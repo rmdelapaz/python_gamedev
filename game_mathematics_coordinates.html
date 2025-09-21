@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master 2D coordinate systems in game development. Learn about screen space, world space, transformations, and camera systems.">
+    <title>2D Coordinate Systems - Game Mathematics</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script src="/js/course-enhancements.js" defer></script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>2D Coordinate Systems</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Section 2: Game Mathematics - Lesson 1</span>
+    </nav>
+
+    <h2>Understanding Space in Games</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Every object in your game exists somewhere in space. Understanding coordinate systems is fundamental to positioning objects, moving characters, implementing cameras, and creating game worlds. Let's explore how games think about space! 📍🗺️</p>
+    </div>
+
+    <h2>The Cartesian Coordinate System</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🗺️ The Map Analogy</h3>
+        <p>Think of coordinate systems like different types of maps:</p>
+        <ul>
+            <li><strong>Screen Space:</strong> Like a tourist map - what the player sees</li>
+            <li><strong>World Space:</strong> Like a full atlas - the entire game world</li>
+            <li><strong>Local Space:</strong> Like a floor plan - relative to an object</li>
+            <li><strong>Camera Space:</strong> Like a photo viewfinder - what's in view</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Coordinate Systems"] --> B["Screen Space"]
+        A --> C["World Space"]
+        A --> D["Local Space"]
+        A --> E["Camera Space"]
+        B --> F["Pixels from top-left"]
+        C --> G["Game world units"]
+        D --> H["Relative to object"]
+        E --> I["Relative to camera"]
+    </div>
+
+    <h2>Screen Coordinates (Pygame Default)</h2>
+    
+    <pre class="language-python"><code># Pygame screen coordinates
+# Origin (0,0) is at TOP-LEFT
+# X increases going RIGHT
+# Y increases going DOWN (unlike math class!)
+
+import pygame
+
+screen = pygame.display.set_mode((800, 600))
+
+# Position at top-left
+top_left = (0, 0)
+
+# Position at center
+center = (400, 300)
+
+# Position at bottom-right
+bottom_right = (799, 599)
+
+# Drawing with screen coordinates
+pygame.draw.circle(screen, (255, 0, 0), center, 50)</code></pre>
+
+    <h2>Interactive Coordinate Explorer</h2>
+    
+    <div class="canvas-wrapper">
+        <canvas id="coordCanvas" width="600" height="400"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Move your mouse to see coordinates in different systems</p>
+        <p>Click to place a marker!</p>
+        <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+            <div><strong>Screen:</strong> <span id="screenCoords">(0, 0)</span></div>
+            <div><strong>Cartesian:</strong> <span id="cartesianCoords">(0, 0)</span></div>
+            <div><strong>Polar:</strong> <span id="polarCoords">(0°, 0)</span></div>
+        </div>
+        <div style="margin-top: 10px;">
+            <button onclick="toggleGrid()">Toggle Grid</button>
+            <button onclick="toggleCoordSystem()">Switch System: <span id="systemDisplay">Screen</span></button>
+            <button onclick="clearMarkers()">Clear Markers</button>
+        </div>
+    </div>
+
+    <script>
+        const coordCanvas = document.getElementById('coordCanvas');
+        const ctx = coordCanvas.getContext('2d');
+        const screenCoordsDisplay = document.getElementById('screenCoords');
+        const cartesianCoordsDisplay = document.getElementById('cartesianCoords');
+        const polarCoordsDisplay = document.getElementById('polarCoords');
+        const systemDisplay = document.getElementById('systemDisplay');
+        
+        let mousePos = {x: 0, y: 0};
+        let markers = [];
+        let showGrid = true;
+        let coordSystem = 'screen'; // 'screen' or 'cartesian'
+        let centerX = coordCanvas.width / 2;
+        let centerY = coordCanvas.height / 2;
+        
+        // Mouse tracking
+        coordCanvas.addEventListener('mousemove', (e) => {
+            const rect = coordCanvas.getBoundingClientRect();
+            mousePos.x = e.clientX - rect.left;
+            mousePos.y = e.clientY - rect.top;
+            updateCoordinateDisplays();
+        });
+        
+        coordCanvas.addEventListener('click', (e) => {
+            markers.push({x: mousePos.x, y: mousePos.y});
+            if (markers.length > 10) markers.shift();
+        });
+        
+        function toggleGrid() {
+            showGrid = !showGrid;
+        }
+        
+        function toggleCoordSystem() {
+            coordSystem = coordSystem === 'screen' ? 'cartesian' : 'screen';
+            systemDisplay.textContent = coordSystem === 'screen' ? 'Screen' : 'Cartesian';
+        }
+        
+        function clearMarkers() {
+            markers = [];
+        }
+        
+        function screenToCartesian(x, y) {
+            return {
+                x: x - centerX,
+                y: centerY - y
+            };
+        }
+        
+        function cartesianToScreen(x, y) {
+            return {
+                x: x + centerX,
+                y: centerY - y
+            };
+        }
+        
+        function toPolar(x, y) {
+            const cart = screenToCartesian(x, y);
+            const r = Math.sqrt(cart.x * cart.x + cart.y * cart.y);
+            let theta = Math.atan2(cart.y, cart.x) * 180 / Math.PI;
+            if (theta < 0) theta += 360;
+            return {r: r, theta: theta};
+        }
+        
+        function updateCoordinateDisplays() {
+            // Screen coordinates
+            screenCoordsDisplay.textContent = `(${Math.round(mousePos.x)}, ${Math.round(mousePos.y)})`;
+            
+            // Cartesian coordinates
+            const cart = screenToCartesian(mousePos.x, mousePos.y);
+            cartesianCoordsDisplay.textContent = `(${Math.round(cart.x)}, ${Math.round(cart.y)})`;
+            
+            // Polar coordinates
+            const polar = toPolar(mousePos.x, mousePos.y);
+            polarCoordsDisplay.textContent = `(${Math.round(polar.theta)}°, ${Math.round(polar.r)})`;
+        }
+        
+        function drawCoordinateSystem() {
+            // Clear canvas
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(0, 0, coordCanvas.width, coordCanvas.height);
+            
+            // Draw grid
+            if (showGrid) {
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+                ctx.lineWidth = 1;
+                
+                // Vertical lines
+                for (let x = 0; x <= coordCanvas.width; x += 50) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, coordCanvas.height);
+                    ctx.stroke();
+                }
+                
+                // Horizontal lines
+                for (let y = 0; y <= coordCanvas.height; y += 50) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(coordCanvas.width, y);
+                    ctx.stroke();
+                }
+            }
+            
+            if (coordSystem === 'cartesian') {
+                // Draw axes for Cartesian system
+                ctx.strokeStyle = '#4caf50';
+                ctx.lineWidth = 2;
+                
+                // X-axis
+                ctx.beginPath();
+                ctx.moveTo(0, centerY);
+                ctx.lineTo(coordCanvas.width, centerY);
+                ctx.stroke();
+                
+                // Y-axis
+                ctx.beginPath();
+                ctx.moveTo(centerX, 0);
+                ctx.lineTo(centerX, coordCanvas.height);
+                ctx.stroke();
+                
+                // Draw axis labels
+                ctx.fillStyle = '#4caf50';
+                ctx.font = '14px Arial';
+                ctx.fillText('X', coordCanvas.width - 20, centerY - 10);
+                ctx.fillText('Y', centerX + 10, 20);
+                ctx.fillText('(0,0)', centerX + 5, centerY + 15);
+                
+                // Draw quadrant labels
+                ctx.font = '12px Arial';
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.fillText('Q1 (+,+)', centerX + 50, centerY - 50);
+                ctx.fillText('Q2 (-,+)', centerX - 80, centerY - 50);
+                ctx.fillText('Q3 (-,-)', centerX - 80, centerY + 60);
+                ctx.fillText('Q4 (+,-)', centerX + 50, centerY + 60);
+            } else {
+                // Draw origin indicator for screen system
+                ctx.fillStyle = '#ff6b6b';
+                ctx.fillRect(0, 0, 5, 5);
+                ctx.font = '12px Arial';
+                ctx.fillText('(0,0)', 10, 15);
+                
+                // Draw corner coordinates
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.fillText(`(${coordCanvas.width},0)`, coordCanvas.width - 50, 15);
+                ctx.fillText(`(0,${coordCanvas.height})`, 10, coordCanvas.height - 5);
+                ctx.fillText(`(${coordCanvas.width},${coordCanvas.height})`, coordCanvas.width - 70, coordCanvas.height - 5);
+            }
+            
+            // Draw markers
+            markers.forEach((marker, index) => {
+                const alpha = (index + 1) / markers.length;
+                ctx.fillStyle = `rgba(255, 235, 59, ${alpha})`;
+                ctx.beginPath();
+                ctx.arc(marker.x, marker.y, 5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Show coordinates for latest marker
+                if (index === markers.length - 1) {
+                    ctx.fillStyle = '#ffeb3b';
+                    ctx.font = '10px Arial';
+                    if (coordSystem === 'screen') {
+                        ctx.fillText(`(${Math.round(marker.x)},${Math.round(marker.y)})`, marker.x + 10, marker.y - 10);
+                    } else {
+                        const cart = screenToCartesian(marker.x, marker.y);
+                        ctx.fillText(`(${Math.round(cart.x)},${Math.round(cart.y)})`, marker.x + 10, marker.y - 10);
+                    }
+                }
+            });
+            
+            // Draw mouse position
+            ctx.strokeStyle = '#2196f3';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 5]);
+            
+            // Crosshair
+            ctx.beginPath();
+            ctx.moveTo(mousePos.x, 0);
+            ctx.lineTo(mousePos.x, coordCanvas.height);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(0, mousePos.y);
+            ctx.lineTo(coordCanvas.width, mousePos.y);
+            ctx.stroke();
+            
+            ctx.setLineDash([]);
+            
+            // Draw mouse position dot
+            ctx.fillStyle = '#2196f3';
+            ctx.beginPath();
+            ctx.arc(mousePos.x, mousePos.y, 3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            requestAnimationFrame(drawCoordinateSystem);
+        }
+        
+        drawCoordinateSystem();
+    </script>
+
+    <h2>Converting Between Coordinate Systems</h2>
+    
+    <pre class="language-python"><code>class CoordinateConverter:
+    def __init__(self, screen_width, screen_height):
+        self.screen_width = screen_width
+        self.screen_height = screen_height
+        self.center_x = screen_width // 2
+        self.center_y = screen_height // 2
+    
+    def screen_to_cartesian(self, x, y):
+        """Convert screen coordinates to mathematical Cartesian"""
+        cart_x = x - self.center_x
+        cart_y = self.center_y - y
+        return (cart_x, cart_y)
+    
+    def cartesian_to_screen(self, x, y):
+        """Convert Cartesian coordinates to screen"""
+        screen_x = x + self.center_x
+        screen_y = self.center_y - y
+        return (screen_x, screen_y)
+    
+    def screen_to_normalized(self, x, y):
+        """Convert to normalized coordinates (0 to 1)"""
+        norm_x = x / self.screen_width
+        norm_y = y / self.screen_height
+        return (norm_x, norm_y)
+    
+    def normalized_to_screen(self, x, y):
+        """Convert from normalized to screen coordinates"""
+        screen_x = int(x * self.screen_width)
+        screen_y = int(y * self.screen_height)
+        return (screen_x, screen_y)</code></pre>
+
+    <h2>World Space vs Screen Space</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🌍 The Camera View</h3>
+        <p>World space is your entire game world, while screen space is just what the camera sees:</p>
+        <ul>
+            <li><strong>World Space:</strong> The complete game level (maybe 10,000 x 10,000 pixels)</li>
+            <li><strong>Screen Space:</strong> What's displayed (800 x 600 pixels)</li>
+            <li><strong>Camera:</strong> The translator between world and screen</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph LR
+        A["World Space"] --> B["Camera Transform"]
+        B --> C["Screen Space"]
+        C --> D["Display"]
+        E["Player Position"] --> F["World Coordinates"]
+        F --> B
+        G["Camera Position"] --> B
+        H["Camera Zoom"] --> B
+    </div>
+
+    <h3>Simple Camera System</h3>
+    <pre class="language-python"><code>class Camera:
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
+        self.x = 0  # Camera position in world
+        self.y = 0
+        self.zoom = 1.0
+    
+    def apply(self, entity_rect):
+        """Convert world position to screen position"""
+        # Apply camera offset
+        screen_x = entity_rect.x - self.x
+        screen_y = entity_rect.y - self.y
+        
+        # Apply zoom
+        screen_x = int(screen_x * self.zoom)
+        screen_y = int(screen_y * self.zoom)
+        width = int(entity_rect.width * self.zoom)
+        height = int(entity_rect.height * self.zoom)
+        
+        return pygame.Rect(screen_x, screen_y, width, height)
+    
+    def update(self, target):
+        """Follow a target (usually the player)"""
+        # Center camera on target
+        self.x = target.rect.centerx - self.width // 2
+        self.y = target.rect.centery - self.height // 2
+        
+        # Optional: Add smooth following
+        # self.x += (target_x - self.x) * 0.1
+    
+    def world_to_screen(self, world_x, world_y):
+        """Convert world coordinates to screen coordinates"""
+        screen_x = (world_x - self.x) * self.zoom
+        screen_y = (world_y - self.y) * self.zoom
+        return (int(screen_x), int(screen_y))
+    
+    def screen_to_world(self, screen_x, screen_y):
+        """Convert screen coordinates to world coordinates"""
+        world_x = screen_x / self.zoom + self.x
+        world_y = screen_y / self.zoom + self.y
+        return (int(world_x), int(world_y))</code></pre>
+
+    <h2>Polar Coordinates</h2>
+    
+    <p>Sometimes it's easier to think in terms of angle and distance rather than X and Y!</p>
+    
+    <pre class="language-python"><code>import math
+
+def cartesian_to_polar(x, y):
+    """Convert Cartesian (x, y) to Polar (r, theta)"""
+    r = math.sqrt(x * x + y * y)
+    theta = math.atan2(y, x)
+    return (r, theta)
+
+def polar_to_cartesian(r, theta):
+    """Convert Polar (r, theta) to Cartesian (x, y)"""
+    x = r * math.cos(theta)
+    y = r * math.sin(theta)
+    return (x, y)
+
+# Example: Rotating objects around a point
+def rotate_around_point(center_x, center_y, point_x, point_y, angle):
+    # Convert to relative position
+    rel_x = point_x - center_x
+    rel_y = point_y - center_y
+    
+    # Convert to polar
+    r, theta = cartesian_to_polar(rel_x, rel_y)
+    
+    # Add rotation
+    theta += angle
+    
+    # Convert back to Cartesian
+    new_x, new_y = polar_to_cartesian(r, theta)
+    
+    # Add back center offset
+    return (new_x + center_x, new_y + center_y)
+
+# Example: Circular movement
+class OrbitingObject:
+    def __init__(self, center_x, center_y, radius, speed):
+        self.center_x = center_x
+        self.center_y = center_y
+        self.radius = radius
+        self.angle = 0
+        self.speed = speed
+    
+    def update(self, dt):
+        self.angle += self.speed * dt
+        
+    def get_position(self):
+        x = self.center_x + self.radius * math.cos(self.angle)
+        y = self.center_y + self.radius * math.sin(self.angle)
+        return (x, y)</code></pre>
+
+    <h2>Isometric Coordinates</h2>
+    
+    <p>For that classic 2.5D look used in strategy games!</p>
+    
+    <pre class="language-python"><code>class IsometricConverter:
+    def __init__(self, tile_width, tile_height):
+        self.tile_width = tile_width
+        self.tile_height = tile_height
+    
+    def cart_to_iso(self, x, y):
+        """Convert Cartesian grid to isometric screen position"""
+        iso_x = (x - y) * (self.tile_width // 2)
+        iso_y = (x + y) * (self.tile_height // 2)
+        return (iso_x, iso_y)
+    
+    def iso_to_cart(self, iso_x, iso_y):
+        """Convert isometric screen position to Cartesian grid"""
+        x = (iso_x / (self.tile_width // 2) + iso_y / (self.tile_height // 2)) / 2
+        y = (iso_y / (self.tile_height // 2) - iso_x / (self.tile_width // 2)) / 2
+        return (int(x), int(y))
+    
+    def get_tile_at_mouse(self, mouse_x, mouse_y, offset_x=0, offset_y=0):
+        """Get which tile the mouse is over"""
+        # Adjust for camera/screen offset
+        adjusted_x = mouse_x - offset_x
+        adjusted_y = mouse_y - offset_y
+        
+        # Convert to grid coordinates
+        grid_x, grid_y = self.iso_to_cart(adjusted_x, adjusted_y)
+        return (grid_x, grid_y)</code></pre>
+
+    <h2>Complete Example: Multi-Coordinate Game</h2>
+    
+    <pre class="language-python"><code>import pygame
+import math
+
+class CoordinateDemo:
+    def __init__(self):
+        pygame.init()
+        self.screen = pygame.display.set_mode((800, 600))
+        pygame.display.set_caption("Coordinate Systems Demo")
+        self.clock = pygame.time.Clock()
+        
+        # Colors
+        self.BLACK = (0, 0, 0)
+        self.WHITE = (255, 255, 255)
+        self.RED = (255, 0, 0)
+        self.GREEN = (0, 255, 0)
+        self.BLUE = (0, 0, 255)
+        self.YELLOW = (255, 255, 0)
+        
+        # World properties
+        self.world_width = 2000
+        self.world_height = 2000
+        
+        # Camera
+        self.camera_x = 0
+        self.camera_y = 0
+        self.zoom = 1.0
+        
+        # Player in world coordinates
+        self.player_x = 1000
+        self.player_y = 1000
+        self.player_speed = 5
+        
+        # Orbiting objects (polar coordinates)
+        self.orbiters = [
+            {'radius': 100, 'angle': 0, 'speed': 1},
+            {'radius': 150, 'angle': math.pi, 'speed': -0.5},
+            {'radius': 200, 'angle': math.pi/2, 'speed': 0.75}
+        ]
+        
+        # Grid objects (for showing coordinate systems)
+        self.grid_objects = []
+        for i in range(10):
+            for j in range(10):
+                self.grid_objects.append({
+                    'world_x': 200 + i * 150,
+                    'world_y': 200 + j * 150
+                })
+    
+    def world_to_screen(self, world_x, world_y):
+        """Convert world coordinates to screen coordinates"""
+        screen_x = (world_x - self.camera_x) * self.zoom
+        screen_y = (world_y - self.camera_y) * self.zoom
+        return (int(screen_x), int(screen_y))
+    
+    def screen_to_world(self, screen_x, screen_y):
+        """Convert screen coordinates to world coordinates"""
+        world_x = screen_x / self.zoom + self.camera_x
+        world_y = screen_y / self.zoom + self.camera_y
+        return (world_x, world_y)
+    
+    def update_camera(self):
+        """Center camera on player"""
+        self.camera_x = self.player_x - 400 / self.zoom
+        self.camera_y = self.player_y - 300 / self.zoom
+    
+    def handle_input(self):
+        keys = pygame.key.get_pressed()
+        
+        # Player movement (in world space)
+        if keys[pygame.K_LEFT]:
+            self.player_x -= self.player_speed
+        if keys[pygame.K_RIGHT]:
+            self.player_x += self.player_speed
+        if keys[pygame.K_UP]:
+            self.player_y -= self.player_speed
+        if keys[pygame.K_DOWN]:
+            self.player_y += self.player_speed
+        
+        # Zoom controls
+        if keys[pygame.K_PLUS] or keys[pygame.K_EQUALS]:
+            self.zoom = min(2.0, self.zoom + 0.02)
+        if keys[pygame.K_MINUS]:
+            self.zoom = max(0.5, self.zoom - 0.02)
+        
+        # Keep player in world bounds
+        self.player_x = max(0, min(self.world_width, self.player_x))
+        self.player_y = max(0, min(self.world_height, self.player_y))
+    
+    def update_orbiters(self, dt):
+        """Update orbiting objects using polar coordinates"""
+        for orbiter in self.orbiters:
+            orbiter['angle'] += orbiter['speed'] * dt
+    
+    def draw(self):
+        self.screen.fill(self.BLACK)
+        
+        # Draw grid objects
+        for obj in self.grid_objects:
+            screen_pos = self.world_to_screen(obj['world_x'], obj['world_y'])
+            if 0 <= screen_pos[0] <= 800 and 0 <= screen_pos[1] <= 600:
+                size = int(20 * self.zoom)
+                pygame.draw.rect(self.screen, (50, 50, 50), 
+                               (screen_pos[0] - size//2, screen_pos[1] - size//2, size, size))
+        
+        # Draw world bounds
+        corners = [
+            (0, 0), (self.world_width, 0),
+            (self.world_width, self.world_height), (0, self.world_height)
+        ]
+        screen_corners = [self.world_to_screen(x, y) for x, y in corners]
+        if any(0 <= x <= 800 and 0 <= y <= 600 for x, y in screen_corners):
+            pygame.draw.lines(self.screen, self.GREEN, True, screen_corners, 2)
+        
+        # Draw player
+        player_screen = self.world_to_screen(self.player_x, self.player_y)
+        pygame.draw.circle(self.screen, self.BLUE, player_screen, int(20 * self.zoom))
+        
+        # Draw orbiters (using polar coordinates)
+        for orbiter in self.orbiters:
+            # Convert polar to Cartesian relative to player
+            orbit_x = orbiter['radius'] * math.cos(orbiter['angle'])
+            orbit_y = orbiter['radius'] * math.sin(orbiter['angle'])
+            
+            # Add to player position (world coordinates)
+            world_x = self.player_x + orbit_x
+            world_y = self.player_y + orbit_y
+            
+            # Convert to screen
+            screen_pos = self.world_to_screen(world_x, world_y)
+            pygame.draw.circle(self.screen, self.YELLOW, screen_pos, int(10 * self.zoom))
+            
+            # Draw orbit path
+            points = []
+            for angle in range(0, 360, 10):
+                rad = math.radians(angle)
+                px = self.player_x + orbiter['radius'] * math.cos(rad)
+                py = self.player_y + orbiter['radius'] * math.sin(rad)
+                points.append(self.world_to_screen(px, py))
+            if len(points) > 1:
+                pygame.draw.lines(self.screen, (100, 100, 0), True, points, 1)
+        
+        # Draw coordinate info
+        font = pygame.font.Font(None, 24)
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        world_mouse = self.screen_to_world(mouse_x, mouse_y)
+        
+        texts = [
+            f"Player World: ({int(self.player_x)}, {int(self.player_y)})",
+            f"Player Screen: {player_screen}",
+            f"Mouse Screen: ({mouse_x}, {mouse_y})",
+            f"Mouse World: ({int(world_mouse[0])}, {int(world_mouse[1])})",
+            f"Camera: ({int(self.camera_x)}, {int(self.camera_y)})",
+            f"Zoom: {self.zoom:.2f}x"
+        ]
+        
+        for i, text in enumerate(texts):
+            rendered = font.render(text, True, self.WHITE)
+            self.screen.blit(rendered, (10, 10 + i * 25))
+        
+        # Instructions
+        instructions = [
+            "Arrow Keys: Move player",
+            "+/-: Zoom in/out",
+            "Yellow circles orbit using polar coordinates"
+        ]
+        for i, text in enumerate(instructions):
+            rendered = font.render(text, True, (200, 200, 200))
+            self.screen.blit(rendered, (10, 500 + i * 25))
+    
+    def run(self):
+        running = True
+        dt = 0
+        
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+            
+            self.handle_input()
+            self.update_camera()
+            self.update_orbiters(dt)
+            self.draw()
+            
+            pygame.display.flip()
+            dt = self.clock.tick(60) / 1000.0  # Delta time in seconds
+        
+        pygame.quit()
+
+if __name__ == "__main__":
+    demo = CoordinateDemo()
+    demo.run()</code></pre>
+
+    <h2>Coordinate System Transformations</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🔄 Transform Operations</h3>
+        <ul>
+            <li><strong>Translation:</strong> Moving objects (changing x, y)</li>
+            <li><strong>Rotation:</strong> Spinning objects around a point</li>
+            <li><strong>Scaling:</strong> Making objects bigger/smaller</li>
+            <li><strong>Shearing:</strong> Skewing objects</li>
+        </ul>
+    </div>
+
+    <pre class="language-python"><code>import numpy as np
+
+class Transform2D:
+    @staticmethod
+    def translate(point, dx, dy):
+        """Translate a point by (dx, dy)"""
+        return (point[0] + dx, point[1] + dy)
+    
+    @staticmethod
+    def rotate(point, angle, origin=(0, 0)):
+        """Rotate a point around an origin"""
+        # Translate to origin
+        x = point[0] - origin[0]
+        y = point[1] - origin[1]
+        
+        # Apply rotation
+        cos_a = math.cos(angle)
+        sin_a = math.sin(angle)
+        new_x = x * cos_a - y * sin_a
+        new_y = x * sin_a + y * cos_a
+        
+        # Translate back
+        return (new_x + origin[0], new_y + origin[1])
+    
+    @staticmethod
+    def scale(point, scale_x, scale_y, origin=(0, 0)):
+        """Scale a point from an origin"""
+        # Translate to origin
+        x = point[0] - origin[0]
+        y = point[1] - origin[1]
+        
+        # Apply scale
+        new_x = x * scale_x
+        new_y = y * scale_y
+        
+        # Translate back
+        return (new_x + origin[0], new_y + origin[1])
+    
+    @staticmethod
+    def transform_matrix(point, matrix):
+        """Apply a transformation matrix to a point"""
+        # Convert to homogeneous coordinates
+        p = np.array([point[0], point[1], 1])
+        
+        # Apply transformation
+        result = matrix @ p
+        
+        # Convert back to 2D
+        return (result[0], result[1])
+    
+    @staticmethod
+    def create_rotation_matrix(angle):
+        """Create a 3x3 rotation matrix"""
+        cos_a = math.cos(angle)
+        sin_a = math.sin(angle)
+        return np.array([
+            [cos_a, -sin_a, 0],
+            [sin_a, cos_a, 0],
+            [0, 0, 1]
+        ])</code></pre>
+
+    <h2>Practice Exercises</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎯 Coordinate Challenges!</h3>
+        <ol>
+            <li><strong>Mini-Map System:</strong> Create a minimap showing world position on screen</li>
+            <li><strong>Click to Move:</strong> Convert mouse clicks to world movement commands</li>
+            <li><strong>Radar Display:</strong> Show nearby objects using polar coordinates</li>
+            <li><strong>Parallax Scrolling:</strong> Multiple coordinate layers moving at different speeds</li>
+            <li><strong>Split Screen:</strong> Two cameras showing different world parts</li>
+            <li><strong>Coordinate Grid Overlay:</strong> Toggle-able coordinate display for debugging</li>
+        </ol>
+    </div>
+
+    <h2>Common Coordinate Problems</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚠️ Watch Out For These Issues!</h3>
+        <ul>
+            <li><strong>Y-Axis Confusion:</strong> Screen Y goes down, math Y goes up</li>
+            <li><strong>Off-by-One:</strong> Screen width 800 means pixels 0-799</li>
+            <li><strong>Integer Truncation:</strong> Converting floats to ints loses precision</li>
+            <li><strong>Zoom Problems:</strong> Remember to scale everything including speeds</li>
+            <li><strong>Origin Confusion:</strong> Different systems have different origins</li>
+            <li><strong>Rotation Order:</strong> Rotate then translate ≠ translate then rotate</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>📍 Screen coordinates start at top-left (0,0)</li>
+            <li>📐 Cartesian coordinates can have (0,0) anywhere</li>
+            <li>🌍 World space contains your entire game world</li>
+            <li>📷 Cameras translate between world and screen space</li>
+            <li>🎯 Polar coordinates are great for circular motion</li>
+            <li>🔄 Transformations let you manipulate coordinates</li>
+            <li>⚡ Always know which coordinate system you're using</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you understand coordinate systems, next we'll explore vector operations - the mathematical tools that make movement, physics, and game mechanics possible!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="pygame_basics_sound.html" class="prev-lesson" aria-label="Previous lesson: Sound and Music">Previous Section: Pygame Basics</a>
+        <a href="game_mathematics_vectors.html" class="next-lesson" aria-label="Next lesson: Vector Operations">Next Lesson: Vector Operations</a>
+    </nav>
+    
+    </main>
+</body>
+</html>

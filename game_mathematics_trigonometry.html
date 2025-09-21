@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Learn essential trigonometry for game development. Master angles, rotations, circular motion, and wave functions for creating dynamic game mechanics.">
+    <title>Basic Trigonometry for Games - Game Mathematics</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script src="/js/course-enhancements.js" defer></script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Basic Trigonometry for Games</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Section 2: Game Mathematics - Lesson 3</span>
+    </nav>
+
+    <h2>The Mathematics of Rotation and Waves</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Trigonometry is the secret sauce behind smooth rotations, realistic physics, wave effects, and circular motion in games. From aiming cannons to creating ocean waves, trig functions power countless game mechanics. Let's unlock these mathematical superpowers! 🎯📐</p>
+    </div>
+
+    <h2>Understanding Sine, Cosine, and Tangent</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎡 The Ferris Wheel Analogy</h3>
+        <p>Think of trigonometry like riding a Ferris wheel:</p>
+        <ul>
+            <li><strong>Angle:</strong> How far around you've rotated</li>
+            <li><strong>Sine:</strong> Your height above/below center</li>
+            <li><strong>Cosine:</strong> Your distance left/right from center</li>
+            <li><strong>Radius:</strong> How big the Ferris wheel is</li>
+            <li><strong>Period:</strong> One complete rotation</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Trigonometry in Games"] --> B["Rotation"]
+        A --> C["Circular Motion"]
+        A --> D["Wave Effects"]
+        A --> E["Aiming/Direction"]
+        B --> F["Spinning objects"]
+        B --> G["Camera rotation"]
+        C --> H["Orbits"]
+        C --> I["Pendulums"]
+        D --> J["Water waves"]
+        D --> K["Breathing effects"]
+        E --> L["Turret aiming"]
+        E --> M["Line of sight"]
+    </div>
+
+    <h2>Angles and Radians</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>📐 Degrees vs Radians</h3>
+        <p>Games often use radians internally but display degrees to players:</p>
+        <ul>
+            <li><strong>360 degrees</strong> = 2π radians (full circle)</li>
+            <li><strong>180 degrees</strong> = π radians (half circle)</li>
+            <li><strong>90 degrees</strong> = π/2 radians (quarter circle)</li>
+            <li><strong>1 radian</strong> ≈ 57.3 degrees</li>
+        </ul>
+    </div>
+
+    <pre class="language-python"><code>import math
+
+# Conversion functions
+def degrees_to_radians(degrees):
+    return degrees * (math.pi / 180)
+
+def radians_to_degrees(radians):
+    return radians * (180 / math.pi)
+
+# Python also has built-in functions
+angle_deg = 45
+angle_rad = math.radians(angle_deg)  # Convert to radians
+back_to_deg = math.degrees(angle_rad)  # Convert back to degrees
+
+# Common angles in radians
+QUARTER_TURN = math.pi / 2    # 90°
+HALF_TURN = math.pi           # 180°
+FULL_TURN = math.pi * 2       # 360°
+
+# Normalize angle to 0-360 degrees
+def normalize_angle(angle_deg):
+    return angle_deg % 360
+
+# Normalize to -180 to 180 (for smallest rotation)
+def normalize_angle_signed(angle_deg):
+    angle = angle_deg % 360
+    if angle > 180:
+        angle -= 360
+    return angle</code></pre>
+
+    <h2>Rotation in Games</h2>
+    
+    <pre class="language-python"><code>class RotatingObject:
+    def __init__(self, x, y, image):
+        self.x = x
+        self.y = y
+        self.angle = 0  # In radians
+        self.original_image = image
+        self.image = image
+        self.rect = image.get_rect(center=(x, y))
+    
+    def rotate(self, angle_delta):
+        """Rotate by angle_delta radians"""
+        self.angle += angle_delta
+        
+        # Keep angle in reasonable range
+        self.angle = self.angle % (math.pi * 2)
+        
+        # Rotate image
+        angle_degrees = math.degrees(self.angle)
+        self.image = pygame.transform.rotate(self.original_image, -angle_degrees)
+        self.rect = self.image.get_rect(center=(self.x, self.y))
+    
+    def point_at(self, target_x, target_y):
+        """Rotate to point at target"""
+        dx = target_x - self.x
+        dy = target_y - self.y
+        self.angle = math.atan2(dy, dx)
+        
+        # Update image
+        angle_degrees = math.degrees(self.angle)
+        self.image = pygame.transform.rotate(self.original_image, -angle_degrees)
+        self.rect = self.image.get_rect(center=(self.x, self.y))
+    
+    def get_facing_vector(self):
+        """Get unit vector of facing direction"""
+        return (math.cos(self.angle), math.sin(self.angle))</code></pre>
+
+    <h2>Circular and Elliptical Motion</h2>
+    
+    <pre class="language-python"><code># Circular motion
+class OrbitingObject:
+    def __init__(self, center_x, center_y, radius, speed):
+        self.center_x = center_x
+        self.center_y = center_y
+        self.radius = radius
+        self.angle = 0
+        self.speed = speed  # Radians per second
+    
+    def update(self, dt):
+        self.angle += self.speed * dt
+        
+    def get_position(self):
+        x = self.center_x + self.radius * math.cos(self.angle)
+        y = self.center_y + self.radius * math.sin(self.angle)
+        return (x, y)
+
+# Elliptical motion
+class EllipticalOrbit:
+    def __init__(self, center_x, center_y, radius_x, radius_y, speed):
+        self.center_x = center_x
+        self.center_y = center_y
+        self.radius_x = radius_x  # Horizontal radius
+        self.radius_y = radius_y  # Vertical radius
+        self.angle = 0
+        self.speed = speed
+    
+    def update(self, dt):
+        self.angle += self.speed * dt
+    
+    def get_position(self):
+        x = self.center_x + self.radius_x * math.cos(self.angle)
+        y = self.center_y + self.radius_y * math.sin(self.angle)
+        return (x, y)
+
+# Spiral motion
+class SpiralMotion:
+    def __init__(self, center_x, center_y, growth_rate):
+        self.center_x = center_x
+        self.center_y = center_y
+        self.angle = 0
+        self.radius = 10
+        self.growth_rate = growth_rate
+    
+    def update(self, dt):
+        self.angle += dt * 2
+        self.radius += self.growth_rate * dt
+    
+    def get_position(self):
+        x = self.center_x + self.radius * math.cos(self.angle)
+        y = self.center_y + self.radius * math.sin(self.angle)
+        return (x, y)</code></pre>
+
+    <h2>Wave Functions</h2>
+    
+    <pre class="language-python"><code># Create wave effects
+class WaveEffect:
+    def __init__(self):
+        self.time = 0
+        
+    def update(self, dt):
+        self.time += dt
+    
+    def sine_wave(self, frequency=1, amplitude=1, phase=0):
+        """Basic sine wave"""
+        return amplitude * math.sin(frequency * self.time + phase)
+    
+    def square_wave(self, frequency=1, amplitude=1):
+        """Square wave (alternates between -amplitude and +amplitude)"""
+        return amplitude if math.sin(frequency * self.time) >= 0 else -amplitude
+    
+    def sawtooth_wave(self, frequency=1, amplitude=1):
+        """Sawtooth wave (linear rise, instant drop)"""
+        phase = (frequency * self.time) % (2 * math.pi)
+        return amplitude * (phase / math.pi - 1)
+    
+    def triangle_wave(self, frequency=1, amplitude=1):
+        """Triangle wave (linear rise and fall)"""
+        phase = (frequency * self.time) % (2 * math.pi)
+        if phase < math.pi:
+            return amplitude * (2 * phase / math.pi - 1)
+        else:
+            return amplitude * (3 - 2 * phase / math.pi)
+    
+    def perlin_style_wave(self, octaves=3):
+        """Multiple sine waves combined for natural movement"""
+        result = 0
+        amplitude = 1
+        frequency = 1
+        
+        for _ in range(octaves):
+            result += amplitude * math.sin(frequency * self.time)
+            amplitude *= 0.5
+            frequency *= 2
+        
+        return result
+
+# Practical uses of waves
+class FloatingObject:
+    def __init__(self, x, y):
+        self.base_x = x
+        self.base_y = y
+        self.wave = WaveEffect()
+    
+    def update(self, dt):
+        self.wave.update(dt)
+        
+        # Float up and down
+        self.y = self.base_y + self.wave.sine_wave(
+            frequency=2, 
+            amplitude=20
+        )
+        
+        # Slight side-to-side movement
+        self.x = self.base_x + self.wave.sine_wave(
+            frequency=0.7, 
+            amplitude=5, 
+            phase=math.pi/2
+        )</code></pre>
+
+    <h2>Aiming and Line of Sight</h2>
+    
+    <pre class="language-python"><code>class Turret:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.angle = 0
+        self.rotation_speed = 2  # Radians per second
+        
+    def aim_at(self, target_x, target_y, dt):
+        """Smoothly rotate towards target"""
+        # Calculate target angle
+        dx = target_x - self.x
+        dy = target_y - self.y
+        target_angle = math.atan2(dy, dx)
+        
+        # Calculate angle difference
+        angle_diff = target_angle - self.angle
+        
+        # Normalize to -pi to pi
+        while angle_diff > math.pi:
+            angle_diff -= 2 * math.pi
+        while angle_diff < -math.pi:
+            angle_diff += 2 * math.pi
+        
+        # Rotate towards target
+        if abs(angle_diff) < self.rotation_speed * dt:
+            self.angle = target_angle
+        else:
+            if angle_diff > 0:
+                self.angle += self.rotation_speed * dt
+            else:
+                self.angle -= self.rotation_speed * dt
+    
+    def can_see(self, target_x, target_y, fov_angle=math.pi/4):
+        """Check if target is within field of view"""
+        # Direction to target
+        dx = target_x - self.x
+        dy = target_y - self.y
+        angle_to_target = math.atan2(dy, dx)
+        
+        # Angle difference
+        angle_diff = abs(angle_to_target - self.angle)
+        
+        # Normalize
+        if angle_diff > math.pi:
+            angle_diff = 2 * math.pi - angle_diff
+        
+        # Check if within FOV
+        return angle_diff <= fov_angle / 2
+    
+    def fire_projectile(self, speed):
+        """Fire in current direction"""
+        vx = speed * math.cos(self.angle)
+        vy = speed * math.sin(self.angle)
+        return Projectile(self.x, self.y, vx, vy)</code></pre>
+
+    <h2>Pendulum Physics</h2>
+    
+    <pre class="language-python"><code>class Pendulum:
+    def __init__(self, x, y, length, start_angle=math.pi/4):
+        self.anchor_x = x
+        self.anchor_y = y
+        self.length = length
+        self.angle = start_angle
+        self.angular_velocity = 0
+        self.gravity = 9.8
+        self.damping = 0.99  # Energy loss
+    
+    def update(self, dt):
+        # Pendulum physics
+        # Angular acceleration = -g/L * sin(angle)
+        angular_acceleration = -(self.gravity / self.length) * math.sin(self.angle)
+        
+        # Update velocity and position
+        self.angular_velocity += angular_acceleration * dt
+        self.angular_velocity *= self.damping  # Apply damping
+        self.angle += self.angular_velocity * dt
+    
+    def get_bob_position(self):
+        """Get position of pendulum bob"""
+        x = self.anchor_x + self.length * math.sin(self.angle)
+        y = self.anchor_y + self.length * math.cos(self.angle)
+        return (x, y)
+    
+    def apply_force(self, force):
+        """Push the pendulum"""
+        self.angular_velocity += force</code></pre>
+
+    <h2>Trigonometric Optimization</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Performance Tips</h3>
+        <ul>
+            <li><strong>Lookup Tables:</strong> Pre-calculate common angles</li>
+            <li><strong>Approximations:</strong> Use Taylor series for small angles</li>
+            <li><strong>Cache Results:</strong> Store frequently used trig values</li>
+            <li><strong>CORDIC Algorithm:</strong> Hardware-friendly trig calculations</li>
+        </ul>
+    </div>
+
+    <pre class="language-python"><code># Optimization techniques
+class TrigCache:
+    def __init__(self, resolution=360):
+        self.resolution = resolution
+        self.sin_table = []
+        self.cos_table = []
+        
+        # Pre-calculate values
+        for i in range(resolution):
+            angle = (i / resolution) * math.pi * 2
+            self.sin_table.append(math.sin(angle))
+            self.cos_table.append(math.cos(angle))
+    
+    def fast_sin(self, angle):
+        """Fast sine using lookup table"""
+        # Normalize angle to 0-2π
+        normalized = angle % (math.pi * 2)
+        # Convert to table index
+        index = int((normalized / (math.pi * 2)) * self.resolution)
+        return self.sin_table[index % self.resolution]
+    
+    def fast_cos(self, angle):
+        """Fast cosine using lookup table"""
+        normalized = angle % (math.pi * 2)
+        index = int((normalized / (math.pi * 2)) * self.resolution)
+        return self.cos_table[index % self.resolution]
+
+# Small angle approximations
+def small_angle_sin(angle):
+    """For small angles, sin(x) ≈ x"""
+    if abs(angle) < 0.1:
+        return angle
+    return math.sin(angle)
+
+def small_angle_cos(angle):
+    """For small angles, cos(x) ≈ 1 - x²/2"""
+    if abs(angle) < 0.1:
+        return 1 - (angle * angle) / 2
+    return math.cos(angle)</code></pre>
+
+    <h2>Practice Exercises</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎯 Trigonometry Challenges!</h3>
+        <ol>
+            <li><strong>Radar Scanner:</strong> Create a rotating radar that detects objects</li>
+            <li><strong>Sine Wave Runner:</strong> Platform game with wavy terrain</li>
+            <li><strong>Clock Simulator:</strong> Analog clock with moving hands</li>
+            <li><strong>Cannon Game:</strong> Calculate trajectory angles for targets</li>
+            <li><strong>Planet Orbit System:</strong> Multiple planets with elliptical orbits</li>
+            <li><strong>Wave Pool:</strong> Simulate water with multiple sine waves</li>
+        </ol>
+    </div>
+
+    <h2>Common Trigonometry Problems</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚠️ Watch Out For These Issues!</h3>
+        <ul>
+            <li><strong>Degree/Radian Confusion:</strong> Always know which unit you're using</li>
+            <li><strong>atan vs atan2:</strong> Use atan2 for full 360° range</li>
+            <li><strong>Angle Wrapping:</strong> Keep angles normalized to avoid overflow</li>
+            <li><strong>Gimbal Lock:</strong> Can occur with multiple rotations</li>
+            <li><strong>Precision Loss:</strong> Small angles need special handling</li>
+            <li><strong>Performance:</strong> Trig functions are expensive - cache when possible</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>📐 Sine and cosine create circular motion</li>
+            <li>🔄 Angles in games are usually in radians</li>
+            <li>🎯 atan2 is perfect for aiming and direction</li>
+            <li>🌊 Sine waves create natural oscillation</li>
+            <li>🎡 Combine trig functions for complex motion</li>
+            <li>⚡ Optimize with lookup tables for performance</li>
+            <li>🎮 Trig powers rotation, orbits, and waves</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you understand trigonometry in games, next we'll explore interpolation and easing functions - the tools that make movement smooth and animations feel natural!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="game_mathematics_vectors.html" class="prev-lesson" aria-label="Previous lesson: Vector Operations">Previous Lesson: Vector Operations</a>
+        <a href="game_mathematics_interpolation.html" class="next-lesson" aria-label="Next lesson: Interpolation and Easing">Next Lesson: Interpolation and Easing</a>
+    </nav>
+    
+    </main>
+</body>
+</html>

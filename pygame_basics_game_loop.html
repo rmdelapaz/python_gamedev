@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Learn the fundamental game loop concept in Pygame. Understand how games create smooth animation and responsive gameplay through continuous loops.">
+    <title>Game Loop Concept - Pygame Basics</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script src="/js/course-enhancements.js" defer></script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>The Game Loop: The Heartbeat of Every Game</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Lesson 1: Game Loop Concept</span>
+    </nav>
+        
+        <h2>Welcome to Game Development!</h2>
+        <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+            <p>You're about to learn the most fundamental concept in game programming - the <strong>Game Loop</strong>. This is the engine that powers every game you've ever played, from Pong to Fortnite! 🚀</p>
+        </div>
+
+        <h2>What Is a Game Loop? 🔄</h2>
+        
+        <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+            <h3>🎬 Think of It Like a Movie</h3>
+            <p>A movie appears to show smooth motion, but it's actually 24-30 still images (frames) shown per second. Your brain sees these rapid images as movement. Games work the same way! The game loop is like a movie projector, showing you 30-60 (or more) slightly different images per second to create the illusion of movement and interaction.</p>
+        </div>
+
+        <h2>The Anatomy of a Game Loop</h2>
+        
+        <div class="mermaid">
+        graph TD
+            A[Start Game] --> B[Initialize]
+            B --> C{Game Running?}
+            C -->|Yes| D[Handle Events]
+            D --> E[Update Game State]
+            E --> F[Draw Everything]
+            F --> G[Control Frame Rate]
+            G --> C
+            C -->|No| H[Clean Up]
+            H --> I[Exit Game]
+        </div>
+
+        <h2>Breaking Down Each Step</h2>
+        
+        <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+            <h3>📥 Handle Events</h3>
+            <p>This is where the game listens to you! Did you press a key? Move the mouse? Click something? The game needs to know!</p>
+            
+            <h3>🔄 Update Game State</h3>
+            <p>Based on the events and game rules, update everything: Move the player, enemies, check collisions, update scores, etc.</p>
+            
+            <h3>🎨 Draw Everything</h3>
+            <p>Take the current game state and draw it on the screen. Every sprite, every background, every UI element.</p>
+            
+            <h3>⏱️ Control Frame Rate</h3>
+            <p>Make sure the game runs at a consistent speed, typically 30 or 60 frames per second (FPS).</p>
+        </div>
+
+        <h2>Your First Game Loop in Pygame</h2>
+        
+        <pre><code># Import Pygame
+import pygame
+import sys
+
+# Initialize Pygame
+pygame.init()
+
+# Set up the display
+screen = pygame.display.set_mode((800, 600))
+pygame.display.set_caption("My First Game Loop!")
+
+# Define colors (R, G, B)
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+RED = (255, 0, 0)
+
+# Game variables
+ball_x = 400
+ball_y = 300
+ball_speed_x = 5
+ball_speed_y = 3
+
+# Clock for controlling frame rate
+clock = pygame.time.Clock()
+
+# Game loop
+running = True
+while running:
+    # 1. HANDLE EVENTS
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+    
+    # 2. UPDATE GAME STATE
+    ball_x += ball_speed_x
+    ball_y += ball_speed_y
+    
+    # Bounce off walls
+    if ball_x &gt;= 780 or ball_x &lt;= 20:
+        ball_speed_x = -ball_speed_x
+    if ball_y &gt;= 580 or ball_y &lt;= 20:
+        ball_speed_y = -ball_speed_y
+    
+    # 3. DRAW EVERYTHING
+    screen.fill(BLACK)  # Clear screen
+    pygame.draw.circle(screen, RED, (ball_x, ball_y), 20)
+    
+    # 4. UPDATE DISPLAY
+    pygame.display.flip()
+    
+    # 5. CONTROL FRAME RATE
+    clock.tick(60)  # 60 FPS
+
+# Clean up
+pygame.quit()
+sys.exit()</code></pre>
+
+        <div style="background-color: #f9f9f9; padding: 20px; border-radius: 10px; margin: 20px 0; text-align: center;">
+            <h3>🎮 Interactive Demo: See the Game Loop in Action!</h3>
+            <canvas id="gameLoopDemo" width="600" height="400"></canvas>
+            <button onclick="toggleGame()">Start/Stop Game</button>
+            <button onclick="toggleVisualization()">Show/Hide Loop Steps</button>
+            <p>FPS: <span id="fpsDisplay">0</span> | Frame: <span id="frameCount">0</span></p>
+        </div>
+
+        <script>
+            const canvas = document.getElementById('gameLoopDemo');
+            const ctx = canvas.getContext('2d');
+            let gameRunning = false;
+            let showSteps = false;
+            let ball = {x: 300, y: 200, vx: 3, vy: 2, radius: 15};
+            let frameCounter = 0;
+            let lastTime = performance.now();
+            let fps = 0;
+
+            function gameLoop(currentTime) {
+                if (!gameRunning) return;
+                
+                // Calculate FPS
+                const deltaTime = currentTime - lastTime;
+                fps = Math.round(1000 / deltaTime);
+                lastTime = currentTime;
+                frameCounter++;
+                
+                // UPDATE
+                ball.x += ball.vx;
+                ball.y += ball.vy;
+                
+                // Bounce off walls
+                if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) {
+                    ball.vx = -ball.vx;
+                }
+                if (ball.y + ball.radius > canvas.height || ball.y - ball.radius < 0) {
+                    ball.vy = -ball.vy;
+                }
+                
+                // DRAW
+                ctx.fillStyle = '#1a1a1a';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw ball
+                ctx.beginPath();
+                ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#ff6b6b';
+                ctx.fill();
+                
+                // Show game loop steps if enabled
+                if (showSteps) {
+                    ctx.fillStyle = 'white';
+                    ctx.font = '14px Arial';
+                    ctx.fillText('1. Handle Events ✓', 10, 30);
+                    ctx.fillText('2. Update Position ✓', 10, 50);
+                    ctx.fillText('3. Check Collisions ✓', 10, 70);
+                    ctx.fillText('4. Draw Everything ✓', 10, 90);
+                    ctx.fillText('5. Control FPS ✓', 10, 110);
+                }
+                
+                // Update displays
+                document.getElementById('fpsDisplay').textContent = fps;
+                document.getElementById('frameCount').textContent = frameCounter;
+                
+                // Continue loop
+                requestAnimationFrame(gameLoop);
+            }
+
+            function toggleGame() {
+                gameRunning = !gameRunning;
+                if (gameRunning) {
+                    lastTime = performance.now();
+                    requestAnimationFrame(gameLoop);
+                }
+            }
+
+            function toggleVisualization() {
+                showSteps = !showSteps;
+            }
+
+            // Initialize canvas
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            ctx.font = '20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Click Start to begin!', canvas.width/2, canvas.height/2);
+            ctx.textAlign = 'left';
+        </script>
+
+        <h2>Real-World Analogy: The Restaurant Kitchen 🍳</h2>
+        
+        <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+            <p>Imagine a busy restaurant kitchen during dinner service:</p>
+            <ul>
+                <li><strong>Handle Events:</strong> Taking new orders from waiters (player input)</li>
+                <li><strong>Update State:</strong> Cooking food, moving dishes along (game logic)</li>
+                <li><strong>Draw/Render:</strong> Plating and presenting dishes (displaying graphics)</li>
+                <li><strong>Frame Rate:</strong> The rhythm of service - too slow and customers wait, too fast and mistakes happen!</li>
+            </ul>
+            <p>Just like a kitchen needs to continuously take orders, cook, and serve, a game needs to continuously listen, update, and display!</p>
+        </div>
+
+        <h2>Common Frame Rates and Their Uses</h2>
+        
+        <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+            <h3>🎯 Frame Rate Standards</h3>
+            <ul>
+                <li><strong>30 FPS:</strong> Console standard, smooth enough for most games 🎮</li>
+                <li><strong>60 FPS:</strong> PC gaming standard, very smooth, responsive 💻</li>
+                <li><strong>120+ FPS:</strong> Competitive gaming, ultra-smooth 🏆</li>
+                <li><strong>24 FPS:</strong> Cinematic feel, used in some story games 🎬</li>
+            </ul>
+        </div>
+
+        <h2>Different Types of Game Loops</h2>
+
+        <div class="mermaid">
+        graph LR
+            A[Game Loop Types] --> B[Fixed Timestep]
+            A --> C[Variable Timestep]
+            A --> D[Semi-Fixed]
+            B --> E[Consistent Physics]
+            C --> F[Smooth Graphics]
+            D --> G[Best of Both]
+        </div>
+
+        <h3>Fixed Timestep Loop</h3>
+        <pre><code># Updates happen at fixed intervals
+TARGET_FPS = 60
+TICK_TIME = 1000 / TARGET_FPS  # milliseconds
+
+while running:
+    current_time = get_time()
+    
+    # Wait if we're running too fast
+    if current_time - last_update &lt; TICK_TIME:
+        sleep(TICK_TIME - (current_time - last_update))
+    
+    handle_events()
+    update_game()
+    render()
+    
+    last_update = current_time</code></pre>
+
+        <h3>Variable Timestep Loop</h3>
+        <pre><code># Updates based on actual time passed
+while running:
+    current_time = get_time()
+    delta_time = current_time - last_time
+    
+    handle_events()
+    update_game(delta_time)  # Pass time to update
+    render()
+    
+    last_time = current_time</code></pre>
+
+        <div style="background-color: #f0fff4; padding: 20px; border-radius: 10px; margin: 20px 0;">
+            <h3>💡 Pro Tips</h3>
+            <ul>
+                <li>Start with a simple fixed timestep loop - it's easier to debug!</li>
+                <li>Always clear the screen before drawing new frames</li>
+                <li>Use <code>clock.tick(FPS)</code> in Pygame to maintain consistent speed</li>
+                <li>Test your game at different frame rates to ensure it plays well</li>
+                <li>Remember: The game loop runs THOUSANDS of times per minute!</li>
+            </ul>
+        </div>
+
+        <h2>Common Game Loop Problems and Solutions</h2>
+        
+        <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+            <h3>⚠️ Watch Out For These Issues!</h3>
+            
+            <h4>Problem: Game runs too fast on powerful computers</h4>
+            <p><strong>Solution:</strong> Always use frame rate limiting (clock.tick())</p>
+            
+            <h4>Problem: Game freezes during long calculations</h4>
+            <p><strong>Solution:</strong> Break up heavy work across multiple frames</p>
+            
+            <h4>Problem: Input feels unresponsive</h4>
+            <p><strong>Solution:</strong> Handle events at the beginning of each loop iteration</p>
+            
+            <h4>Problem: Animations look choppy</h4>
+            <p><strong>Solution:</strong> Ensure consistent frame rate and use delta time for smooth movement</p>
+        </div>
+
+        <h2>Practice Exercise: Modify the Loop! 🎯</h2>
+        
+        <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+            <h3>Try These Modifications:</h3>
+            <ol>
+                <li><strong>Change the Speed:</strong> Modify <code>clock.tick(60)</code> to 30 or 120. What happens?</li>
+                <li><strong>Add a Second Ball:</strong> Create another ball with different speed and color</li>
+                <li><strong>Add Gravity:</strong> Make the ball accelerate downward (hint: add to ball_speed_y each frame)</li>
+                <li><strong>Add Paddle Control:</strong> Draw a paddle that follows the mouse position</li>
+                <li><strong>Frame Counter:</strong> Display how many frames have passed on screen</li>
+            </ol>
+        </div>
+
+        <h2>The Magic Behind Your Favorite Games 🎮</h2>
+        
+        <div class="interactive-demo">
+            <h3>Game Loop in Popular Games</h3>
+            <canvas id="gameExamplesCanvas" width="600" height="300"></canvas>
+        </div>
+
+        <script>
+            const exCanvas = document.getElementById('gameExamplesCanvas');
+            const exCtx = exCanvas.getContext('2d');
+            
+            // Draw game examples
+            exCtx.fillStyle = '#2c3e50';
+            exCtx.fillRect(0, 0, 600, 300);
+            
+            // Draw three game panels
+            const games = [
+                {name: 'Minecraft', fps: '60-120', color: '#8BC34A'},
+                {name: 'Fortnite', fps: '30-240', color: '#9C27B0'},
+                {name: 'Chess.com', fps: '30', color: '#FF9800'}
+            ];
+            
+            games.forEach((game, index) => {
+                const x = index * 200 + 20;
+                const y = 50;
+                
+                // Draw panel
+                exCtx.fillStyle = game.color;
+                exCtx.fillRect(x, y, 160, 200);
+                
+                // Draw game name
+                exCtx.fillStyle = 'white';
+                exCtx.font = 'bold 18px Arial';
+                exCtx.fillText(game.name, x + 10, y + 30);
+                
+                // Draw FPS
+                exCtx.font = '14px Arial';
+                exCtx.fillText(`FPS: ${game.fps}`, x + 10, y + 60);
+                
+                // Draw loop visualization
+                exCtx.strokeStyle = 'white';
+                exCtx.lineWidth = 2;
+                exCtx.beginPath();
+                exCtx.arc(x + 80, y + 130, 40, 0, Math.PI * 2);
+                exCtx.stroke();
+                
+                // Add arrow
+                exCtx.beginPath();
+                exCtx.moveTo(x + 120, y + 130);
+                exCtx.lineTo(x + 115, y + 125);
+                exCtx.lineTo(x + 115, y + 135);
+                exCtx.closePath();
+                exCtx.fill();
+            });
+            
+            // Add description
+            exCtx.fillStyle = 'white';
+            exCtx.font = '12px Arial';
+            exCtx.fillText('All games use the same basic loop structure!', 150, 280);
+        </script>
+
+        <h2>Key Takeaways 🎯</h2>
+        
+        <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+            <ul>
+                <li>🔄 The game loop is the core of every game - it runs continuously while playing</li>
+                <li>📥 Each iteration: Handle Input → Update State → Draw Graphics → Control Speed</li>
+                <li>⏱️ Frame rate (FPS) determines how smooth your game feels</li>
+                <li>🎮 Different games may optimize their loops differently, but the pattern is universal</li>
+                <li>🐛 Most game bugs come from incorrect game loop implementation</li>
+            </ul>
+        </div>
+
+        <h2>What's Next?</h2>
+        
+        <p>Now that you understand the heartbeat of games, next we'll learn how to draw shapes and sprites to bring your game world to life! You'll create colorful graphics, load images, and make things move smoothly across the screen.</p>
+
+        <!-- Lesson Navigation -->
+        <nav class="lesson-nav" aria-label="Lesson navigation">
+            <a href="index.html" class="prev-lesson" aria-label="Course Home">Course Home</a>
+            <a href="pygame_basics_drawing.html" class="next-lesson" aria-label="Next lesson: Drawing Shapes & Sprites">Next Lesson: Drawing Shapes & Sprites</a>
+        </nav>
+    </main>
+</body>
+</html>

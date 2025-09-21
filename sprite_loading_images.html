@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Learn to load, display, and manage images in Pygame. Master image formats, transparency, transformations, and optimization techniques.">
+    <title>Loading and Displaying Images - Sprite Management</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script src="/js/course-enhancements.js" defer></script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Loading and Displaying Images</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Section 3: Sprite Management - Lesson 1</span>
+    </nav>
+
+    <h2>Bringing Your Games to Life with Images</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Images and sprites are the visual heart of your game! Moving from simple shapes to rich graphics transforms your projects from prototypes to polished games. Let's learn how to efficiently load, display, and manipulate images in Pygame! 🎨🖼️</p>
+    </div>
+
+    <h2>Understanding Image Formats</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🖼️ The Photo Album Analogy</h3>
+        <p>Think of image formats like different types of photos:</p>
+        <ul>
+            <li><strong>PNG:</strong> Like a cutout sticker - supports transparency, perfect for sprites</li>
+            <li><strong>JPG:</strong> Like a printed photo - smaller size, no transparency, good for backgrounds</li>
+            <li><strong>GIF:</strong> Like a flipbook - can animate, limited colors</li>
+            <li><strong>BMP:</strong> Like raw photo paper - uncompressed, large files</li>
+            <li><strong>Surface:</strong> Pygame's internal format - like photos ready for display</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Image Management"] --> B["Loading"]
+        A --> C["Display"]
+        A --> D["Transformation"]
+        A --> E["Optimization"]
+        B --> F["File Formats"]
+        B --> G["Memory Management"]
+        C --> H["Blitting"]
+        C --> I["Transparency"]
+        D --> J["Scale/Rotate/Flip"]
+        D --> K["Color Effects"]
+        E --> L["Convert"]
+        E --> M["Subsurfaces"]
+    </div>
+
+    <h2>Basic Image Loading</h2>
+    
+    <pre class="language-python"><code>import pygame
+import os
+
+pygame.init()
+screen = pygame.display.set_mode((800, 600))
+
+# Basic image loading
+player_image = pygame.image.load("player.png")
+
+# Load with path handling
+def load_image(path):
+    """Safely load an image with error handling"""
+    try:
+        image = pygame.image.load(path)
+        return image
+    except pygame.error as e:
+        print(f"Cannot load image: {path}")
+        print(f"Error: {e}")
+        return None
+
+# Using os.path for cross-platform compatibility
+game_folder = os.path.dirname(__file__)
+img_folder = os.path.join(game_folder, 'images')
+player_img = load_image(os.path.join(img_folder, 'player.png'))
+
+# Convert for performance (IMPORTANT!)
+player_img = player_img.convert()  # For images without transparency
+enemy_img = enemy_img.convert_alpha()  # For images with transparency</code></pre>
+
+    <h2>Interactive Image Demo</h2>
+    
+    <div class="canvas-wrapper">
+        <canvas id="imageCanvas" width="600" height="400"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Explore different image operations!</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; max-width: 600px; margin: 10px auto;">
+            <button onclick="setImageMode('normal')">Normal</button>
+            <button onclick="setImageMode('scale')">Scale</button>
+            <button onclick="setImageMode('rotate')">Rotate</button>
+            <button onclick="setImageMode('flip')">Flip</button>
+            <button onclick="setImageMode('tint')">Tint</button>
+            <button onclick="setImageMode('alpha')">Alpha</button>
+        </div>
+        <div style="margin-top: 10px;">
+            <label>Scale: <input type="range" id="scaleSlider" min="0.5" max="3" step="0.1" value="1" onchange="updateScale(this.value)"></label>
+            <label>Rotation: <input type="range" id="rotationSlider" min="0" max="360" value="0" onchange="updateRotation(this.value)"></label>
+        </div>
+        <p>Mode: <strong id="imageModeDisplay">Normal</strong></p>
+    </div>
+
+    <script>
+        const imageCanvas = document.getElementById('imageCanvas');
+        const iCtx = imageCanvas.getContext('2d');
+        const imageModeDisplay = document.getElementById('imageModeDisplay');
+        const scaleSlider = document.getElementById('scaleSlider');
+        const rotationSlider = document.getElementById('rotationSlider');
+        
+        let currentImageMode = 'normal';
+        let scale = 1;
+        let rotation = 0;
+        let animationTime = 0;
+        
+        // Create sample "sprite" using canvas drawing
+        function createSprite() {
+            const spriteCanvas = document.createElement('canvas');
+            spriteCanvas.width = 64;
+            spriteCanvas.height = 64;
+            const sCtx = spriteCanvas.getContext('2d');
+            
+            // Draw a simple character sprite
+            // Body
+            sCtx.fillStyle = '#4a90e2';
+            sCtx.fillRect(20, 30, 24, 20);
+            
+            // Head
+            sCtx.fillStyle = '#fdbcb4';
+            sCtx.beginPath();
+            sCtx.arc(32, 20, 12, 0, Math.PI * 2);
+            sCtx.fill();
+            
+            // Eyes
+            sCtx.fillStyle = '#000';
+            sCtx.beginPath();
+            sCtx.arc(28, 18, 2, 0, Math.PI * 2);
+            sCtx.arc(36, 18, 2, 0, Math.PI * 2);
+            sCtx.fill();
+            
+            // Arms
+            sCtx.strokeStyle = '#4a90e2';
+            sCtx.lineWidth = 4;
+            sCtx.beginPath();
+            sCtx.moveTo(20, 35);
+            sCtx.lineTo(10, 45);
+            sCtx.moveTo(44, 35);
+            sCtx.lineTo(54, 45);
+            sCtx.stroke();
+            
+            // Legs
+            sCtx.beginPath();
+            sCtx.moveTo(28, 50);
+            sCtx.lineTo(28, 60);
+            sCtx.moveTo(36, 50);
+            sCtx.lineTo(36, 60);
+            sCtx.stroke();
+            
+            return spriteCanvas;
+        }
+        
+        const sprite = createSprite();
+        
+        function setImageMode(mode) {
+            currentImageMode = mode;
+            imageModeDisplay.textContent = mode.charAt(0).toUpperCase() + mode.slice(1);
+        }
+        
+        function updateScale(value) {
+            scale = parseFloat(value);
+        }
+        
+        function updateRotation(value) {
+            rotation = parseInt(value);
+        }
+        
+        function drawImageDemo() {
+            // Clear canvas
+            iCtx.fillStyle = '#2a2a2a';
+            iCtx.fillRect(0, 0, imageCanvas.width, imageCanvas.height);
+            
+            // Draw grid
+            iCtx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            iCtx.lineWidth = 1;
+            for (let x = 0; x <= imageCanvas.width; x += 50) {
+                iCtx.beginPath();
+                iCtx.moveTo(x, 0);
+                iCtx.lineTo(x, imageCanvas.height);
+                iCtx.stroke();
+            }
+            for (let y = 0; y <= imageCanvas.height; y += 50) {
+                iCtx.beginPath();
+                iCtx.moveTo(0, y);
+                iCtx.lineTo(imageCanvas.width, y);
+                iCtx.stroke();
+            }
+            
+            // Position for sprite
+            const centerX = imageCanvas.width / 2;
+            const centerY = imageCanvas.height / 2;
+            
+            iCtx.save();
+            
+            // Apply transformations based on mode
+            switch(currentImageMode) {
+                case 'normal':
+                    iCtx.translate(centerX, centerY);
+                    iCtx.drawImage(sprite, -32, -32);
+                    break;
+                    
+                case 'scale':
+                    iCtx.translate(centerX, centerY);
+                    const currentScale = scale + Math.sin(animationTime * 0.002) * 0.2;
+                    iCtx.scale(currentScale, currentScale);
+                    iCtx.drawImage(sprite, -32, -32);
+                    break;
+                    
+                case 'rotate':
+                    iCtx.translate(centerX, centerY);
+                    iCtx.rotate((rotation + animationTime * 0.05) * Math.PI / 180);
+                    iCtx.drawImage(sprite, -32, -32);
+                    break;
+                    
+                case 'flip':
+                    iCtx.translate(centerX, centerY);
+                    const flipX = Math.sin(animationTime * 0.001) > 0 ? 1 : -1;
+                    iCtx.scale(flipX, 1);
+                    iCtx.drawImage(sprite, -32, -32);
+                    break;
+                    
+                case 'tint':
+                    iCtx.translate(centerX, centerY);
+                    iCtx.drawImage(sprite, -32, -32);
+                    // Tint overlay
+                    iCtx.globalCompositeOperation = 'multiply';
+                    const hue = (animationTime * 0.1) % 360;
+                    iCtx.fillStyle = `hsl(${hue}, 70%, 50%)`;
+                    iCtx.fillRect(-32, -32, 64, 64);
+                    iCtx.globalCompositeOperation = 'source-over';
+                    break;
+                    
+                case 'alpha':
+                    iCtx.translate(centerX, centerY);
+                    iCtx.globalAlpha = 0.5 + Math.sin(animationTime * 0.002) * 0.5;
+                    iCtx.drawImage(sprite, -32, -32);
+                    iCtx.globalAlpha = 1;
+                    break;
+            }
+            
+            iCtx.restore();
+            
+            // Draw info
+            iCtx.fillStyle = 'white';
+            iCtx.font = '14px Arial';
+            iCtx.fillText(`Transform: ${currentImageMode}`, 10, 20);
+            iCtx.fillText(`Scale: ${scale.toFixed(1)}x`, 10, 40);
+            iCtx.fillText(`Rotation: ${rotation}°`, 10, 60);
+            
+            // Draw multiple sprites to show batch rendering
+            if (currentImageMode === 'normal') {
+                iCtx.globalAlpha = 0.3;
+                for (let i = 0; i < 5; i++) {
+                    const x = 100 + i * 100;
+                    const y = 350 + Math.sin((animationTime + i * 500) * 0.002) * 20;
+                    iCtx.drawImage(sprite, x - 16, y - 16, 32, 32);
+                }
+                iCtx.globalAlpha = 1;
+            }
+            
+            animationTime += 16;
+            requestAnimationFrame(drawImageDemo);
+        }
+        
+        drawImageDemo();
+    </script>
+
+    <h2>Image Display and Blitting</h2>
+    
+    <pre class="language-python"><code># Blitting - copying image data to screen
+screen.blit(player_image, (x, y))  # Basic blit at position
+
+# Blit with area (source rectangle)
+# Only blit part of the image
+source_rect = pygame.Rect(0, 0, 32, 32)  # Top-left 32x32 pixels
+screen.blit(sprite_sheet, (x, y), source_rect)
+
+# Centered blitting
+def blit_centered(surface, image, pos):
+    """Blit image centered at position"""
+    rect = image.get_rect(center=pos)
+    surface.blit(image, rect)
+
+# Blitting with clipping
+clip_rect = pygame.Rect(100, 100, 400, 300)
+screen.set_clip(clip_rect)  # Only draw within this area
+screen.blit(large_image, (0, 0))
+screen.set_clip(None)  # Reset clipping</code></pre>
+
+    <h2>Working with Transparency</h2>
+    
+    <pre class="language-python"><code># Different types of transparency
+
+# 1. Colorkey transparency (one color becomes transparent)
+image = pygame.image.load("sprite.png")
+image.set_colorkey((255, 0, 255))  # Magenta becomes transparent
+image = image.convert()
+
+# Auto-detect colorkey from top-left pixel
+image = pygame.image.load("sprite.png")
+colorkey = image.get_at((0, 0))
+image.set_colorkey(colorkey)
+
+# 2. Per-pixel alpha (PNG with transparency)
+image = pygame.image.load("sprite_with_alpha.png")
+image = image.convert_alpha()  # Preserve alpha channel
+
+# 3. Surface alpha (entire surface transparency)
+transparent_surface = pygame.Surface((100, 100))
+transparent_surface.set_alpha(128)  # 50% transparent
+transparent_surface.fill((255, 0, 0))
+
+# Combining alpha methods
+class FadingSprite:
+    def __init__(self, image):
+        self.original_image = image.convert_alpha()
+        self.image = self.original_image.copy()
+        self.alpha = 255
+        
+    def set_alpha(self, alpha):
+        """Set transparency level"""
+        self.alpha = max(0, min(255, alpha))
+        self.image = self.original_image.copy()
+        self.image.fill((255, 255, 255, self.alpha), special_flags=pygame.BLEND_RGBA_MULT)
+    
+    def fade_out(self, speed=5):
+        """Gradually fade out"""
+        self.set_alpha(self.alpha - speed)</code></pre>
+
+    <h2>Image Transformations</h2>
+    
+    <pre class="language-python"><code>import pygame
+
+# Scaling
+scaled_image = pygame.transform.scale(original_image, (new_width, new_height))
+scaled2x = pygame.transform.scale2x(original_image)  # Double size with smoothing
+
+# Smooth scaling (better quality, slower)
+smooth_scaled = pygame.transform.smoothscale(original_image, (new_width, new_height))
+
+# Rotation
+rotated = pygame.transform.rotate(original_image, angle_degrees)
+
+# Rotation without changing size (maintains original rect)
+def rotate_center(image, angle):
+    """Rotate image while keeping center and size"""
+    orig_rect = image.get_rect()
+    rot_image = pygame.transform.rotate(image, angle)
+    rot_rect = orig_rect.copy()
+    rot_rect.center = rot_image.get_rect().center
+    rot_image = rot_image.subsurface(rot_rect).copy()
+    return rot_image
+
+# Flipping
+flipped_h = pygame.transform.flip(original_image, True, False)  # Horizontal
+flipped_v = pygame.transform.flip(original_image, False, True)  # Vertical
+flipped_both = pygame.transform.flip(original_image, True, True)  # Both
+
+# Advanced transformations
+class TransformableSprite:
+    def __init__(self, image):
+        self.original_image = image
+        self.image = image
+        self.angle = 0
+        self.scale = 1.0
+        self.flip_x = False
+        self.flip_y = False
+        
+    def update_transform(self):
+        """Apply all transformations"""
+        # Start with original
+        self.image = self.original_image
+        
+        # Apply flip
+        if self.flip_x or self.flip_y:
+            self.image = pygame.transform.flip(self.image, self.flip_x, self.flip_y)
+        
+        # Apply scale
+        if self.scale != 1.0:
+            new_size = (int(self.image.get_width() * self.scale),
+                       int(self.image.get_height() * self.scale))
+            self.image = pygame.transform.smoothscale(self.image, new_size)
+        
+        # Apply rotation
+        if self.angle != 0:
+            self.image = pygame.transform.rotate(self.image, self.angle)</code></pre>
+
+    <h2>Color Manipulation</h2>
+    
+    <pre class="language-python"><code># Tinting images
+def tint_image(image, color):
+    """Tint an image with a color"""
+    tinted = image.copy()
+    tinted.fill(color, special_flags=pygame.BLEND_MULT)
+    return tinted
+
+# Create colored variations
+red_enemy = tint_image(enemy_base, (255, 100, 100))
+blue_enemy = tint_image(enemy_base, (100, 100, 255))
+
+# Adjusting brightness
+def adjust_brightness(image, factor):
+    """Adjust image brightness (factor: 0=black, 1=normal, 2=2x bright)"""
+    brightened = image.copy()
+    brightened.fill((255, 255, 255), special_flags=pygame.BLEND_RGB_MULT)
+    
+    # Create overlay
+    overlay = pygame.Surface(image.get_size())
+    gray_value = int(255 * factor)
+    overlay.fill((gray_value, gray_value, gray_value))
+    
+    brightened.blit(overlay, (0, 0), special_flags=pygame.BLEND_MULT)
+    return brightened
+
+# Grayscale conversion
+def grayscale(image):
+    """Convert image to grayscale"""
+    gray_image = image.copy()
+    arr = pygame.surfarray.array3d(gray_image)
+    # Weighted average for better perception
+    gray = arr[:,:,0] * 0.299 + arr[:,:,1] * 0.587 + arr[:,:,2] * 0.114
+    arr[:,:,0] = arr[:,:,1] = arr[:,:,2] = gray
+    return pygame.surfarray.make_surface(arr)
+
+# Color replacement
+def replace_color(image, old_color, new_color):
+    """Replace specific color in image"""
+    new_image = image.copy()
+    pygame.PixelArray(new_image).replace(old_color, new_color)
+    return new_image</code></pre>
+
+    <h2>Image Loading System</h2>
+    
+    <pre class="language-python"><code>import pygame
+import os
+
+class ImageLoader:
+    """Centralized image loading and caching"""
+    def __init__(self):
+        self.images = {}
+        self.image_folder = "assets/images"
+        
+    def load(self, filename, convert_alpha=True):
+        """Load image once and cache it"""
+        if filename in self.images:
+            return self.images[filename]
+        
+        path = os.path.join(self.image_folder, filename)
+        
+        try:
+            image = pygame.image.load(path)
+            
+            if convert_alpha:
+                image = image.convert_alpha()
+            else:
+                image = image.convert()
+            
+            self.images[filename] = image
+            print(f"Loaded: {filename}")
+            return image
+            
+        except pygame.error as e:
+            print(f"Failed to load {filename}: {e}")
+            # Return placeholder image
+            placeholder = pygame.Surface((32, 32))
+            placeholder.fill((255, 0, 255))
+            return placeholder
+    
+    def load_folder(self, folder_path):
+        """Load all images from a folder"""
+        loaded = {}
+        full_path = os.path.join(self.image_folder, folder_path)
+        
+        for filename in os.listdir(full_path):
+            if filename.endswith(('.png', '.jpg', '.gif', '.bmp')):
+                name = os.path.splitext(filename)[0]
+                path = os.path.join(folder_path, filename)
+                loaded[name] = self.load(path)
+        
+        return loaded
+    
+    def preload_all(self, image_list):
+        """Preload a list of images"""
+        for filename in image_list:
+            self.load(filename)
+    
+    def clear_cache(self):
+        """Clear image cache to free memory"""
+        self.images.clear()
+
+# Usage
+loader = ImageLoader()
+
+# Load individual images
+player_img = loader.load("player.png")
+enemy_img = loader.load("enemy.png")
+background = loader.load("background.jpg", convert_alpha=False)
+
+# Load all images from a folder
+tile_images = loader.load_folder("tiles")
+
+# Preload images at startup
+images_to_preload = [
+    "player.png",
+    "enemy.png",
+    "bullet.png",
+    "explosion.png"
+]
+loader.preload_all(images_to_preload)</code></pre>
+
+    <h2>Optimizing Image Performance</h2>
+    
+    <pre class="language-python"><code># Performance tips
+
+# 1. Convert surfaces for better performance
+def optimize_image(image, has_alpha=True):
+    """Convert image to optimal format"""
+    if has_alpha:
+        return image.convert_alpha()
+    else:
+        return image.convert()
+
+# 2. Use subsurfaces for sprite sheets (shares memory)
+sprite_sheet = pygame.image.load("sprites.png").convert_alpha()
+sprite_rect = pygame.Rect(0, 0, 32, 32)
+sprite = sprite_sheet.subsurface(sprite_rect)  # No copy, shares memory
+
+# 3. Cache transformed images
+class CachedSprite:
+    def __init__(self, image):
+        self.original = image
+        self.cache = {}  # Cache transformed versions
+        
+    def get_rotated(self, angle):
+        """Get cached rotated version"""
+        if angle not in self.cache:
+            self.cache[angle] = pygame.transform.rotate(self.original, angle)
+        return self.cache[angle]
+    
+    def clear_cache(self):
+        """Clear cache to save memory"""
+        self.cache.clear()
+
+# 4. Batch similar operations
+def batch_blit(screen, images_positions):
+    """Blit multiple images efficiently"""
+    # Group by image for better cache performance
+    by_image = {}
+    for image, pos in images_positions:
+        if image not in by_image:
+            by_image[image] = []
+        by_image[image].append(pos)
+    
+    # Blit grouped images
+    for image, positions in by_image.items():
+        for pos in positions:
+            screen.blit(image, pos)
+
+# 5. Level of detail (LOD) system
+class LODSprite:
+    def __init__(self, image):
+        self.high_res = image
+        self.medium_res = pygame.transform.scale(image, 
+                                                 (image.get_width()//2, 
+                                                  image.get_height()//2))
+        self.low_res = pygame.transform.scale(image,
+                                              (image.get_width()//4,
+                                               image.get_height()//4))
+    
+    def get_image(self, distance):
+        """Get appropriate resolution based on distance"""
+        if distance < 100:
+            return self.high_res
+        elif distance < 300:
+            return self.medium_res
+        else:
+            return self.low_res</code></pre>
+
+    <h2>Complete Image Management Example</h2>
+    
+    <pre class="language-python"><code>import pygame
+import os
+import math
+
+class ImageDemo:
+    def __init__(self):
+        pygame.init()
+        self.screen = pygame.display.set_mode((800, 600))
+        pygame.display.set_caption("Image Management Demo")
+        self.clock = pygame.time.Clock()
+        
+        # Create sample images
+        self.create_sample_images()
+        
+        # Image effects
+        self.rotation = 0
+        self.scale = 1.0
+        self.alpha = 255
+        self.tint_color = (255, 255, 255)
+        
+        # Floating sprites
+        self.sprites = []
+        for i in range(5):
+            self.sprites.append({
+                'image': self.create_sprite(30 + i * 10),
+                'x': 100 + i * 150,
+                'y': 300,
+                'base_y': 300,
+                'phase': i * math.pi / 3,
+                'speed': 1 + i * 0.2
+            })
+    
+    def create_sample_images(self):
+        """Create sample images programmatically"""
+        # Player sprite
+        self.player_img = pygame.Surface((40, 40), pygame.SRCALPHA)
+        pygame.draw.circle(self.player_img, (100, 150, 255), (20, 20), 18)
+        pygame.draw.circle(self.player_img, (255, 255, 255), (15, 15), 5)
+        pygame.draw.circle(self.player_img, (255, 255, 255), (25, 15), 5)
+        
+        # Enemy sprite with colorkey
+        self.enemy_img = pygame.Surface((40, 40))
+        self.enemy_img.fill((255, 0, 255))  # Magenta background
+        pygame.draw.rect(self.enemy_img, (255, 100, 100), (5, 5, 30, 30))
+        pygame.draw.polygon(self.enemy_img, (200, 50, 50), 
+                           [(20, 10), (10, 30), (30, 30)])
+        self.enemy_img.set_colorkey((255, 0, 255))
+        
+        # Background pattern
+        self.background = pygame.Surface((800, 600))
+        for y in range(0, 600, 50):
+            for x in range(0, 800, 50):
+                color = (40 + (x//50 + y//50) % 2 * 20,
+                        40 + (x//50 + y//50) % 2 * 20,
+                        60 + (x//50 + y//50) % 2 * 20)
+                pygame.draw.rect(self.background, color, (x, y, 50, 50))
+    
+    def create_sprite(self, hue):
+        """Create a colored sprite"""
+        sprite = pygame.Surface((30, 30), pygame.SRCALPHA)
+        # Convert HSV to RGB
+        import colorsys
+        r, g, b = colorsys.hsv_to_rgb(hue/360, 0.8, 1.0)
+        color = (int(r*255), int(g*255), int(b*255))
+        pygame.draw.circle(sprite, color, (15, 15), 14)
+        return sprite
+    
+    def handle_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    # Reset transformations
+                    self.rotation = 0
+                    self.scale = 1.0
+                    self.alpha = 255
+                elif event.key == pygame.K_r:
+                    # Random tint
+                    import random
+                    self.tint_color = (random.randint(100, 255),
+                                      random.randint(100, 255),
+                                      random.randint(100, 255))
+        
+        # Continuous input
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT]:
+            self.rotation += 2
+        if keys[pygame.K_RIGHT]:
+            self.rotation -= 2
+        if keys[pygame.K_UP]:
+            self.scale = min(3.0, self.scale + 0.02)
+        if keys[pygame.K_DOWN]:
+            self.scale = max(0.3, self.scale - 0.02)
+        if keys[pygame.K_a]:
+            self.alpha = max(0, self.alpha - 5)
+        if keys[pygame.K_s]:
+            self.alpha = min(255, self.alpha + 5)
+        
+        return True
+    
+    def update(self, dt):
+        # Update floating sprites
+        for sprite in self.sprites:
+            sprite['phase'] += sprite['speed'] * dt
+            sprite['y'] = sprite['base_y'] + math.sin(sprite['phase']) * 50
+    
+    def draw_transformed_image(self, image, x, y):
+        """Draw image with current transformations"""
+        # Apply transformations
+        transformed = image.copy()
+        
+        # Scale
+        if self.scale != 1.0:
+            new_size = (int(image.get_width() * self.scale),
+                       int(image.get_height() * self.scale))
+            transformed = pygame.transform.smoothscale(transformed, new_size)
+        
+        # Rotate
+        if self.rotation != 0:
+            transformed = pygame.transform.rotate(transformed, self.rotation)
+        
+        # Tint
+        if self.tint_color != (255, 255, 255):
+            transformed.fill(self.tint_color, special_flags=pygame.BLEND_MULT)
+        
+        # Alpha
+        if self.alpha < 255:
+            transformed.set_alpha(self.alpha)
+        
+        # Center the transformed image
+        rect = transformed.get_rect(center=(x, y))
+        self.screen.blit(transformed, rect)
+    
+    def draw(self):
+        # Draw background
+        self.screen.blit(self.background, (0, 0))
+        
+        # Draw floating sprites
+        for sprite in self.sprites:
+            self.screen.blit(sprite['image'], 
+                           (sprite['x'] - 15, sprite['y'] - 15))
+        
+        # Draw main demo image with transformations
+        self.draw_transformed_image(self.player_img, 400, 200)
+        
+        # Draw enemy with colorkey
+        self.screen.blit(self.enemy_img, (350, 400))
+        
+        # Draw semi-transparent overlay
+        overlay = pygame.Surface((200, 100), pygame.SRCALPHA)
+        overlay.fill((255, 255, 255, 100))
+        pygame.draw.rect(overlay, (0, 0, 0, 200), (10, 10, 180, 80), 3)
+        self.screen.blit(overlay, (550, 50))
+        
+        # Draw info
+        font = pygame.font.Font(None, 24)
+        info_texts = [
+            f"Rotation: {self.rotation}° (←→)",
+            f"Scale: {self.scale:.2f}x (↑↓)",
+            f"Alpha: {self.alpha} (A/S)",
+            "R: Random Tint",
+            "Space: Reset"
+        ]
+        
+        for i, text in enumerate(info_texts):
+            rendered = font.render(text, True, (255, 255, 255))
+            self.screen.blit(rendered, (10, 10 + i * 30))
+        
+        # Draw tint color indicator
+        pygame.draw.rect(self.screen, self.tint_color, (10, 160, 50, 50))
+        pygame.draw.rect(self.screen, (255, 255, 255), (10, 160, 50, 50), 2)
+    
+    def run(self):
+        running = True
+        dt = 0
+        
+        while running:
+            running = self.handle_events()
+            self.update(dt)
+            self.draw()
+            pygame.display.flip()
+            dt = self.clock.tick(60) / 1000.0
+        
+        pygame.quit()
+
+if __name__ == "__main__":
+    demo = ImageDemo()
+    demo.run()</code></pre>
+
+    <h2>Best Practices for Image Management</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Image Optimization Tips</h3>
+        <ul>
+            <li><strong>Always Convert:</strong> Use convert() or convert_alpha() after loading</li>
+            <li><strong>Batch Operations:</strong> Group similar blits together</li>
+            <li><strong>Cache Transforms:</strong> Don't rotate/scale every frame</li>
+            <li><strong>Use Sprite Sheets:</strong> Reduce file I/O and improve performance</li>
+            <li><strong>Appropriate Formats:</strong> PNG for sprites, JPG for backgrounds</li>
+            <li><strong>Power of 2:</strong> Some GPUs prefer dimensions like 256x256, 512x512</li>
+            <li><strong>Preload:</strong> Load all images at startup, not during gameplay</li>
+        </ul>
+    </div>
+
+    <h2>Common Image Problems and Solutions</h2>
+    
+    <div style="background-color: #f0fff4; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🔧 Troubleshooting</h3>
+        <ul>
+            <li><strong>Black Boxes:</strong> Forgot to set colorkey or use convert_alpha()</li>
+            <li><strong>Slow Performance:</strong> Not converting surfaces, transforming every frame</li>
+            <li><strong>Memory Issues:</strong> Loading same image multiple times, not clearing cache</li>
+            <li><strong>Quality Loss:</strong> Multiple transformations, use original for each transform</li>
+            <li><strong>Wrong Colors:</strong> Different pixel formats, use convert()</li>
+            <li><strong>Missing Images:</strong> Path issues, always use os.path.join()</li>
+        </ul>
+    </div>
+
+    <h2>Practice Exercises</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎯 Image Challenges!</h3>
+        <ol>
+            <li><strong>Image Gallery:</strong> Create a scrollable image viewer with thumbnails</li>
+            <li><strong>Color Picker:</strong> Sample colors from loaded images</li>
+            <li><strong>Image Effects:</strong> Implement blur, pixelate, and edge detection</li>
+            <li><strong>Sprite Editor:</strong> Basic tool to flip, rotate, and tint sprites</li>
+            <li><strong>Dynamic Loading:</strong> Load images on demand with loading screen</li>
+            <li><strong>Atlas Generator:</strong> Combine multiple images into one sprite sheet</li>
+        </ol>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>🖼️ Always convert images for better performance</li>
+            <li>🎨 Use PNG for sprites, JPG for backgrounds</li>
+            <li>✨ Handle transparency with convert_alpha() or colorkey</li>
+            <li>🔄 Cache transformed images instead of recreating</li>
+            <li>📁 Organize images and use proper path handling</li>
+            <li>⚡ Batch similar operations for better performance</li>
+            <li>💾 Implement proper image loading and caching system</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you can load and display images, next we'll learn how to animate sprites - bringing your characters to life with smooth animations and sprite sheets!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="game_mathematics_random.html" class="prev-lesson" aria-label="Previous lesson: Random Generation">Previous Section: Game Mathematics</a>
+        <a href="sprite_animation.html" class="next-lesson" aria-label="Next lesson: Sprite Animation">Next Lesson: Sprite Animation</a>
+    </nav>
+    
+    </main>
+</body>
+</html>

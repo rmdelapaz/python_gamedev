@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Learn collision detection in Pygame. Master bounding boxes, pixel-perfect collision, and optimization techniques for responsive game physics.">
+    <title>Basic Collision Detection - Pygame Basics</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script src="/js/course-enhancements.js" defer></script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Basic Collision Detection</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Lesson 4: Collision Detection</span>
+    </nav>
+
+    <h2>Making Things Interact!</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Collision detection is what makes games feel real! It's how we know when the player touches a coin, when a bullet hits an enemy, or when you crash into a wall. Without collision detection, objects would pass through each other like ghosts! 👻</p>
+    </div>
+
+    <h2>Types of Collision Detection</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎯 The Security Check Analogy</h3>
+        <p>Think of collision detection like airport security checks:</p>
+        <ul>
+            <li><strong>Bounding Box:</strong> Like a metal detector gate - quick but not precise</li>
+            <li><strong>Circle Collision:</strong> Like a security perimeter - good for round objects</li>
+            <li><strong>Pixel Perfect:</strong> Like a full body scan - very precise but slower</li>
+            <li><strong>Spatial Partitioning:</strong> Like having multiple security lanes - speeds up checking many objects</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Collision Detection Methods"] --> B["Rectangle/AABB"]
+        A --> C["Circle"]
+        A --> D["Pixel Perfect"]
+        A --> E["Polygon"]
+        B --> F["Fast, Simple, Most Common"]
+        C --> G["Good for Round Objects"]
+        D --> H["Precise but Slow"]
+        E --> I["Complex Shapes"]
+    </div>
+
+    <h2>Rectangle Collision (AABB)</h2>
+    
+    <p>AABB stands for "Axis-Aligned Bounding Box" - rectangles that don't rotate. This is the most common collision detection in 2D games!</p>
+
+    <h3>Basic Rectangle Collision</h3>
+    <pre class="language-python"><code># Check if two rectangles overlap
+def rectangles_collide(rect1, rect2):
+    # rect format: (x, y, width, height)
+    return (rect1[0] &lt; rect2[0] + rect2[2] and
+            rect1[0] + rect1[2] &gt; rect2[0] and
+            rect1[1] &lt; rect2[1] + rect2[3] and
+            rect1[1] + rect1[3] &gt; rect2[1])
+
+# Using Pygame's built-in Rect
+import pygame
+
+rect1 = pygame.Rect(100, 100, 50, 50)
+rect2 = pygame.Rect(120, 120, 50, 50)
+
+if rect1.colliderect(rect2):
+    print("Collision detected!")
+
+# Check point in rectangle
+point = (125, 125)
+if rect1.collidepoint(point):
+    print("Point is inside rectangle!")</code></pre>
+
+    <h2>Interactive Collision Demo</h2>
+    
+    <div class="canvas-wrapper">
+        <canvas id="collisionCanvas" width="600" height="400"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Move your mouse to control the blue box. Watch it turn red on collision!</p>
+        <p>Collision Status: <span id="collisionStatus" style="font-weight: bold;">No Collision</span></p>
+        <button onclick="toggleCollisionType()">Switch Mode: <span id="modeDisplay">Rectangle</span></button>
+        <button onclick="addObstacle()">Add Random Obstacle</button>
+        <button onclick="clearObstacles()">Clear Obstacles</button>
+    </div>
+
+    <script>
+        const collisionCanvas = document.getElementById('collisionCanvas');
+        const collisionCtx = collisionCanvas.getContext('2d');
+        const collisionStatus = document.getElementById('collisionStatus');
+        const modeDisplay = document.getElementById('modeDisplay');
+        
+        let collisionMode = 'rect'; // 'rect' or 'circle'
+        let mouseBox = {x: 300, y: 200, width: 40, height: 40, radius: 20};
+        let obstacles = [
+            {x: 100, y: 100, width: 60, height: 60, radius: 30, color: '#4caf50'},
+            {x: 400, y: 150, width: 50, height: 80, radius: 25, color: '#ff9800'},
+            {x: 250, y: 300, width: 70, height: 40, radius: 35, color: '#9c27b0'}
+        ];
+        
+        // Mouse tracking
+        collisionCanvas.addEventListener('mousemove', (e) => {
+            const rect = collisionCanvas.getBoundingClientRect();
+            mouseBox.x = e.clientX - rect.left - mouseBox.width/2;
+            mouseBox.y = e.clientY - rect.top - mouseBox.height/2;
+        });
+        
+        function toggleCollisionType() {
+            collisionMode = collisionMode === 'rect' ? 'circle' : 'rect';
+            modeDisplay.textContent = collisionMode === 'rect' ? 'Rectangle' : 'Circle';
+        }
+        
+        function addObstacle() {
+            obstacles.push({
+                x: Math.random() * (collisionCanvas.width - 60),
+                y: Math.random() * (collisionCanvas.height - 60),
+                width: Math.random() * 40 + 40,
+                height: Math.random() * 40 + 40,
+                radius: Math.random() * 20 + 20,
+                color: `hsl(${Math.random() * 360}, 70%, 50%)`
+            });
+        }
+        
+        function clearObstacles() {
+            obstacles = [];
+        }
+        
+        function checkRectCollision(rect1, rect2) {
+            return rect1.x < rect2.x + rect2.width &&
+                   rect1.x + rect1.width > rect2.x &&
+                   rect1.y < rect2.y + rect2.height &&
+                   rect1.y + rect1.height > rect2.y;
+        }
+        
+        function checkCircleCollision(circle1, circle2) {
+            const dx = (circle1.x + circle1.radius) - (circle2.x + circle2.radius);
+            const dy = (circle1.y + circle1.radius) - (circle2.y + circle2.radius);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            return distance < circle1.radius + circle2.radius;
+        }
+        
+        function drawCollisionDemo() {
+            // Clear canvas
+            collisionCtx.fillStyle = '#1a1a1a';
+            collisionCtx.fillRect(0, 0, collisionCanvas.width, collisionCanvas.height);
+            
+            // Check collisions
+            let isColliding = false;
+            for (let obstacle of obstacles) {
+                if (collisionMode === 'rect') {
+                    if (checkRectCollision(mouseBox, obstacle)) {
+                        isColliding = true;
+                        break;
+                    }
+                } else {
+                    if (checkCircleCollision(mouseBox, obstacle)) {
+                        isColliding = true;
+                        break;
+                    }
+                }
+            }
+            
+            // Update status
+            if (isColliding) {
+                collisionStatus.textContent = 'COLLISION!';
+                collisionStatus.style.color = '#ff6b6b';
+            } else {
+                collisionStatus.textContent = 'No Collision';
+                collisionStatus.style.color = '#4caf50';
+            }
+            
+            // Draw obstacles
+            for (let obstacle of obstacles) {
+                collisionCtx.fillStyle = obstacle.color;
+                if (collisionMode === 'rect') {
+                    collisionCtx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+                    // Draw bounding box
+                    collisionCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                    collisionCtx.strokeRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+                } else {
+                    collisionCtx.beginPath();
+                    collisionCtx.arc(obstacle.x + obstacle.radius, obstacle.y + obstacle.radius, 
+                                   obstacle.radius, 0, Math.PI * 2);
+                    collisionCtx.fill();
+                }
+            }
+            
+            // Draw player box
+            collisionCtx.fillStyle = isColliding ? '#ff6b6b' : '#2196f3';
+            if (collisionMode === 'rect') {
+                collisionCtx.fillRect(mouseBox.x, mouseBox.y, mouseBox.width, mouseBox.height);
+            } else {
+                collisionCtx.beginPath();
+                collisionCtx.arc(mouseBox.x + mouseBox.radius, mouseBox.y + mouseBox.radius, 
+                               mouseBox.radius, 0, Math.PI * 2);
+                collisionCtx.fill();
+            }
+            
+            requestAnimationFrame(drawCollisionDemo);
+        }
+        
+        drawCollisionDemo();
+    </script>
+
+    <h2>Circle Collision Detection</h2>
+    
+    <p>Perfect for round objects like balls, coins, or explosions!</p>
+
+    <pre class="language-python"><code>import math
+
+def circles_collide(circle1, circle2):
+    # circle format: (x, y, radius)
+    dx = circle1[0] - circle2[0]
+    dy = circle1[1] - circle2[1]
+    distance = math.sqrt(dx * dx + dy * dy)
+    
+    return distance &lt; circle1[2] + circle2[2]
+
+# Optimized version (no square root)
+def circles_collide_fast(circle1, circle2):
+    dx = circle1[0] - circle2[0]
+    dy = circle1[1] - circle2[1]
+    distance_squared = dx * dx + dy * dy
+    radius_sum = circle1[2] + circle2[2]
+    
+    return distance_squared &lt; radius_sum * radius_sum</code></pre>
+
+    <h2>Pygame Sprite Collision</h2>
+    
+    <pre class="language-python"><code>import pygame
+
+class Player(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.Surface((30, 30))
+        self.image.fill((0, 100, 255))
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.Surface((30, 30))
+        self.image.fill((255, 0, 0))
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+
+# Create sprite groups
+all_sprites = pygame.sprite.Group()
+enemies = pygame.sprite.Group()
+
+player = Player(400, 300)
+all_sprites.add(player)
+
+for i in range(5):
+    enemy = Enemy(100 + i * 100, 200)
+    all_sprites.add(enemy)
+    enemies.add(enemy)
+
+# Check collision between player and enemies
+hits = pygame.sprite.spritecollide(player, enemies, False)
+for hit in hits:
+    print(f"Player hit enemy at {hit.rect.center}")
+
+# Check collision between groups
+collisions = pygame.sprite.groupcollide(enemies, bullets, True, True)</code></pre>
+
+    <h2>Collision Response</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>What Happens After Collision?</h3>
+        <p>Detecting collision is only half the battle. You need to respond appropriately:</p>
+        <ul>
+            <li><strong>Bounce:</strong> Reverse velocity (balls, bullets)</li>
+            <li><strong>Stop:</strong> Prevent movement (walls, obstacles)</li>
+            <li><strong>Destroy:</strong> Remove object (enemies, pickups)</li>
+            <li><strong>Trigger:</strong> Start event (doors, switches)</li>
+            <li><strong>Damage:</strong> Reduce health (combat)</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph LR
+        A["Collision Detected"] --> B{"Response Type"}
+        B --> C["Physical Response"]
+        B --> D["Game Logic Response"]
+        C --> E["Push Apart"]
+        C --> F["Bounce"]
+        C --> G["Stop Movement"]
+        D --> H["Deal Damage"]
+        D --> I["Collect Item"]
+        D --> J["Trigger Event"]
+    </div>
+
+    <h2>Separating Overlapping Objects</h2>
+    
+    <pre class="language-python"><code>def separate_rectangles(rect1, rect2):
+    """Push rectangles apart when they overlap"""
+    # Calculate overlap on each axis
+    overlap_left = rect2.right - rect1.left
+    overlap_right = rect1.right - rect2.left
+    overlap_top = rect2.bottom - rect1.top
+    overlap_bottom = rect1.bottom - rect2.top
+    
+    # Find minimum overlap (smallest push needed)
+    min_overlap_x = min(overlap_left, overlap_right)
+    min_overlap_y = min(overlap_top, overlap_bottom)
+    
+    # Push apart on axis with smallest overlap
+    if min_overlap_x &lt; min_overlap_y:
+        if overlap_left &lt; overlap_right:
+            rect1.left = rect2.right
+        else:
+            rect1.right = rect2.left
+    else:
+        if overlap_top &lt; overlap_bottom:
+            rect1.top = rect2.bottom
+        else:
+            rect1.bottom = rect2.top</code></pre>
+
+    <h2>Platform Collision Example</h2>
+    
+    <pre class="language-python"><code>class Player:
+    def __init__(self, x, y):
+        self.rect = pygame.Rect(x, y, 32, 32)
+        self.vel_y = 0
+        self.on_ground = False
+        self.gravity = 0.5
+        self.jump_speed = -12
+    
+    def update(self, platforms):
+        # Apply gravity
+        self.vel_y += self.gravity
+        
+        # Move vertically
+        self.rect.y += self.vel_y
+        
+        # Check platform collisions
+        self.on_ground = False
+        for platform in platforms:
+            if self.rect.colliderect(platform):
+                if self.vel_y &gt; 0:  # Falling down
+                    self.rect.bottom = platform.top
+                    self.vel_y = 0
+                    self.on_ground = True
+                elif self.vel_y &lt; 0:  # Jumping up
+                    self.rect.top = platform.bottom
+                    self.vel_y = 0
+    
+    def jump(self):
+        if self.on_ground:
+            self.vel_y = self.jump_speed</code></pre>
+
+    <h2>Optimization Techniques</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Speed Up Your Collision Detection</h3>
+        <ul>
+            <li><strong>Broad Phase:</strong> Quick check to eliminate impossible collisions</li>
+            <li><strong>Spatial Partitioning:</strong> Divide space into regions, only check nearby objects</li>
+            <li><strong>Collision Layers:</strong> Only check objects that can actually collide</li>
+            <li><strong>Caching:</strong> Store collision results if objects haven't moved</li>
+            <li><strong>Early Exit:</strong> Stop checking once you find what you need</li>
+        </ul>
+    </div>
+
+    <h3>Broad Phase Optimization</h3>
+    <pre class="language-python"><code>def broad_phase_check(obj1, obj2, margin=50):
+    """Quick distance check before detailed collision"""
+    # If objects are far apart, skip detailed check
+    if abs(obj1.rect.centerx - obj2.rect.centerx) &gt; margin:
+        return False
+    if abs(obj1.rect.centery - obj2.rect.centery) &gt; margin:
+        return False
+    return True
+
+# Only do detailed collision if broad phase passes
+for enemy in enemies:
+    if broad_phase_check(player, enemy):
+        if player.rect.colliderect(enemy.rect):
+            # Handle collision
+            pass</code></pre>
+
+    <h3>Spatial Grid</h3>
+    <pre class="language-python"><code>class SpatialGrid:
+    def __init__(self, width, height, cell_size):
+        self.cell_size = cell_size
+        self.cols = width // cell_size + 1
+        self.rows = height // cell_size + 1
+        self.grid = {}
+    
+    def clear(self):
+        self.grid.clear()
+    
+    def add(self, obj):
+        # Find which cells the object occupies
+        start_col = obj.rect.left // self.cell_size
+        end_col = obj.rect.right // self.cell_size
+        start_row = obj.rect.top // self.cell_size
+        end_row = obj.rect.bottom // self.cell_size
+        
+        # Add to all occupied cells
+        for col in range(start_col, end_col + 1):
+            for row in range(start_row, end_row + 1):
+                key = (col, row)
+                if key not in self.grid:
+                    self.grid[key] = []
+                self.grid[key].append(obj)
+    
+    def get_nearby(self, obj):
+        # Get all objects in same cells as obj
+        nearby = set()
+        start_col = obj.rect.left // self.cell_size
+        end_col = obj.rect.right // self.cell_size
+        start_row = obj.rect.top // self.cell_size
+        end_row = obj.rect.bottom // self.cell_size
+        
+        for col in range(start_col, end_col + 1):
+            for row in range(start_row, end_row + 1):
+                key = (col, row)
+                if key in self.grid:
+                    nearby.update(self.grid[key])
+        
+        nearby.discard(obj)  # Don't include self
+        return nearby</code></pre>
+
+    <h2>Complete Collision System Example</h2>
+    
+    <pre class="language-python"><code>import pygame
+import random
+
+class GameObject(pygame.sprite.Sprite):
+    def __init__(self, x, y, width, height, color):
+        super().__init__()
+        self.image = pygame.Surface((width, height))
+        self.image.fill(color)
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.vel_x = 0
+        self.vel_y = 0
+
+class Player(GameObject):
+    def __init__(self, x, y):
+        super().__init__(x, y, 30, 30, (0, 100, 255))
+        self.speed = 5
+        self.health = 100
+    
+    def update(self, walls):
+        # Store old position
+        old_x = self.rect.x
+        old_y = self.rect.y
+        
+        # Move
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT]:
+            self.rect.x -= self.speed
+        if keys[pygame.K_RIGHT]:
+            self.rect.x += self.speed
+        if keys[pygame.K_UP]:
+            self.rect.y -= self.speed
+        if keys[pygame.K_DOWN]:
+            self.rect.y += self.speed
+        
+        # Check wall collisions and revert if needed
+        for wall in walls:
+            if self.rect.colliderect(wall.rect):
+                self.rect.x = old_x
+                self.rect.y = old_y
+                break
+
+class Enemy(GameObject):
+    def __init__(self, x, y):
+        super().__init__(x, y, 25, 25, (255, 0, 0))
+        self.vel_x = random.choice([-2, 2])
+        self.vel_y = random.choice([-2, 2])
+    
+    def update(self, walls):
+        self.rect.x += self.vel_x
+        self.rect.y += self.vel_y
+        
+        # Bounce off walls
+        for wall in walls:
+            if self.rect.colliderect(wall.rect):
+                # Simple bounce
+                self.vel_x = -self.vel_x
+                self.vel_y = -self.vel_y
+                break
+        
+        # Bounce off screen edges
+        if self.rect.left &lt;= 0 or self.rect.right &gt;= 800:
+            self.vel_x = -self.vel_x
+        if self.rect.top &lt;= 0 or self.rect.bottom &gt;= 600:
+            self.vel_y = -self.vel_y
+
+class Wall(GameObject):
+    def __init__(self, x, y, width, height):
+        super().__init__(x, y, width, height, (128, 128, 128))
+
+class Coin(GameObject):
+    def __init__(self, x, y):
+        super().__init__(x, y, 20, 20, (255, 215, 0))
+        self.collected = False
+
+# Game setup
+pygame.init()
+screen = pygame.display.set_mode((800, 600))
+clock = pygame.time.Clock()
+
+# Create groups
+all_sprites = pygame.sprite.Group()
+walls = pygame.sprite.Group()
+enemies = pygame.sprite.Group()
+coins = pygame.sprite.Group()
+
+# Create objects
+player = Player(400, 300)
+all_sprites.add(player)
+
+# Create walls
+wall_positions = [
+    (200, 200, 100, 20),
+    (500, 300, 20, 100),
+    (300, 400, 150, 20)
+]
+for x, y, w, h in wall_positions:
+    wall = Wall(x, y, w, h)
+    all_sprites.add(wall)
+    walls.add(wall)
+
+# Create enemies
+for _ in range(5):
+    enemy = Enemy(random.randint(50, 750), random.randint(50, 550))
+    all_sprites.add(enemy)
+    enemies.add(enemy)
+
+# Create coins
+for _ in range(10):
+    coin = Coin(random.randint(50, 750), random.randint(50, 550))
+    all_sprites.add(coin)
+    coins.add(coin)
+
+score = 0
+running = True
+
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+    
+    # Update
+    player.update(walls)
+    enemies.update(walls)
+    
+    # Check player-enemy collisions
+    enemy_hits = pygame.sprite.spritecollide(player, enemies, False)
+    if enemy_hits:
+        player.health -= 1
+    
+    # Check player-coin collisions
+    coin_hits = pygame.sprite.spritecollide(player, coins, True)
+    score += len(coin_hits)
+    
+    # Draw
+    screen.fill((20, 20, 20))
+    all_sprites.draw(screen)
+    
+    # Display info
+    font = pygame.font.Font(None, 36)
+    score_text = font.render(f"Score: {score}", True, (255, 255, 255))
+    health_text = font.render(f"Health: {player.health}", True, (255, 255, 255))
+    screen.blit(score_text, (10, 10))
+    screen.blit(health_text, (10, 50))
+    
+    pygame.display.flip()
+    clock.tick(60)
+
+pygame.quit()</code></pre>
+
+    <h2>Common Collision Problems</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚠️ Watch Out For These Issues!</h3>
+        <ul>
+            <li><strong>Tunneling:</strong> Fast objects passing through thin walls - use continuous collision detection</li>
+            <li><strong>Getting Stuck:</strong> Objects trapped inside each other - separate them properly</li>
+            <li><strong>Jittering:</strong> Objects vibrating at collision boundaries - use proper response</li>
+            <li><strong>False Positives:</strong> Detecting collision when visually separate - adjust hitboxes</li>
+            <li><strong>Performance:</strong> Checking too many collisions - use optimization techniques</li>
+        </ul>
+    </div>
+
+    <h2>Practice Exercises</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎯 Challenge Yourself!</h3>
+        <ol>
+            <li><strong>Breakout Clone:</strong> Ball bouncing off paddle and bricks</li>
+            <li><strong>Maze Game:</strong> Player navigating walls without passing through</li>
+            <li><strong>Bullet Hell:</strong> Dodge many projectiles with precise hitboxes</li>
+            <li><strong>Pool/Billiards:</strong> Realistic ball-to-ball collisions</li>
+            <li><strong>Fighting Game:</strong> Different hitboxes for attacks and hurt boxes</li>
+        </ol>
+    </div>
+
+    <h2>Collision Detection Best Practices</h2>
+    
+    <div style="background-color: #f0fff4; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>💡 Pro Tips</h3>
+        <ul>
+            <li><strong>Start Simple:</strong> Use rectangles first, optimize later if needed</li>
+            <li><strong>Visual Debugging:</strong> Draw collision boxes to see what's happening</li>
+            <li><strong>Smaller Hitboxes:</strong> Make hitboxes slightly smaller than sprites for better game feel</li>
+            <li><strong>Layer System:</strong> Use collision layers (player, enemy, environment)</li>
+            <li><strong>Predictive Collision:</strong> Check where objects will be, not just where they are</li>
+            <li><strong>Response Priority:</strong> Handle important collisions first (player death vs coin pickup)</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>📦 Rectangle collision is fast and works for most games</li>
+            <li>⭕ Circle collision is great for round objects</li>
+            <li>🎯 Pygame provides built-in collision detection methods</li>
+            <li>⚡ Optimize only when you have performance problems</li>
+            <li>🔄 Collision response is as important as detection</li>
+            <li>🎮 Good collision makes games feel solid and responsive</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you can detect when objects collide, next we'll add sound and music to make your games come alive with audio feedback! You'll learn how to play sound effects for collisions, background music, and create an immersive audio experience.</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="pygame_basics_input.html" class="prev-lesson" aria-label="Previous lesson: Handling Input">Previous Lesson: Handling Input</a>
+        <a href="pygame_basics_sound.html" class="next-lesson" aria-label="Next lesson: Sound and Music">Next Lesson: Sound and Music</a>
+    </nav>
+    
+    </main>
+</body>
+</html>

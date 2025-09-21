@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Learn how to add sound effects and music to your Pygame games. Master audio loading, playback, mixing, and create immersive soundscapes.">
+    <title>Sound and Music - Pygame Basics</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script src="/js/course-enhancements.js" defer></script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Sound and Music</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Lesson 5: Sound and Music</span>
+    </nav>
+
+    <h2>Bringing Your Games to Life with Audio!</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Sound is half the experience! Great audio can transform a simple game into an immersive adventure. In this lesson, you'll learn how to add sound effects, background music, and create dynamic audio that responds to gameplay. Let's make some noise! 🎵🔊</p>
+    </div>
+
+    <h2>Understanding Game Audio</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎭 The Movie Theater Analogy</h3>
+        <p>Think of game audio like a movie theater's sound system:</p>
+        <ul>
+            <li><strong>Background Music:</strong> Like the movie soundtrack - sets the mood</li>
+            <li><strong>Sound Effects:</strong> Like action sounds - immediate feedback</li>
+            <li><strong>Ambient Sounds:</strong> Like background noise - creates atmosphere</li>
+            <li><strong>UI Sounds:</strong> Like the "ding" before the movie - interface feedback</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Game Audio System"] --> B["Music"]
+        A --> C["Sound Effects"]
+        A --> D["Voice/Dialog"]
+        A --> E["Ambient"]
+        B --> F["Background Loops"]
+        B --> G["Dynamic Tracks"]
+        C --> H["Actions"]
+        C --> I["Feedback"]
+        C --> J["Collisions"]
+        D --> K["Narration"]
+        D --> L["Character Speech"]
+        E --> M["Environment"]
+        E --> N["Atmosphere"]
+    </div>
+
+    <h2>Setting Up Pygame Audio</h2>
+    
+    <pre class="language-python"><code>import pygame
+
+# Initialize Pygame and the mixer
+pygame.init()
+pygame.mixer.init()
+
+# Optional: Configure mixer for better performance
+pygame.mixer.init(
+    frequency=22050,     # Sample rate (22050, 44100, 48000)
+    size=-16,           # 16-bit signed samples
+    channels=2,         # Stereo
+    buffer=512          # Smaller = less latency, more CPU
+)
+
+# Set number of channels for sound effects
+pygame.mixer.set_num_channels(8)  # 8 simultaneous sounds</code></pre>
+
+    <h2>Loading and Playing Sounds</h2>
+    
+    <h3>Sound Effects (Short Sounds)</h3>
+    <pre class="language-python"><code># Load a sound effect
+jump_sound = pygame.mixer.Sound("jump.wav")
+coin_sound = pygame.mixer.Sound("coin.ogg")
+explosion_sound = pygame.mixer.Sound("explosion.mp3")
+
+# Play a sound
+jump_sound.play()
+
+# Play with volume control (0.0 to 1.0)
+coin_sound.set_volume(0.5)
+coin_sound.play()
+
+# Play sound multiple times
+explosion_sound.play(loops=3)  # Play 4 times total
+
+# Play sound forever
+engine_sound.play(loops=-1)
+
+# Stop a specific sound
+engine_sound.stop()
+
+# Fade out a sound
+engine_sound.fadeout(1000)  # Fade out over 1 second</code></pre>
+
+    <h3>Background Music</h3>
+    <pre class="language-python"><code># Load and play background music
+pygame.mixer.music.load("background_music.mp3")
+pygame.mixer.music.play(loops=-1)  # Loop forever
+
+# Control music volume (0.0 to 1.0)
+pygame.mixer.music.set_volume(0.7)
+
+# Pause and unpause music
+pygame.mixer.music.pause()
+pygame.mixer.music.unpause()
+
+# Stop music
+pygame.mixer.music.stop()
+
+# Fade in/out music
+pygame.mixer.music.fadeout(2000)  # Fade out over 2 seconds
+pygame.mixer.music.load("new_song.mp3")
+pygame.mixer.music.play(loops=-1, fade_ms=3000)  # Fade in over 3 seconds
+
+# Queue next song
+pygame.mixer.music.queue("next_song.mp3")
+
+# Check if music is playing
+if pygame.mixer.music.get_busy():
+    print("Music is playing")</code></pre>
+
+    <h2>Interactive Audio Mixer Demo</h2>
+    
+    <div class="canvas-wrapper">
+        <canvas id="audioCanvas" width="600" height="400"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Click on instruments to play sounds! Adjust volumes with sliders.</p>
+        <div style="margin: 10px;">
+            <button onclick="toggleBackgroundMusic()">🎵 Music: <span id="musicStatus">OFF</span></button>
+            <button onclick="muteAll()">🔇 Mute All</button>
+            <button onclick="unmuteAll()">🔊 Unmute All</button>
+        </div>
+        <p>Master Volume: <input type="range" id="masterVolume" min="0" max="100" value="70" onchange="updateMasterVolume(this.value)"> <span id="masterVolumeDisplay">70%</span></p>
+    </div>
+
+    <script>
+        const audioCanvas = document.getElementById('audioCanvas');
+        const audioCtx = audioCanvas.getContext('2d');
+        const musicStatus = document.getElementById('musicStatus');
+        const masterVolumeDisplay = document.getElementById('masterVolumeDisplay');
+        
+        // Web Audio API setup
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioContext = new AudioContext();
+        let musicPlaying = false;
+        let masterVolume = 0.7;
+        let backgroundOscillator = null;
+        
+        // Sound sources (visual representation)
+        const soundSources = [
+            {x: 100, y: 150, radius: 40, color: '#ff6b6b', name: 'Kick', frequency: 60, type: 'sine'},
+            {x: 200, y: 150, radius: 40, color: '#4caf50', name: 'Snare', frequency: 200, type: 'noise'},
+            {x: 300, y: 150, radius: 40, color: '#2196f3', name: 'Hi-hat', frequency: 8000, type: 'noise'},
+            {x: 400, y: 150, radius: 40, color: '#ffeb3b', name: 'Bell', frequency: 800, type: 'sine'},
+            {x: 500, y: 150, radius: 40, color: '#9c27b0', name: 'Bass', frequency: 100, type: 'triangle'}
+        ];
+        
+        // Volume meters
+        const volumeMeters = [];
+        for (let i = 0; i < soundSources.length; i++) {
+            volumeMeters.push({
+                value: 0,
+                target: 0,
+                decay: 0.95
+            });
+        }
+        
+        // Create oscillator with envelope
+        function playSound(source, index) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            if (source.type === 'noise') {
+                // Create white noise
+                const bufferSize = audioContext.sampleRate * 0.1;
+                const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+                const noise = audioContext.createBufferSource();
+                noise.buffer = buffer;
+                
+                // Filter for different noise colors
+                const filter = audioContext.createBiquadFilter();
+                filter.type = source.frequency > 1000 ? 'highpass' : 'lowpass';
+                filter.frequency.value = source.frequency;
+                
+                noise.connect(filter);
+                filter.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // Envelope
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(masterVolume * 0.5, audioContext.currentTime + 0.01);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2);
+                
+                noise.start();
+                noise.stop(audioContext.currentTime + 0.2);
+            } else {
+                oscillator.type = source.type;
+                oscillator.frequency.value = source.frequency;
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // Envelope
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(masterVolume * 0.3, audioContext.currentTime + 0.01);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.5);
+            }
+            
+            // Update volume meter
+            volumeMeters[index].target = 1;
+        }
+        
+        // Background music (simple chord progression)
+        function toggleBackgroundMusic() {
+            if (musicPlaying) {
+                stopBackgroundMusic();
+                musicStatus.textContent = 'OFF';
+            } else {
+                startBackgroundMusic();
+                musicStatus.textContent = 'ON';
+            }
+            musicPlaying = !musicPlaying;
+        }
+        
+        function startBackgroundMusic() {
+            const now = audioContext.currentTime;
+            const chords = [
+                [261.63, 329.63, 392.00], // C major
+                [293.66, 369.99, 440.00], // D minor
+                [349.23, 440.00, 523.25], // F major
+                [392.00, 493.88, 587.33]  // G major
+            ];
+            
+            let chordIndex = 0;
+            
+            function playChord() {
+                if (!musicPlaying) return;
+                
+                const chord = chords[chordIndex];
+                chord.forEach(freq => {
+                    const osc = audioContext.createOscillator();
+                    const gain = audioContext.createGain();
+                    
+                    osc.type = 'sine';
+                    osc.frequency.value = freq;
+                    osc.connect(gain);
+                    gain.connect(audioContext.destination);
+                    
+                    gain.gain.setValueAtTime(masterVolume * 0.1, audioContext.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1.5);
+                    
+                    osc.start();
+                    osc.stop(audioContext.currentTime + 1.5);
+                });
+                
+                chordIndex = (chordIndex + 1) % chords.length;
+                setTimeout(playChord, 1000);
+            }
+            
+            playChord();
+        }
+        
+        function stopBackgroundMusic() {
+            // Music will stop on next cycle
+        }
+        
+        function updateMasterVolume(value) {
+            masterVolume = value / 100;
+            masterVolumeDisplay.textContent = value + '%';
+        }
+        
+        function muteAll() {
+            masterVolume = 0;
+            document.getElementById('masterVolume').value = 0;
+            masterVolumeDisplay.textContent = '0%';
+        }
+        
+        function unmuteAll() {
+            masterVolume = 0.7;
+            document.getElementById('masterVolume').value = 70;
+            masterVolumeDisplay.textContent = '70%';
+        }
+        
+        // Canvas interaction
+        audioCanvas.addEventListener('click', (e) => {
+            const rect = audioCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            soundSources.forEach((source, index) => {
+                const dist = Math.hypot(x - source.x, y - source.y);
+                if (dist < source.radius) {
+                    playSound(source, index);
+                }
+            });
+        });
+        
+        function drawAudioDemo() {
+            // Clear canvas
+            audioCtx.fillStyle = '#1a1a1a';
+            audioCtx.fillRect(0, 0, audioCanvas.width, audioCanvas.height);
+            
+            // Draw title
+            audioCtx.fillStyle = 'white';
+            audioCtx.font = '20px Arial';
+            audioCtx.textAlign = 'center';
+            audioCtx.fillText('Click the instruments to play!', audioCanvas.width/2, 50);
+            
+            // Draw sound sources
+            soundSources.forEach((source, index) => {
+                // Draw volume meter background
+                audioCtx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+                audioCtx.fillRect(source.x - 30, source.y + 50, 60, 100);
+                
+                // Update and draw volume meter
+                volumeMeters[index].value = volumeMeters[index].value * 0.9 + volumeMeters[index].target * 0.1;
+                volumeMeters[index].target *= volumeMeters[index].decay;
+                
+                const meterHeight = volumeMeters[index].value * 100;
+                audioCtx.fillStyle = source.color;
+                audioCtx.fillRect(source.x - 30, source.y + 150 - meterHeight, 60, meterHeight);
+                
+                // Draw instrument circle
+                audioCtx.beginPath();
+                audioCtx.arc(source.x, source.y, source.radius, 0, Math.PI * 2);
+                audioCtx.fillStyle = source.color;
+                audioCtx.fill();
+                
+                // Pulsing effect when playing
+                if (volumeMeters[index].value > 0.1) {
+                    audioCtx.beginPath();
+                    audioCtx.arc(source.x, source.y, source.radius + volumeMeters[index].value * 20, 0, Math.PI * 2);
+                    audioCtx.strokeStyle = source.color;
+                    audioCtx.globalAlpha = volumeMeters[index].value * 0.5;
+                    audioCtx.lineWidth = 2;
+                    audioCtx.stroke();
+                    audioCtx.globalAlpha = 1;
+                }
+                
+                // Draw label
+                audioCtx.fillStyle = 'white';
+                audioCtx.font = '14px Arial';
+                audioCtx.textAlign = 'center';
+                audioCtx.fillText(source.name, source.x, source.y + 5);
+            });
+            
+            // Draw waveform visualization
+            if (musicPlaying) {
+                audioCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                audioCtx.lineWidth = 2;
+                audioCtx.beginPath();
+                for (let x = 0; x < audioCanvas.width; x += 10) {
+                    const y = 300 + Math.sin(x * 0.02 + Date.now() * 0.001) * 20;
+                    if (x === 0) {
+                        audioCtx.moveTo(x, y);
+                    } else {
+                        audioCtx.lineTo(x, y);
+                    }
+                }
+                audioCtx.stroke();
+            }
+            
+            requestAnimationFrame(drawAudioDemo);
+        }
+        
+        drawAudioDemo();
+    </script>
+
+    <h2>Audio File Formats</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>📁 Supported Audio Formats</h3>
+        <table>
+            <tr>
+                <th>Format</th>
+                <th>Extension</th>
+                <th>Best For</th>
+                <th>File Size</th>
+                <th>Quality</th>
+            </tr>
+            <tr>
+                <td>WAV</td>
+                <td>.wav</td>
+                <td>Short sound effects</td>
+                <td>Large</td>
+                <td>Excellent</td>
+            </tr>
+            <tr>
+                <td>OGG Vorbis</td>
+                <td>.ogg</td>
+                <td>Music & longer sounds</td>
+                <td>Small</td>
+                <td>Very Good</td>
+            </tr>
+            <tr>
+                <td>MP3</td>
+                <td>.mp3</td>
+                <td>Music</td>
+                <td>Small</td>
+                <td>Good</td>
+            </tr>
+            <tr>
+                <td>FLAC</td>
+                <td>.flac</td>
+                <td>High quality music</td>
+                <td>Medium</td>
+                <td>Excellent</td>
+            </tr>
+        </table>
+    </div>
+
+    <h2>Managing Multiple Sounds</h2>
+    
+    <pre class="language-python"><code>class SoundManager:
+    def __init__(self):
+        self.sounds = {}
+        self.music_volume = 0.7
+        self.sfx_volume = 0.5
+        self.muted = False
+        
+    def load_sound(self, name, filepath):
+        """Load a sound effect"""
+        self.sounds[name] = pygame.mixer.Sound(filepath)
+        
+    def play_sound(self, name, loops=0):
+        """Play a loaded sound effect"""
+        if name in self.sounds and not self.muted:
+            sound = self.sounds[name]
+            sound.set_volume(self.sfx_volume)
+            return sound.play(loops)
+        return None
+    
+    def play_music(self, filepath, loops=-1):
+        """Play background music"""
+        if not self.muted:
+            pygame.mixer.music.load(filepath)
+            pygame.mixer.music.set_volume(self.music_volume)
+            pygame.mixer.music.play(loops)
+    
+    def stop_music(self):
+        pygame.mixer.music.stop()
+    
+    def pause_all(self):
+        pygame.mixer.pause()
+        pygame.mixer.music.pause()
+    
+    def unpause_all(self):
+        pygame.mixer.unpause()
+        pygame.mixer.music.unpause()
+    
+    def set_music_volume(self, volume):
+        self.music_volume = max(0.0, min(1.0, volume))
+        pygame.mixer.music.set_volume(self.music_volume)
+    
+    def set_sfx_volume(self, volume):
+        self.sfx_volume = max(0.0, min(1.0, volume))
+        for sound in self.sounds.values():
+            sound.set_volume(self.sfx_volume)
+    
+    def toggle_mute(self):
+        self.muted = not self.muted
+        if self.muted:
+            self.pause_all()
+        else:
+            self.unpause_all()
+
+# Usage
+sound_manager = SoundManager()
+
+# Load sounds
+sound_manager.load_sound('jump', 'sounds/jump.wav')
+sound_manager.load_sound('coin', 'sounds/coin.wav')
+sound_manager.load_sound('explosion', 'sounds/explosion.wav')
+
+# Play sounds in game
+sound_manager.play_sound('jump')
+sound_manager.play_sound('coin')
+
+# Background music
+sound_manager.play_music('music/level1.ogg')</code></pre>
+
+    <h2>Dynamic Audio System</h2>
+    
+    <div class="mermaid">
+    graph LR
+        A["Game State"] --> B{"Check Conditions"}
+        B --> C["Adjust Volume"]
+        B --> D["Change Music"]
+        B --> E["Trigger SFX"]
+        C --> F["Distance-based"]
+        C --> G["Health-based"]
+        D --> H["Combat Music"]
+        D --> I["Exploration Music"]
+        E --> J["Action Feedback"]
+        E --> K["Environmental"]
+    </div>
+
+    <h3>Distance-Based Volume</h3>
+    <pre class="language-python"><code>def calculate_volume_by_distance(listener_pos, sound_pos, max_distance=500):
+    """Calculate volume based on distance between listener and sound source"""
+    dx = listener_pos[0] - sound_pos[0]
+    dy = listener_pos[1] - sound_pos[1]
+    distance = math.sqrt(dx * dx + dy * dy)
+    
+    if distance >= max_distance:
+        return 0.0
+    else:
+        # Linear falloff
+        return 1.0 - (distance / max_distance)
+        
+        # Exponential falloff (more realistic)
+        # return math.exp(-distance / (max_distance * 0.3))
+
+class PositionalSound:
+    def __init__(self, sound, position):
+        self.sound = sound
+        self.position = position
+        self.channel = None
+        
+    def play(self, listener_pos, max_distance=500):
+        volume = calculate_volume_by_distance(listener_pos, self.position, max_distance)
+        if volume > 0:
+            self.sound.set_volume(volume)
+            self.channel = self.sound.play()
+            
+            # Stereo panning
+            if self.channel:
+                dx = self.position[0] - listener_pos[0]
+                # Pan from -1 (left) to 1 (right)
+                pan = max(-1, min(1, dx / max_distance))
+                # Pygame doesn't have built-in panning, but you can simulate it
+                # with channel volume for left/right speakers</code></pre>
+
+    <h3>Music Crossfading</h3>
+    <pre class="language-python"><code>class MusicCrossfader:
+    def __init__(self):
+        self.current_music = None
+        self.target_music = None
+        self.fade_speed = 0.01
+        self.current_volume = 1.0
+        self.target_volume = 0.0
+        self.fading = False
+        
+    def crossfade_to(self, music_file):
+        """Start crossfading to new music"""
+        self.target_music = music_file
+        self.fading = True
+        self.target_volume = 1.0
+        
+    def update(self):
+        """Update crossfade - call this in game loop"""
+        if not self.fading:
+            return
+            
+        # Fade out current
+        self.current_volume -= self.fade_speed
+        
+        if self.current_volume <= 0:
+            # Switch to new music
+            pygame.mixer.music.stop()
+            pygame.mixer.music.load(self.target_music)
+            pygame.mixer.music.play(-1)
+            self.current_music = self.target_music
+            self.target_music = None
+            self.current_volume = 1.0
+            self.fading = False
+        else:
+            pygame.mixer.music.set_volume(self.current_volume)</code></pre>
+
+    <h2>Complete Audio Example Game</h2>
+    
+    <pre class="language-python"><code>import pygame
+import math
+import random
+
+class AudioGame:
+    def __init__(self):
+        pygame.init()
+        pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=512)
+        
+        self.screen = pygame.display.set_mode((800, 600))
+        pygame.display.set_caption("Audio Adventure")
+        self.clock = pygame.time.Clock()
+        
+        # Load sounds
+        self.sounds = {
+            'footstep': pygame.mixer.Sound('sounds/footstep.wav'),
+            'coin': pygame.mixer.Sound('sounds/coin.wav'),
+            'enemy_hit': pygame.mixer.Sound('sounds/hit.wav'),
+            'player_hurt': pygame.mixer.Sound('sounds/hurt.wav'),
+            'powerup': pygame.mixer.Sound('sounds/powerup.wav'),
+            'ambient': pygame.mixer.Sound('sounds/ambient.wav')
+        }
+        
+        # Set sound volumes
+        self.sounds['footstep'].set_volume(0.3)
+        self.sounds['coin'].set_volume(0.5)
+        self.sounds['ambient'].set_volume(0.2)
+        
+        # Load music
+        pygame.mixer.music.load('music/exploration.ogg')
+        pygame.mixer.music.set_volume(0.5)
+        pygame.mixer.music.play(-1)
+        
+        # Play ambient sound loop
+        self.ambient_channel = self.sounds['ambient'].play(-1)
+        
+        # Game objects
+        self.player = {'x': 400, 'y': 300, 'health': 100, 'coins': 0}
+        self.coins = [
+            {'x': random.randint(50, 750), 'y': random.randint(50, 550)}
+            for _ in range(10)
+        ]
+        self.enemies = [
+            {'x': random.randint(50, 750), 'y': random.randint(50, 550), 'vx': random.choice([-1, 1])}
+            for _ in range(3)
+        ]
+        
+        # Audio states
+        self.footstep_timer = 0
+        self.in_danger = False
+        self.combat_music = 'music/combat.ogg'
+        self.exploration_music = 'music/exploration.ogg'
+        
+    def handle_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    self.sounds['powerup'].play()
+                elif event.key == pygame.K_m:
+                    # Toggle mute
+                    if pygame.mixer.music.get_volume() > 0:
+                        pygame.mixer.music.set_volume(0)
+                        for sound in self.sounds.values():
+                            sound.set_volume(0)
+                    else:
+                        pygame.mixer.music.set_volume(0.5)
+                        self.sounds['footstep'].set_volume(0.3)
+                        self.sounds['coin'].set_volume(0.5)
+        return True
+        
+    def update(self):
+        # Player movement
+        keys = pygame.key.get_pressed()
+        old_x, old_y = self.player['x'], self.player['y']
+        
+        if keys[pygame.K_LEFT]:
+            self.player['x'] -= 5
+        if keys[pygame.K_RIGHT]:
+            self.player['x'] += 5
+        if keys[pygame.K_UP]:
+            self.player['y'] -= 5
+        if keys[pygame.K_DOWN]:
+            self.player['y'] += 5
+            
+        # Play footstep sounds when moving
+        if old_x != self.player['x'] or old_y != self.player['y']:
+            self.footstep_timer += 1
+            if self.footstep_timer >= 15:  # Every 15 frames
+                self.sounds['footstep'].play()
+                self.footstep_timer = 0
+        
+        # Keep player on screen
+        self.player['x'] = max(20, min(780, self.player['x']))
+        self.player['y'] = max(20, min(580, self.player['y']))
+        
+        # Update enemies
+        for enemy in self.enemies:
+            enemy['x'] += enemy['vx'] * 2
+            if enemy['x'] <= 20 or enemy['x'] >= 780:
+                enemy['vx'] = -enemy['vx']
+        
+        # Check coin collection
+        for coin in self.coins[:]:
+            if abs(self.player['x'] - coin['x']) < 30 and abs(self.player['y'] - coin['y']) < 30:
+                self.sounds['coin'].play()
+                self.coins.remove(coin)
+                self.player['coins'] += 1
+                
+                # Play victory sound if all coins collected
+                if len(self.coins) == 0:
+                    self.sounds['powerup'].play()
+        
+        # Check enemy proximity
+        was_in_danger = self.in_danger
+        self.in_danger = False
+        
+        for enemy in self.enemies:
+            distance = math.sqrt((self.player['x'] - enemy['x'])**2 + 
+                               (self.player['y'] - enemy['y'])**2)
+            
+            if distance < 150:
+                self.in_danger = True
+                
+                # Collision with enemy
+                if distance < 30:
+                    self.sounds['player_hurt'].play()
+                    self.player['health'] -= 10
+                    # Knockback
+                    dx = self.player['x'] - enemy['x']
+                    dy = self.player['y'] - enemy['y']
+                    self.player['x'] += dx * 0.5
+                    self.player['y'] += dy * 0.5
+        
+        # Dynamic music based on danger
+        if self.in_danger and not was_in_danger:
+            # Switch to combat music
+            pygame.mixer.music.fadeout(500)
+            pygame.mixer.music.load(self.combat_music)
+            pygame.mixer.music.play(-1, fade_ms=500)
+        elif not self.in_danger and was_in_danger:
+            # Back to exploration music
+            pygame.mixer.music.fadeout(500)
+            pygame.mixer.music.load(self.exploration_music)
+            pygame.mixer.music.play(-1, fade_ms=500)
+    
+    def draw(self):
+        self.screen.fill((20, 20, 40))
+        
+        # Draw coins
+        for coin in self.coins:
+            pygame.draw.circle(self.screen, (255, 215, 0), 
+                             (coin['x'], coin['y']), 15)
+        
+        # Draw enemies with danger zones
+        for enemy in self.enemies:
+            # Draw danger zone
+            pygame.draw.circle(self.screen, (50, 0, 0), 
+                             (enemy['x'], enemy['y']), 150, 2)
+            # Draw enemy
+            pygame.draw.rect(self.screen, (255, 0, 0), 
+                           (enemy['x'] - 15, enemy['y'] - 15, 30, 30))
+        
+        # Draw player
+        color = (0, 100, 255) if not self.in_danger else (255, 100, 100)
+        pygame.draw.circle(self.screen, color, 
+                         (self.player['x'], self.player['y']), 20)
+        
+        # Draw UI
+        font = pygame.font.Font(None, 36)
+        health_text = font.render(f"Health: {self.player['health']}", True, (255, 255, 255))
+        coins_text = font.render(f"Coins: {self.player['coins']}/{10 - len(self.coins)}", True, (255, 255, 255))
+        
+        if self.in_danger:
+            danger_text = font.render("DANGER!", True, (255, 0, 0))
+            self.screen.blit(danger_text, (350, 50))
+        
+        self.screen.blit(health_text, (10, 10))
+        self.screen.blit(coins_text, (10, 50))
+        
+        # Instructions
+        font_small = pygame.font.Font(None, 24)
+        instructions = [
+            "Arrow Keys: Move",
+            "Space: Power Up Sound",
+            "M: Toggle Mute",
+            "Collect coins and avoid enemies!"
+        ]
+        for i, text in enumerate(instructions):
+            rendered = font_small.render(text, True, (200, 200, 200))
+            self.screen.blit(rendered, (10, 500 + i * 25))
+        
+        pygame.display.flip()
+    
+    def run(self):
+        running = True
+        while running:
+            running = self.handle_events()
+            self.update()
+            self.draw()
+            self.clock.tick(60)
+        
+        pygame.quit()
+
+if __name__ == "__main__":
+    game = AudioGame()
+    game.run()</code></pre>
+
+    <h2>Audio Best Practices</h2>
+    
+    <div style="background-color: #f0fff4; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>💡 Pro Tips for Great Game Audio</h3>
+        <ul>
+            <li><strong>Preload Everything:</strong> Load all sounds at startup, not during gameplay</li>
+            <li><strong>Use Appropriate Formats:</strong> WAV for short SFX, OGG for music</li>
+            <li><strong>Volume Balance:</strong> Music quieter than SFX, SFX quieter than UI sounds</li>
+            <li><strong>Avoid Repetition:</strong> Use multiple variations of common sounds</li>
+            <li><strong>Spatial Audio:</strong> Adjust volume/pan based on distance/position</li>
+            <li><strong>Audio Feedback:</strong> Every player action should have a sound</li>
+            <li><strong>Compression:</strong> Use audio compression to reduce file sizes</li>
+            <li><strong>Test on Different Systems:</strong> Audio can vary greatly between devices</li>
+        </ul>
+    </div>
+
+    <h2>Common Audio Problems and Solutions</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚠️ Audio Pitfalls to Avoid</h3>
+        <ul>
+            <li><strong>Lag/Delay:</strong> Increase buffer size or preload sounds</li>
+            <li><strong>Crackling/Popping:</strong> Reduce sample rate or increase buffer</li>
+            <li><strong>Silent Failure:</strong> Always check if mixer initialized properly</li>
+            <li><strong>Memory Issues:</strong> Don't load huge files as Sound objects</li>
+            <li><strong>Format Problems:</strong> Ensure files are in supported formats</li>
+            <li><strong>Volume Spikes:</strong> Normalize audio files before using</li>
+        </ul>
+    </div>
+
+    <h2>Practice Exercises</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎯 Audio Challenges!</h3>
+        <ol>
+            <li><strong>Rhythm Game:</strong> Play sounds in time with visual cues</li>
+            <li><strong>Audio Puzzle:</strong> Use sound cues to solve puzzles</li>
+            <li><strong>Dynamic Soundtrack:</strong> Music that changes with game state</li>
+            <li><strong>3D Audio:</strong> Implement positional audio with stereo panning</li>
+            <li><strong>Sound Board:</strong> Create a musical instrument or DJ mixer</li>
+            <li><strong>Audio Settings Menu:</strong> Volume sliders, mute options, audio device selection</li>
+        </ol>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>🎵 Use pygame.mixer for all audio needs</li>
+            <li>🎮 Sound effects use Sound objects, music uses the music module</li>
+            <li>📊 Manage volume levels for better player experience</li>
+            <li>🔄 Preload audio files to avoid gameplay stuttering</li>
+            <li>🎯 Every action should have audio feedback</li>
+            <li>🎼 Dynamic music enhances immersion</li>
+            <li>⚡ Optimize audio formats and settings for performance</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Congratulations! You've completed the Pygame Basics module! You now know how to create game loops, draw graphics, handle input, detect collisions, and add audio. Next, we'll dive into Game Mathematics where you'll learn about 2D coordinate systems, vectors, and the math that makes games work!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="pygame_basics_collision.html" class="prev-lesson" aria-label="Previous lesson: Collision Detection">Previous Lesson: Collision Detection</a>
+        <a href="game_mathematics_coordinates.html" class="next-lesson" aria-label="Next lesson: 2D Coordinate Systems">Next Module: Game Mathematics</a>
+    </nav>
+    
+    </main>
+</body>
+</html>

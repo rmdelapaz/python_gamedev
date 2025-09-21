@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master Pygame sprite groups and layers. Learn to organize, update, and render multiple sprites efficiently for complex game scenes.">
+    <title>Sprite Groups and Layers - Sprite Management</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script src="/js/course-enhancements.js" defer></script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Sprite Groups and Layers</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Section 3: Sprite Management - Lesson 4</span>
+    </nav>
+
+    <h2>Organizing Complex Game Scenes</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Sprite groups and layers are the backbone of organized game development! They help you manage hundreds of sprites, handle collisions efficiently, and create beautiful layered scenes with depth. Let's master the art of sprite organization! 🎮📚</p>
+    </div>
+
+    <h2>Understanding Sprite Groups</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🏢 The Office Building Analogy</h3>
+        <p>Think of sprite groups like departments in an office building:</p>
+        <ul>
+            <li><strong>Groups:</strong> Different departments (enemies, players, bullets)</li>
+            <li><strong>Layers:</strong> Different floors (background, midground, foreground)</li>
+            <li><strong>Updates:</strong> Department meetings (everyone updates together)</li>
+            <li><strong>Collision:</strong> Inter-department communication</li>
+            <li><strong>Rendering:</strong> Building directory (who goes where)</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Sprite Groups"] --> B["Basic Groups"]
+        A --> C["Layered Groups"]
+        A --> D["Collision Groups"]
+        A --> E["Custom Groups"]
+        B --> F["Group/GroupSingle"]
+        B --> G["RenderPlain"]
+        C --> H["LayeredUpdates"]
+        C --> I["OrderedUpdates"]
+        D --> J["Collision Detection"]
+        D --> K["Spatial Hashing"]
+        E --> L["Custom Logic"]
+        E --> M["Specialized Behavior"]
+    </div>
+
+    <h2>Interactive Groups and Layers Demo</h2>
+    
+    <div class="canvas-wrapper">
+        <canvas id="groupCanvas" width="600" height="400"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Watch sprite groups and layers in action!</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; max-width: 600px; margin: 10px auto;">
+            <button onclick="toggleGroup('enemies')">Toggle Enemies</button>
+            <button onclick="toggleGroup('players')">Toggle Players</button>
+            <button onclick="toggleGroup('bullets')">Toggle Bullets</button>
+            <button onclick="toggleGroup('effects')">Toggle Effects</button>
+        </div>
+        <div style="margin-top: 10px;">
+            <button onclick="addSprite('enemy')">Add Enemy</button>
+            <button onclick="addSprite('bullet')">Fire Bullet</button>
+            <button onclick="addSprite('effect')">Add Effect</button>
+            <button onclick="clearGroup('all')">Clear All</button>
+        </div>
+        <label>
+            <input type="checkbox" id="showLayers" checked onchange="toggleLayers()"> Show Layers
+        </label>
+        <label>
+            <input type="checkbox" id="showCollisions" onchange="toggleCollisions()"> Show Collisions
+        </label>
+        <p>Sprites: <span id="spriteCount">0</span> | FPS: <span id="fpsDisplay">60</span></p>
+    </div>
+
+    <script>
+        const groupCanvas = document.getElementById('groupCanvas');
+        const gCtx = groupCanvas.getContext('2d');
+        const spriteCountDisplay = document.getElementById('spriteCount');
+        const fpsDisplay = document.getElementById('fpsDisplay');
+        const showLayersCheck = document.getElementById('showLayers');
+        const showCollisionsCheck = document.getElementById('showCollisions');
+        
+        // Sprite groups
+        const groups = {
+            background: [],
+            enemies: [],
+            players: [],
+            bullets: [],
+            effects: [],
+            foreground: []
+        };
+        
+        const groupVisibility = {
+            enemies: true,
+            players: true,
+            bullets: true,
+            effects: true
+        };
+        
+        let showLayers = true;
+        let showCollisions = false;
+        let lastTime = performance.now();
+        let fps = 60;
+        
+        // Sprite class
+        class Sprite {
+            constructor(x, y, type, layer) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2;
+                this.type = type;
+                this.layer = layer;
+                this.radius = type === 'bullet' ? 3 : type === 'effect' ? 15 : 10;
+                this.color = this.getColorForType(type);
+                this.lifetime = type === 'effect' ? 1000 : Infinity;
+                this.age = 0;
+                this.colliding = false;
+            }
+            
+            getColorForType(type) {
+                const colors = {
+                    enemy: '#ff6b6b',
+                    player: '#4ecdc4',
+                    bullet: '#ffd93d',
+                    effect: '#6c5ce7',
+                    background: '#2d3436',
+                    foreground: '#74b9ff'
+                };
+                return colors[type] || '#ffffff';
+            }
+            
+            update(dt) {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.age += dt;
+                
+                // Bounce off walls
+                if (this.x - this.radius <= 0 || this.x + this.radius >= groupCanvas.width) {
+                    this.vx *= -1;
+                    this.x = Math.max(this.radius, Math.min(groupCanvas.width - this.radius, this.x));
+                }
+                if (this.y - this.radius <= 0 || this.y + this.radius >= groupCanvas.height) {
+                    this.vy *= -1;
+                    this.y = Math.max(this.radius, Math.min(groupCanvas.height - this.radius, this.y));
+                }
+                
+                // Special behaviors
+                if (this.type === 'enemy') {
+                    // Enemies wobble
+                    this.vx += Math.sin(this.age * 0.003) * 0.1;
+                } else if (this.type === 'bullet') {
+                    // Bullets are fast
+                    this.vx *= 1.01;
+                    this.vy *= 1.01;
+                } else if (this.type === 'effect') {
+                    // Effects expand and fade
+                    this.radius += 0.5;
+                }
+                
+                // Reset collision state
+                this.colliding = false;
+            }
+            
+            draw(ctx) {
+                ctx.save();
+                
+                // Apply alpha for effects
+                if (this.type === 'effect') {
+                    ctx.globalAlpha = Math.max(0, 1 - (this.age / this.lifetime));
+                }
+                
+                // Draw sprite
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                
+                if (this.type === 'enemy') {
+                    // Triangle for enemies
+                    ctx.moveTo(this.x, this.y - this.radius);
+                    ctx.lineTo(this.x - this.radius, this.y + this.radius);
+                    ctx.lineTo(this.x + this.radius, this.y + this.radius);
+                    ctx.closePath();
+                } else if (this.type === 'player') {
+                    // Square for player
+                    ctx.fillRect(this.x - this.radius, this.y - this.radius, 
+                               this.radius * 2, this.radius * 2);
+                } else {
+                    // Circle for others
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                }
+                
+                ctx.fill();
+                
+                // Draw collision indicator
+                if (this.colliding && showCollisions) {
+                    ctx.strokeStyle = '#ff0000';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius + 5, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+                
+                ctx.restore();
+            }
+            
+            checkCollision(other) {
+                const dx = this.x - other.x;
+                const dy = this.y - other.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                return distance < (this.radius + other.radius);
+            }
+            
+            isExpired() {
+                return this.age > this.lifetime;
+            }
+        }
+        
+        // Initialize with some sprites
+        function initSprites() {
+            // Add player
+            const player = new Sprite(300, 200, 'player', 'players');
+            groups.players.push(player);
+            
+            // Add some enemies
+            for (let i = 0; i < 5; i++) {
+                const x = Math.random() * groupCanvas.width;
+                const y = Math.random() * groupCanvas.height;
+                groups.enemies.push(new Sprite(x, y, 'enemy', 'enemies'));
+            }
+            
+            // Add background elements
+            for (let i = 0; i < 3; i++) {
+                const x = Math.random() * groupCanvas.width;
+                const y = Math.random() * groupCanvas.height;
+                const bg = new Sprite(x, y, 'background', 'background');
+                bg.vx *= 0.2;
+                bg.vy *= 0.2;
+                bg.radius = 30;
+                groups.background.push(bg);
+            }
+        }
+        
+        function toggleGroup(groupName) {
+            groupVisibility[groupName] = !groupVisibility[groupName];
+        }
+        
+        function toggleLayers() {
+            showLayers = showLayersCheck.checked;
+        }
+        
+        function toggleCollisions() {
+            showCollisions = showCollisionsCheck.checked;
+        }
+        
+        function addSprite(type) {
+            const x = Math.random() * groupCanvas.width;
+            const y = Math.random() * groupCanvas.height;
+            
+            if (type === 'enemy') {
+                groups.enemies.push(new Sprite(x, y, 'enemy', 'enemies'));
+            } else if (type === 'bullet') {
+                // Fire from player if exists
+                if (groups.players.length > 0) {
+                    const player = groups.players[0];
+                    const bullet = new Sprite(player.x, player.y, 'bullet', 'bullets');
+                    bullet.vx = Math.random() * 10 - 5;
+                    bullet.vy = Math.random() * 10 - 5;
+                    groups.bullets.push(bullet);
+                }
+            } else if (type === 'effect') {
+                groups.effects.push(new Sprite(x, y, 'effect', 'effects'));
+            }
+        }
+        
+        function clearGroup(groupName) {
+            if (groupName === 'all') {
+                for (let key in groups) {
+                    if (key !== 'background' && key !== 'players') {
+                        groups[key] = [];
+                    }
+                }
+            } else {
+                groups[groupName] = [];
+            }
+        }
+        
+        function updateGroups(dt) {
+            // Update all groups
+            for (let groupName in groups) {
+                const group = groups[groupName];
+                for (let i = group.length - 1; i >= 0; i--) {
+                    const sprite = group[i];
+                    sprite.update(dt);
+                    
+                    // Remove expired sprites
+                    if (sprite.isExpired()) {
+                        group.splice(i, 1);
+                    }
+                }
+            }
+            
+            // Check collisions
+            if (showCollisions) {
+                checkCollisions();
+            }
+        }
+        
+        function checkCollisions() {
+            // Check bullet-enemy collisions
+            for (let bullet of groups.bullets) {
+                for (let enemy of groups.enemies) {
+                    if (bullet.checkCollision(enemy)) {
+                        bullet.colliding = true;
+                        enemy.colliding = true;
+                        
+                        // Create effect at collision point
+                        const effectX = (bullet.x + enemy.x) / 2;
+                        const effectY = (bullet.y + enemy.y) / 2;
+                        groups.effects.push(new Sprite(effectX, effectY, 'effect', 'effects'));
+                    }
+                }
+            }
+            
+            // Check player-enemy collisions
+            for (let player of groups.players) {
+                for (let enemy of groups.enemies) {
+                    if (player.checkCollision(enemy)) {
+                        player.colliding = true;
+                        enemy.colliding = true;
+                    }
+                }
+            }
+        }
+        
+        function drawGroups() {
+            // Clear canvas
+            gCtx.fillStyle = '#2c3e50';
+            gCtx.fillRect(0, 0, groupCanvas.width, groupCanvas.height);
+            
+            // Define layer order
+            const layerOrder = ['background', 'enemies', 'players', 'bullets', 'effects', 'foreground'];
+            
+            // Draw sprites by layer
+            for (let layerName of layerOrder) {
+                if (!groupVisibility[layerName] && layerName !== 'background' && layerName !== 'foreground') {
+                    continue;
+                }
+                
+                const group = groups[layerName];
+                
+                // Draw layer indicator
+                if (showLayers && group.length > 0) {
+                    gCtx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+                    gCtx.font = '12px Arial';
+                    gCtx.fillText(`Layer: ${layerName} (${group.length})`, 10, 20 + layerOrder.indexOf(layerName) * 15);
+                }
+                
+                // Draw sprites in this layer
+                for (let sprite of group) {
+                    sprite.draw(gCtx);
+                }
+            }
+            
+            // Update sprite count
+            let totalSprites = 0;
+            for (let groupName in groups) {
+                totalSprites += groups[groupName].length;
+            }
+            spriteCountDisplay.textContent = totalSprites;
+        }
+        
+        function gameLoop(currentTime) {
+            const dt = currentTime - lastTime;
+            
+            // Calculate FPS
+            fps = Math.round(1000 / dt);
+            fpsDisplay.textContent = fps;
+            
+            updateGroups(dt);
+            drawGroups();
+            
+            lastTime = currentTime;
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Initialize and start
+        initSprites();
+        requestAnimationFrame(gameLoop);
+    </script>
+
+    <h2>Basic Sprite Groups</h2>
+    
+    <pre class="language-python"><code>import pygame
+
+# Initialize Pygame
+pygame.init()
+
+# Basic sprite group usage
+all_sprites = pygame.sprite.Group()
+enemies = pygame.sprite.Group()
+bullets = pygame.sprite.Group()
+players = pygame.sprite.GroupSingle()  # For single sprite
+
+# Create a sprite
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.Surface((30, 30))
+        self.image.fill((255, 0, 0))
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        self.speed = 2
+    
+    def update(self):
+        self.rect.x += self.speed
+        if self.rect.right > 800 or self.rect.left < 0:
+            self.speed *= -1
+
+# Add sprites to groups
+enemy = Enemy(100, 100)
+all_sprites.add(enemy)
+enemies.add(enemy)
+
+# Update all sprites in group
+all_sprites.update()
+
+# Draw all sprites in group
+all_sprites.draw(screen)
+
+# Check if sprite is in group
+if enemy in enemies:
+    print("Enemy found!")
+
+# Remove sprite from group
+enemies.remove(enemy)
+
+# Kill sprite (removes from all groups)
+enemy.kill()
+
+# Empty a group
+enemies.empty()
+
+# Get list of sprites
+sprite_list = enemies.sprites()
+
+# Count sprites
+num_enemies = len(enemies)</code></pre>
+
+    <h2>Collision Detection with Groups</h2>
+    
+    <pre class="language-python"><code># Different collision detection methods
+
+# 1. Sprite vs Group collision
+hit_enemies = pygame.sprite.spritecollide(player, enemies, dokill=False)
+for enemy in hit_enemies:
+    # Handle collision
+    player.take_damage(enemy.damage)
+
+# 2. Group vs Group collision
+hits = pygame.sprite.groupcollide(bullets, enemies, dokill1=True, dokill2=True)
+for bullet, enemy_list in hits.items():
+    for enemy in enemy_list:
+        # Bullet hit enemy
+        score += enemy.points
+        explosions.add(Explosion(enemy.rect.center))
+
+# 3. Circle collision (more accurate for round objects)
+hit_enemies = pygame.sprite.spritecollide(
+    player, enemies, False, pygame.sprite.collide_circle
+)
+
+# 4. Custom collision detection
+def pixel_perfect_collision(sprite1, sprite2):
+    """Pixel-perfect collision detection"""
+    rect = sprite1.rect.clip(sprite2.rect)
+    if rect.width > 0 and rect.height > 0:
+        # Get masks for both sprites
+        mask1 = pygame.mask.from_surface(sprite1.image)
+        mask2 = pygame.mask.from_surface(sprite2.image)
+        # Check overlap
+        offset = (sprite2.rect.x - sprite1.rect.x,
+                 sprite2.rect.y - sprite1.rect.y)
+        return mask1.overlap(mask2, offset)
+    return None
+
+# Use custom collision
+hit_enemies = pygame.sprite.spritecollide(
+    player, enemies, False, pixel_perfect_collision
+)
+
+# 5. Collision with callback
+def handle_player_enemy_collision(player, enemy):
+    """Custom collision handler"""
+    if player.is_invulnerable():
+        return False  # No collision
+    player.take_damage(enemy.damage)
+    enemy.stun()
+    return True  # Collision handled
+
+pygame.sprite.spritecollide(
+    player, enemies, False, handle_player_enemy_collision
+)</code></pre>
+
+    <h2>Layered Sprite Groups</h2>
+    
+    <pre class="language-python"><code>import pygame
+
+class LayeredSprite(pygame.sprite.Sprite):
+    def __init__(self, image, pos, layer):
+        super().__init__()
+        self.image = image
+        self.rect = self.image.get_rect(center=pos)
+        self._layer = layer
+
+# Using LayeredUpdates for automatic layer sorting
+all_sprites = pygame.sprite.LayeredUpdates()
+
+# Add sprites with layers
+background = LayeredSprite(bg_image, (400, 300), layer=0)
+player = LayeredSprite(player_image, (400, 300), layer=5)
+foreground = LayeredSprite(fg_image, (400, 300), layer=10)
+
+all_sprites.add(background, player, foreground)
+
+# Change layer dynamically
+all_sprites.change_layer(player, 8)
+
+# Get sprites from specific layer
+layer_5_sprites = all_sprites.get_sprites_from_layer(5)
+
+# Get all layers
+layers = all_sprites.layers()
+
+# Move sprite to top/bottom
+all_sprites.move_to_front(player)
+all_sprites.move_to_back(background)
+
+# Custom layered group
+class GameLayeredGroup(pygame.sprite.LayeredUpdates):
+    def __init__(self):
+        super().__init__()
+        self.layer_names = {
+            'background': 0,
+            'tiles': 1,
+            'items': 2,
+            'enemies': 3,
+            'player': 4,
+            'bullets': 5,
+            'effects': 6,
+            'ui': 7
+        }
+    
+    def add_to_layer(self, sprite, layer_name):
+        """Add sprite to named layer"""
+        if layer_name in self.layer_names:
+            sprite._layer = self.layer_names[layer_name]
+            self.add(sprite)
+    
+    def get_layer_sprites(self, layer_name):
+        """Get all sprites from named layer"""
+        if layer_name in self.layer_names:
+            layer_num = self.layer_names[layer_name]
+            return self.get_sprites_from_layer(layer_num)
+        return []
+
+# Usage
+game_sprites = GameLayeredGroup()
+game_sprites.add_to_layer(enemy, 'enemies')
+game_sprites.add_to_layer(bullet, 'bullets')</code></pre>
+
+    <h2>Custom Sprite Groups</h2>
+    
+    <pre class="language-python"><code># Custom group with spatial hashing for efficient collision
+class SpatialHashGroup(pygame.sprite.Group):
+    def __init__(self, cell_size=100):
+        super().__init__()
+        self.cell_size = cell_size
+        self.hash_table = {}
+    
+    def add(self, *sprites):
+        """Add sprites and update hash table"""
+        super().add(*sprites)
+        for sprite in sprites:
+            self._add_to_hash(sprite)
+    
+    def _add_to_hash(self, sprite):
+        """Add sprite to spatial hash table"""
+        cells = self._get_cells(sprite.rect)
+        for cell in cells:
+            if cell not in self.hash_table:
+                self.hash_table[cell] = set()
+            self.hash_table[cell].add(sprite)
+    
+    def _get_cells(self, rect):
+        """Get all cells that rect occupies"""
+        cells = []
+        left = rect.left // self.cell_size
+        right = rect.right // self.cell_size
+        top = rect.top // self.cell_size
+        bottom = rect.bottom // self.cell_size
+        
+        for x in range(left, right + 1):
+            for y in range(top, bottom + 1):
+                cells.append((x, y))
+        return cells
+    
+    def get_nearby_sprites(self, sprite):
+        """Get sprites in same and adjacent cells"""
+        nearby = set()
+        cells = self._get_cells(sprite.rect)
+        
+        # Check current and adjacent cells
+        for cell_x, cell_y in cells:
+            for dx in [-1, 0, 1]:
+                for dy in [-1, 0, 1]:
+                    check_cell = (cell_x + dx, cell_y + dy)
+                    if check_cell in self.hash_table:
+                        nearby.update(self.hash_table[check_cell])
+        
+        nearby.discard(sprite)  # Remove self
+        return nearby
+    
+    def update_hash(self):
+        """Rebuild hash table after movement"""
+        self.hash_table.clear()
+        for sprite in self.sprites():
+            self._add_to_hash(sprite)
+
+# Camera group for scrolling games
+class CameraGroup(pygame.sprite.Group):
+    def __init__(self, target):
+        super().__init__()
+        self.display_surface = pygame.display.get_surface()
+        self.offset = pygame.math.Vector2()
+        self.target = target
+        self.camera_rect = pygame.Rect(0, 0, 800, 600)
+        self.camera_speed = 5
+    
+    def center_target(self):
+        """Center camera on target sprite"""
+        if self.target:
+            self.offset.x = self.target.rect.centerx - self.display_surface.get_width() // 2
+            self.offset.y = self.target.rect.centery - self.display_surface.get_height() // 2
+    
+    def apply_limits(self, map_rect):
+        """Limit camera to map boundaries"""
+        self.offset.x = max(0, min(self.offset.x, 
+                                   map_rect.width - self.display_surface.get_width()))
+        self.offset.y = max(0, min(self.offset.y,
+                                   map_rect.height - self.display_surface.get_height()))
+    
+    def custom_draw(self):
+        """Draw sprites with camera offset"""
+        self.center_target()
+        
+        for sprite in self.sprites():
+            offset_pos = sprite.rect.topleft - self.offset
+            self.display_surface.blit(sprite.image, offset_pos)</code></pre>
+
+    <h2>Group Management Patterns</h2>
+    
+    <pre class="language-python"><code># Sprite pool for performance
+class SpritePool:
+    def __init__(self, sprite_class, initial_size=50):
+        self.sprite_class = sprite_class
+        self.available = []
+        self.active = pygame.sprite.Group()
+        
+        # Pre-create sprites
+        for _ in range(initial_size):
+            sprite = sprite_class()
+            sprite.kill()  # Not in any group initially
+            self.available.append(sprite)
+    
+    def get(self):
+        """Get sprite from pool or create new one"""
+        if self.available:
+            sprite = self.available.pop()
+        else:
+            sprite = self.sprite_class()
+        
+        self.active.add(sprite)
+        return sprite
+    
+    def release(self, sprite):
+        """Return sprite to pool"""
+        sprite.kill()  # Remove from all groups
+        sprite.reset()  # Reset sprite state
+        self.available.append(sprite)
+    
+    def update(self, *args):
+        """Update active sprites"""
+        self.active.update(*args)
+        
+        # Return dead sprites to pool
+        for sprite in self.active:
+            if sprite.is_dead():
+                self.release(sprite)
+
+# Group manager for complex games
+class GroupManager:
+    def __init__(self):
+        self.groups = {
+            'all': pygame.sprite.LayeredUpdates(),
+            'enemies': pygame.sprite.Group(),
+            'players': pygame.sprite.GroupSingle(),
+            'bullets': pygame.sprite.Group(),
+            'items': pygame.sprite.Group(),
+            'effects': pygame.sprite.Group(),
+            'ui': pygame.sprite.Group()
+        }
+        
+        self.collision_pairs = [
+            ('players', 'enemies', self.handle_player_enemy),
+            ('bullets', 'enemies', self.handle_bullet_enemy),
+            ('players', 'items', self.handle_player_item)
+        ]
+    
+    def add(self, sprite, *group_names):
+        """Add sprite to multiple groups"""
+        self.groups['all'].add(sprite)
+        for name in group_names:
+            if name in self.groups:
+                self.groups[name].add(sprite)
+    
+    def update(self, dt):
+        """Update all groups"""
+        self.groups['all'].update(dt)
+    
+    def draw(self, surface):
+        """Draw all sprites in layer order"""
+        self.groups['all'].draw(surface)
+    
+    def check_collisions(self):
+        """Check all collision pairs"""
+        for group1_name, group2_name, handler in self.collision_pairs:
+            group1 = self.groups[group1_name]
+            group2 = self.groups[group2_name]
+            
+            collisions = pygame.sprite.groupcollide(
+                group1, group2, False, False
+            )
+            
+            for sprite1, sprite2_list in collisions.items():
+                for sprite2 in sprite2_list:
+                    handler(sprite1, sprite2)
+    
+    def handle_player_enemy(self, player, enemy):
+        """Handle player-enemy collision"""
+        if not player.invulnerable:
+            player.take_damage(enemy.damage)
+            self.add(DamageEffect(player.rect.center), 'effects')
+    
+    def handle_bullet_enemy(self, bullet, enemy):
+        """Handle bullet-enemy collision"""
+        bullet.kill()
+        enemy.take_damage(bullet.damage)
+        if enemy.health <= 0:
+            self.add(Explosion(enemy.rect.center), 'effects')
+            enemy.kill()
+    
+    def handle_player_item(self, player, item):
+        """Handle player-item collision"""
+        item.apply(player)
+        item.kill()</code></pre>
+
+    <h2>Complete Groups and Layers Example</h2>
+    
+    <pre class="language-python"><code>import pygame
+import random
+import math
+
+class CompleteGroupDemo:
+    def __init__(self):
+        pygame.init()
+        self.screen = pygame.display.set_mode((800, 600))
+        pygame.display.set_caption("Sprite Groups and Layers Demo")
+        self.clock = pygame.time.Clock()
+        
+        # Create sprite groups
+        self.setup_groups()
+        
+        # Create initial sprites
+        self.create_sprites()
+        
+        # Demo settings
+        self.show_layers = True
+        self.show_collisions = False
+        self.camera_offset = pygame.math.Vector2(0, 0)
+    
+    def setup_groups(self):
+        """Initialize all sprite groups"""
+        # Main layered group for rendering
+        self.all_sprites = pygame.sprite.LayeredUpdates()
+        
+        # Gameplay groups
+        self.players = pygame.sprite.GroupSingle()
+        self.enemies = pygame.sprite.Group()
+        self.bullets = pygame.sprite.Group()
+        self.items = pygame.sprite.Group()
+        self.effects = pygame.sprite.Group()
+        self.background_sprites = pygame.sprite.Group()
+        
+        # Define layers
+        self.layers = {
+            'background': 0,
+            'items': 1,
+            'enemies': 2,
+            'players': 3,
+            'bullets': 4,
+            'effects': 5,
+            'ui': 6
+        }
+    
+    def create_sprites(self):
+        """Create initial game sprites"""
+        # Create player
+        player = Player(400, 300)
+        self.add_sprite(player, 'players')
+        
+        # Create enemies
+        for _ in range(5):
+            x = random.randint(50, 750)
+            y = random.randint(50, 550)
+            enemy = Enemy(x, y)
+            self.add_sprite(enemy, 'enemies')
+        
+        # Create items
+        for _ in range(3):
+            x = random.randint(100, 700)
+            y = random.randint(100, 500)
+            item = Item(x, y)
+            self.add_sprite(item, 'items')
+        
+        # Create background elements
+        for _ in range(10):
+            x = random.randint(0, 800)
+            y = random.randint(0, 600)
+            bg = BackgroundElement(x, y)
+            self.add_sprite(bg, 'background_sprites')
+    
+    def add_sprite(self, sprite, group_name):
+        """Add sprite to appropriate groups with correct layer"""
+        # Add to specific group
+        if group_name == 'players':
+            self.players.add(sprite)
+            sprite._layer = self.layers['players']
+        elif group_name == 'enemies':
+            self.enemies.add(sprite)
+            sprite._layer = self.layers['enemies']
+        elif group_name == 'bullets':
+            self.bullets.add(sprite)
+            sprite._layer = self.layers['bullets']
+        elif group_name == 'items':
+            self.items.add(sprite)
+            sprite._layer = self.layers['items']
+        elif group_name == 'effects':
+            self.effects.add(sprite)
+            sprite._layer = self.layers['effects']
+        elif group_name == 'background_sprites':
+            self.background_sprites.add(sprite)
+            sprite._layer = self.layers['background']
+        
+        # Add to main group
+        self.all_sprites.add(sprite)
+    
+    def handle_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    # Player shoots
+                    if self.players.sprite:
+                        bullet = Bullet(self.players.sprite.rect.centerx,
+                                      self.players.sprite.rect.centery,
+                                      self.players.sprite.facing)
+                        self.add_sprite(bullet, 'bullets')
+                elif event.key == pygame.K_l:
+                    self.show_layers = not self.show_layers
+                elif event.key == pygame.K_c:
+                    self.show_collisions = not self.show_collisions
+                elif event.key == pygame.K_e:
+                    # Spawn enemy
+                    x = random.randint(50, 750)
+                    y = random.randint(50, 550)
+                    enemy = Enemy(x, y)
+                    self.add_sprite(enemy, 'enemies')
+        
+        return True
+    
+    def update(self, dt):
+        # Update all sprites
+        self.all_sprites.update(dt)
+        
+        # Handle player input
+        if self.players.sprite:
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_LEFT]:
+                self.players.sprite.move(-1, 0)
+            if keys[pygame.K_RIGHT]:
+                self.players.sprite.move(1, 0)
+            if keys[pygame.K_UP]:
+                self.players.sprite.move(0, -1)
+            if keys[pygame.K_DOWN]:
+                self.players.sprite.move(0, 1)
+        
+        # Check collisions
+        self.check_collisions()
+        
+        # Remove dead sprites
+        for sprite in self.all_sprites:
+            if hasattr(sprite, 'health') and sprite.health <= 0:
+                if sprite in self.enemies:
+                    # Create explosion effect
+                    explosion = Explosion(sprite.rect.center)
+                    self.add_sprite(explosion, 'effects')
+                sprite.kill()
+            elif hasattr(sprite, 'lifetime') and sprite.lifetime <= 0:
+                sprite.kill()
+    
+    def check_collisions(self):
+        """Handle all collision detection"""
+        # Bullet vs Enemy
+        for bullet in self.bullets:
+            hit_enemies = pygame.sprite.spritecollide(
+                bullet, self.enemies, False, pygame.sprite.collide_circle
+            )
+            if hit_enemies:
+                bullet.kill()
+                for enemy in hit_enemies:
+                    enemy.take_damage(25)
+                    # Create hit effect
+                    effect = HitEffect(enemy.rect.center)
+                    self.add_sprite(effect, 'effects')
+        
+        # Player vs Enemy
+        if self.players.sprite:
+            hit_enemies = pygame.sprite.spritecollide(
+                self.players.sprite, self.enemies, False
+            )
+            for enemy in hit_enemies:
+                if not self.players.sprite.invulnerable:
+                    self.players.sprite.take_damage(10)
+        
+        # Player vs Items
+        if self.players.sprite:
+            collected_items = pygame.sprite.spritecollide(
+                self.players.sprite, self.items, True
+            )
+            for item in collected_items:
+                self.players.sprite.collect_item(item)
+                # Create collect effect
+                effect = CollectEffect(item.rect.center)
+                self.add_sprite(effect, 'effects')
+    
+    def draw(self):
+        self.screen.fill((40, 45, 50))
+        
+        # Draw all sprites in layer order
+        self.all_sprites.draw(self.screen)
+        
+        # Draw layer info
+        if self.show_layers:
+            self.draw_layer_info()
+        
+        # Draw collision boxes
+        if self.show_collisions:
+            self.draw_collision_boxes()
+        
+        # Draw UI
+        self.draw_ui()
+    
+    def draw_layer_info(self):
+        """Display layer information"""
+        font = pygame.font.Font(None, 20)
+        y_offset = 10
+        
+        for layer_name, layer_num in sorted(self.layers.items(), 
+                                           key=lambda x: x[1]):
+            sprites_in_layer = self.all_sprites.get_sprites_from_layer(layer_num)
+            count = len(sprites_in_layer)
+            
+            if count > 0:
+                text = f"Layer {layer_num} ({layer_name}): {count} sprites"
+                rendered = font.render(text, True, (200, 200, 200))
+                self.screen.blit(rendered, (10, y_offset))
+                y_offset += 25
+    
+    def draw_collision_boxes(self):
+        """Draw collision rectangles"""
+        for sprite in self.all_sprites:
+            pygame.draw.rect(self.screen, (255, 0, 0), sprite.rect, 1)
+            
+            # Draw collision radius for circular collision
+            if hasattr(sprite, 'radius'):
+                pygame.draw.circle(self.screen, (0, 255, 0),
+                                 sprite.rect.center, sprite.radius, 1)
+    
+    def draw_ui(self):
+        """Draw UI elements"""
+        font = pygame.font.Font(None, 24)
+        
+        # Instructions
+        instructions = [
+            "Arrow Keys: Move",
+            "Space: Shoot",
+            "L: Toggle Layers",
+            "C: Toggle Collisions",
+            "E: Spawn Enemy"
+        ]
+        
+        for i, text in enumerate(instructions):
+            rendered = font.render(text, True, (255, 255, 255))
+            self.screen.blit(rendered, (600, 10 + i * 30))
+        
+        # Stats
+        if self.players.sprite:
+            health_text = f"Health: {self.players.sprite.health}"
+            rendered = font.render(health_text, True, (255, 255, 255))
+            self.screen.blit(rendered, (10, 550))
+    
+    def run(self):
+        running = True
+        dt = 0
+        
+        while running:
+            running = self.handle_events()
+            self.update(dt)
+            self.draw()
+            pygame.display.flip()
+            dt = self.clock.tick(60) / 1000.0
+        
+        pygame.quit()
+
+# Sprite classes
+class Player(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.Surface((30, 30))
+        self.image.fill((100, 200, 255))
+        self.rect = self.image.get_rect(center=(x, y))
+        self.radius = 15
+        self.health = 100
+        self.speed = 5
+        self.facing = (0, -1)
+        self.invulnerable = False
+        self.invulnerable_time = 0
+    
+    def move(self, dx, dy):
+        self.rect.x += dx * self.speed
+        self.rect.y += dy * self.speed
+        if dx != 0 or dy != 0:
+            self.facing = (dx, dy)
+    
+    def take_damage(self, amount):
+        if not self.invulnerable:
+            self.health -= amount
+            self.invulnerable = True
+            self.invulnerable_time = 1000
+    
+    def collect_item(self, item):
+        self.health = min(100, self.health + item.value)
+    
+    def update(self, dt):
+        if self.invulnerable:
+            self.invulnerable_time -= dt * 1000
+            if self.invulnerable_time <= 0:
+                self.invulnerable = False
+            
+            # Flash effect
+            if int(self.invulnerable_time / 100) % 2:
+                self.image.set_alpha(128)
+            else:
+                self.image.set_alpha(255)
+
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.Surface((25, 25))
+        self.image.fill((255, 100, 100))
+        self.rect = self.image.get_rect(center=(x, y))
+        self.radius = 12
+        self.health = 50
+        self.speed = 1
+        self.direction = random.random() * math.pi * 2
+    
+    def take_damage(self, amount):
+        self.health -= amount
+    
+    def update(self, dt):
+        # Random movement
+        self.rect.x += math.cos(self.direction) * self.speed
+        self.rect.y += math.sin(self.direction) * self.speed
+        
+        # Bounce off walls
+        if self.rect.left < 0 or self.rect.right > 800:
+            self.direction = math.pi - self.direction
+        if self.rect.top < 0 or self.rect.bottom > 600:
+            self.direction = -self.direction
+        
+        # Occasionally change direction
+        if random.random() < 0.01:
+            self.direction += random.random() - 0.5
+
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self, x, y, direction):
+        super().__init__()
+        self.image = pygame.Surface((6, 6))
+        self.image.fill((255, 255, 0))
+        self.rect = self.image.get_rect(center=(x, y))
+        self.radius = 3
+        self.speed = 10
+        self.direction = direction
+    
+    def update(self, dt):
+        self.rect.x += self.direction[0] * self.speed
+        self.rect.y += self.direction[1] * self.speed
+        
+        # Remove if off screen
+        if (self.rect.right < 0 or self.rect.left > 800 or
+            self.rect.bottom < 0 or self.rect.top > 600):
+            self.kill()
+
+class Item(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.Surface((20, 20))
+        self.image.fill((100, 255, 100))
+        self.rect = self.image.get_rect(center=(x, y))
+        self.value = 25
+        self.bob_offset = random.random() * math.pi * 2
+    
+    def update(self, dt):
+        # Bobbing effect
+        self.bob_offset += dt * 2
+        self.rect.y += math.sin(self.bob_offset) * 0.5
+
+class BackgroundElement(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        size = random.randint(40, 80)
+        self.image = pygame.Surface((size, size))
+        gray = random.randint(60, 80)
+        self.image.fill((gray, gray, gray))
+        self.rect = self.image.get_rect(center=(x, y))
+        self.parallax_factor = random.uniform(0.1, 0.3)
+
+class Explosion(pygame.sprite.Sprite):
+    def __init__(self, pos):
+        super().__init__()
+        self.radius = 10
+        self.image = pygame.Surface((60, 60), pygame.SRCALPHA)
+        self.rect = self.image.get_rect(center=pos)
+        self.lifetime = 500
+        self.max_lifetime = 500
+    
+    def update(self, dt):
+        self.lifetime -= dt * 1000
+        self.radius = 30 * (1 - self.lifetime / self.max_lifetime)
+        
+        # Redraw explosion
+        self.image.fill((0, 0, 0, 0))
+        alpha = int(255 * (self.lifetime / self.max_lifetime))
+        color = (255, 200, 100, alpha)
+        pygame.draw.circle(self.image, color, (30, 30), int(self.radius))
+
+class HitEffect(pygame.sprite.Sprite):
+    def __init__(self, pos):
+        super().__init__()
+        self.image = pygame.Surface((20, 20), pygame.SRCALPHA)
+        self.rect = self.image.get_rect(center=pos)
+        self.lifetime = 200
+    
+    def update(self, dt):
+        self.lifetime -= dt * 1000
+        alpha = int(255 * (self.lifetime / 200))
+        self.image.fill((255, 255, 255, alpha))
+
+class CollectEffect(pygame.sprite.Sprite):
+    def __init__(self, pos):
+        super().__init__()
+        self.image = pygame.Surface((40, 40), pygame.SRCALPHA)
+        self.rect = self.image.get_rect(center=pos)
+        self.lifetime = 300
+        self.particles = []
+        
+        # Create particles
+        for _ in range(10):
+            angle = random.random() * math.pi * 2
+            speed = random.uniform(1, 3)
+            self.particles.append({
+                'x': 20,
+                'y': 20,
+                'vx': math.cos(angle) * speed,
+                'vy': math.sin(angle) * speed
+            })
+    
+    def update(self, dt):
+        self.lifetime -= dt * 1000
+        self.image.fill((0, 0, 0, 0))
+        
+        for particle in self.particles:
+            particle['x'] += particle['vx']
+            particle['y'] += particle['vy']
+            
+            alpha = int(255 * (self.lifetime / 300))
+            pygame.draw.circle(self.image, (100, 255, 100, alpha),
+                             (int(particle['x']), int(particle['y'])), 2)
+
+if __name__ == "__main__":
+    demo = CompleteGroupDemo()
+    demo.run()</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Group Management Tips</h3>
+        <ul>
+            <li><strong>Use Multiple Groups:</strong> Organize sprites logically for efficient updates</li>
+            <li><strong>Layer Appropriately:</strong> Background → Game Objects → Effects → UI</li>
+            <li><strong>Pool Objects:</strong> Reuse sprites instead of creating/destroying</li>
+            <li><strong>Spatial Hashing:</strong> For games with many collision checks</li>
+            <li><strong>Clean Up:</strong> Remove dead sprites promptly</li>
+            <li><strong>Batch Operations:</strong> Update/draw groups together</li>
+            <li><strong>Custom Collision:</strong> Use appropriate collision detection for shape</li>
+        </ul>
+    </div>
+
+    <h2>Practice Exercises</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎯 Group Management Challenges!</h3>
+        <ol>
+            <li><strong>Particle System:</strong> Create group-based particle effects</li>
+            <li><strong>Enemy Waves:</strong> Manage waves of enemies with groups</li>
+            <li><strong>Inventory System:</strong> Use groups for inventory management</li>
+            <li><strong>Parallax Scrolling:</strong> Implement multi-layer parallax</li>
+            <li><strong>Quadtree Collision:</strong> Implement quadtree for collision optimization</li>
+            <li><strong>State-Based Groups:</strong> Groups that change based on game state</li>
+        </ol>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>📦 Groups simplify sprite management and updates</li>
+            <li>🎯 Use appropriate collision detection methods</li>
+            <li>📚 Layers create depth and proper rendering order</li>
+            <li>⚡ Spatial optimization improves performance</li>
+            <li>🔄 Pool and reuse sprites for efficiency</li>
+            <li>🎮 Custom groups add game-specific functionality</li>
+            <li>🔧 Group manager pattern organizes complex games</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you can organize sprites with groups and layers, next we'll create stunning visual effects with particle systems - the final piece of our sprite management toolkit!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="sprite_sheets.html" class="prev-lesson" aria-label="Previous lesson: Sprite Sheets">Previous Lesson: Sprite Sheets</a>
+        <a href="particle_effects.html" class="next-lesson" aria-label="Next lesson: Particle Effects">Next Lesson: Particle Effects</a>
+    </nav>
+    
+    </main>
+</body>
+</html>

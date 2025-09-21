@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master interpolation and easing functions for smooth animations and transitions in games. Learn linear, cubic, and advanced easing techniques.">
+    <title>Interpolation and Easing - Game Mathematics</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script src="/js/course-enhancements.js" defer></script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Interpolation and Easing</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Section 2: Game Mathematics - Lesson 4</span>
+    </nav>
+
+    <h2>Making Movement Smooth and Natural</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Interpolation and easing are the secret ingredients that make games feel polished and professional. They transform robotic movements into smooth animations, harsh transitions into gentle flows, and static UIs into dynamic experiences. Let's master the art of smooth motion! 🎬✨</p>
+    </div>
+
+    <h2>What is Interpolation?</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🚂 The Train Journey Analogy</h3>
+        <p>Think of interpolation like a train journey:</p>
+        <ul>
+            <li><strong>Start Station:</strong> Your beginning value (0%)</li>
+            <li><strong>End Station:</strong> Your target value (100%)</li>
+            <li><strong>Journey Progress:</strong> The interpolation factor (t)</li>
+            <li><strong>Speed Profile:</strong> The easing function (how you accelerate/decelerate)</li>
+            <li><strong>Current Position:</strong> The interpolated value</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Interpolation Types"] --> B["Linear"]
+        A --> C["Easing Functions"]
+        A --> D["Spline"]
+        A --> E["Physics-Based"]
+        B --> F["Constant Speed"]
+        C --> G["Ease In/Out/InOut"]
+        D --> H["Smooth Curves"]
+        E --> I["Spring/Bounce"]
+    </div>
+
+    <h2>Interactive Easing Visualizer</h2>
+    
+    <div class="canvas-wrapper">
+        <canvas id="easingCanvas" width="600" height="400"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Watch different easing functions in action!</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; max-width: 600px; margin: 10px auto;">
+            <button onclick="setEasing('linear')">Linear</button>
+            <button onclick="setEasing('easeIn')">Ease In</button>
+            <button onclick="setEasing('easeOut')">Ease Out</button>
+            <button onclick="setEasing('easeInOut')">Ease InOut</button>
+            <button onclick="setEasing('bounce')">Bounce</button>
+            <button onclick="setEasing('elastic')">Elastic</button>
+            <button onclick="setEasing('back')">Back</button>
+            <button onclick="setEasing('expo')">Exponential</button>
+        </div>
+        <button onclick="toggleAnimation()" style="margin-top: 10px;">Start/Stop Animation</button>
+        <p>Current: <strong id="easingDisplay">Linear</strong></p>
+    </div>
+
+    <script>
+        const easingCanvas = document.getElementById('easingCanvas');
+        const eCtx = easingCanvas.getContext('2d');
+        const easingDisplay = document.getElementById('easingDisplay');
+        
+        let currentEasing = 'linear';
+        let animationTime = 0;
+        let isAnimating = false;
+        let animationDuration = 2000; // 2 seconds
+        
+        // Easing functions
+        const easingFunctions = {
+            linear: t => t,
+            easeIn: t => t * t,
+            easeOut: t => 1 - (1 - t) * (1 - t),
+            easeInOut: t => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2,
+            bounce: t => {
+                const n1 = 7.5625;
+                const d1 = 2.75;
+                if (t < 1 / d1) {
+                    return n1 * t * t;
+                } else if (t < 2 / d1) {
+                    return n1 * (t -= 1.5 / d1) * t + 0.75;
+                } else if (t < 2.5 / d1) {
+                    return n1 * (t -= 2.25 / d1) * t + 0.9375;
+                } else {
+                    return n1 * (t -= 2.625 / d1) * t + 0.984375;
+                }
+            },
+            elastic: t => {
+                if (t === 0) return 0;
+                if (t === 1) return 1;
+                return Math.sin((t * 10 - 0.75) * ((2 * Math.PI) / 3)) * Math.pow(2, -10 * t) + 1;
+            },
+            back: t => {
+                const c1 = 1.70158;
+                const c3 = c1 + 1;
+                return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+            },
+            expo: t => t === 0 ? 0 : Math.pow(2, 10 * t - 10)
+        };
+        
+        function setEasing(type) {
+            currentEasing = type;
+            easingDisplay.textContent = type.charAt(0).toUpperCase() + type.slice(1).replace(/([A-Z])/g, ' $1');
+            animationTime = 0;
+            isAnimating = true;
+        }
+        
+        function toggleAnimation() {
+            isAnimating = !isAnimating;
+            if (isAnimating) {
+                animationTime = 0;
+            }
+        }
+        
+        function drawEasingCurve() {
+            // Draw background
+            eCtx.fillStyle = '#1a1a1a';
+            eCtx.fillRect(0, 0, easingCanvas.width, easingCanvas.height);
+            
+            // Draw grid
+            eCtx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            eCtx.lineWidth = 1;
+            
+            for (let x = 0; x <= easingCanvas.width; x += 50) {
+                eCtx.beginPath();
+                eCtx.moveTo(x, 0);
+                eCtx.lineTo(x, easingCanvas.height);
+                eCtx.stroke();
+            }
+            
+            for (let y = 0; y <= easingCanvas.height; y += 50) {
+                eCtx.beginPath();
+                eCtx.moveTo(0, y);
+                eCtx.lineTo(easingCanvas.width, y);
+                eCtx.stroke();
+            }
+            
+            // Draw axes
+            eCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            eCtx.lineWidth = 2;
+            
+            // X-axis (time)
+            eCtx.beginPath();
+            eCtx.moveTo(50, 350);
+            eCtx.lineTo(350, 350);
+            eCtx.stroke();
+            
+            // Y-axis (value)
+            eCtx.beginPath();
+            eCtx.moveTo(50, 50);
+            eCtx.lineTo(50, 350);
+            eCtx.stroke();
+            
+            // Draw labels
+            eCtx.fillStyle = 'white';
+            eCtx.font = '12px Arial';
+            eCtx.fillText('0', 35, 365);
+            eCtx.fillText('1', 345, 365);
+            eCtx.fillText('Time', 180, 385);
+            eCtx.fillText('Value', 10, 200);
+            
+            // Draw easing curve
+            const easingFunc = easingFunctions[currentEasing];
+            eCtx.strokeStyle = '#4caf50';
+            eCtx.lineWidth = 3;
+            eCtx.beginPath();
+            
+            for (let i = 0; i <= 100; i++) {
+                const t = i / 100;
+                const value = easingFunc(t);
+                const x = 50 + t * 300;
+                const y = 350 - value * 300;
+                
+                if (i === 0) {
+                    eCtx.moveTo(x, y);
+                } else {
+                    eCtx.lineTo(x, y);
+                }
+            }
+            eCtx.stroke();
+            
+            // Draw animated objects
+            if (isAnimating) {
+                const t = (animationTime % animationDuration) / animationDuration;
+                const easedValue = easingFunc(t);
+                
+                // Moving box (horizontal)
+                const boxX = 400 + easedValue * 150;
+                eCtx.fillStyle = '#2196f3';
+                eCtx.fillRect(boxX - 15, 100, 30, 30);
+                
+                // Moving circle (vertical)
+                const circleY = 50 + easedValue * 300;
+                eCtx.fillStyle = '#ff6b6b';
+                eCtx.beginPath();
+                eCtx.arc(450, circleY, 15, 0, Math.PI * 2);
+                eCtx.fill();
+                
+                // Rotating square
+                eCtx.save();
+                eCtx.translate(500, 250);
+                eCtx.rotate(easedValue * Math.PI * 2);
+                eCtx.fillStyle = '#ffeb3b';
+                eCtx.fillRect(-15, -15, 30, 30);
+                eCtx.restore();
+                
+                // Progress indicator on curve
+                const progressX = 50 + t * 300;
+                const progressY = 350 - easedValue * 300;
+                eCtx.fillStyle = '#ffffff';
+                eCtx.beginPath();
+                eCtx.arc(progressX, progressY, 5, 0, Math.PI * 2);
+                eCtx.fill();
+            }
+            
+            // Update animation
+            if (isAnimating) {
+                animationTime += 16; // ~60fps
+                if (animationTime >= animationDuration) {
+                    animationTime = 0;
+                }
+            }
+            
+            requestAnimationFrame(drawEasingCurve);
+        }
+        
+        drawEasingCurve();
+    </script>
+
+    <h2>Linear Interpolation (Lerp)</h2>
+    
+    <pre class="language-python"><code>def lerp(start, end, t):
+    """Linear interpolation between start and end by factor t (0 to 1)"""
+    return start + (end - start) * t
+
+# Examples
+position = lerp(0, 100, 0.5)    # Returns 50 (halfway)
+color = lerp(0, 255, 0.25)      # Returns 63.75 (quarter way)
+angle = lerp(0, 360, 0.75)      # Returns 270 (three quarters)
+
+# Lerp for 2D points
+def lerp_point(start_pos, end_pos, t):
+    x = lerp(start_pos[0], end_pos[0], t)
+    y = lerp(start_pos[1], end_pos[1], t)
+    return (x, y)
+
+# Lerp for colors (RGB)
+def lerp_color(color1, color2, t):
+    r = int(lerp(color1[0], color2[0], t))
+    g = int(lerp(color1[1], color2[1], t))
+    b = int(lerp(color1[2], color2[2], t))
+    return (r, g, b)
+
+# Smooth movement over time
+class SmoothMover:
+    def __init__(self, start_pos):
+        self.current_pos = start_pos
+        self.target_pos = start_pos
+        self.move_time = 0
+        self.move_duration = 1.0  # 1 second
+        self.start_pos = start_pos
+    
+    def move_to(self, target, duration=1.0):
+        self.start_pos = self.current_pos
+        self.target_pos = target
+        self.move_time = 0
+        self.move_duration = duration
+    
+    def update(self, dt):
+        if self.move_time < self.move_duration:
+            self.move_time += dt
+            t = min(self.move_time / self.move_duration, 1.0)
+            self.current_pos = lerp_point(self.start_pos, self.target_pos, t)</code></pre>
+
+    <h2>Common Easing Functions</h2>
+    
+    <pre class="language-python"><code>import math
+
+class Easing:
+    @staticmethod
+    def linear(t):
+        return t
+    
+    @staticmethod
+    def ease_in_quad(t):
+        """Slow start, fast end"""
+        return t * t
+    
+    @staticmethod
+    def ease_out_quad(t):
+        """Fast start, slow end"""
+        return 1 - (1 - t) * (1 - t)
+    
+    @staticmethod
+    def ease_in_out_quad(t):
+        """Slow start and end"""
+        if t < 0.5:
+            return 2 * t * t
+        else:
+            return 1 - pow(-2 * t + 2, 2) / 2
+    
+    @staticmethod
+    def ease_in_cubic(t):
+        return t * t * t
+    
+    @staticmethod
+    def ease_out_cubic(t):
+        return 1 - pow(1 - t, 3)
+    
+    @staticmethod
+    def ease_in_out_cubic(t):
+        if t < 0.5:
+            return 4 * t * t * t
+        else:
+            return 1 - pow(-2 * t + 2, 3) / 2
+    
+    @staticmethod
+    def ease_in_sine(t):
+        return 1 - math.cos((t * math.pi) / 2)
+    
+    @staticmethod
+    def ease_out_sine(t):
+        return math.sin((t * math.pi) / 2)
+    
+    @staticmethod
+    def ease_in_out_sine(t):
+        return -(math.cos(math.pi * t) - 1) / 2
+    
+    @staticmethod
+    def ease_in_expo(t):
+        return 0 if t == 0 else pow(2, 10 * t - 10)
+    
+    @staticmethod
+    def ease_out_expo(t):
+        return 1 if t == 1 else 1 - pow(2, -10 * t)
+    
+    @staticmethod
+    def ease_in_out_expo(t):
+        if t == 0:
+            return 0
+        if t == 1:
+            return 1
+        if t < 0.5:
+            return pow(2, 20 * t - 10) / 2
+        else:
+            return (2 - pow(2, -20 * t + 10)) / 2
+    
+    @staticmethod
+    def ease_in_elastic(t):
+        if t == 0:
+            return 0
+        if t == 1:
+            return 1
+        c4 = (2 * math.pi) / 3
+        return -pow(2, 10 * t - 10) * math.sin((t * 10 - 10.75) * c4)
+    
+    @staticmethod
+    def ease_out_elastic(t):
+        if t == 0:
+            return 0
+        if t == 1:
+            return 1
+        c4 = (2 * math.pi) / 3
+        return pow(2, -10 * t) * math.sin((t * 10 - 0.75) * c4) + 1
+    
+    @staticmethod
+    def ease_out_bounce(t):
+        n1 = 7.5625
+        d1 = 2.75
+        
+        if t < 1 / d1:
+            return n1 * t * t
+        elif t < 2 / d1:
+            t -= 1.5 / d1
+            return n1 * t * t + 0.75
+        elif t < 2.5 / d1:
+            t -= 2.25 / d1
+            return n1 * t * t + 0.9375
+        else:
+            t -= 2.625 / d1
+            return n1 * t * t + 0.984375
+    
+    @staticmethod
+    def ease_in_bounce(t):
+        return 1 - Easing.ease_out_bounce(1 - t)
+    
+    @staticmethod
+    def ease_in_back(t):
+        c1 = 1.70158
+        c3 = c1 + 1
+        return c3 * t * t * t - c1 * t * t
+    
+    @staticmethod
+    def ease_out_back(t):
+        c1 = 1.70158
+        c3 = c1 + 1
+        return 1 + c3 * pow(t - 1, 3) + c1 * pow(t - 1, 2)</code></pre>
+
+    <h2>Smooth Following (Lerp Smoothing)</h2>
+    
+    <pre class="language-python"><code>class Camera:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.smoothness = 0.1  # Lower = smoother/slower
+    
+    def follow(self, target_x, target_y):
+        """Smoothly follow a target using lerp"""
+        self.x = lerp(self.x, target_x, self.smoothness)
+        self.y = lerp(self.y, target_y, self.smoothness)
+    
+    def follow_with_offset(self, target_x, target_y, offset_x=0, offset_y=0):
+        """Follow with look-ahead offset"""
+        goal_x = target_x + offset_x
+        goal_y = target_y + offset_y
+        self.x = lerp(self.x, goal_x, self.smoothness)
+        self.y = lerp(self.y, goal_y, self.smoothness)
+
+# Smooth value changes
+class SmoothValue:
+    def __init__(self, initial_value, smoothing=0.1):
+        self.current = initial_value
+        self.target = initial_value
+        self.smoothing = smoothing
+    
+    def set_target(self, value):
+        self.target = value
+    
+    def update(self):
+        self.current = lerp(self.current, self.target, self.smoothing)
+    
+    def snap_to(self, value):
+        """Instantly set value without smoothing"""
+        self.current = value
+        self.target = value
+
+# Example: Smooth health bar
+class HealthBar:
+    def __init__(self, max_health):
+        self.max_health = max_health
+        self.actual_health = max_health
+        self.display_health = SmoothValue(max_health, 0.1)
+    
+    def take_damage(self, amount):
+        self.actual_health = max(0, self.actual_health - amount)
+        self.display_health.set_target(self.actual_health)
+    
+    def update(self):
+        self.display_health.update()
+    
+    def draw(self, screen, x, y, width, height):
+        # Background
+        pygame.draw.rect(screen, (50, 50, 50), (x, y, width, height))
+        
+        # Smooth animated health bar
+        health_width = (self.display_health.current / self.max_health) * width
+        pygame.draw.rect(screen, (255, 0, 0), (x, y, health_width, height))</code></pre>
+
+    <h2>Animation System with Easing</h2>
+    
+    <pre class="language-python"><code>class Animation:
+    def __init__(self, start_value, end_value, duration, easing_func=None):
+        self.start_value = start_value
+        self.end_value = end_value
+        self.duration = duration
+        self.elapsed = 0
+        self.easing_func = easing_func or Easing.linear
+        self.finished = False
+        self.current_value = start_value
+    
+    def update(self, dt):
+        if self.finished:
+            return
+        
+        self.elapsed += dt
+        
+        if self.elapsed >= self.duration:
+            self.elapsed = self.duration
+            self.finished = True
+        
+        # Calculate t (0 to 1)
+        t = self.elapsed / self.duration
+        
+        # Apply easing
+        eased_t = self.easing_func(t)
+        
+        # Interpolate
+        self.current_value = lerp(self.start_value, self.end_value, eased_t)
+    
+    def reset(self):
+        self.elapsed = 0
+        self.finished = False
+        self.current_value = self.start_value
+    
+    def reverse(self):
+        """Swap start and end values"""
+        self.start_value, self.end_value = self.end_value, self.start_value
+        self.reset()
+
+# Animation sequence
+class AnimationSequence:
+    def __init__(self):
+        self.animations = []
+        self.current_index = 0
+    
+    def add(self, animation):
+        self.animations.append(animation)
+        return self
+    
+    def update(self, dt):
+        if self.current_index < len(self.animations):
+            current = self.animations[self.current_index]
+            current.update(dt)
+            
+            if current.finished:
+                self.current_index += 1
+    
+    def reset(self):
+        self.current_index = 0
+        for anim in self.animations:
+            anim.reset()
+    
+    def is_finished(self):
+        return self.current_index >= len(self.animations)</code></pre>
+
+    <h2>Bezier Curves</h2>
+    
+    <pre class="language-python"><code>def bezier_quadratic(p0, p1, p2, t):
+    """Quadratic Bezier curve with 3 control points"""
+    # Linear interpolations
+    q0 = lerp_point(p0, p1, t)
+    q1 = lerp_point(p1, p2, t)
+    
+    # Final interpolation
+    return lerp_point(q0, q1, t)
+
+def bezier_cubic(p0, p1, p2, p3, t):
+    """Cubic Bezier curve with 4 control points"""
+    # First level interpolations
+    q0 = lerp_point(p0, p1, t)
+    q1 = lerp_point(p1, p2, t)
+    q2 = lerp_point(p2, p3, t)
+    
+    # Second level interpolations
+    r0 = lerp_point(q0, q1, t)
+    r1 = lerp_point(q1, q2, t)
+    
+    # Final interpolation
+    return lerp_point(r0, r1, t)
+
+class BezierPath:
+    def __init__(self, points):
+        """Create a Bezier path from control points"""
+        self.points = points
+        self.length = self.calculate_length()
+    
+    def calculate_length(self, samples=100):
+        """Approximate the length of the curve"""
+        total_length = 0
+        prev_point = self.get_point(0)
+        
+        for i in range(1, samples + 1):
+            t = i / samples
+            current_point = self.get_point(t)
+            dx = current_point[0] - prev_point[0]
+            dy = current_point[1] - prev_point[1]
+            total_length += math.sqrt(dx * dx + dy * dy)
+            prev_point = current_point
+        
+        return total_length
+    
+    def get_point(self, t):
+        """Get point on curve at parameter t (0 to 1)"""
+        if len(self.points) == 3:
+            return bezier_quadratic(self.points[0], self.points[1], 
+                                  self.points[2], t)
+        elif len(self.points) == 4:
+            return bezier_cubic(self.points[0], self.points[1], 
+                              self.points[2], self.points[3], t)
+        else:
+            # Fallback to linear
+            return lerp_point(self.points[0], self.points[-1], t)
+    
+    def get_point_at_distance(self, distance):
+        """Get point at specific distance along curve"""
+        if distance <= 0:
+            return self.points[0]
+        if distance >= self.length:
+            return self.points[-1]
+        
+        # Binary search for correct t value
+        low, high = 0.0, 1.0
+        epsilon = 0.001
+        
+        while high - low > epsilon:
+            mid = (low + high) / 2
+            mid_length = self.calculate_length_to_t(mid)
+            
+            if mid_length < distance:
+                low = mid
+            else:
+                high = mid
+        
+        return self.get_point((low + high) / 2)
+    
+    def calculate_length_to_t(self, t, samples=20):
+        """Calculate length from start to parameter t"""
+        total_length = 0
+        prev_point = self.get_point(0)
+        
+        for i in range(1, samples + 1):
+            sample_t = (i / samples) * t
+            current_point = self.get_point(sample_t)
+            dx = current_point[0] - prev_point[0]
+            dy = current_point[1] - prev_point[1]
+            total_length += math.sqrt(dx * dx + dy * dy)
+            prev_point = current_point
+        
+        return total_length</code></pre>
+
+    <h2>Spring Physics</h2>
+    
+    <pre class="language-python"><code>class Spring:
+    def __init__(self, target, stiffness=0.1, damping=0.9):
+        self.target = target
+        self.current = target
+        self.velocity = 0
+        self.stiffness = stiffness  # Spring constant
+        self.damping = damping      # Friction
+    
+    def update(self, target=None):
+        if target is not None:
+            self.target = target
+        
+        # Calculate spring force
+        displacement = self.target - self.current
+        spring_force = displacement * self.stiffness
+        
+        # Apply force to velocity
+        self.velocity += spring_force
+        
+        # Apply damping
+        self.velocity *= self.damping
+        
+        # Update position
+        self.current += self.velocity
+    
+    def set_target(self, target):
+        self.target = target
+    
+    def snap_to(self, value):
+        self.current = value
+        self.target = value
+        self.velocity = 0
+
+# 2D Spring
+class Spring2D:
+    def __init__(self, x, y, stiffness=0.1, damping=0.9):
+        self.spring_x = Spring(x, stiffness, damping)
+        self.spring_y = Spring(y, stiffness, damping)
+    
+    def update(self, target_x=None, target_y=None):
+        self.spring_x.update(target_x)
+        self.spring_y.update(target_y)
+    
+    def set_target(self, x, y):
+        self.spring_x.set_target(x)
+        self.spring_y.set_target(y)
+    
+    def get_position(self):
+        return (self.spring_x.current, self.spring_y.current)
+
+# Example: Springy camera
+class SpringCamera:
+    def __init__(self, x, y):
+        self.spring = Spring2D(x, y, stiffness=0.05, damping=0.85)
+    
+    def follow(self, target_x, target_y):
+        self.spring.set_target(target_x, target_y)
+        self.spring.update()
+        return self.spring.get_position()</code></pre>
+
+    <h2>Complete Interpolation Demo Game</h2>
+    
+    <pre class="language-python"><code>import pygame
+import math
+
+class InterpolationDemo:
+    def __init__(self):
+        pygame.init()
+        self.screen = pygame.display.set_mode((800, 600))
+        pygame.display.set_caption("Interpolation and Easing Demo")
+        self.clock = pygame.time.Clock()
+        
+        # Create different moving objects with different easing
+        self.objects = [
+            {
+                'name': 'Linear',
+                'x': 100, 'y': 100,
+                'start_x': 100, 'end_x': 700,
+                'time': 0, 'duration': 2,
+                'easing': Easing.linear,
+                'color': (255, 100, 100)
+            },
+            {
+                'name': 'Ease In Out',
+                'x': 100, 'y': 150,
+                'start_x': 100, 'end_x': 700,
+                'time': 0, 'duration': 2,
+                'easing': Easing.ease_in_out_cubic,
+                'color': (100, 255, 100)
+            },
+            {
+                'name': 'Bounce',
+                'x': 100, 'y': 200,
+                'start_x': 100, 'end_x': 700,
+                'time': 0, 'duration': 2,
+                'easing': Easing.ease_out_bounce,
+                'color': (100, 100, 255)
+            },
+            {
+                'name': 'Elastic',
+                'x': 100, 'y': 250,
+                'start_x': 100, 'end_x': 700,
+                'time': 0, 'duration': 2,
+                'easing': Easing.ease_out_elastic,
+                'color': (255, 255, 100)
+            },
+            {
+                'name': 'Back',
+                'x': 100, 'y': 300,
+                'start_x': 100, 'end_x': 700,
+                'time': 0, 'duration': 2,
+                'easing': Easing.ease_out_back,
+                'color': (255, 100, 255)
+            }
+        ]
+        
+        # Spring follower
+        self.mouse_follower = Spring2D(400, 400, stiffness=0.05, damping=0.8)
+        
+        # Bezier path
+        self.bezier_points = [
+            (100, 500),
+            (300, 400),
+            (500, 400),
+            (700, 500)
+        ]
+        self.bezier_path = BezierPath(self.bezier_points)
+        self.bezier_t = 0
+        
+        # UI animations
+        self.ui_scale = Animation(0, 1, 0.5, Easing.ease_out_back)
+        self.ui_alpha = Animation(0, 255, 1, Easing.ease_out_cubic)
+        
+        # Smooth camera
+        self.camera = Camera(0, 0)
+        self.camera.smoothness = 0.1
+        
+        # Color lerping
+        self.color_time = 0
+        self.color1 = (255, 0, 0)
+        self.color2 = (0, 0, 255)
+    
+    def handle_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    # Reset all animations
+                    for obj in self.objects:
+                        obj['time'] = 0
+                    self.ui_scale.reset()
+                    self.ui_alpha.reset()
+        return True
+    
+    def update(self, dt):
+        # Update moving objects
+        for obj in self.objects:
+            obj['time'] += dt
+            if obj['time'] >= obj['duration']:
+                # Reverse direction
+                obj['start_x'], obj['end_x'] = obj['end_x'], obj['start_x']
+                obj['time'] = 0
+            
+            t = obj['time'] / obj['duration']
+            eased_t = obj['easing'](t)
+            obj['x'] = lerp(obj['start_x'], obj['end_x'], eased_t)
+        
+        # Update spring follower
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        self.mouse_follower.set_target(mouse_x, mouse_y)
+        self.mouse_follower.update()
+        
+        # Update Bezier animation
+        self.bezier_t += dt * 0.2
+        if self.bezier_t > 1:
+            self.bezier_t = 0
+        
+        # Update UI animations
+        self.ui_scale.update(dt)
+        self.ui_alpha.update(dt)
+        
+        # Update color lerping
+        self.color_time += dt
+    
+    def draw(self):
+        self.screen.fill((30, 30, 30))
+        
+        # Draw moving objects
+        font = pygame.font.Font(None, 24)
+        for obj in self.objects:
+            pygame.draw.circle(self.screen, obj['color'], 
+                             (int(obj['x']), int(obj['y'])), 15)
+            
+            # Draw trail
+            for i in range(5):
+                trail_t = max(0, obj['time'] / obj['duration'] - i * 0.05)
+                trail_eased = obj['easing'](trail_t)
+                trail_x = lerp(obj['start_x'], obj['end_x'], trail_eased)
+                alpha = 255 - i * 50
+                trail_color = (*obj['color'], alpha)
+                pygame.draw.circle(self.screen, obj['color'], 
+                                 (int(trail_x), int(obj['y'])), 
+                                 15 - i * 2, 1)
+            
+            # Label
+            label = font.render(obj['name'], True, (255, 255, 255))
+            self.screen.blit(label, (10, obj['y'] - 10))
+        
+        # Draw spring follower
+        spring_pos = self.mouse_follower.get_position()
+        pygame.draw.circle(self.screen, (100, 255, 255), 
+                         (int(spring_pos[0]), int(spring_pos[1])), 20)
+        pygame.draw.line(self.screen, (100, 255, 255),
+                        (mouse_x, mouse_y), spring_pos, 2)
+        
+        # Draw Bezier curve
+        # Draw control points
+        for i, point in enumerate(self.bezier_points):
+            pygame.draw.circle(self.screen, (100, 100, 100), 
+                             (int(point[0]), int(point[1])), 5)
+            if i > 0:
+                pygame.draw.line(self.screen, (50, 50, 50),
+                               self.bezier_points[i-1], point, 1)
+        
+        # Draw curve
+        prev_point = self.bezier_path.get_point(0)
+        for i in range(1, 51):
+            t = i / 50
+            current_point = self.bezier_path.get_point(t)
+            pygame.draw.line(self.screen, (255, 200, 100),
+                           prev_point, current_point, 2)
+            prev_point = current_point
+        
+        # Draw object on Bezier curve
+        bezier_pos = self.bezier_path.get_point(self.bezier_t)
+        pygame.draw.circle(self.screen, (255, 255, 0),
+                         (int(bezier_pos[0]), int(bezier_pos[1])), 10)
+        
+        # Draw animated UI element
+        if self.ui_scale.current_value > 0:
+            size = int(50 * self.ui_scale.current_value)
+            alpha = int(self.ui_alpha.current_value)
+            ui_surf = pygame.Surface((size * 2, size * 2), pygame.SRCALPHA)
+            pygame.draw.circle(ui_surf, (*[200, 100, 255], alpha),
+                             (size, size), size)
+            self.screen.blit(ui_surf, (650 - size, 450 - size))
+        
+        # Draw color lerping example
+        t = (math.sin(self.color_time) + 1) / 2  # Oscillate between 0 and 1
+        current_color = lerp_color(self.color1, self.color2, t)
+        pygame.draw.rect(self.screen, current_color, (650, 50, 100, 100))
+        
+        # Instructions
+        instructions = [
+            "Space: Reset animations",
+            "Move mouse for spring effect"
+        ]
+        for i, text in enumerate(instructions):
+            rendered = font.render(text, True, (150, 150, 150))
+            self.screen.blit(rendered, (10, 550 + i * 25))
+    
+    def run(self):
+        running = True
+        dt = 0
+        
+        while running:
+            running = self.handle_events()
+            self.update(dt)
+            self.draw()
+            pygame.display.flip()
+            dt = self.clock.tick(60) / 1000.0
+        
+        pygame.quit()
+
+if __name__ == "__main__":
+    # Include Easing class definition here
+    demo = InterpolationDemo()
+    demo.run()</code></pre>
+
+    <h2>Performance Considerations</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Optimization Tips</h3>
+        <ul>
+            <li><strong>Pre-calculate:</strong> Store easing values in lookup tables</li>
+            <li><strong>Simplify:</strong> Use simpler easing for many objects</li>
+            <li><strong>LOD:</strong> Use linear for distant/small objects</li>
+            <li><strong>Frame Independence:</strong> Always use delta time</li>
+            <li><strong>Batch Updates:</strong> Update similar animations together</li>
+        </ul>
+    </div>
+
+    <h2>Practice Exercises</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎯 Interpolation Challenges!</h3>
+        <ol>
+            <li><strong>UI Animation System:</strong> Sliding menus with different easings</li>
+            <li><strong>Camera Controller:</strong> Smooth camera with deadzone and lookahead</li>
+            <li><strong>Particle Trail:</strong> Particles that follow Bezier curves</li>
+            <li><strong>Morphing Shapes:</strong> Interpolate between different polygon shapes</li>
+            <li><strong>Time Control:</strong> Game with slow-motion and speed-up effects</li>
+            <li><strong>Procedural Animation:</strong> Character that moves with spring physics</li>
+        </ol>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>📈 Linear interpolation (lerp) is the foundation</li>
+            <li>🎢 Easing functions add personality to movement</li>
+            <li>🎯 Different easings for different feels</li>
+            <li>🌊 Springs create natural, responsive motion</li>
+            <li>📐 Bezier curves enable complex paths</li>
+            <li>⏱️ Always use delta time for consistency</li>
+            <li>✨ Smooth animation makes games feel professional</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you've mastered smooth motion, next we'll explore random generation for games - creating variety, procedural content, and controlled randomness!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="game_mathematics_trigonometry.html" class="prev-lesson" aria-label="Previous lesson: Basic Trigonometry">Previous Lesson: Basic Trigonometry</a>
+        <a href="game_mathematics_random.html" class="next-lesson" aria-label="Next lesson: Random Generation">Next Lesson: Random Generation for Games</a>
+    </nav>
+    
+    </main>
+</body>
+</html>

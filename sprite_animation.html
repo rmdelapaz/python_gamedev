@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master sprite animation in Pygame. Learn frame-based animation, timing, state machines, and create smooth character animations.">
+    <title>Sprite Animation - Sprite Management</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script src="/js/course-enhancements.js" defer></script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Sprite Animation</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Section 3: Sprite Management - Lesson 2</span>
+    </nav>
+
+    <h2>Bringing Characters to Life</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Animation is what transforms static sprites into living, breathing characters! By sequencing frames and controlling timing, you can create walk cycles, attacks, idle animations, and more. Let's learn how to make your sprites move naturally and expressively! 🏃‍♂️✨</p>
+    </div>
+
+    <h2>Understanding Animation Principles</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎬 The Flipbook Analogy</h3>
+        <p>Think of sprite animation like a flipbook:</p>
+        <ul>
+            <li><strong>Frames:</strong> Individual pages/drawings in sequence</li>
+            <li><strong>Frame Rate:</strong> How fast you flip the pages</li>
+            <li><strong>Loop:</strong> Starting over when you reach the end</li>
+            <li><strong>States:</strong> Different flipbooks for different actions</li>
+            <li><strong>Transitions:</strong> Switching between flipbooks smoothly</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Sprite Animation"] --> B["Frame Management"]
+        A --> C["Timing Control"]
+        A --> D["State Machines"]
+        A --> E["Optimization"]
+        B --> F["Frame Sequences"]
+        B --> G["Frame Data"]
+        C --> H["Frame Duration"]
+        C --> I["Animation Speed"]
+        D --> J["Animation States"]
+        D --> K["Transitions"]
+        E --> L["Sprite Sheets"]
+        E --> M["Frame Caching"]
+    </div>
+
+    <h2>Interactive Animation Demo</h2>
+    
+    <div class="canvas-wrapper">
+        <canvas id="animCanvas" width="600" height="400"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Watch different animation techniques in action!</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; max-width: 600px; margin: 10px auto;">
+            <button onclick="setAnimState('idle')">Idle</button>
+            <button onclick="setAnimState('walk')">Walk</button>
+            <button onclick="setAnimState('run')">Run</button>
+            <button onclick="setAnimState('jump')">Jump</button>
+            <button onclick="setAnimState('attack')">Attack</button>
+        </div>
+        <div style="margin-top: 10px;">
+            <label>Speed: <input type="range" id="speedSlider" min="0.1" max="3" step="0.1" value="1" onchange="updateSpeed(this.value)"></label>
+            <button onclick="togglePause()">Pause/Play</button>
+        </div>
+        <p>State: <strong id="stateDisplay">Idle</strong> | Frame: <span id="frameDisplay">0</span></p>
+    </div>
+
+    <script>
+        const animCanvas = document.getElementById('animCanvas');
+        const aCtx = animCanvas.getContext('2d');
+        const stateDisplay = document.getElementById('stateDisplay');
+        const frameDisplay = document.getElementById('frameDisplay');
+        const speedSlider = document.getElementById('speedSlider');
+        
+        let currentState = 'idle';
+        let animSpeed = 1;
+        let isPaused = false;
+        let globalTime = 0;
+        
+        // Character animation data
+        class AnimatedCharacter {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.currentFrame = 0;
+                this.frameTime = 0;
+                this.state = 'idle';
+                this.direction = 1; // 1 for right, -1 for left
+                
+                // Animation definitions
+                this.animations = {
+                    idle: {
+                        frames: 4,
+                        frameDuration: 200,
+                        loop: true,
+                        colors: ['#4a90e2', '#5a9fee', '#6aafff', '#5a9fee']
+                    },
+                    walk: {
+                        frames: 6,
+                        frameDuration: 100,
+                        loop: true,
+                        colors: ['#4ae290', '#5aee9f', '#6affaf', '#5aee9f', '#4ae290', '#3ad680']
+                    },
+                    run: {
+                        frames: 4,
+                        frameDuration: 60,
+                        loop: true,
+                        colors: ['#e24a4a', '#ee5a5a', '#ff6a6a', '#ee5a5a']
+                    },
+                    jump: {
+                        frames: 5,
+                        frameDuration: 100,
+                        loop: false,
+                        colors: ['#e2e24a', '#eeee5a', '#ffff6a', '#eeee5a', '#e2e24a']
+                    },
+                    attack: {
+                        frames: 4,
+                        frameDuration: 80,
+                        loop: false,
+                        colors: ['#e24ae2', '#ee5aee', '#ff6aff', '#ee5aee']
+                    }
+                };
+            }
+            
+            setState(state) {
+                if (this.state !== state) {
+                    this.state = state;
+                    this.currentFrame = 0;
+                    this.frameTime = 0;
+                }
+            }
+            
+            update(dt) {
+                if (isPaused) return;
+                
+                const anim = this.animations[this.state];
+                this.frameTime += dt * animSpeed;
+                
+                if (this.frameTime >= anim.frameDuration) {
+                    this.frameTime = 0;
+                    this.currentFrame++;
+                    
+                    if (this.currentFrame >= anim.frames) {
+                        if (anim.loop) {
+                            this.currentFrame = 0;
+                        } else {
+                            this.currentFrame = anim.frames - 1;
+                            // Return to idle after non-looping animation
+                            if (this.state !== 'idle') {
+                                this.setState('idle');
+                            }
+                        }
+                    }
+                }
+                
+                // Move character based on state
+                if (this.state === 'walk') {
+                    this.x += 2 * this.direction * animSpeed;
+                } else if (this.state === 'run') {
+                    this.x += 4 * this.direction * animSpeed;
+                }
+                
+                // Wrap around screen
+                if (this.x > animCanvas.width + 50) {
+                    this.x = -50;
+                } else if (this.x < -50) {
+                    this.x = animCanvas.width + 50;
+                }
+            }
+            
+            draw(ctx) {
+                const anim = this.animations[this.state];
+                const color = anim.colors[this.currentFrame];
+                
+                // Draw character body
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.scale(this.direction, 1);
+                
+                // Body
+                ctx.fillStyle = color;
+                ctx.fillRect(-20, -30, 40, 40);
+                
+                // Head
+                ctx.fillStyle = '#fdbcb4';
+                ctx.beginPath();
+                ctx.arc(0, -40, 15, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Eyes (blink on certain frames)
+                ctx.fillStyle = '#000';
+                if (this.state === 'idle' && this.currentFrame === 3) {
+                    // Closed eyes (blink)
+                    ctx.fillRect(-8, -42, 6, 2);
+                    ctx.fillRect(2, -42, 6, 2);
+                } else {
+                    // Open eyes
+                    ctx.beginPath();
+                    ctx.arc(-5, -40, 2, 0, Math.PI * 2);
+                    ctx.arc(5, -40, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                // Arms animation
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 5;
+                
+                let armAngle = 0;
+                if (this.state === 'walk' || this.state === 'run') {
+                    armAngle = Math.sin(this.currentFrame / anim.frames * Math.PI * 2) * 0.5;
+                } else if (this.state === 'attack') {
+                    armAngle = this.currentFrame / anim.frames * Math.PI;
+                }
+                
+                // Left arm
+                ctx.beginPath();
+                ctx.moveTo(-20, -10);
+                ctx.lineTo(-30 - Math.sin(armAngle) * 10, 0 + Math.cos(armAngle) * 10);
+                ctx.stroke();
+                
+                // Right arm
+                ctx.beginPath();
+                ctx.moveTo(20, -10);
+                ctx.lineTo(30 - Math.sin(armAngle + Math.PI) * 10, 0 + Math.cos(armAngle + Math.PI) * 10);
+                ctx.stroke();
+                
+                // Legs animation
+                let legAngle = 0;
+                if (this.state === 'walk' || this.state === 'run') {
+                    legAngle = Math.sin(this.currentFrame / anim.frames * Math.PI * 2) * 0.3;
+                } else if (this.state === 'jump') {
+                    legAngle = -0.5;
+                }
+                
+                // Left leg
+                ctx.beginPath();
+                ctx.moveTo(-10, 10);
+                ctx.lineTo(-10 - Math.sin(legAngle) * 10, 30 + Math.abs(Math.cos(legAngle) * 5));
+                ctx.stroke();
+                
+                // Right leg
+                ctx.beginPath();
+                ctx.moveTo(10, 10);
+                ctx.lineTo(10 - Math.sin(legAngle + Math.PI) * 10, 30 + Math.abs(Math.cos(legAngle + Math.PI) * 5));
+                ctx.stroke();
+                
+                ctx.restore();
+                
+                // Draw frame indicator
+                ctx.fillStyle = 'white';
+                ctx.font = '10px Arial';
+                ctx.fillText(`${this.currentFrame + 1}/${anim.frames}`, this.x - 15, this.y + 50);
+            }
+        }
+        
+        // Create characters
+        const mainCharacter = new AnimatedCharacter(300, 200);
+        const characters = [
+            new AnimatedCharacter(100, 320),
+            new AnimatedCharacter(200, 320),
+            new AnimatedCharacter(300, 320),
+            new AnimatedCharacter(400, 320),
+            new AnimatedCharacter(500, 320)
+        ];
+        
+        // Set different states for bottom characters
+        characters[0].setState('idle');
+        characters[1].setState('walk');
+        characters[2].setState('run');
+        characters[3].setState('jump');
+        characters[4].setState('attack');
+        
+        function setAnimState(state) {
+            mainCharacter.setState(state);
+            currentState = state;
+            stateDisplay.textContent = state.charAt(0).toUpperCase() + state.slice(1);
+        }
+        
+        function updateSpeed(value) {
+            animSpeed = parseFloat(value);
+        }
+        
+        function togglePause() {
+            isPaused = !isPaused;
+        }
+        
+        let lastTime = performance.now();
+        
+        function animate(currentTime) {
+            const dt = currentTime - lastTime;
+            lastTime = currentTime;
+            
+            // Clear canvas
+            aCtx.fillStyle = '#2a2a2a';
+            aCtx.fillRect(0, 0, animCanvas.width, animCanvas.height);
+            
+            // Draw floor
+            aCtx.strokeStyle = '#444';
+            aCtx.lineWidth = 2;
+            aCtx.beginPath();
+            aCtx.moveTo(0, 250);
+            aCtx.lineTo(animCanvas.width, 250);
+            aCtx.moveTo(0, 370);
+            aCtx.lineTo(animCanvas.width, 370);
+            aCtx.stroke();
+            
+            // Update and draw main character
+            mainCharacter.update(dt);
+            mainCharacter.draw(aCtx);
+            frameDisplay.textContent = mainCharacter.currentFrame;
+            
+            // Update and draw showcase characters
+            for (let char of characters) {
+                char.update(dt);
+                char.draw(aCtx);
+            }
+            
+            // Draw labels
+            aCtx.fillStyle = 'white';
+            aCtx.font = '12px Arial';
+            const labels = ['Idle', 'Walk', 'Run', 'Jump', 'Attack'];
+            for (let i = 0; i < labels.length; i++) {
+                aCtx.fillText(labels[i], 85 + i * 100, 390);
+            }
+            
+            // Draw info
+            aCtx.font = '14px Arial';
+            aCtx.fillText('Main Character (Control Above)', animCanvas.width / 2 - 80, 20);
+            aCtx.fillText('Animation Showcase', animCanvas.width / 2 - 60, 290);
+            
+            globalTime += dt;
+            requestAnimationFrame(animate);
+        }
+        
+        animate(performance.now());
+    </script>
+
+    <h2>Basic Frame Animation</h2>
+    
+    <pre class="language-python"><code>import pygame
+
+class AnimatedSprite(pygame.sprite.Sprite):
+    def __init__(self, frames, x, y):
+        super().__init__()
+        self.frames = frames
+        self.current_frame = 0
+        self.image = self.frames[0]
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        
+        # Animation timing
+        self.animation_speed = 0.15  # Frames per update
+        self.animation_counter = 0
+        
+    def update(self):
+        # Update animation
+        self.animation_counter += self.animation_speed
+        
+        if self.animation_counter >= 1:
+            self.animation_counter = 0
+            self.current_frame = (self.current_frame + 1) % len(self.frames)
+            self.image = self.frames[self.current_frame]
+
+# Load animation frames
+def load_animation_frames(base_path, frame_count):
+    frames = []
+    for i in range(frame_count):
+        filename = f"{base_path}_{i}.png"
+        frame = pygame.image.load(filename).convert_alpha()
+        frames.append(frame)
+    return frames
+
+# Usage
+walk_frames = load_animation_frames("sprites/player_walk", 8)
+player = AnimatedSprite(walk_frames, 100, 100)</code></pre>
+
+    <h2>Time-Based Animation</h2>
+    
+    <pre class="language-python"><code>class TimedAnimation:
+    """Animation with precise timing control"""
+    def __init__(self, frames, frame_duration=100):
+        self.frames = frames
+        self.frame_duration = frame_duration  # milliseconds per frame
+        self.current_frame = 0
+        self.time_since_last_frame = 0
+        self.playing = True
+        self.loop = True
+        
+    def update(self, dt):
+        """Update animation with delta time"""
+        if not self.playing:
+            return
+            
+        self.time_since_last_frame += dt
+        
+        # Check if it's time to change frame
+        if self.time_since_last_frame >= self.frame_duration:
+            self.time_since_last_frame = 0
+            self.current_frame += 1
+            
+            # Handle end of animation
+            if self.current_frame >= len(self.frames):
+                if self.loop:
+                    self.current_frame = 0
+                else:
+                    self.current_frame = len(self.frames) - 1
+                    self.playing = False
+    
+    def get_current_frame(self):
+        """Get the current frame image"""
+        return self.frames[self.current_frame]
+    
+    def reset(self):
+        """Reset animation to beginning"""
+        self.current_frame = 0
+        self.time_since_last_frame = 0
+        self.playing = True
+    
+    def play(self):
+        self.playing = True
+    
+    def pause(self):
+        self.playing = False
+    
+    def set_frame(self, frame_index):
+        """Jump to specific frame"""
+        self.current_frame = min(frame_index, len(self.frames) - 1)</code></pre>
+
+    <h2>Animation State Machine</h2>
+    
+    <pre class="language-python"><code>class AnimationStateMachine:
+    """Manage multiple animation states"""
+    def __init__(self):
+        self.animations = {}
+        self.current_state = None
+        self.previous_state = None
+        
+    def add_animation(self, state_name, frames, frame_duration=100, loop=True):
+        """Add an animation state"""
+        self.animations[state_name] = {
+            'frames': frames,
+            'duration': frame_duration,
+            'loop': loop,
+            'current_frame': 0,
+            'timer': 0
+        }
+        
+        # Set first animation as default
+        if self.current_state is None:
+            self.current_state = state_name
+    
+    def change_state(self, new_state):
+        """Switch to a different animation"""
+        if new_state in self.animations and new_state != self.current_state:
+            self.previous_state = self.current_state
+            self.current_state = new_state
+            # Reset new animation
+            self.animations[new_state]['current_frame'] = 0
+            self.animations[new_state]['timer'] = 0
+    
+    def update(self, dt):
+        """Update current animation"""
+        if not self.current_state:
+            return None
+            
+        anim = self.animations[self.current_state]
+        anim['timer'] += dt
+        
+        if anim['timer'] >= anim['duration']:
+            anim['timer'] = 0
+            anim['current_frame'] += 1
+            
+            if anim['current_frame'] >= len(anim['frames']):
+                if anim['loop']:
+                    anim['current_frame'] = 0
+                else:
+                    anim['current_frame'] = len(anim['frames']) - 1
+                    # Could trigger animation complete event here
+        
+        return anim['frames'][anim['current_frame']]
+    
+    def get_current_frame(self):
+        """Get current frame of active animation"""
+        if not self.current_state:
+            return None
+        anim = self.animations[self.current_state]
+        return anim['frames'][anim['current_frame']]
+
+# Example: Character with multiple animations
+class AnimatedCharacter(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.animation = AnimationStateMachine()
+        
+        # Load animations
+        self.load_animations()
+        
+        # Set initial image
+        self.image = self.animation.get_current_frame()
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        
+        # Character state
+        self.velocity_x = 0
+        self.velocity_y = 0
+        self.on_ground = True
+        
+    def load_animations(self):
+        """Load all character animations"""
+        # Idle animation
+        idle_frames = load_animation_frames("char_idle", 4)
+        self.animation.add_animation('idle', idle_frames, 200, True)
+        
+        # Walk animation
+        walk_frames = load_animation_frames("char_walk", 8)
+        self.animation.add_animation('walk', walk_frames, 100, True)
+        
+        # Run animation
+        run_frames = load_animation_frames("char_run", 6)
+        self.animation.add_animation('run', run_frames, 80, True)
+        
+        # Jump animation
+        jump_frames = load_animation_frames("char_jump", 5)
+        self.animation.add_animation('jump', jump_frames, 100, False)
+        
+        # Attack animation
+        attack_frames = load_animation_frames("char_attack", 6)
+        self.animation.add_animation('attack', attack_frames, 60, False)
+    
+    def update(self, dt):
+        """Update character and animation"""
+        # Determine animation based on state
+        if abs(self.velocity_x) > 5:
+            self.animation.change_state('run')
+        elif abs(self.velocity_x) > 0:
+            self.animation.change_state('walk')
+        elif not self.on_ground:
+            self.animation.change_state('jump')
+        else:
+            self.animation.change_state('idle')
+        
+        # Update animation
+        self.image = self.animation.update(dt)
+        
+        # Flip image based on direction
+        if self.velocity_x < 0:
+            self.image = pygame.transform.flip(self.image, True, False)</code></pre>
+
+    <h2>Advanced Animation Techniques</h2>
+    
+    <pre class="language-python"><code># Animation with variable frame durations
+class AdvancedAnimation:
+    def __init__(self, frame_data):
+        """
+        frame_data: list of (image, duration) tuples
+        """
+        self.frame_data = frame_data
+        self.current_frame = 0
+        self.timer = 0
+        self.total_duration = sum(duration for _, duration in frame_data)
+        
+    def update(self, dt):
+        self.timer += dt
+        
+        current_image, current_duration = self.frame_data[self.current_frame]
+        
+        if self.timer >= current_duration:
+            self.timer -= current_duration
+            self.current_frame = (self.current_frame + 1) % len(self.frame_data)
+    
+    def get_frame(self):
+        return self.frame_data[self.current_frame][0]
+
+# Animation blending/transitions
+class AnimationBlender:
+    def __init__(self):
+        self.from_animation = None
+        self.to_animation = None
+        self.blend_time = 0
+        self.blend_duration = 200  # milliseconds
+        self.blending = False
+        
+    def start_blend(self, from_anim, to_anim, duration=200):
+        """Start blending between two animations"""
+        self.from_animation = from_anim
+        self.to_animation = to_anim
+        self.blend_duration = duration
+        self.blend_time = 0
+        self.blending = True
+        
+    def update(self, dt):
+        if not self.blending:
+            return None
+            
+        self.blend_time += dt
+        blend_factor = min(self.blend_time / self.blend_duration, 1.0)
+        
+        if blend_factor >= 1.0:
+            self.blending = False
+            return self.to_animation.get_frame()
+        
+        # Simple crossfade
+        from_frame = self.from_animation.get_frame()
+        to_frame = self.to_animation.get_frame()
+        
+        # Create blended frame
+        blended = from_frame.copy()
+        blended.set_alpha(int(255 * (1 - blend_factor)))
+        
+        temp = to_frame.copy()
+        temp.set_alpha(int(255 * blend_factor))
+        blended.blit(temp, (0, 0))
+        
+        return blended
+
+# Animation events
+class AnimationWithEvents:
+    def __init__(self, frames, events=None):
+        self.frames = frames
+        self.events = events or {}  # {frame_number: callback}
+        self.current_frame = 0
+        self.last_frame = -1
+        
+    def update(self):
+        self.current_frame = (self.current_frame + 1) % len(self.frames)
+        
+        # Trigger events
+        if self.current_frame != self.last_frame:
+            if self.current_frame in self.events:
+                self.events[self.current_frame]()
+            self.last_frame = self.current_frame
+    
+    def add_event(self, frame, callback):
+        """Add event at specific frame"""
+        self.events[frame] = callback
+
+# Usage
+attack_anim = AnimationWithEvents(attack_frames)
+attack_anim.add_event(3, lambda: play_sound("sword_swing"))
+attack_anim.add_event(5, lambda: check_hit_enemies())</code></pre>
+
+    <h2>Sprite Animation Optimization</h2>
+    
+    <pre class="language-python"><code># Frame caching system
+class AnimationCache:
+    def __init__(self):
+        self.cache = {}
+        
+    def get_rotated_frames(self, frames, angle):
+        """Get cached rotated frames"""
+        cache_key = (id(frames), angle)
+        
+        if cache_key not in self.cache:
+            rotated = []
+            for frame in frames:
+                rotated.append(pygame.transform.rotate(frame, angle))
+            self.cache[cache_key] = rotated
+            
+        return self.cache[cache_key]
+    
+    def get_scaled_frames(self, frames, scale):
+        """Get cached scaled frames"""
+        cache_key = (id(frames), scale)
+        
+        if cache_key not in self.cache:
+            scaled = []
+            for frame in frames:
+                new_size = (int(frame.get_width() * scale),
+                           int(frame.get_height() * scale))
+                scaled.append(pygame.transform.smoothscale(frame, new_size))
+            self.cache[cache_key] = scaled
+            
+        return self.cache[cache_key]
+    
+    def clear(self):
+        """Clear cache to free memory"""
+        self.cache.clear()
+
+# Efficient sprite sheet animation
+class SpriteSheetAnimation:
+    def __init__(self, sheet, frame_width, frame_height, frame_count):
+        self.sheet = sheet
+        self.frame_width = frame_width
+        self.frame_height = frame_height
+        self.frame_count = frame_count
+        self.current_frame = 0
+        
+        # Pre-calculate frame rectangles
+        self.frame_rects = []
+        for i in range(frame_count):
+            x = (i % (sheet.get_width() // frame_width)) * frame_width
+            y = (i // (sheet.get_width() // frame_width)) * frame_height
+            self.frame_rects.append(pygame.Rect(x, y, frame_width, frame_height))
+    
+    def get_frame(self, frame_index=None):
+        """Get frame directly from sprite sheet (no copying)"""
+        if frame_index is None:
+            frame_index = self.current_frame
+        
+        # Return subsurface (shares memory with sprite sheet)
+        return self.sheet.subsurface(self.frame_rects[frame_index])
+    
+    def update(self):
+        self.current_frame = (self.current_frame + 1) % self.frame_count</code></pre>
+
+    <h2>Complete Animation System Example</h2>
+    
+    <pre class="language-python"><code>import pygame
+import math
+
+class CompleteAnimationDemo:
+    def __init__(self):
+        pygame.init()
+        self.screen = pygame.display.set_mode((800, 600))
+        pygame.display.set_caption("Complete Animation System")
+        self.clock = pygame.time.Clock()
+        
+        # Create animated sprites
+        self.create_sprites()
+        
+        # Animation settings
+        self.show_onion_skin = False
+        self.show_hitboxes = False
+        
+    def create_sprites(self):
+        """Create various animated sprites"""
+        # Walking character
+        self.walker = WalkingCharacter(100, 400)
+        
+        # Flying creature
+        self.flyer = FlyingCreature(400, 200)
+        
+        # Animated effects
+        self.effects = []
+        
+        # UI animations
+        self.ui_pulse = PulsingUI(700, 50)
+        
+        # All sprites group
+        self.all_sprites = pygame.sprite.Group()
+        self.all_sprites.add(self.walker, self.flyer, self.ui_pulse)
+    
+    def handle_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    # Create explosion effect
+                    explosion = ExplosionEffect(400, 400)
+                    self.effects.append(explosion)
+                elif event.key == pygame.K_o:
+                    self.show_onion_skin = not self.show_onion_skin
+                elif event.key == pygame.K_h:
+                    self.show_hitboxes = not self.show_hitboxes
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                # Create click effect
+                click_effect = ClickEffect(*pygame.mouse.get_pos())
+                self.effects.append(click_effect)
+        
+        return True
+    
+    def update(self, dt):
+        # Update all sprites
+        self.all_sprites.update(dt)
+        
+        # Update effects
+        for effect in self.effects[:]:
+            effect.update(dt)
+            if effect.finished:
+                self.effects.remove(effect)
+        
+        # Handle input for walker
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT]:
+            self.walker.move_left()
+        elif keys[pygame.K_RIGHT]:
+            self.walker.move_right()
+        else:
+            self.walker.stop()
+        
+        if keys[pygame.K_UP]:
+            self.walker.jump()
+    
+    def draw(self):
+        self.screen.fill((30, 30, 40))
+        
+        # Draw ground
+        pygame.draw.line(self.screen, (100, 100, 100), 
+                        (0, 450), (800, 450), 3)
+        
+        # Draw sprites with optional onion skinning
+        if self.show_onion_skin:
+            self.draw_onion_skin()
+        
+        # Draw all sprites
+        self.all_sprites.draw(self.screen)
+        
+        # Draw effects
+        for effect in self.effects:
+            effect.draw(self.screen)
+        
+        # Draw hitboxes if enabled
+        if self.show_hitboxes:
+            self.draw_hitboxes()
+        
+        # Draw UI
+        self.draw_ui()
+    
+    def draw_onion_skin(self):
+        """Draw previous frames with transparency"""
+        for sprite in self.all_sprites:
+            if hasattr(sprite, 'get_onion_frames'):
+                frames = sprite.get_onion_frames()
+                for i, (image, pos) in enumerate(frames):
+                    alpha = 50 + i * 30
+                    temp = image.copy()
+                    temp.set_alpha(alpha)
+                    self.screen.blit(temp, pos)
+    
+    def draw_hitboxes(self):
+        """Draw collision boxes"""
+        for sprite in self.all_sprites:
+            pygame.draw.rect(self.screen, (255, 0, 0), sprite.rect, 2)
+            
+            if hasattr(sprite, 'hit_rect'):
+                pygame.draw.rect(self.screen, (0, 255, 0), sprite.hit_rect, 1)
+    
+    def draw_ui(self):
+        font = pygame.font.Font(None, 24)
+        texts = [
+            "Space: Explosion Effect",
+            "Click: Ripple Effect",
+            "O: Toggle Onion Skin",
+            "H: Toggle Hitboxes",
+            "Arrow Keys: Move Character"
+        ]
+        
+        for i, text in enumerate(texts):
+            rendered = font.render(text, True, (255, 255, 255))
+            self.screen.blit(rendered, (10, 10 + i * 30))
+    
+    def run(self):
+        running = True
+        dt = 0
+        
+        while running:
+            running = self.handle_events()
+            self.update(dt)
+            self.draw()
+            pygame.display.flip()
+            dt = self.clock.tick(60) / 1000.0  # Delta time in seconds
+        
+        pygame.quit()
+
+# Sprite classes
+class WalkingCharacter(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.animations = {}
+        self.create_animations()
+        self.current_animation = 'idle'
+        self.image = self.animations['idle'].get_frame()
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.velocity_x = 0
+        self.direction = 1
+        self.frame_history = []
+        
+    def create_animations(self):
+        """Create procedural animations"""
+        # Create simple colored rectangles as frames
+        idle_frames = []
+        for i in range(4):
+            surf = pygame.Surface((40, 60), pygame.SRCALPHA)
+            color = (100, 150 + i * 10, 255)
+            pygame.draw.rect(surf, color, (5, 10, 30, 40))
+            pygame.draw.circle(surf, (255, 200, 150), (20, 15), 8)
+            idle_frames.append(surf)
+        
+        walk_frames = []
+        for i in range(6):
+            surf = pygame.Surface((40, 60), pygame.SRCALPHA)
+            color = (100, 255, 150)
+            offset = math.sin(i * math.pi / 3) * 3
+            pygame.draw.rect(surf, color, (5, 10 + offset, 30, 40))
+            pygame.draw.circle(surf, (255, 200, 150), (20, 15 + offset), 8)
+            walk_frames.append(surf)
+        
+        self.animations['idle'] = SimpleAnimation(idle_frames, 200)
+        self.animations['walk'] = SimpleAnimation(walk_frames, 100)
+    
+    def update(self, dt):
+        # Update animation
+        old_image = self.image
+        self.animations[self.current_animation].update(dt)
+        self.image = self.animations[self.current_animation].get_frame()
+        
+        # Flip based on direction
+        if self.direction < 0:
+            self.image = pygame.transform.flip(self.image, True, False)
+        
+        # Store frame history for onion skinning
+        self.frame_history.append((old_image, self.rect.copy()))
+        if len(self.frame_history) > 3:
+            self.frame_history.pop(0)
+        
+        # Move
+        self.rect.x += self.velocity_x
+    
+    def move_left(self):
+        self.velocity_x = -3
+        self.direction = -1
+        self.current_animation = 'walk'
+    
+    def move_right(self):
+        self.velocity_x = 3
+        self.direction = 1
+        self.current_animation = 'walk'
+    
+    def stop(self):
+        self.velocity_x = 0
+        self.current_animation = 'idle'
+    
+    def jump(self):
+        # Simple jump animation trigger
+        pass
+    
+    def get_onion_frames(self):
+        return self.frame_history
+
+class FlyingCreature(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.create_animation()
+        self.image = self.frames[0]
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.base_y = y
+        self.time = 0
+        self.current_frame = 0
+        self.frame_timer = 0
+        
+    def create_animation(self):
+        """Create wing flapping animation"""
+        self.frames = []
+        for i in range(4):
+            surf = pygame.Surface((60, 40), pygame.SRCALPHA)
+            # Body
+            pygame.draw.ellipse(surf, (150, 100, 200), (20, 15, 20, 10))
+            # Wings
+            wing_angle = math.sin(i * math.pi / 2) * 20
+            pygame.draw.ellipse(surf, (200, 150, 255), 
+                              (5, 20 - wing_angle, 15, 8))
+            pygame.draw.ellipse(surf, (200, 150, 255), 
+                              (40, 20 - wing_angle, 15, 8))
+            self.frames.append(surf)
+    
+    def update(self, dt):
+        # Animate
+        self.frame_timer += dt
+        if self.frame_timer >= 100:
+            self.frame_timer = 0
+            self.current_frame = (self.current_frame + 1) % len(self.frames)
+            self.image = self.frames[self.current_frame]
+        
+        # Float motion
+        self.time += dt / 1000
+        self.rect.y = self.base_y + math.sin(self.time * 2) * 30
+
+class PulsingUI(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.base_size = 40
+        self.image = pygame.Surface((60, 60), pygame.SRCALPHA)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        self.pulse_time = 0
+        
+    def update(self, dt):
+        self.pulse_time += dt / 1000
+        
+        # Clear and redraw with pulsing effect
+        self.image.fill((0, 0, 0, 0))
+        size = self.base_size + math.sin(self.pulse_time * 3) * 10
+        color_intensity = 200 + math.sin(self.pulse_time * 3) * 55
+        
+        pygame.draw.circle(self.image, (color_intensity, 100, 100), 
+                         (30, 30), int(size / 2))
+
+class ExplosionEffect:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.radius = 0
+        self.max_radius = 100
+        self.growth_speed = 300
+        self.finished = False
+        
+    def update(self, dt):
+        self.radius += self.growth_speed * dt / 1000
+        if self.radius >= self.max_radius:
+            self.finished = True
+    
+    def draw(self, screen):
+        if not self.finished:
+            alpha = 1 - (self.radius / self.max_radius)
+            color = (255, 200 * alpha, 100 * alpha)
+            if self.radius > 0:
+                pygame.draw.circle(screen, color, (int(self.x), int(self.y)), 
+                                 int(self.radius), 3)
+
+class ClickEffect:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.rings = [(0, 255)]  # (radius, alpha)
+        self.finished = False
+        
+    def update(self, dt):
+        new_rings = []
+        for radius, alpha in self.rings:
+            radius += 100 * dt / 1000
+            alpha -= 200 * dt / 1000
+            if alpha > 0:
+                new_rings.append((radius, alpha))
+        
+        self.rings = new_rings
+        if not self.rings:
+            self.finished = True
+    
+    def draw(self, screen):
+        for radius, alpha in self.rings:
+            surf = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
+            pygame.draw.circle(surf, (100, 150, 255, min(255, int(alpha))), 
+                             (radius, radius), int(radius), 2)
+            screen.blit(surf, (self.x - radius, self.y - radius))
+
+class SimpleAnimation:
+    def __init__(self, frames, frame_duration):
+        self.frames = frames
+        self.frame_duration = frame_duration
+        self.current_frame = 0
+        self.timer = 0
+        
+    def update(self, dt):
+        self.timer += dt
+        if self.timer >= self.frame_duration:
+            self.timer = 0
+            self.current_frame = (self.current_frame + 1) % len(self.frames)
+    
+    def get_frame(self):
+        return self.frames[self.current_frame]
+
+if __name__ == "__main__":
+    demo = CompleteAnimationDemo()
+    demo.run()</code></pre>
+
+    <h2>Animation Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Performance Tips</h3>
+        <ul>
+            <li><strong>Use Sprite Sheets:</strong> Load once, use subsurfaces</li>
+            <li><strong>Cache Transformations:</strong> Don't rotate/scale every frame</li>
+            <li><strong>Limit Active Animations:</strong> Pause off-screen animations</li>
+            <li><strong>Frame Rate Independence:</strong> Use delta time for timing</li>
+            <li><strong>Optimize Frame Count:</strong> Balance smoothness vs memory</li>
+            <li><strong>Pool Animation Objects:</strong> Reuse completed animations</li>
+        </ul>
+    </div>
+
+    <h2>Common Animation Principles</h2>
+    
+    <div style="background-color: #f0fff4; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎨 Making Animations Feel Good</h3>
+        <ul>
+            <li><strong>Anticipation:</strong> Prepare for action (crouch before jump)</li>
+            <li><strong>Follow Through:</strong> Continue motion after main action</li>
+            <li><strong>Squash & Stretch:</strong> Deform on impact/acceleration</li>
+            <li><strong>Timing:</strong> Fast actions feel powerful, slow feels heavy</li>
+            <li><strong>Secondary Motion:</strong> Hair, clothes, particles follow main motion</li>
+            <li><strong>Exaggeration:</strong> Push poses beyond realistic for impact</li>
+        </ul>
+    </div>
+
+    <h2>Practice Exercises</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎯 Animation Challenges!</h3>
+        <ol>
+            <li><strong>Walk Cycle:</strong> Create smooth 8-frame walk animation</li>
+            <li><strong>State Machine:</strong> Character with idle, walk, run, jump, attack</li>
+            <li><strong>Combo System:</strong> Chain animations based on input timing</li>
+            <li><strong>Procedural Animation:</strong> Generate animations programmatically</li>
+            <li><strong>Cutscene System:</strong> Sequence multiple animations with events</li>
+            <li><strong>Animation Editor:</strong> Tool to preview and adjust animation timing</li>
+        </ol>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>🎬 Animation is about timing and smooth transitions</li>
+            <li>⏱️ Use delta time for consistent animation speed</li>
+            <li>🔄 State machines organize complex animation logic</li>
+            <li>📊 Cache transformed frames for better performance</li>
+            <li>🎨 Follow animation principles for better feel</li>
+            <li>🔧 Separate animation logic from game logic</li>
+            <li>💫 Small details like blinking add life to characters</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you can animate individual sprites, next we'll learn about sprite sheets - the efficient way to store and manage multiple animation frames in a single image!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="sprite_loading_images.html" class="prev-lesson" aria-label="Previous lesson: Loading Images">Previous Lesson: Loading and Displaying Images</a>
+        <a href="sprite_sheets.html" class="next-lesson" aria-label="Next lesson: Sprite Sheets">Next Lesson: Sprite Sheets</a>
+    </nav>
+    
+    </main>
+</body>
+</html>

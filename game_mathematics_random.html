@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master random generation techniques for game development. Learn about RNG, seeds, distributions, noise functions, and procedural content generation.">
+    <title>Random Generation for Games - Game Mathematics</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script src="/js/course-enhancements.js" defer></script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Random Generation for Games</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Section 2: Game Mathematics - Lesson 5</span>
+    </nav>
+
+    <h2>Creating Variety and Surprise</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Randomness is the spice of gaming! It creates variety, replayability, and surprise. From loot drops to procedural worlds, understanding controlled randomness is essential for creating engaging games. Let's explore how to harness chaos for fun! 🎲🌟</p>
+    </div>
+
+    <h2>Understanding Randomness in Games</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎰 The Casino Analogy</h3>
+        <p>Think of randomness in games like a casino:</p>
+        <ul>
+            <li><strong>True Random:</strong> Like a perfectly fair dice - unpredictable</li>
+            <li><strong>Pseudo-Random:</strong> Like a shuffled deck - appears random but deterministic</li>
+            <li><strong>Weighted Random:</strong> Like loaded dice - biased outcomes</li>
+            <li><strong>Controlled Random:</strong> Like card counting - managing randomness</li>
+            <li><strong>Seeded Random:</strong> Like using the same deck - reproducible results</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Random Generation"] --> B["Basic Random"]
+        A --> C["Distributions"]
+        A --> D["Noise Functions"]
+        A --> E["Procedural Generation"]
+        B --> F["Uniform Random"]
+        B --> G["Seeded Random"]
+        C --> H["Gaussian/Normal"]
+        C --> I["Weighted"]
+        D --> J["Perlin Noise"]
+        D --> K["Simplex Noise"]
+        E --> L["Terrain"]
+        E --> M["Dungeons"]
+    </div>
+
+    <h2>Interactive Random Visualizer</h2>
+    
+    <div class="canvas-wrapper">
+        <canvas id="randomCanvas" width="600" height="400"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Visualize different random distributions and patterns!</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; max-width: 600px; margin: 10px auto;">
+            <button onclick="setRandomMode('uniform')">Uniform</button>
+            <button onclick="setRandomMode('gaussian')">Gaussian</button>
+            <button onclick="setRandomMode('weighted')">Weighted</button>
+            <button onclick="setRandomMode('perlin')">Perlin Noise</button>
+            <button onclick="setRandomMode('random-walk')">Random Walk</button>
+            <button onclick="setRandomMode('poisson')">Poisson Disk</button>
+        </div>
+        <button onclick="regenerate()" style="margin-top: 10px;">Regenerate</button>
+        <div style="margin-top: 10px;">
+            <label>Seed: <input type="number" id="seedInput" value="12345" onchange="updateSeed(this.value)"></label>
+            <button onclick="randomizeSeed()">Random Seed</button>
+        </div>
+        <p>Mode: <strong id="modeDisplay">Uniform</strong></p>
+    </div>
+
+    <script>
+        const randomCanvas = document.getElementById('randomCanvas');
+        const rCtx = randomCanvas.getContext('2d');
+        const modeDisplay = document.getElementById('modeDisplay');
+        const seedInput = document.getElementById('seedInput');
+        
+        let currentMode = 'uniform';
+        let currentSeed = 12345;
+        let points = [];
+        let noiseGrid = [];
+        
+        // Simple seeded random (mulberry32)
+        function mulberry32(seed) {
+            return function() {
+                let t = seed += 0x6D2B79F5;
+                t = Math.imul(t ^ t >>> 15, t | 1);
+                t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+                return ((t ^ t >>> 14) >>> 0) / 4294967296;
+            }
+        }
+        
+        let random = mulberry32(currentSeed);
+        
+        function setRandomMode(mode) {
+            currentMode = mode;
+            modeDisplay.textContent = mode.charAt(0).toUpperCase() + mode.slice(1).replace('-', ' ');
+            regenerate();
+        }
+        
+        function updateSeed(seed) {
+            currentSeed = parseInt(seed) || 12345;
+            random = mulberry32(currentSeed);
+            regenerate();
+        }
+        
+        function randomizeSeed() {
+            const newSeed = Math.floor(Math.random() * 1000000);
+            seedInput.value = newSeed;
+            updateSeed(newSeed);
+        }
+        
+        function regenerate() {
+            points = [];
+            noiseGrid = [];
+            
+            switch(currentMode) {
+                case 'uniform':
+                    generateUniform();
+                    break;
+                case 'gaussian':
+                    generateGaussian();
+                    break;
+                case 'weighted':
+                    generateWeighted();
+                    break;
+                case 'perlin':
+                    generatePerlin();
+                    break;
+                case 'random-walk':
+                    generateRandomWalk();
+                    break;
+                case 'poisson':
+                    generatePoissonDisk();
+                    break;
+            }
+            
+            draw();
+        }
+        
+        function generateUniform() {
+            for (let i = 0; i < 500; i++) {
+                points.push({
+                    x: random() * randomCanvas.width,
+                    y: random() * randomCanvas.height,
+                    color: `hsl(${random() * 360}, 70%, 50%)`
+                });
+            }
+        }
+        
+        function generateGaussian() {
+            // Box-Muller transform for Gaussian distribution
+            for (let i = 0; i < 500; i++) {
+                let u1 = random();
+                let u2 = random();
+                let z0 = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+                let z1 = Math.sqrt(-2 * Math.log(u1)) * Math.sin(2 * Math.PI * u2);
+                
+                // Scale and center
+                let x = randomCanvas.width / 2 + z0 * 100;
+                let y = randomCanvas.height / 2 + z1 * 100;
+                
+                points.push({
+                    x: x,
+                    y: y,
+                    color: `hsl(200, 70%, 50%)`
+                });
+            }
+        }
+        
+        function generateWeighted() {
+            const weights = [
+                { x: 150, y: 200, weight: 3, color: 'hsl(0, 70%, 50%)' },
+                { x: 300, y: 150, weight: 2, color: 'hsl(120, 70%, 50%)' },
+                { x: 450, y: 250, weight: 1, color: 'hsl(240, 70%, 50%)' }
+            ];
+            
+            for (let i = 0; i < 500; i++) {
+                // Choose weighted center
+                let totalWeight = weights.reduce((sum, w) => sum + w.weight, 0);
+                let r = random() * totalWeight;
+                let center = weights[0];
+                let cumWeight = 0;
+                
+                for (let w of weights) {
+                    cumWeight += w.weight;
+                    if (r <= cumWeight) {
+                        center = w;
+                        break;
+                    }
+                }
+                
+                // Generate point around center
+                let angle = random() * Math.PI * 2;
+                let radius = random() * 50;
+                
+                points.push({
+                    x: center.x + Math.cos(angle) * radius,
+                    y: center.y + Math.sin(angle) * radius,
+                    color: center.color
+                });
+            }
+        }
+        
+        function generatePerlin() {
+            // Simple Perlin-like noise visualization
+            const scale = 0.02;
+            const gridSize = 5;
+            
+            for (let x = 0; x < randomCanvas.width; x += gridSize) {
+                for (let y = 0; y < randomCanvas.height; y += gridSize) {
+                    let noise = simplexNoise2D(x * scale, y * scale);
+                    let brightness = (noise + 1) / 2; // Normalize to 0-1
+                    
+                    noiseGrid.push({
+                        x: x,
+                        y: y,
+                        size: gridSize,
+                        brightness: brightness
+                    });
+                }
+            }
+        }
+        
+        function generateRandomWalk() {
+            let x = randomCanvas.width / 2;
+            let y = randomCanvas.height / 2;
+            let hue = 0;
+            
+            for (let i = 0; i < 1000; i++) {
+                points.push({
+                    x: x,
+                    y: y,
+                    color: `hsl(${hue}, 70%, 50%)`
+                });
+                
+                // Random step
+                let angle = random() * Math.PI * 2;
+                let stepSize = random() * 5 + 2;
+                x += Math.cos(angle) * stepSize;
+                y += Math.sin(angle) * stepSize;
+                
+                // Wrap around
+                x = (x + randomCanvas.width) % randomCanvas.width;
+                y = (y + randomCanvas.height) % randomCanvas.height;
+                
+                hue = (hue + 1) % 360;
+            }
+        }
+        
+        function generatePoissonDisk() {
+            // Simplified Poisson disk sampling
+            const radius = 20;
+            const k = 30; // attempts before rejection
+            const grid = [];
+            const active = [];
+            const cellSize = radius / Math.sqrt(2);
+            
+            // Initialize grid
+            const cols = Math.ceil(randomCanvas.width / cellSize);
+            const rows = Math.ceil(randomCanvas.height / cellSize);
+            
+            for (let i = 0; i < cols * rows; i++) {
+                grid[i] = null;
+            }
+            
+            // Start with random point
+            let x = random() * randomCanvas.width;
+            let y = random() * randomCanvas.height;
+            let pos = {x: x, y: y};
+            let gridIndex = Math.floor(x / cellSize) + Math.floor(y / cellSize) * cols;
+            
+            points.push({x: x, y: y, color: 'hsl(300, 70%, 50%)'});
+            grid[gridIndex] = pos;
+            active.push(pos);
+            
+            // Generate points
+            while (active.length > 0 && points.length < 200) {
+                let randIndex = Math.floor(random() * active.length);
+                let pos = active[randIndex];
+                let found = false;
+                
+                for (let n = 0; n < k; n++) {
+                    let angle = random() * Math.PI * 2;
+                    let dist = radius + random() * radius;
+                    let newX = pos.x + Math.cos(angle) * dist;
+                    let newY = pos.y + Math.sin(angle) * dist;
+                    
+                    if (newX >= 0 && newX < randomCanvas.width && 
+                        newY >= 0 && newY < randomCanvas.height) {
+                        
+                        let col = Math.floor(newX / cellSize);
+                        let row = Math.floor(newY / cellSize);
+                        let gridIndex = col + row * cols;
+                        
+                        if (!grid[gridIndex]) {
+                            // Check neighbors
+                            let ok = true;
+                            for (let i = -1; i <= 1; i++) {
+                                for (let j = -1; j <= 1; j++) {
+                                    let index = (col + i) + (row + j) * cols;
+                                    if (grid[index]) {
+                                        let d = Math.hypot(newX - grid[index].x, newY - grid[index].y);
+                                        if (d < radius) {
+                                            ok = false;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (!ok) break;
+                            }
+                            
+                            if (ok) {
+                                found = true;
+                                let newPos = {x: newX, y: newY};
+                                grid[gridIndex] = newPos;
+                                active.push(newPos);
+                                points.push({x: newX, y: newY, color: 'hsl(300, 70%, 50%)'});
+                            }
+                        }
+                    }
+                }
+                
+                if (!found) {
+                    active.splice(randIndex, 1);
+                }
+            }
+        }
+        
+        // Simple 2D noise function
+        function simplexNoise2D(x, y) {
+            // Very simplified noise - not true Perlin/Simplex
+            let n = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
+            return (n - Math.floor(n)) * 2 - 1;
+        }
+        
+        function draw() {
+            // Clear canvas
+            rCtx.fillStyle = '#1a1a1a';
+            rCtx.fillRect(0, 0, randomCanvas.width, randomCanvas.height);
+            
+            // Draw noise grid if applicable
+            if (noiseGrid.length > 0) {
+                for (let cell of noiseGrid) {
+                    let gray = Math.floor(cell.brightness * 255);
+                    rCtx.fillStyle = `rgb(${gray}, ${gray}, ${gray})`;
+                    rCtx.fillRect(cell.x, cell.y, cell.size, cell.size);
+                }
+            }
+            
+            // Draw points
+            for (let point of points) {
+                rCtx.fillStyle = point.color || '#4caf50';
+                rCtx.beginPath();
+                rCtx.arc(point.x, point.y, 2, 0, Math.PI * 2);
+                rCtx.fill();
+            }
+            
+            // Draw additional visualizations based on mode
+            if (currentMode === 'weighted') {
+                // Draw weight centers
+                const centers = [
+                    { x: 150, y: 200 },
+                    { x: 300, y: 150 },
+                    { x: 450, y: 250 }
+                ];
+                
+                for (let center of centers) {
+                    rCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                    rCtx.beginPath();
+                    rCtx.arc(center.x, center.y, 50, 0, Math.PI * 2);
+                    rCtx.stroke();
+                }
+            }
+            
+            // Draw info
+            rCtx.fillStyle = 'white';
+            rCtx.font = '12px Arial';
+            rCtx.fillText(`Seed: ${currentSeed}`, 10, 20);
+            rCtx.fillText(`Points: ${points.length}`, 10, 35);
+        }
+        
+        // Initial generation
+        regenerate();
+    </script>
+
+    <h2>Basic Random Number Generation</h2>
+    
+    <pre class="language-python"><code>import random
+
+# Basic random functions
+random_float = random.random()           # 0.0 to 1.0
+random_int = random.randint(1, 6)       # 1 to 6 (inclusive)
+random_range = random.randrange(0, 100, 5)  # 0, 5, 10, ..., 95
+random_choice = random.choice(['sword', 'shield', 'potion'])
+
+# Set seed for reproducibility
+random.seed(12345)  # Same seed = same sequence
+
+# Random with probability
+def weighted_choice(choices):
+    """choices = [(item, weight), ...]"""
+    total = sum(weight for item, weight in choices)
+    r = random.uniform(0, total)
+    upto = 0
+    for item, weight in choices:
+        upto += weight
+        if r <= upto:
+            return item
+    return choices[-1][0]
+
+# Example: Loot table
+loot_table = [
+    ('common', 60),
+    ('uncommon', 30),
+    ('rare', 9),
+    ('legendary', 1)
+]
+rarity = weighted_choice(loot_table)</code></pre>
+
+    <h2>Random Distributions</h2>
+    
+    <pre class="language-python"><code>import random
+import math
+
+class RandomDistributions:
+    @staticmethod
+    def uniform(min_val, max_val):
+        """Equal probability for all values"""
+        return random.uniform(min_val, max_val)
+    
+    @staticmethod
+    def gaussian(mean, std_dev):
+        """Bell curve distribution"""
+        return random.gauss(mean, std_dev)
+    
+    @staticmethod
+    def exponential(rate=1.0):
+        """Decay distribution - good for spawn timers"""
+        return random.expovariate(rate)
+    
+    @staticmethod
+    def triangular(low, high, peak):
+        """Triangle-shaped distribution"""
+        return random.triangular(low, high, peak)
+    
+    @staticmethod
+    def beta_distribution(alpha, beta):
+        """Flexible distribution between 0 and 1"""
+        return random.betavariate(alpha, beta)
+    
+    @staticmethod
+    def pareto(alpha):
+        """Power law - few large values, many small"""
+        return random.paretovariate(alpha)
+
+# Custom distributions
+def biased_random(bias=2):
+    """Returns 0-1 biased towards 0 or 1"""
+    r = random.random()
+    if bias > 1:
+        # Bias towards 1
+        return r ** (1/bias)
+    else:
+        # Bias towards 0
+        return 1 - (1 - r) ** bias
+
+def random_in_circle(radius):
+    """Uniform random point in circle"""
+    # Simple but wrong: clustering in center
+    # angle = random.uniform(0, 2 * math.pi)
+    # r = random.uniform(0, radius)
+    
+    # Correct: uniform distribution
+    angle = random.uniform(0, 2 * math.pi)
+    r = math.sqrt(random.random()) * radius
+    x = r * math.cos(angle)
+    y = r * math.sin(angle)
+    return (x, y)
+
+def random_on_circle(radius):
+    """Random point on circle perimeter"""
+    angle = random.uniform(0, 2 * math.pi)
+    x = radius * math.cos(angle)
+    y = radius * math.sin(angle)
+    return (x, y)</code></pre>
+
+    <h2>Controlled Randomness</h2>
+    
+    <pre class="language-python"><code>class DiceRoller:
+    """Dice with guaranteed distribution over time"""
+    def __init__(self, sides=6):
+        self.sides = sides
+        self.history = []
+        self.max_history = sides * 3
+    
+    def roll(self):
+        """Roll with bias against recent results"""
+        weights = [1.0] * self.sides
+        
+        # Reduce weight of recent results
+        for past_roll in self.history[-self.sides:]:
+            weights[past_roll - 1] *= 0.5
+        
+        # Weighted random choice
+        total = sum(weights)
+        r = random.uniform(0, total)
+        cumsum = 0
+        
+        for i, weight in enumerate(weights):
+            cumsum += weight
+            if r <= cumsum:
+                result = i + 1
+                self.history.append(result)
+                if len(self.history) > self.max_history:
+                    self.history.pop(0)
+                return result
+        
+        return self.sides
+
+class LootBag:
+    """Guaranteed drops without repetition"""
+    def __init__(self, items):
+        self.items = items[:]
+        self.available = items[:]
+    
+    def get_item(self):
+        if not self.available:
+            self.available = self.items[:]
+            random.shuffle(self.available)
+        return self.available.pop()
+
+class PitySystem:
+    """Increase chance until success"""
+    def __init__(self, base_chance=0.01, increase=0.01):
+        self.base_chance = base_chance
+        self.increase = increase
+        self.current_chance = base_chance
+    
+    def try_drop(self):
+        if random.random() < self.current_chance:
+            self.current_chance = self.base_chance
+            return True
+        else:
+            self.current_chance += self.increase
+            return False</code></pre>
+
+    <h2>Noise Functions</h2>
+    
+    <pre class="language-python"><code>import math
+import random
+
+class NoiseGenerator:
+    def __init__(self, seed=None):
+        if seed:
+            random.seed(seed)
+        
+        # Create permutation table
+        self.perm = list(range(256))
+        random.shuffle(self.perm)
+        self.perm = self.perm + self.perm  # Duplicate for wrapping
+    
+    def fade(self, t):
+        """Fade function for smooth interpolation"""
+        return t * t * t * (t * (t * 6 - 15) + 10)
+    
+    def lerp(self, t, a, b):
+        """Linear interpolation"""
+        return a + t * (b - a)
+    
+    def grad1d(self, hash_val, x):
+        """1D gradient function"""
+        return x if hash_val & 1 else -x
+    
+    def noise1d(self, x):
+        """1D Perlin noise"""
+        # Find unit interval
+        xi = int(math.floor(x)) & 255
+        xf = x - math.floor(x)
+        
+        # Fade for smoothing
+        u = self.fade(xf)
+        
+        # Hash and interpolate
+        a = self.perm[xi]
+        b = self.perm[xi + 1]
+        
+        return self.lerp(u, self.grad1d(a, xf), 
+                        self.grad1d(b, xf - 1))
+    
+    def octave_noise1d(self, x, octaves=4, persistence=0.5):
+        """Layered noise for more detail"""
+        total = 0
+        amplitude = 1
+        max_value = 0
+        frequency = 1
+        
+        for _ in range(octaves):
+            total += self.noise1d(x * frequency) * amplitude
+            max_value += amplitude
+            amplitude *= persistence
+            frequency *= 2
+        
+        return total / max_value
+
+class ValueNoise2D:
+    """Simple 2D value noise"""
+    def __init__(self, width, height, scale=20):
+        self.width = width
+        self.height = height
+        self.scale = scale
+        self.values = {}
+    
+    def get_noise(self, x, y):
+        """Get noise value at integer coordinates"""
+        key = (x, y)
+        if key not in self.values:
+            random.seed(hash(key))
+            self.values[key] = random.random()
+        return self.values[key]
+    
+    def smooth_noise(self, x, y):
+        """Interpolated noise value"""
+        int_x = int(x)
+        int_y = int(y)
+        frac_x = x - int_x
+        frac_y = y - int_y
+        
+        # Get corner values
+        v1 = self.get_noise(int_x, int_y)
+        v2 = self.get_noise(int_x + 1, int_y)
+        v3 = self.get_noise(int_x, int_y + 1)
+        v4 = self.get_noise(int_x + 1, int_y + 1)
+        
+        # Interpolate
+        i1 = self.cosine_interp(v1, v2, frac_x)
+        i2 = self.cosine_interp(v3, v4, frac_x)
+        
+        return self.cosine_interp(i1, i2, frac_y)
+    
+    def cosine_interp(self, a, b, x):
+        """Smooth interpolation"""
+        ft = x * math.pi
+        f = (1 - math.cos(ft)) * 0.5
+        return a * (1 - f) + b * f
+    
+    def generate_map(self):
+        """Generate full noise map"""
+        noise_map = []
+        for y in range(self.height):
+            row = []
+            for x in range(self.width):
+                noise_val = self.smooth_noise(x / self.scale, 
+                                             y / self.scale)
+                row.append(noise_val)
+            noise_map.append(row)
+        return noise_map</code></pre>
+
+    <h2>Procedural Generation</h2>
+    
+    <pre class="language-python"><code>class ProceduralDungeon:
+    def __init__(self, width, height, seed=None):
+        self.width = width
+        self.height = height
+        if seed:
+            random.seed(seed)
+        
+        # Initialize with walls
+        self.tiles = [['#' for _ in range(width)] for _ in range(height)]
+        self.rooms = []
+    
+    def generate(self, num_rooms=10, min_size=4, max_size=10):
+        """Generate dungeon with rooms and corridors"""
+        
+        for _ in range(num_rooms):
+            # Random room size and position
+            w = random.randint(min_size, max_size)
+            h = random.randint(min_size, max_size)
+            x = random.randint(1, self.width - w - 1)
+            y = random.randint(1, self.height - h - 1)
+            
+            room = {'x': x, 'y': y, 'w': w, 'h': h}
+            
+            # Check for overlaps
+            if not any(self.rooms_overlap(room, other) for other in self.rooms):
+                self.carve_room(room)
+                
+                # Connect to previous room
+                if self.rooms:
+                    prev = self.rooms[-1]
+                    self.carve_corridor(
+                        room['x'] + room['w'] // 2,
+                        room['y'] + room['h'] // 2,
+                        prev['x'] + prev['w'] // 2,
+                        prev['y'] + prev['h'] // 2
+                    )
+                
+                self.rooms.append(room)
+    
+    def rooms_overlap(self, r1, r2):
+        """Check if two rooms overlap"""
+        return (r1['x'] < r2['x'] + r2['w'] and
+                r1['x'] + r1['w'] > r2['x'] and
+                r1['y'] < r2['y'] + r2['h'] and
+                r1['y'] + r1['h'] > r2['y'])
+    
+    def carve_room(self, room):
+        """Carve out a room"""
+        for y in range(room['y'], room['y'] + room['h']):
+            for x in range(room['x'], room['x'] + room['w']):
+                self.tiles[y][x] = '.'
+    
+    def carve_corridor(self, x1, y1, x2, y2):
+        """Carve corridor between two points"""
+        # Horizontal first, then vertical
+        if random.random() < 0.5:
+            self.carve_h_tunnel(x1, x2, y1)
+            self.carve_v_tunnel(y1, y2, x2)
+        else:
+            self.carve_v_tunnel(y1, y2, x1)
+            self.carve_h_tunnel(x1, x2, y2)
+    
+    def carve_h_tunnel(self, x1, x2, y):
+        """Carve horizontal tunnel"""
+        for x in range(min(x1, x2), max(x1, x2) + 1):
+            self.tiles[y][x] = '.'
+    
+    def carve_v_tunnel(self, y1, y2, x):
+        """Carve vertical tunnel"""
+        for y in range(min(y1, y2), max(y1, y2) + 1):
+            self.tiles[y][x] = '.'
+
+class WaveFunction Collapse:
+    """Simple WFC for tile-based generation"""
+    def __init__(self, tile_rules):
+        self.tile_rules = tile_rules  # What can be adjacent
+        
+    def generate(self, width, height):
+        # Simplified WFC implementation
+        grid = [[None for _ in range(width)] for _ in range(height)]
+        
+        # Start with random tile
+        start_x = width // 2
+        start_y = height // 2
+        grid[start_y][start_x] = random.choice(list(self.tile_rules.keys()))
+        
+        # Propagate constraints
+        # (Full WFC is complex - this is simplified)
+        for y in range(height):
+            for x in range(width):
+                if grid[y][x] is None:
+                    possible = self.get_valid_tiles(grid, x, y)
+                    if possible:
+                        grid[y][x] = random.choice(possible)
+        
+        return grid
+    
+    def get_valid_tiles(self, grid, x, y):
+        """Get tiles that can be placed at position"""
+        possible = set(self.tile_rules.keys())
+        
+        # Check neighbors
+        neighbors = [
+            (x-1, y), (x+1, y),
+            (x, y-1), (x, y+1)
+        ]
+        
+        for nx, ny in neighbors:
+            if 0 <= nx < len(grid[0]) and 0 <= ny < len(grid):
+                neighbor_tile = grid[ny][nx]
+                if neighbor_tile:
+                    # Filter based on rules
+                    valid = self.tile_rules[neighbor_tile]
+                    possible = possible.intersection(valid)
+        
+        return list(possible)</code></pre>
+
+    <h2>Random in Game Systems</h2>
+    
+    <pre class="language-python"><code>class CriticalHitSystem:
+    """Critical hits with pseudo-random distribution"""
+    def __init__(self, base_chance=0.25):
+        self.base_chance = base_chance
+        self.c = self._calculate_c()
+        self.counter = 0
+    
+    def _calculate_c(self):
+        """Calculate PRD constant"""
+        # Approximation for PRD
+        p = self.base_chance
+        if p <= 0:
+            return 0
+        return p * 0.75  # Simplified
+    
+    def check_crit(self):
+        """Check if attack is critical"""
+        self.counter += 1
+        chance = min(1.0, self.c * self.counter)
+        
+        if random.random() < chance:
+            self.counter = 0
+            return True
+        return False
+
+class RandomEncounter:
+    """Random encounters with increasing probability"""
+    def __init__(self, base_steps=20):
+        self.base_steps = base_steps
+        self.steps_since_encounter = 0
+    
+    def step(self):
+        """Take a step, check for encounter"""
+        self.steps_since_encounter += 1
+        
+        # Probability increases with steps
+        chance = self.steps_since_encounter / self.base_steps
+        
+        if random.random() < chance:
+            self.steps_since_encounter = 0
+            return True
+        return False
+
+class RandomSpawner:
+    """Spawn enemies with controlled randomness"""
+    def __init__(self, spawn_points):
+        self.spawn_points = spawn_points
+        self.last_spawn = None
+        self.spawn_cooldown = {}
+    
+    def get_spawn_point(self):
+        """Get random spawn point, avoiding recent ones"""
+        available = [sp for sp in self.spawn_points 
+                    if sp not in self.spawn_cooldown]
+        
+        if not available:
+            # All on cooldown, use oldest
+            oldest = min(self.spawn_cooldown, 
+                        key=self.spawn_cooldown.get)
+            del self.spawn_cooldown[oldest]
+            available = [oldest]
+        
+        spawn = random.choice(available)
+        
+        # Add to cooldown
+        self.spawn_cooldown[spawn] = 3  # 3 spawns before reuse
+        
+        # Decrease all cooldowns
+        for sp in list(self.spawn_cooldown.keys()):
+            self.spawn_cooldown[sp] -= 1
+            if self.spawn_cooldown[sp] <= 0:
+                del self.spawn_cooldown[sp]
+        
+        return spawn</code></pre>
+
+    <h2>Complete Random Generation Demo</h2>
+    
+    <pre class="language-python"><code>import pygame
+import random
+import math
+
+class RandomDemo:
+    def __init__(self):
+        pygame.init()
+        self.screen = pygame.display.set_mode((800, 600))
+        pygame.display.set_caption("Random Generation Demo")
+        self.clock = pygame.time.Clock()
+        
+        # Initialize systems
+        self.seed = random.randint(0, 999999)
+        random.seed(self.seed)
+        
+        # Generate terrain with noise
+        self.terrain = self.generate_terrain()
+        
+        # Generate dungeon
+        self.dungeon = ProceduralDungeon(40, 30, self.seed)
+        self.dungeon.generate()
+        
+        # Particle system with random properties
+        self.particles = []
+        
+        # Loot system
+        self.loot_bag = LootBag(['sword', 'shield', 'potion', 
+                                'gold', 'gem', 'scroll'])
+        
+        # Random walker
+        self.walker_x = 400
+        self.walker_y = 300
+        self.walker_trail = []
+        
+        # Spawn timer
+        self.spawn_timer = 0
+        self.spawn_interval = RandomDistributions.exponential(0.5)
+        
+        # Demo state
+        self.show_terrain = True
+        self.show_dungeon = False
+    
+    def generate_terrain(self):
+        """Generate terrain using layered noise"""
+        noise = ValueNoise2D(80, 60, scale=10)
+        terrain_map = noise.generate_map()
+        
+        # Convert to tiles
+        terrain = []
+        for row in terrain_map:
+            terrain_row = []
+            for value in row:
+                if value < 0.3:
+                    terrain_row.append('water')
+                elif value < 0.5:
+                    terrain_row.append('sand')
+                elif value < 0.7:
+                    terrain_row.append('grass')
+                else:
+                    terrain_row.append('mountain')
+            terrain.append(terrain_row)
+        
+        return terrain
+    
+    def spawn_particle(self):
+        """Spawn particle with random properties"""
+        # Random position on edge
+        edge = random.choice(['top', 'bottom', 'left', 'right'])
+        if edge == 'top':
+            x = random.randint(0, 800)
+            y = 0
+        elif edge == 'bottom':
+            x = random.randint(0, 800)
+            y = 600
+        elif edge == 'left':
+            x = 0
+            y = random.randint(0, 600)
+        else:
+            x = 800
+            y = random.randint(0, 600)
+        
+        # Random velocity towards center with variation
+        center_x = 400 + random.gauss(0, 100)
+        center_y = 300 + random.gauss(0, 100)
+        
+        dx = center_x - x
+        dy = center_y - y
+        dist = math.sqrt(dx*dx + dy*dy)
+        
+        if dist > 0:
+            speed = random.uniform(1, 4)
+            vx = (dx / dist) * speed
+            vy = (dy / dist) * speed
+        else:
+            vx = vy = 0
+        
+        # Random color
+        hue = random.randint(0, 360)
+        color = self.hsv_to_rgb(hue, 0.8, 1.0)
+        
+        # Random lifetime
+        lifetime = random.triangular(0.5, 3, 1.5)
+        
+        self.particles.append({
+            'x': x, 'y': y,
+            'vx': vx, 'vy': vy,
+            'color': color,
+            'lifetime': lifetime,
+            'max_lifetime': lifetime,
+            'size': random.randint(2, 8)
+        })
+    
+    def hsv_to_rgb(self, h, s, v):
+        """Convert HSV to RGB"""
+        h = h / 360.0
+        i = int(h * 6)
+        f = h * 6 - i
+        p = v * (1 - s)
+        q = v * (1 - f * s)
+        t = v * (1 - (1 - f) * s)
+        
+        i = i % 6
+        
+        if i == 0:
+            r, g, b = v, t, p
+        elif i == 1:
+            r, g, b = q, v, p
+        elif i == 2:
+            r, g, b = p, v, t
+        elif i == 3:
+            r, g, b = p, q, v
+        elif i == 4:
+            r, g, b = t, p, v
+        else:
+            r, g, b = v, p, q
+        
+        return (int(r * 255), int(g * 255), int(b * 255))
+    
+    def update_walker(self):
+        """Update random walker"""
+        # Biased random walk
+        dx = random.gauss(0, 2)
+        dy = random.gauss(0, 2)
+        
+        self.walker_x += dx
+        self.walker_y += dy
+        
+        # Keep on screen
+        self.walker_x = max(10, min(790, self.walker_x))
+        self.walker_y = max(10, min(590, self.walker_y))
+        
+        # Add to trail
+        self.walker_trail.append((self.walker_x, self.walker_y))
+        if len(self.walker_trail) > 100:
+            self.walker_trail.pop(0)
+    
+    def handle_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    # Get random loot
+                    loot = self.loot_bag.get_item()
+                    print(f"Got loot: {loot}")
+                elif event.key == pygame.K_r:
+                    # New seed
+                    self.seed = random.randint(0, 999999)
+                    random.seed(self.seed)
+                    self.terrain = self.generate_terrain()
+                    self.dungeon = ProceduralDungeon(40, 30, self.seed)
+                    self.dungeon.generate()
+                elif event.key == pygame.K_t:
+                    self.show_terrain = not self.show_terrain
+                elif event.key == pygame.K_d:
+                    self.show_dungeon = not self.show_dungeon
+        
+        return True
+    
+    def update(self, dt):
+        # Update particles
+        for particle in self.particles[:]:
+            particle['x'] += particle['vx']
+            particle['y'] += particle['vy']
+            particle['lifetime'] -= dt
+            
+            if particle['lifetime'] <= 0:
+                self.particles.remove(particle)
+        
+        # Spawn new particles
+        self.spawn_timer -= dt
+        if self.spawn_timer <= 0:
+            self.spawn_particle()
+            self.spawn_timer = random.expovariate(2)  # Average 0.5 seconds
+        
+        # Update walker
+        self.update_walker()
+    
+    def draw(self):
+        self.screen.fill((20, 20, 20))
+        
+        # Draw terrain
+        if self.show_terrain:
+            tile_size = 10
+            colors = {
+                'water': (50, 100, 200),
+                'sand': (238, 203, 173),
+                'grass': (50, 200, 50),
+                'mountain': (139, 90, 43)
+            }
+            
+            for y, row in enumerate(self.terrain):
+                for x, tile in enumerate(row):
+                    color = colors[tile]
+                    pygame.draw.rect(self.screen, color,
+                                   (x * tile_size, y * tile_size,
+                                    tile_size, tile_size))
+        
+        # Draw dungeon overlay
+        if self.show_dungeon:
+            tile_size = 15
+            for y, row in enumerate(self.dungeon.tiles):
+                for x, tile in enumerate(row):
+                    if tile == '#':
+                        color = (100, 100, 100)
+                    else:
+                        color = (200, 180, 140)
+                    
+                    pygame.draw.rect(self.screen, color,
+                                   (x * tile_size + 200, 
+                                    y * tile_size + 150,
+                                    tile_size - 1, tile_size - 1))
+        
+        # Draw random walker trail
+        if len(self.walker_trail) > 1:
+            for i in range(1, len(self.walker_trail)):
+                alpha = i / len(self.walker_trail)
+                color = (int(255 * alpha), int(100 * alpha), int(100 * alpha))
+                pygame.draw.line(self.screen, color,
+                               self.walker_trail[i-1],
+                               self.walker_trail[i], 2)
+        
+        # Draw walker
+        pygame.draw.circle(self.screen, (255, 100, 100),
+                         (int(self.walker_x), int(self.walker_y)), 5)
+        
+        # Draw particles
+        for particle in self.particles:
+            alpha = particle['lifetime'] / particle['max_lifetime']
+            size = int(particle['size'] * alpha)
+            if size > 0:
+                pygame.draw.circle(self.screen, particle['color'],
+                                 (int(particle['x']), int(particle['y'])),
+                                 size)
+        
+        # Draw info
+        font = pygame.font.Font(None, 24)
+        info = [
+            f"Seed: {self.seed}",
+            f"Particles: {len(self.particles)}",
+            "R: New Seed | T: Terrain | D: Dungeon | Space: Loot"
+        ]
+        
+        for i, text in enumerate(info):
+            rendered = font.render(text, True, (255, 255, 255))
+            self.screen.blit(rendered, (10, 10 + i * 25))
+    
+    def run(self):
+        running = True
+        dt = 0
+        
+        while running:
+            running = self.handle_events()
+            self.update(dt)
+            self.draw()
+            pygame.display.flip()
+            dt = self.clock.tick(60) / 1000.0
+        
+        pygame.quit()
+
+if __name__ == "__main__":
+    demo = RandomDemo()
+    demo.run()</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Random Generation Tips</h3>
+        <ul>
+            <li><strong>Always Use Seeds:</strong> For debugging and reproducibility</li>
+            <li><strong>Avoid True Random:</strong> Use pseudo-random for consistency</li>
+            <li><strong>Control Distribution:</strong> Don't use uniform for everything</li>
+            <li><strong>Test Edge Cases:</strong> Min/max values, empty sets</li>
+            <li><strong>Cache When Possible:</strong> Don't regenerate unchanged content</li>
+            <li><strong>Player Psychology:</strong> Fair ≠ Fun (use controlled random)</li>
+        </ul>
+    </div>
+
+    <h2>Practice Exercises</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎯 Random Generation Challenges!</h3>
+        <ol>
+            <li><strong>Infinite Runner:</strong> Procedurally generate endless level</li>
+            <li><strong>Loot System:</strong> Tiered drops with rarity and affixes</li>
+            <li><strong>Name Generator:</strong> Random names from syllable parts</li>
+            <li><strong>Galaxy Generator:</strong> Star systems with planets</li>
+            <li><strong>Music Generator:</strong> Procedural melodies with rules</li>
+            <li><strong>Roguelike Dungeon:</strong> Complete dungeon with rooms, items, enemies</li>
+        </ol>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>🎲 Pseudo-random is predictable with seeds</li>
+            <li>📊 Different distributions for different needs</li>
+            <li>🎯 Controlled random feels more fair</li>
+            <li>🌊 Noise functions create natural patterns</li>
+            <li>🏗️ Procedural generation saves content creation</li>
+            <li>⚖️ Balance true random with player satisfaction</li>
+            <li>🔧 Always test with multiple seeds</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Congratulations! You've completed the Game Mathematics section! You now have the mathematical tools to create smooth movement, realistic physics, and infinite variety. Next, we'll move into the Intermediate Module where you'll learn about sprite animation, scrolling backgrounds, and more!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="game_mathematics_interpolation.html" class="prev-lesson" aria-label="Previous lesson: Interpolation and Easing">Previous Lesson: Interpolation and Easing</a>
+        <a href="intermediate_intro.html" class="next-lesson" aria-label="Next lesson: Intermediate Module">Next Module: Intermediate Game Development</a>
+    </nav>
+    
+    </main>
+</body>
+</html>

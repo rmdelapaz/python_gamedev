@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master vector operations for game development. Learn vector math, movement, physics, and practical applications in games.">
+    <title>Vector Operations - Game Mathematics</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script src="/js/course-enhancements.js" defer></script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Vector Operations</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Section 2: Game Mathematics - Lesson 2</span>
+    </nav>
+
+    <h2>The Language of Movement and Physics</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Vectors are the mathematical foundation of game movement, physics, and spatial relationships. They represent both position and direction, making them essential for everything from character movement to projectile physics. Let's unlock the power of vectors! 🚀📐</p>
+    </div>
+
+    <h2>What is a Vector?</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🏹 The Arrow Analogy</h3>
+        <p>Think of vectors like arrows:</p>
+        <ul>
+            <li><strong>Magnitude:</strong> The length of the arrow (how far)</li>
+            <li><strong>Direction:</strong> Where the arrow points (which way)</li>
+            <li><strong>Components:</strong> How much the arrow goes in X and Y</li>
+            <li><strong>Operations:</strong> You can add arrows tip-to-tail, scale them, or find angles between them</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Vector"] --> B["Magnitude/Length"]
+        A --> C["Direction/Angle"]
+        A --> D["Components"]
+        D --> E["X Component"]
+        D --> F["Y Component"]
+        B --> G["Speed, Distance, Force"]
+        C --> H["Movement, Aim, Orientation"]
+        E --> I["Horizontal Movement"]
+        F --> J["Vertical Movement"]
+    </div>
+
+    <h2>Basic Vector Class</h2>
+    
+    <pre class="language-python"><code>import math
+
+class Vector2:
+    def __init__(self, x=0, y=0):
+        self.x = x
+        self.y = y
+    
+    def __repr__(self):
+        return f"Vector2({self.x}, {self.y})"
+    
+    def __add__(self, other):
+        """Vector addition"""
+        return Vector2(self.x + other.x, self.y + other.y)
+    
+    def __sub__(self, other):
+        """Vector subtraction"""
+        return Vector2(self.x - other.x, self.y - other.y)
+    
+    def __mul__(self, scalar):
+        """Scalar multiplication"""
+        return Vector2(self.x * scalar, self.y * scalar)
+    
+    def __truediv__(self, scalar):
+        """Scalar division"""
+        return Vector2(self.x / scalar, self.y / scalar)
+    
+    def magnitude(self):
+        """Get the length of the vector"""
+        return math.sqrt(self.x * self.x + self.y * self.y)
+    
+    def normalize(self):
+        """Return a unit vector (length 1) in the same direction"""
+        mag = self.magnitude()
+        if mag == 0:
+            return Vector2(0, 0)
+        return self / mag
+    
+    def dot(self, other):
+        """Dot product - useful for angles and projections"""
+        return self.x * other.x + self.y * other.y
+    
+    def angle(self):
+        """Get angle in radians"""
+        return math.atan2(self.y, self.x)
+    
+    def rotate(self, angle):
+        """Rotate vector by angle (in radians)"""
+        cos_a = math.cos(angle)
+        sin_a = math.sin(angle)
+        new_x = self.x * cos_a - self.y * sin_a
+        new_y = self.x * sin_a + self.y * cos_a
+        return Vector2(new_x, new_y)
+    
+    def distance_to(self, other):
+        """Distance to another vector/point"""
+        return (other - self).magnitude()
+    
+    def to_tuple(self):
+        """Convert to tuple for Pygame"""
+        return (int(self.x), int(self.y))</code></pre>
+
+    <h2>Interactive Vector Playground</h2>
+    
+    <div class="canvas-wrapper">
+        <canvas id="vectorCanvas" width="600" height="400"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Click and drag to create vectors! See operations in real-time.</p>
+        <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 10px;">
+            <button onclick="setVectorMode('create')">Create Vectors</button>
+            <button onclick="setVectorMode('add')">Add Vectors</button>
+            <button onclick="setVectorMode('subtract')">Subtract Vectors</button>
+            <button onclick="clearVectors()">Clear All</button>
+        </div>
+        <div style="margin-top: 10px;">
+            <label>Scale Factor: <input type="range" id="scaleSlider" min="0.1" max="3" step="0.1" value="1" onchange="updateScale(this.value)"> <span id="scaleDisplay">1.0</span></label>
+        </div>
+        <p>Mode: <strong id="modeDisplay">Create Vectors</strong></p>
+    </div>
+
+    <script>
+        const vectorCanvas = document.getElementById('vectorCanvas');
+        const vCtx = vectorCanvas.getContext('2d');
+        const modeDisplay = document.getElementById('modeDisplay');
+        const scaleDisplay = document.getElementById('scaleDisplay');
+        
+        let vectors = [];
+        let currentVector = null;
+        let isDragging = false;
+        let dragStart = {x: 0, y: 0};
+        let mode = 'create';
+        let scaleFactor = 1.0;
+        let selectedVectors = [];
+        
+        class Vector {
+            constructor(startX, startY, endX, endY, color = '#2196f3') {
+                this.start = {x: startX, y: startY};
+                this.end = {x: endX, y: endY};
+                this.color = color;
+            }
+            
+            get x() {
+                return this.end.x - this.start.x;
+            }
+            
+            get y() {
+                return this.end.y - this.start.y;
+            }
+            
+            get magnitude() {
+                return Math.sqrt(this.x * this.x + this.y * this.y);
+            }
+            
+            get angle() {
+                return Math.atan2(this.y, this.x) * 180 / Math.PI;
+            }
+            
+            draw(ctx, label = '') {
+                if (this.magnitude < 1) return;
+                
+                // Draw line
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(this.start.x, this.start.y);
+                ctx.lineTo(this.end.x, this.end.y);
+                ctx.stroke();
+                
+                // Draw arrowhead
+                const angle = Math.atan2(this.y, this.x);
+                const headLength = 15;
+                
+                ctx.beginPath();
+                ctx.moveTo(this.end.x, this.end.y);
+                ctx.lineTo(
+                    this.end.x - headLength * Math.cos(angle - Math.PI/6),
+                    this.end.y - headLength * Math.sin(angle - Math.PI/6)
+                );
+                ctx.moveTo(this.end.x, this.end.y);
+                ctx.lineTo(
+                    this.end.x - headLength * Math.cos(angle + Math.PI/6),
+                    this.end.y - headLength * Math.sin(angle + Math.PI/6)
+                );
+                ctx.stroke();
+                
+                // Draw start point
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.start.x, this.start.y, 5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw label
+                if (label) {
+                    ctx.fillStyle = 'white';
+                    ctx.font = '12px Arial';
+                    const midX = (this.start.x + this.end.x) / 2;
+                    const midY = (this.start.y + this.end.y) / 2;
+                    ctx.fillText(label, midX + 10, midY);
+                }
+                
+                // Draw magnitude and angle
+                ctx.fillStyle = this.color;
+                ctx.font = '10px Arial';
+                ctx.fillText(
+                    `|v| = ${Math.round(this.magnitude)}`,
+                    this.end.x + 10,
+                    this.end.y
+                );
+                ctx.fillText(
+                    `θ = ${Math.round(this.angle)}°`,
+                    this.end.x + 10,
+                    this.end.y + 15
+                );
+            }
+        }
+        
+        function setVectorMode(newMode) {
+            mode = newMode;
+            selectedVectors = [];
+            const modeTexts = {
+                'create': 'Create Vectors',
+                'add': 'Add Vectors (Select 2)',
+                'subtract': 'Subtract Vectors (Select 2)'
+            };
+            modeDisplay.textContent = modeTexts[newMode];
+        }
+        
+        function updateScale(value) {
+            scaleFactor = parseFloat(value);
+            scaleDisplay.textContent = scaleFactor.toFixed(1);
+        }
+        
+        function clearVectors() {
+            vectors = [];
+            selectedVectors = [];
+        }
+        
+        // Mouse events
+        vectorCanvas.addEventListener('mousedown', (e) => {
+            const rect = vectorCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            if (mode === 'create') {
+                isDragging = true;
+                dragStart = {x: x, y: y};
+                currentVector = new Vector(x, y, x, y);
+            } else if (mode === 'add' || mode === 'subtract') {
+                // Check if clicking near a vector
+                for (let v of vectors) {
+                    const distToEnd = Math.hypot(x - v.end.x, y - v.end.y);
+                    if (distToEnd < 20) {
+                        if (selectedVectors.length < 2 && !selectedVectors.includes(v)) {
+                            selectedVectors.push(v);
+                            v.color = '#ff6b6b';
+                        }
+                        break;
+                    }
+                }
+                
+                // Perform operation if 2 vectors selected
+                if (selectedVectors.length === 2) {
+                    const v1 = selectedVectors[0];
+                    const v2 = selectedVectors[1];
+                    
+                    if (mode === 'add') {
+                        // Add vectors
+                        const resultStart = {x: 300, y: 200};
+                        const resultEnd = {
+                            x: resultStart.x + v1.x + v2.x,
+                            y: resultStart.y + v1.y + v2.y
+                        };
+                        vectors.push(new Vector(
+                            resultStart.x, resultStart.y,
+                            resultEnd.x, resultEnd.y,
+                            '#4caf50'
+                        ));
+                    } else if (mode === 'subtract') {
+                        // Subtract v2 from v1
+                        const resultStart = {x: 300, y: 200};
+                        const resultEnd = {
+                            x: resultStart.x + v1.x - v2.x,
+                            y: resultStart.y + v1.y - v2.y
+                        };
+                        vectors.push(new Vector(
+                            resultStart.x, resultStart.y,
+                            resultEnd.x, resultEnd.y,
+                            '#ffeb3b'
+                        ));
+                    }
+                    
+                    // Reset colors
+                    v1.color = '#2196f3';
+                    v2.color = '#2196f3';
+                    selectedVectors = [];
+                }
+            }
+        });
+        
+        vectorCanvas.addEventListener('mousemove', (e) => {
+            if (!isDragging || !currentVector) return;
+            
+            const rect = vectorCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Apply scaling
+            const dx = (x - dragStart.x) * scaleFactor;
+            const dy = (y - dragStart.y) * scaleFactor;
+            
+            currentVector.end.x = dragStart.x + dx;
+            currentVector.end.y = dragStart.y + dy;
+        });
+        
+        vectorCanvas.addEventListener('mouseup', () => {
+            if (isDragging && currentVector && currentVector.magnitude > 10) {
+                vectors.push(currentVector);
+            }
+            isDragging = false;
+            currentVector = null;
+        });
+        
+        function drawGrid() {
+            vCtx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            vCtx.lineWidth = 1;
+            
+            // Grid lines
+            for (let x = 0; x <= vectorCanvas.width; x += 50) {
+                vCtx.beginPath();
+                vCtx.moveTo(x, 0);
+                vCtx.lineTo(x, vectorCanvas.height);
+                vCtx.stroke();
+            }
+            
+            for (let y = 0; y <= vectorCanvas.height; y += 50) {
+                vCtx.beginPath();
+                vCtx.moveTo(0, y);
+                vCtx.lineTo(vectorCanvas.width, y);
+                vCtx.stroke();
+            }
+            
+            // Origin axes
+            vCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            vCtx.beginPath();
+            vCtx.moveTo(vectorCanvas.width / 2, 0);
+            vCtx.lineTo(vectorCanvas.width / 2, vectorCanvas.height);
+            vCtx.stroke();
+            
+            vCtx.beginPath();
+            vCtx.moveTo(0, vectorCanvas.height / 2);
+            vCtx.lineTo(vectorCanvas.width, vectorCanvas.height / 2);
+            vCtx.stroke();
+        }
+        
+        function animate() {
+            // Clear canvas
+            vCtx.fillStyle = '#1a1a1a';
+            vCtx.fillRect(0, 0, vectorCanvas.width, vectorCanvas.height);
+            
+            // Draw grid
+            drawGrid();
+            
+            // Draw vectors
+            vectors.forEach(v => v.draw(vCtx));
+            
+            // Draw current vector being created
+            if (currentVector) {
+                currentVector.draw(vCtx);
+            }
+            
+            // Draw info
+            vCtx.fillStyle = 'white';
+            vCtx.font = '14px Arial';
+            vCtx.fillText(`Vectors: ${vectors.length}`, 10, 20);
+            
+            if (selectedVectors.length > 0) {
+                vCtx.fillText(`Selected: ${selectedVectors.length}/2`, 10, 40);
+            }
+            
+            requestAnimationFrame(animate);
+        }
+        
+        animate();
+    </script>
+
+    <h2>Vector Addition and Subtraction</h2>
+    
+    <pre class="language-python"><code># Vector addition - combine movements/forces
+position = Vector2(100, 100)
+velocity = Vector2(5, -3)
+position = position + velocity  # New position after movement
+
+# Vector subtraction - find difference/direction
+player = Vector2(400, 300)
+enemy = Vector2(600, 200)
+direction_to_enemy = enemy - player  # Vector pointing from player to enemy
+
+# Multiple forces
+gravity = Vector2(0, 9.8)
+wind = Vector2(2, 0)
+thrust = Vector2(0, -15)
+total_force = gravity + wind + thrust</code></pre>
+
+    <h2>Vector Normalization and Scaling</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>📏 Normalization</h3>
+        <p>Normalizing a vector gives you a "unit vector" - same direction, but length of 1. Perfect for:</p>
+        <ul>
+            <li>Setting consistent movement speeds</li>
+            <li>Getting pure direction without magnitude</li>
+            <li>Calculating facing directions</li>
+        </ul>
+    </div>
+
+    <pre class="language-python"><code># Normalize for consistent speed
+def move_towards_target(position, target, speed):
+    # Get direction vector
+    direction = target - position
+    
+    # Normalize to get pure direction
+    if direction.magnitude() > 0:
+        direction = direction.normalize()
+    
+    # Scale by desired speed
+    velocity = direction * speed
+    
+    # Update position
+    return position + velocity
+
+# Example: Enemy chasing player
+class Enemy:
+    def __init__(self, x, y):
+        self.position = Vector2(x, y)
+        self.speed = 3
+    
+    def update(self, player_position):
+        # Calculate direction to player
+        direction = (player_position - self.position).normalize()
+        
+        # Move towards player
+        self.position += direction * self.speed</code></pre>
+
+    <h2>Dot Product and Projections</h2>
+    
+    <div class="mermaid">
+    graph LR
+        A["Dot Product Uses"] --> B["Angle Between Vectors"]
+        A --> C["Projection Length"]
+        A --> D["Direction Similarity"]
+        A --> E["Perpendicular Check"]
+        B --> F["Field of View"]
+        C --> G["Shadow Casting"]
+        D --> H["AI Vision"]
+        E --> I["Wall Sliding"]
+    </div>
+
+    <pre class="language-python"><code>def angle_between(v1, v2):
+    """Calculate angle between two vectors in radians"""
+    # Normalize vectors
+    v1_norm = v1.normalize()
+    v2_norm = v2.normalize()
+    
+    # Dot product gives cos(angle)
+    dot = v1_norm.dot(v2_norm)
+    
+    # Clamp to avoid floating point errors with acos
+    dot = max(-1, min(1, dot))
+    
+    return math.acos(dot)
+
+def is_in_front(observer_pos, observer_facing, target_pos):
+    """Check if target is in front of observer"""
+    to_target = target_pos - observer_pos
+    
+    # Positive dot product means in front
+    return observer_facing.dot(to_target) > 0
+
+def project_onto(vector, onto):
+    """Project vector onto another vector"""
+    onto_norm = onto.normalize()
+    projection_length = vector.dot(onto_norm)
+    return onto_norm * projection_length
+
+# Example: Sliding along walls
+def slide_along_wall(velocity, wall_normal):
+    """Calculate sliding velocity when hitting a wall"""
+    # Remove the component going into the wall
+    into_wall = project_onto(velocity, wall_normal)
+    slide_velocity = velocity - into_wall
+    return slide_velocity</code></pre>
+
+    <h2>Practical Vector Applications</h2>
+    
+    <h3>1. Steering Behaviors</h3>
+    <pre class="language-python"><code>class SteeringEntity:
+    def __init__(self, x, y):
+        self.position = Vector2(x, y)
+        self.velocity = Vector2(0, 0)
+        self.acceleration = Vector2(0, 0)
+        self.max_speed = 5
+        self.max_force = 0.2
+    
+    def seek(self, target):
+        """Steer towards a target"""
+        desired = (target - self.position).normalize() * self.max_speed
+        steer = desired - self.velocity
+        
+        # Limit steering force
+        if steer.magnitude() > self.max_force:
+            steer = steer.normalize() * self.max_force
+        
+        return steer
+    
+    def flee(self, threat):
+        """Steer away from a threat"""
+        return -self.seek(threat)
+    
+    def arrive(self, target, slow_radius=100):
+        """Slow down when approaching target"""
+        to_target = target - self.position
+        distance = to_target.magnitude()
+        
+        if distance > 0:
+            # Calculate desired speed based on distance
+            if distance < slow_radius:
+                desired_speed = self.max_speed * (distance / slow_radius)
+            else:
+                desired_speed = self.max_speed
+            
+            # Calculate steering
+            desired = to_target.normalize() * desired_speed
+            steer = desired - self.velocity
+            
+            # Limit force
+            if steer.magnitude() > self.max_force:
+                steer = steer.normalize() * self.max_force
+            
+            return steer
+        
+        return Vector2(0, 0)
+    
+    def update(self):
+        # Update physics
+        self.velocity += self.acceleration
+        
+        # Limit speed
+        if self.velocity.magnitude() > self.max_speed:
+            self.velocity = self.velocity.normalize() * self.max_speed
+        
+        self.position += self.velocity
+        self.acceleration = Vector2(0, 0)  # Reset acceleration</code></pre>
+
+    <h3>2. Projectile Motion</h3>
+    <pre class="language-python"><code>class Projectile:
+    def __init__(self, start_pos, target_pos, speed):
+        self.position = Vector2(start_pos[0], start_pos[1])
+        
+        # Calculate launch angle for projectile
+        direction = Vector2(target_pos[0], target_pos[1]) - self.position
+        
+        # Simple direct shot
+        self.velocity = direction.normalize() * speed
+        
+        # For arc trajectory (with gravity)
+        # Calculate angle for desired arc
+        distance = direction.magnitude()
+        gravity = 9.8
+        
+        # Physics formula for projectile angle
+        angle = 0.5 * math.asin((gravity * distance) / (speed * speed))
+        
+        # Set velocity components
+        self.velocity = Vector2(
+            speed * math.cos(angle) * (direction.x / distance),
+            speed * math.sin(angle)
+        )
+        
+        self.gravity = Vector2(0, gravity)
+    
+    def update(self, dt):
+        # Apply gravity
+        self.velocity += self.gravity * dt
+        
+        # Update position
+        self.position += self.velocity * dt
+        
+        return self.position.y > 0  # Still in air</code></pre>
+
+    <h3>3. Collision Response</h3>
+    <pre class="language-python"><code>def reflect_vector(incident, normal):
+    """Reflect a vector off a surface"""
+    # Formula: R = I - 2 * (I · N) * N
+    return incident - normal * (2 * incident.dot(normal))
+
+def bounce_off_wall(ball_velocity, wall_normal, restitution=0.8):
+    """Calculate bounce velocity with energy loss"""
+    reflected = reflect_vector(ball_velocity, wall_normal)
+    return reflected * restitution  # Lose some energy
+
+class Ball:
+    def __init__(self, x, y):
+        self.position = Vector2(x, y)
+        self.velocity = Vector2(5, 3)
+        self.radius = 10
+    
+    def check_wall_collision(self, screen_width, screen_height):
+        # Check boundaries and bounce
+        if self.position.x - self.radius <= 0:
+            self.velocity = bounce_off_wall(self.velocity, Vector2(1, 0))
+            self.position.x = self.radius
+        
+        if self.position.x + self.radius >= screen_width:
+            self.velocity = bounce_off_wall(self.velocity, Vector2(-1, 0))
+            self.position.x = screen_width - self.radius
+        
+        if self.position.y - self.radius <= 0:
+            self.velocity = bounce_off_wall(self.velocity, Vector2(0, 1))
+            self.position.y = self.radius
+        
+        if self.position.y + self.radius >= screen_height:
+            self.velocity = bounce_off_wall(self.velocity, Vector2(0, -1))
+            self.position.y = screen_height - self.radius</code></pre>
+
+    <h2>Complete Vector-Based Game</h2>
+    
+    <pre class="language-python"><code>import pygame
+import math
+import random
+
+# Import our Vector2 class from earlier
+class Vector2:
+    # ... (full implementation from above)
+    pass
+
+class Particle:
+    def __init__(self, position, velocity, color, lifetime=1.0):
+        self.position = position
+        self.velocity = velocity
+        self.color = color
+        self.lifetime = lifetime
+        self.max_lifetime = lifetime
+    
+    def update(self, dt):
+        self.position += self.velocity * dt
+        self.velocity *= 0.98  # Drag
+        self.lifetime -= dt
+    
+    def draw(self, screen):
+        if self.lifetime > 0:
+            alpha = self.lifetime / self.max_lifetime
+            size = int(5 * alpha)
+            if size > 0:
+                pygame.draw.circle(screen, self.color, 
+                                 self.position.to_tuple(), size)
+
+class VectorGame:
+    def __init__(self):
+        pygame.init()
+        self.screen = pygame.display.set_mode((800, 600))
+        pygame.display.set_caption("Vector Operations Game")
+        self.clock = pygame.time.Clock()
+        
+        # Player
+        self.player_pos = Vector2(400, 300)
+        self.player_vel = Vector2(0, 0)
+        self.player_facing = Vector2(1, 0)
+        
+        # Enemies that use seeking behavior
+        self.enemies = []
+        for _ in range(3):
+            pos = Vector2(
+                random.randint(50, 750),
+                random.randint(50, 550)
+            )
+            self.enemies.append({
+                'position': pos,
+                'velocity': Vector2(0, 0),
+                'speed': random.uniform(1, 3)
+            })
+        
+        # Collectibles that orbit
+        self.orbitals = []
+        for i in range(5):
+            angle = (math.pi * 2 / 5) * i
+            self.orbitals.append({
+                'angle': angle,
+                'radius': 150,
+                'speed': 1,
+                'collected': False
+            })
+        
+        # Projectiles
+        self.projectiles = []
+        
+        # Particles for effects
+        self.particles = []
+        
+        # Score
+        self.score = 0
+        
+    def handle_input(self):
+        keys = pygame.key.get_pressed()
+        
+        # Player movement with vector operations
+        move_vector = Vector2(0, 0)
+        
+        if keys[pygame.K_LEFT] or keys[pygame.K_a]:
+            move_vector.x -= 1
+        if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+            move_vector.x += 1
+        if keys[pygame.K_UP] or keys[pygame.K_w]:
+            move_vector.y -= 1
+        if keys[pygame.K_DOWN] or keys[pygame.K_s]:
+            move_vector.y += 1
+        
+        # Normalize diagonal movement
+        if move_vector.magnitude() > 0:
+            move_vector = move_vector.normalize()
+            self.player_vel = move_vector * 5
+            self.player_facing = move_vector
+    
+    def handle_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:  # Left click
+                    # Shoot projectile towards mouse
+                    mouse_pos = Vector2(*pygame.mouse.get_pos())
+                    direction = (mouse_pos - self.player_pos).normalize()
+                    
+                    self.projectiles.append({
+                        'position': Vector2(self.player_pos.x, self.player_pos.y),
+                        'velocity': direction * 10,
+                        'lifetime': 2.0
+                    })
+                    
+                    # Recoil effect
+                    self.player_vel -= direction * 3
+        
+        return True
+    
+    def update(self, dt):
+        # Update player
+        self.player_pos += self.player_vel * dt * 60
+        self.player_vel *= 0.9  # Friction
+        
+        # Keep player on screen
+        self.player_pos.x = max(20, min(780, self.player_pos.x))
+        self.player_pos.y = max(20, min(580, self.player_pos.y))
+        
+        # Update enemies with seeking behavior
+        for enemy in self.enemies:
+            # Calculate steering towards player
+            to_player = self.player_pos - enemy['position']
+            distance = to_player.magnitude()
+            
+            if distance > 0:
+                # Seek player
+                desired = to_player.normalize() * enemy['speed']
+                steering = desired - enemy['velocity']
+                
+                # Apply steering
+                enemy['velocity'] += steering * dt * 10
+                
+                # Limit velocity
+                if enemy['velocity'].magnitude() > enemy['speed']:
+                    enemy['velocity'] = enemy['velocity'].normalize() * enemy['speed']
+                
+                # Update position
+                enemy['position'] += enemy['velocity'] * dt * 60
+                
+                # Check collision with player
+                if distance < 30:
+                    # Push player away
+                    push = to_player.normalize() * 5
+                    self.player_vel += push
+                    
+                    # Create explosion particles
+                    for _ in range(10):
+                        vel = Vector2(
+                            random.uniform(-5, 5),
+                            random.uniform(-5, 5)
+                        )
+                        self.particles.append(
+                            Particle(Vector2(enemy['position'].x, enemy['position'].y),
+                                   vel, (255, 100, 100), 0.5)
+                        )
+        
+        # Update orbitals
+        for orbital in self.orbitals:
+            if not orbital['collected']:
+                orbital['angle'] += orbital['speed'] * dt
+                
+                # Check collection
+                orbital_pos = Vector2(
+                    self.player_pos.x + orbital['radius'] * math.cos(orbital['angle']),
+                    self.player_pos.y + orbital['radius'] * math.sin(orbital['angle'])
+                )
+                
+                # Simple distance check
+                if (orbital_pos - self.player_pos).magnitude() < 30:
+                    orbital['collected'] = True
+                    self.score += 100
+                    
+                    # Create collection particles
+                    for _ in range(20):
+                        vel = Vector2(
+                            random.uniform(-3, 3),
+                            random.uniform(-3, 3)
+                        )
+                        self.particles.append(
+                            Particle(orbital_pos, vel, (255, 215, 0), 1.0)
+                        )
+        
+        # Update projectiles
+        for proj in self.projectiles[:]:
+            proj['position'] += proj['velocity'] * dt * 60
+            proj['lifetime'] -= dt
+            
+            if proj['lifetime'] <= 0:
+                self.projectiles.remove(proj)
+                continue
+            
+            # Check collision with enemies
+            for enemy in self.enemies:
+                if (proj['position'] - enemy['position']).magnitude() < 20:
+                    # Hit enemy - push it back
+                    enemy['velocity'] = proj['velocity'].normalize() * 10
+                    self.projectiles.remove(proj)
+                    self.score += 50
+                    break
+        
+        # Update particles
+        for particle in self.particles[:]:
+            particle.update(dt)
+            if particle.lifetime <= 0:
+                self.particles.remove(particle)
+    
+    def draw_vector_info(self):
+        """Draw vector visualization"""
+        font = pygame.font.Font(None, 20)
+        
+        # Player velocity vector
+        if self.player_vel.magnitude() > 0.1:
+            end_pos = self.player_pos + self.player_vel * 10
+            pygame.draw.line(self.screen, (0, 255, 0),
+                           self.player_pos.to_tuple(),
+                           end_pos.to_tuple(), 2)
+        
+        # Show vector info
+        texts = [
+            f"Player Vel: ({self.player_vel.x:.1f}, {self.player_vel.y:.1f})",
+            f"Magnitude: {self.player_vel.magnitude():.1f}",
+            f"Score: {self.score}"
+        ]
+        
+        for i, text in enumerate(texts):
+            rendered = font.render(text, True, (255, 255, 255))
+            self.screen.blit(rendered, (10, 10 + i * 25))
+    
+    def draw(self):
+        self.screen.fill((20, 20, 30))
+        
+        # Draw orbit paths
+        for orbital in self.orbitals:
+            if not orbital['collected']:
+                pygame.draw.circle(self.screen, (50, 50, 50),
+                                 self.player_pos.to_tuple(),
+                                 orbital['radius'], 1)
+        
+        # Draw enemies
+        for enemy in self.enemies:
+            pygame.draw.circle(self.screen, (255, 0, 0),
+                             enemy['position'].to_tuple(), 15)
+            
+            # Draw velocity vector
+            if enemy['velocity'].magnitude() > 0.1:
+                end = enemy['position'] + enemy['velocity'] * 20
+                pygame.draw.line(self.screen, (150, 0, 0),
+                               enemy['position'].to_tuple(),
+                               end.to_tuple(), 1)
+        
+        # Draw orbitals
+        for orbital in self.orbitals:
+            if not orbital['collected']:
+                pos = Vector2(
+                    self.player_pos.x + orbital['radius'] * math.cos(orbital['angle']),
+                    self.player_pos.y + orbital['radius'] * math.sin(orbital['angle'])
+                )
+                pygame.draw.circle(self.screen, (255, 215, 0),
+                                 pos.to_tuple(), 10)
+        
+        # Draw projectiles
+        for proj in self.projectiles:
+            pygame.draw.circle(self.screen, (100, 200, 255),
+                             proj['position'].to_tuple(), 5)
+        
+        # Draw particles
+        for particle in self.particles:
+            particle.draw(self.screen)
+        
+        # Draw player
+        pygame.draw.circle(self.screen, (0, 100, 255),
+                         self.player_pos.to_tuple(), 20)
+        
+        # Draw facing direction
+        face_end = self.player_pos + self.player_facing * 30
+        pygame.draw.line(self.screen, (0, 150, 255),
+                       self.player_pos.to_tuple(),
+                       face_end.to_tuple(), 3)
+        
+        # Draw vector info
+        self.draw_vector_info()
+        
+        # Instructions
+        font = pygame.font.Font(None, 20)
+        instructions = [
+            "WASD/Arrows: Move",
+            "Click: Shoot",
+            "Collect yellow orbs!"
+        ]
+        for i, text in enumerate(instructions):
+            rendered = font.render(text, True, (200, 200, 200))
+            self.screen.blit(rendered, (650, 550 - i * 25))
+    
+    def run(self):
+        running = True
+        dt = 0
+        
+        while running:
+            running = self.handle_events()
+            self.handle_input()
+            self.update(dt)
+            self.draw()
+            
+            pygame.display.flip()
+            dt = self.clock.tick(60) / 1000.0
+        
+        pygame.quit()
+
+if __name__ == "__main__":
+    game = VectorGame()
+    game.run()</code></pre>
+
+    <h2>Vector Performance Tips</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Optimization Strategies</h3>
+        <ul>
+            <li><strong>Cache Magnitudes:</strong> Don't recalculate if vector hasn't changed</li>
+            <li><strong>Use Squared Distance:</strong> Avoid sqrt when just comparing distances</li>
+            <li><strong>Batch Operations:</strong> Process multiple vectors together</li>
+            <li><strong>Approximate Normalization:</strong> Fast inverse square root for non-critical cases</li>
+            <li><strong>Pool Vectors:</strong> Reuse vector objects to reduce allocation</li>
+        </ul>
+    </div>
+
+    <pre class="language-python"><code># Performance optimizations
+def distance_squared(v1, v2):
+    """Faster than actual distance for comparisons"""
+    dx = v2.x - v1.x
+    dy = v2.y - v1.y
+    return dx * dx + dy * dy
+
+# Use squared distance for comparisons
+if distance_squared(player, enemy) < 100 * 100:  # Instead of distance < 100
+    # In range...
+
+# Fast approximate normalize (good enough for many cases)
+def fast_normalize(x, y):
+    mag_sq = x * x + y * y
+    if mag_sq == 0:
+        return (0, 0)
+    # Fast inverse square root approximation
+    inv_mag = 1.0 / math.sqrt(mag_sq)  # Can optimize further
+    return (x * inv_mag, y * inv_mag)</code></pre>
+
+    <h2>Practice Exercises</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎯 Vector Challenges!</h3>
+        <ol>
+            <li><strong>Homing Missile:</strong> Create projectiles that track targets using vectors</li>
+            <li><strong>Flocking Simulation:</strong> Implement boids with separation, alignment, cohesion</li>
+            <li><strong>Elastic Collision:</strong> Realistic ball physics with vector math</li>
+            <li><strong>Line of Sight:</strong> Check visibility using dot products</li>
+            <li><strong>Force Field:</strong> Push/pull objects with vector fields</li>
+            <li><strong>Path Following:</strong> Make entities follow curved paths using vectors</li>
+        </ol>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>➡️ Vectors represent both position and direction</li>
+            <li>➕ Addition combines movements/forces</li>
+            <li>➖ Subtraction finds direction between points</li>
+            <li>📏 Normalization gives pure direction (length 1)</li>
+            <li>• Dot product reveals angle relationships</li>
+            <li>🔄 Vectors enable smooth movement and physics</li>
+            <li>⚡ Optimize with squared distances and caching</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you've mastered vectors, next we'll explore trigonometry in games - using sine, cosine, and angles to create rotations, waves, and circular motion!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="game_mathematics_coordinates.html" class="prev-lesson" aria-label="Previous lesson: 2D Coordinate Systems">Previous Lesson: 2D Coordinate Systems</a>
+        <a href="game_mathematics_trigonometry.html" class="next-lesson" aria-label="Next lesson: Basic Trigonometry">Next Lesson: Basic Trigonometry for Games</a>
+    </nav>
+    
+    </main>
+</body>
+</html>

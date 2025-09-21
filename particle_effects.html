@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Create stunning particle effects in Pygame. Learn particle systems, emitters, physics, and visual effects for explosions, fire, smoke, and more.">
+    <title>Particle Effects - Sprite Management</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script src="/js/course-enhancements.js" defer></script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Particle Effects</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Section 3: Sprite Management - Lesson 5</span>
+    </nav>
+
+    <h2>Creating Magic with Particles</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Particle effects bring your game to life with explosions, fire, smoke, sparks, and magical effects! They're the visual spice that makes actions feel impactful and worlds feel alive. Let's master the art of particle systems! ✨🎆</p>
+    </div>
+
+    <h2>Understanding Particle Systems</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎆 The Fireworks Analogy</h3>
+        <p>Think of particle systems like fireworks:</p>
+        <ul>
+            <li><strong>Emitter:</strong> The launcher that creates particles</li>
+            <li><strong>Particles:</strong> Individual sparks with their own life</li>
+            <li><strong>Properties:</strong> Color, size, velocity, lifetime</li>
+            <li><strong>Forces:</strong> Gravity, wind, attraction/repulsion</li>
+            <li><strong>Death:</strong> Particles fade or disappear after their lifetime</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Particle Systems"] --> B["Emitters"]
+        A --> C["Particles"]
+        A --> D["Physics"]
+        A --> E["Rendering"]
+        B --> F["Point/Area/Line"]
+        B --> G["Burst/Continuous"]
+        C --> H["Properties"]
+        C --> I["Lifecycle"]
+        D --> J["Forces"]
+        D --> K["Collisions"]
+        E --> L["Blending Modes"]
+        E --> M["Optimization"]
+    </div>
+
+    <h2>Interactive Particle Effects Playground</h2>
+    
+    <div class="canvas-wrapper">
+        <canvas id="particleCanvas" width="600" height="400"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Click to create effects! Explore different particle systems!</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; max-width: 600px; margin: 10px auto;">
+            <button onclick="setEffectType('explosion')">Explosion</button>
+            <button onclick="setEffectType('fire')">Fire</button>
+            <button onclick="setEffectType('smoke')">Smoke</button>
+            <button onclick="setEffectType('sparks')">Sparks</button>
+            <button onclick="setEffectType('magic')">Magic</button>
+            <button onclick="setEffectType('rain')">Rain</button>
+            <button onclick="setEffectType('snow')">Snow</button>
+            <button onclick="setEffectType('fountain')">Fountain</button>
+        </div>
+        <div style="margin-top: 10px;">
+            <label>Gravity: <input type="range" id="gravitySlider" min="-1" max="2" step="0.1" value="0.5" onchange="updateGravity(this.value)"></label>
+            <label>Wind: <input type="range" id="windSlider" min="-2" max="2" step="0.1" value="0" onchange="updateWind(this.value)"></label>
+        </div>
+        <button onclick="clearParticles()">Clear All</button>
+        <p>Effect: <strong id="effectDisplay">Explosion</strong> | Particles: <span id="particleCount">0</span></p>
+    </div>
+
+    <script>
+        const particleCanvas = document.getElementById('particleCanvas');
+        const pCtx = particleCanvas.getContext('2d');
+        const effectDisplay = document.getElementById('effectDisplay');
+        const particleCountDisplay = document.getElementById('particleCount');
+        const gravitySlider = document.getElementById('gravitySlider');
+        const windSlider = document.getElementById('windSlider');
+        
+        let currentEffectType = 'explosion';
+        let particles = [];
+        let emitters = [];
+        let gravity = 0.5;
+        let wind = 0;
+        
+        // Particle class
+        class Particle {
+            constructor(x, y, config = {}) {
+                this.x = x;
+                this.y = y;
+                this.vx = config.vx || (Math.random() - 0.5) * 4;
+                this.vy = config.vy || (Math.random() - 0.5) * 4;
+                this.size = config.size || Math.random() * 3 + 1;
+                this.color = config.color || '#ffffff';
+                this.lifetime = config.lifetime || 1000;
+                this.maxLifetime = this.lifetime;
+                this.gravity = config.gravity !== undefined ? config.gravity : true;
+                this.wind = config.wind !== undefined ? config.wind : true;
+                this.fade = config.fade !== undefined ? config.fade : true;
+                this.shrink = config.shrink !== undefined ? config.shrink : false;
+                this.glow = config.glow || false;
+                this.trail = config.trail || false;
+                this.trailPositions = [];
+            }
+            
+            update(dt) {
+                // Apply physics
+                if (this.gravity) {
+                    this.vy += gravity * dt * 0.1;
+                }
+                if (this.wind) {
+                    this.vx += wind * dt * 0.05;
+                }
+                
+                // Update position
+                this.x += this.vx;
+                this.y += this.vy;
+                
+                // Store trail
+                if (this.trail) {
+                    this.trailPositions.push({x: this.x, y: this.y});
+                    if (this.trailPositions.length > 10) {
+                        this.trailPositions.shift();
+                    }
+                }
+                
+                // Update lifetime
+                this.lifetime -= dt;
+                
+                // Shrink over time
+                if (this.shrink) {
+                    this.size *= 0.99;
+                }
+                
+                return this.lifetime > 0;
+            }
+            
+            draw(ctx) {
+                const lifeRatio = this.lifetime / this.maxLifetime;
+                
+                // Draw trail
+                if (this.trail && this.trailPositions.length > 1) {
+                    ctx.strokeStyle = this.color;
+                    ctx.beginPath();
+                    ctx.moveTo(this.trailPositions[0].x, this.trailPositions[0].y);
+                    for (let i = 1; i < this.trailPositions.length; i++) {
+                        const alpha = (i / this.trailPositions.length) * lifeRatio;
+                        ctx.globalAlpha = alpha * 0.5;
+                        ctx.lineTo(this.trailPositions[i].x, this.trailPositions[i].y);
+                    }
+                    ctx.stroke();
+                }
+                
+                // Set alpha
+                ctx.globalAlpha = this.fade ? lifeRatio : 1;
+                
+                // Draw glow
+                if (this.glow) {
+                    const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size * 3);
+                    gradient.addColorStop(0, this.color);
+                    gradient.addColorStop(1, 'transparent');
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size * 3, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                // Draw particle
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.globalAlpha = 1;
+            }
+        }
+        
+        // Particle Emitter class
+        class ParticleEmitter {
+            constructor(x, y, config = {}) {
+                this.x = x;
+                this.y = y;
+                this.rate = config.rate || 10; // particles per second
+                this.particleConfig = config.particleConfig || {};
+                this.spread = config.spread || Math.PI * 2;
+                this.speed = config.speed || 2;
+                this.lifetime = config.lifetime || Infinity;
+                this.timeSinceLastEmit = 0;
+                this.active = true;
+            }
+            
+            update(dt) {
+                if (!this.active) return;
+                
+                this.lifetime -= dt;
+                if (this.lifetime <= 0) {
+                    this.active = false;
+                    return;
+                }
+                
+                this.timeSinceLastEmit += dt;
+                const emitInterval = 1000 / this.rate;
+                
+                while (this.timeSinceLastEmit >= emitInterval) {
+                    this.emit();
+                    this.timeSinceLastEmit -= emitInterval;
+                }
+            }
+            
+            emit() {
+                const angle = Math.random() * this.spread - this.spread / 2;
+                const speed = this.speed * (0.5 + Math.random());
+                
+                const config = {
+                    ...this.particleConfig,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed
+                };
+                
+                particles.push(new Particle(this.x, this.y, config));
+            }
+        }
+        
+        // Effect creators
+        const effectCreators = {
+            explosion: (x, y) => {
+                for (let i = 0; i < 50; i++) {
+                    const angle = (Math.PI * 2 / 50) * i + Math.random() * 0.2;
+                    const speed = 2 + Math.random() * 4;
+                    
+                    particles.push(new Particle(x, y, {
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed,
+                        size: Math.random() * 4 + 2,
+                        color: `hsl(${Math.random() * 60}, 100%, 50%)`,
+                        lifetime: 500 + Math.random() * 500,
+                        gravity: true,
+                        fade: true,
+                        glow: true
+                    }));
+                }
+                
+                // Smoke particles
+                for (let i = 0; i < 20; i++) {
+                    particles.push(new Particle(x, y, {
+                        vx: (Math.random() - 0.5) * 1,
+                        vy: -Math.random() * 2,
+                        size: Math.random() * 10 + 5,
+                        color: '#666666',
+                        lifetime: 1000 + Math.random() * 1000,
+                        gravity: false,
+                        fade: true,
+                        shrink: true
+                    }));
+                }
+            },
+            
+            fire: (x, y) => {
+                emitters.push(new ParticleEmitter(x, y, {
+                    rate: 30,
+                    lifetime: 2000,
+                    spread: Math.PI / 3,
+                    speed: 3,
+                    particleConfig: {
+                        size: 5,
+                        color: `hsl(${Math.random() * 60}, 100%, 50%)`,
+                        lifetime: 800,
+                        gravity: false,
+                        vy: -3,
+                        fade: true,
+                        shrink: true,
+                        glow: true
+                    }
+                }));
+            },
+            
+            smoke: (x, y) => {
+                emitters.push(new ParticleEmitter(x, y, {
+                    rate: 10,
+                    lifetime: 2000,
+                    spread: Math.PI / 4,
+                    speed: 1,
+                    particleConfig: {
+                        size: 15,
+                        color: '#444444',
+                        lifetime: 2000,
+                        gravity: false,
+                        vy: -1,
+                        fade: true,
+                        shrink: false,
+                        wind: true
+                    }
+                }));
+            },
+            
+            sparks: (x, y) => {
+                for (let i = 0; i < 30; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = 1 + Math.random() * 5;
+                    
+                    particles.push(new Particle(x, y, {
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed,
+                        size: 1,
+                        color: '#ffff00',
+                        lifetime: 300 + Math.random() * 700,
+                        gravity: true,
+                        fade: true,
+                        trail: true,
+                        glow: true
+                    }));
+                }
+            },
+            
+            magic: (x, y) => {
+                for (let i = 0; i < 40; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = Math.random() * 30;
+                    const px = x + Math.cos(angle) * distance;
+                    const py = y + Math.sin(angle) * distance;
+                    
+                    particles.push(new Particle(px, py, {
+                        vx: Math.cos(angle) * 0.5,
+                        vy: Math.sin(angle) * 0.5 - 1,
+                        size: Math.random() * 3 + 1,
+                        color: `hsl(${280 + Math.random() * 60}, 100%, 70%)`,
+                        lifetime: 1000 + Math.random() * 1000,
+                        gravity: false,
+                        fade: true,
+                        glow: true,
+                        trail: true
+                    }));
+                }
+            },
+            
+            rain: (x, y) => {
+                particles.push(new Particle(x, 0, {
+                    vx: wind,
+                    vy: 5 + Math.random() * 3,
+                    size: 1,
+                    color: '#4444ff',
+                    lifetime: 2000,
+                    gravity: false,
+                    fade: false,
+                    trail: true
+                }));
+            },
+            
+            snow: (x, y) => {
+                particles.push(new Particle(Math.random() * particleCanvas.width, 0, {
+                    vx: (Math.random() - 0.5) * 0.5,
+                    vy: 0.5 + Math.random() * 0.5,
+                    size: Math.random() * 3 + 1,
+                    color: '#ffffff',
+                    lifetime: 5000,
+                    gravity: false,
+                    fade: false,
+                    wind: true
+                }));
+            },
+            
+            fountain: (x, y) => {
+                emitters.push(new ParticleEmitter(x, y, {
+                    rate: 50,
+                    lifetime: 2000,
+                    spread: Math.PI / 6,
+                    speed: 5,
+                    particleConfig: {
+                        size: 2,
+                        color: '#4444ff',
+                        lifetime: 1500,
+                        gravity: true,
+                        vy: -8,
+                        fade: true,
+                        trail: true
+                    }
+                }));
+            }
+        };
+        
+        function setEffectType(type) {
+            currentEffectType = type;
+            effectDisplay.textContent = type.charAt(0).toUpperCase() + type.slice(1);
+        }
+        
+        function updateGravity(value) {
+            gravity = parseFloat(value);
+        }
+        
+        function updateWind(value) {
+            wind = parseFloat(value);
+        }
+        
+        function clearParticles() {
+            particles = [];
+            emitters = [];
+        }
+        
+        // Create continuous effects
+        let rainTimer = 0;
+        let snowTimer = 0;
+        
+        // Mouse interaction
+        particleCanvas.addEventListener('click', (e) => {
+            const rect = particleCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            if (effectCreators[currentEffectType]) {
+                effectCreators[currentEffectType](x, y);
+            }
+        });
+        
+        function update(dt) {
+            // Update continuous effects
+            if (currentEffectType === 'rain') {
+                rainTimer += dt;
+                if (rainTimer > 50) {
+                    effectCreators.rain(Math.random() * particleCanvas.width, 0);
+                    rainTimer = 0;
+                }
+            } else if (currentEffectType === 'snow') {
+                snowTimer += dt;
+                if (snowTimer > 100) {
+                    effectCreators.snow(0, 0);
+                    snowTimer = 0;
+                }
+            }
+            
+            // Update emitters
+            for (let i = emitters.length - 1; i >= 0; i--) {
+                emitters[i].update(dt);
+                if (!emitters[i].active) {
+                    emitters.splice(i, 1);
+                }
+            }
+            
+            // Update particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                if (!particles[i].update(dt)) {
+                    particles.splice(i, 1);
+                }
+            }
+            
+            particleCountDisplay.textContent = particles.length;
+        }
+        
+        function draw() {
+            // Clear canvas
+            pCtx.fillStyle = 'rgba(32, 32, 32, 0.1)';
+            pCtx.fillRect(0, 0, particleCanvas.width, particleCanvas.height);
+            
+            // Draw particles
+            for (let particle of particles) {
+                particle.draw(pCtx);
+            }
+            
+            // Draw emitter positions
+            pCtx.fillStyle = 'rgba(255, 255, 0, 0.5)';
+            for (let emitter of emitters) {
+                if (emitter.active) {
+                    pCtx.beginPath();
+                    pCtx.arc(emitter.x, emitter.y, 3, 0, Math.PI * 2);
+                    pCtx.fill();
+                }
+            }
+        }
+        
+        let lastTime = performance.now();
+        function gameLoop(currentTime) {
+            const dt = currentTime - lastTime;
+            lastTime = currentTime;
+            
+            update(dt);
+            draw();
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        gameLoop(performance.now());
+    </script>
+
+    <h2>Basic Particle System</h2>
+    
+    <pre class="language-python"><code>import pygame
+import random
+import math
+
+class Particle:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.vx = random.uniform(-2, 2)
+        self.vy = random.uniform(-5, -1)
+        self.lifetime = random.uniform(0.5, 1.5)
+        self.size = random.randint(2, 5)
+        self.color = (255, random.randint(100, 255), 0)
+        self.gravity = 0.2
+    
+    def update(self, dt):
+        # Physics
+        self.vx *= 0.99  # Air resistance
+        self.vy += self.gravity
+        
+        # Movement
+        self.x += self.vx
+        self.y += self.vy
+        
+        # Age
+        self.lifetime -= dt
+        
+        # Fade color
+        fade_factor = max(0, self.lifetime)
+        self.color = (
+            int(255 * fade_factor),
+            int(self.color[1] * fade_factor),
+            0
+        )
+        
+        return self.lifetime > 0
+    
+    def draw(self, screen):
+        if self.lifetime > 0:
+            pygame.draw.circle(screen, self.color, 
+                             (int(self.x), int(self.y)), 
+                             self.size)
+
+class ParticleSystem:
+    def __init__(self):
+        self.particles = []
+    
+    def emit(self, x, y, count=10):
+        """Create new particles"""
+        for _ in range(count):
+            self.particles.append(Particle(x, y))
+    
+    def update(self, dt):
+        """Update all particles"""
+        # Update particles and remove dead ones
+        self.particles = [p for p in self.particles if p.update(dt)]
+    
+    def draw(self, screen):
+        """Draw all particles"""
+        for particle in self.particles:
+            particle.draw(screen)
+    
+    def clear(self):
+        """Remove all particles"""
+        self.particles.clear()
+    
+    def count(self):
+        """Get particle count"""
+        return len(self.particles)</code></pre>
+
+    <h2>Advanced Particle Effects</h2>
+    
+    <pre class="language-python"><code># Configurable particle system
+class ConfigurableParticle:
+    def __init__(self, x, y, config):
+        self.x = x
+        self.y = y
+        
+        # Velocity with spread
+        angle = random.uniform(config.angle - config.spread, 
+                             config.angle + config.spread)
+        speed = random.uniform(config.speed_min, config.speed_max)
+        self.vx = math.cos(angle) * speed
+        self.vy = math.sin(angle) * speed
+        
+        # Properties
+        self.lifetime = random.uniform(config.lifetime_min, config.lifetime_max)
+        self.max_lifetime = self.lifetime
+        self.size = random.uniform(config.size_min, config.size_max)
+        self.start_size = self.size
+        
+        # Color
+        if config.color_variation:
+            h = config.hue + random.randint(-config.hue_variation, config.hue_variation)
+            s = config.saturation
+            v = config.value
+            self.color = self.hsv_to_rgb(h, s, v)
+        else:
+            self.color = config.color
+        
+        # Physics
+        self.gravity = config.gravity
+        self.damping = config.damping
+        self.wind = config.wind
+        
+        # Behavior flags
+        self.fade = config.fade
+        self.shrink = config.shrink
+        self.glow = config.glow
+    
+    def hsv_to_rgb(self, h, s, v):
+        """Convert HSV to RGB"""
+        import colorsys
+        r, g, b = colorsys.hsv_to_rgb(h/360, s, v)
+        return (int(r*255), int(g*255), int(b*255))
+    
+    def update(self, dt):
+        # Apply forces
+        self.vy += self.gravity * dt
+        self.vx += self.wind * dt
+        
+        # Apply damping
+        self.vx *= (1 - self.damping * dt)
+        self.vy *= (1 - self.damping * dt)
+        
+        # Update position
+        self.x += self.vx * dt
+        self.y += self.vy * dt
+        
+        # Update lifetime
+        self.lifetime -= dt
+        
+        # Update size
+        if self.shrink:
+            life_ratio = self.lifetime / self.max_lifetime
+            self.size = self.start_size * life_ratio
+        
+        return self.lifetime > 0
+    
+    def draw(self, screen):
+        # Calculate alpha
+        alpha = 255
+        if self.fade:
+            alpha = int(255 * (self.lifetime / self.max_lifetime))
+        
+        # Draw glow effect
+        if self.glow and alpha > 0:
+            glow_surf = pygame.Surface((self.size * 4, self.size * 4), pygame.SRCALPHA)
+            pygame.draw.circle(glow_surf, (*self.color, alpha // 4),
+                             (self.size * 2, self.size * 2), self.size * 2)
+            screen.blit(glow_surf, (self.x - self.size * 2, self.y - self.size * 2),
+                       special_flags=pygame.BLEND_ADD)
+        
+        # Draw particle
+        if alpha > 0:
+            particle_surf = pygame.Surface((self.size * 2, self.size * 2), pygame.SRCALPHA)
+            pygame.draw.circle(particle_surf, (*self.color, alpha),
+                             (self.size, self.size), self.size)
+            screen.blit(particle_surf, (self.x - self.size, self.y - self.size))
+
+class ParticleConfig:
+    """Configuration for particle behavior"""
+    def __init__(self):
+        # Emission
+        self.angle = -math.pi / 2  # Upward
+        self.spread = math.pi / 4  # 45 degree spread
+        self.speed_min = 50
+        self.speed_max = 150
+        
+        # Lifetime
+        self.lifetime_min = 0.5
+        self.lifetime_max = 1.5
+        
+        # Appearance
+        self.size_min = 2
+        self.size_max = 6
+        self.color = (255, 100, 0)
+        self.hue = 30  # Orange
+        self.saturation = 1.0
+        self.value = 1.0
+        self.color_variation = True
+        self.hue_variation = 30
+        
+        # Physics
+        self.gravity = 100
+        self.damping = 0.1
+        self.wind = 0
+        
+        # Behavior
+        self.fade = True
+        self.shrink = True
+        self.glow = False
+
+# Particle emitter
+class ParticleEmitter:
+    def __init__(self, x, y, config, system):
+        self.x = x
+        self.y = y
+        self.config = config
+        self.system = system
+        self.active = True
+        
+        # Emission settings
+        self.emission_rate = 30  # particles per second
+        self.burst_count = 0  # 0 for continuous
+        self.emission_timer = 0
+        
+        # Lifetime
+        self.lifetime = -1  # -1 for infinite
+        self.age = 0
+    
+    def update(self, dt):
+        if not self.active:
+            return
+        
+        # Update age
+        self.age += dt
+        
+        # Check lifetime
+        if self.lifetime > 0 and self.age >= self.lifetime:
+            self.active = False
+            return
+        
+        # Emit particles
+        if self.burst_count > 0:
+            # Burst emission
+            for _ in range(self.burst_count):
+                self.emit_particle()
+            self.active = False  # One-shot burst
+        else:
+            # Continuous emission
+            self.emission_timer += dt
+            particles_to_emit = int(self.emission_timer * self.emission_rate)
+            
+            if particles_to_emit > 0:
+                for _ in range(particles_to_emit):
+                    self.emit_particle()
+                self.emission_timer -= particles_to_emit / self.emission_rate
+    
+    def emit_particle(self):
+        """Create a single particle"""
+        # Add position variation
+        x = self.x + random.uniform(-5, 5)
+        y = self.y + random.uniform(-5, 5)
+        
+        particle = ConfigurableParticle(x, y, self.config)
+        self.system.particles.append(particle)</code></pre>
+
+    <h2>Specialized Particle Effects</h2>
+    
+    <pre class="language-python"><code># Fire effect
+class FireEffect(ParticleEmitter):
+    def __init__(self, x, y, system):
+        config = ParticleConfig()
+        config.angle = -math.pi / 2
+        config.spread = math.pi / 6
+        config.speed_min = 30
+        config.speed_max = 60
+        config.lifetime_min = 0.3
+        config.lifetime_max = 0.8
+        config.size_min = 3
+        config.size_max = 8
+        config.hue = 30
+        config.hue_variation = 30
+        config.gravity = -50  # Fire rises
+        config.wind = random.uniform(-20, 20)
+        config.fade = True
+        config.shrink = True
+        config.glow = True
+        
+        super().__init__(x, y, config, system)
+        self.emission_rate = 50
+
+# Smoke effect
+class SmokeEffect(ParticleEmitter):
+    def __init__(self, x, y, system):
+        config = ParticleConfig()
+        config.angle = -math.pi / 2
+        config.spread = math.pi / 4
+        config.speed_min = 10
+        config.speed_max = 30
+        config.lifetime_min = 1.0
+        config.lifetime_max = 2.0
+        config.size_min = 10
+        config.size_max = 20
+        config.color = (100, 100, 100)
+        config.color_variation = False
+        config.gravity = -20
+        config.wind = 10
+        config.fade = True
+        config.shrink = False
+        config.glow = False
+        
+        super().__init__(x, y, config, system)
+        self.emission_rate = 20
+
+# Explosion effect
+class ExplosionEffect:
+    def __init__(self, x, y, system):
+        self.x = x
+        self.y = y
+        self.system = system
+        self.create_explosion()
+    
+    def create_explosion(self):
+        # Main explosion particles
+        config = ParticleConfig()
+        config.spread = math.pi * 2  # Full circle
+        config.speed_min = 100
+        config.speed_max = 300
+        config.lifetime_min = 0.3
+        config.lifetime_max = 0.6
+        config.size_min = 3
+        config.size_max = 8
+        config.hue = 30
+        config.hue_variation = 60
+        config.gravity = 50
+        config.damping = 0.5
+        config.fade = True
+        config.shrink = True
+        config.glow = True
+        
+        # Create burst
+        for _ in range(50):
+            particle = ConfigurableParticle(self.x, self.y, config)
+            self.system.particles.append(particle)
+        
+        # Add smoke
+        smoke_config = ParticleConfig()
+        smoke_config.spread = math.pi * 2
+        smoke_config.speed_min = 20
+        smoke_config.speed_max = 50
+        smoke_config.lifetime_min = 1.0
+        smoke_config.lifetime_max = 2.0
+        smoke_config.size_min = 15
+        smoke_config.size_max = 25
+        smoke_config.color = (50, 50, 50)
+        smoke_config.color_variation = False
+        smoke_config.gravity = -10
+        smoke_config.fade = True
+        
+        for _ in range(20):
+            particle = ConfigurableParticle(self.x, self.y, smoke_config)
+            self.system.particles.append(particle)
+
+# Magic sparkles
+class MagicSparkles(ParticleEmitter):
+    def __init__(self, x, y, system):
+        config = ParticleConfig()
+        config.spread = math.pi * 2
+        config.speed_min = 20
+        config.speed_max = 50
+        config.lifetime_min = 0.5
+        config.lifetime_max = 1.5
+        config.size_min = 1
+        config.size_max = 3
+        config.hue = 270  # Purple
+        config.hue_variation = 60
+        config.gravity = -20
+        config.fade = True
+        config.shrink = True
+        config.glow = True
+        
+        super().__init__(x, y, config, system)
+        self.emission_rate = 30
+        
+    def emit_particle(self):
+        """Override to add spiral motion"""
+        particle = ConfigurableParticle(self.x, self.y, self.config)
+        
+        # Add spiral motion
+        angle = self.age * 5
+        radius = 30
+        offset_x = math.cos(angle) * radius
+        offset_y = math.sin(angle) * radius
+        
+        particle.x += offset_x
+        particle.y += offset_y
+        
+        self.system.particles.append(particle)</code></pre>
+
+    <h2>Complete Particle System Demo</h2>
+    
+    <pre class="language-python"><code>import pygame
+import random
+import math
+
+class ParticleSystemDemo:
+    def __init__(self):
+        pygame.init()
+        self.screen = pygame.display.set_mode((800, 600))
+        pygame.display.set_caption("Particle Effects Demo")
+        self.clock = pygame.time.Clock()
+        
+        # Particle system
+        self.particle_system = AdvancedParticleSystem()
+        
+        # Emitters
+        self.emitters = []
+        
+        # Demo settings
+        self.current_effect = 'fire'
+        self.show_info = True
+        
+        # Create initial effects
+        self.setup_demo_effects()
+    
+    def setup_demo_effects(self):
+        """Create demonstration effects"""
+        # Campfire
+        fire = FireEffect(200, 400, self.particle_system)
+        self.emitters.append(fire)
+        
+        # Magic fountain
+        magic = MagicSparkles(600, 400, self.particle_system)
+        self.emitters.append(magic)
+    
+    def handle_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = pygame.mouse.get_pos()
+                
+                if event.button == 1:  # Left click
+                    self.create_effect(self.current_effect, x, y)
+                elif event.button == 3:  # Right click
+                    self.create_effect('explosion', x, y)
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_1:
+                    self.current_effect = 'fire'
+                elif event.key == pygame.K_2:
+                    self.current_effect = 'smoke'
+                elif event.key == pygame.K_3:
+                    self.current_effect = 'explosion'
+                elif event.key == pygame.K_4:
+                    self.current_effect = 'magic'
+                elif event.key == pygame.K_5:
+                    self.current_effect = 'sparks'
+                elif event.key == pygame.K_c:
+                    self.particle_system.clear()
+                    self.emitters.clear()
+                elif event.key == pygame.K_i:
+                    self.show_info = not self.show_info
+        
+        return True
+    
+    def create_effect(self, effect_type, x, y):
+        """Create particle effect at position"""
+        if effect_type == 'fire':
+            emitter = FireEffect(x, y, self.particle_system)
+            emitter.lifetime = 3  # 3 seconds
+            self.emitters.append(emitter)
+        elif effect_type == 'smoke':
+            emitter = SmokeEffect(x, y, self.particle_system)
+            emitter.lifetime = 3
+            self.emitters.append(emitter)
+        elif effect_type == 'explosion':
+            ExplosionEffect(x, y, self.particle_system)
+        elif effect_type == 'magic':
+            emitter = MagicSparkles(x, y, self.particle_system)
+            emitter.lifetime = 3
+            self.emitters.append(emitter)
+        elif effect_type == 'sparks':
+            self.create_spark_burst(x, y)
+    
+    def create_spark_burst(self, x, y):
+        """Create burst of sparks"""
+        config = ParticleConfig()
+        config.spread = math.pi * 2
+        config.speed_min = 100
+        config.speed_max = 200
+        config.lifetime_min = 0.5
+        config.lifetime_max = 1.0
+        config.size_min = 1
+        config.size_max = 2
+        config.color = (255, 255, 100)
+        config.gravity = 200
+        config.fade = True
+        config.glow = True
+        
+        for _ in range(30):
+            particle = ConfigurableParticle(x, y, config)
+            self.particle_system.particles.append(particle)
+    
+    def update(self, dt):
+        # Update emitters
+        for emitter in self.emitters[:]:
+            emitter.update(dt)
+            if not emitter.active:
+                self.emitters.remove(emitter)
+        
+        # Update particle system
+        self.particle_system.update(dt)
+    
+    def draw(self):
+        # Clear screen
+        self.screen.fill((20, 20, 30))
+        
+        # Draw ground
+        pygame.draw.rect(self.screen, (40, 40, 40), (0, 450, 800, 150))
+        
+        # Draw particles
+        self.particle_system.draw(self.screen)
+        
+        # Draw emitter positions
+        for emitter in self.emitters:
+            if emitter.active:
+                pygame.draw.circle(self.screen, (255, 255, 0, 50),
+                                 (int(emitter.x), int(emitter.y)), 5, 1)
+        
+        # Draw UI
+        if self.show_info:
+            self.draw_ui()
+    
+    def draw_ui(self):
+        """Draw user interface"""
+        font = pygame.font.Font(None, 24)
+        
+        # Effect selection
+        effects = ['1: Fire', '2: Smoke', '3: Explosion', '4: Magic', '5: Sparks']
+        y_offset = 10
+        
+        for i, text in enumerate(effects):
+            color = (255, 255, 0) if text.split(':')[1].strip().lower() == self.current_effect else (200, 200, 200)
+            rendered = font.render(text, True, color)
+            self.screen.blit(rendered, (10, y_offset))
+            y_offset += 30
+        
+        # Instructions
+        instructions = [
+            f"Current: {self.current_effect}",
+            f"Particles: {self.particle_system.count()}",
+            f"Emitters: {len(self.emitters)}",
+            "",
+            "Left Click: Create Effect",
+            "Right Click: Explosion",
+            "C: Clear All",
+            "I: Toggle Info"
+        ]
+        
+        y_offset = 10
+        for text in instructions:
+            rendered = font.render(text, True, (255, 255, 255))
+            self.screen.blit(rendered, (600, y_offset))
+            y_offset += 25
+    
+    def run(self):
+        running = True
+        dt = 0
+        
+        while running:
+            running = self.handle_events()
+            self.update(dt / 1000.0)  # Convert to seconds
+            self.draw()
+            pygame.display.flip()
+            dt = self.clock.tick(60)
+        
+        pygame.quit()
+
+class AdvancedParticleSystem:
+    def __init__(self):
+        self.particles = []
+        self.max_particles = 5000
+    
+    def update(self, dt):
+        """Update all particles"""
+        # Update particles and remove dead ones
+        self.particles = [p for p in self.particles 
+                         if p.update(dt)]
+        
+        # Limit particle count
+        if len(self.particles) > self.max_particles:
+            self.particles = self.particles[-self.max_particles:]
+    
+    def draw(self, screen):
+        """Draw all particles with blending"""
+        # Create surface for additive blending
+        particle_surf = pygame.Surface(screen.get_size())
+        particle_surf.fill((0, 0, 0))
+        
+        # Draw particles to surface
+        for particle in self.particles:
+            particle.draw(particle_surf)
+        
+        # Blend with main screen
+        screen.blit(particle_surf, (0, 0), special_flags=pygame.BLEND_ADD)
+    
+    def clear(self):
+        """Remove all particles"""
+        self.particles.clear()
+    
+    def count(self):
+        """Get particle count"""
+        return len(self.particles)
+
+if __name__ == "__main__":
+    demo = ParticleSystemDemo()
+    demo.run()</code></pre>
+
+    <h2>Performance Optimization</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Particle System Optimization</h3>
+        <ul>
+            <li><strong>Object Pooling:</strong> Reuse particle objects instead of creating new</li>
+            <li><strong>LOD System:</strong> Reduce particles based on distance</li>
+            <li><strong>Batch Rendering:</strong> Draw similar particles together</li>
+            <li><strong>Spatial Partitioning:</strong> Only update visible particles</li>
+            <li><strong>GPU Particles:</strong> Use shaders for massive particle counts</li>
+            <li><strong>Texture Atlas:</strong> One texture for all particle types</li>
+            <li><strong>Frame Skipping:</strong> Update particles less frequently when needed</li>
+        </ul>
+    </div>
+
+    <h2>Practice Exercises</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎯 Particle Effect Challenges!</h3>
+        <ol>
+            <li><strong>Weather System:</strong> Create rain, snow, and fog effects</li>
+            <li><strong>Magic Spells:</strong> Design unique spell particle effects</li>
+            <li><strong>Destruction:</strong> Particle-based destruction system</li>
+            <li><strong>Trail System:</strong> Smooth trails behind moving objects</li>
+            <li><strong>Fluid Simulation:</strong> Simple water/smoke using particles</li>
+            <li><strong>Fireworks Show:</strong> Choreographed fireworks display</li>
+        </ol>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>✨ Particles add life and feedback to games</li>
+            <li>🎯 Configure particles for different effects</li>
+            <li>⚡ Emitters create continuous streams</li>
+            <li>🌊 Physics makes particles behave naturally</li>
+            <li>🎨 Blending modes create visual variety</li>
+            <li>📊 Pool and limit particles for performance</li>
+            <li>🔧 Combine simple particles for complex effects</li>
+        </ul>
+    </div>
+
+    <h2>Congratulations! 🎉</h2>
+    
+    <div style="background-color: #d4edda; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🏆 Section Complete!</h3>
+        <p>You've completed the <strong>Sprite Management</strong> section! You've learned:</p>
+        <ul>
+            <li>✅ Loading and displaying images efficiently</li>
+            <li>✅ Creating smooth sprite animations</li>
+            <li>✅ Working with sprite sheets</li>
+            <li>✅ Organizing sprites with groups and layers</li>
+            <li>✅ Creating stunning particle effects</li>
+        </ul>
+        <p>You now have all the tools to create visually rich, well-organized games with beautiful graphics and effects!</p>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>You've completed the Basic Module's Sprite Management section! With these skills, you're ready to move on to more advanced topics or start creating your own games with rich visual effects and polished graphics!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="sprite_groups_layers.html" class="prev-lesson" aria-label="Previous lesson: Sprite Groups">Previous Lesson: Sprite Groups and Layers</a>
+        <a href="index.html" class="next-lesson" aria-label="Next: Course Home">Back to Course Home</a>
+    </nav>
+    
+    </main>
+</body>
+</html>

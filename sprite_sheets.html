@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Learn to work with sprite sheets in Pygame. Master loading, extracting frames, creating atlases, and optimizing game graphics.">
+    <title>Sprite Sheets - Sprite Management</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script src="/js/course-enhancements.js" defer></script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Sprite Sheets</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Section 3: Sprite Management - Lesson 3</span>
+    </nav>
+
+    <h2>Efficient Graphics with Sprite Sheets</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Sprite sheets are the secret weapon of game graphics! By packing multiple images into a single file, you reduce loading times, improve performance, and organize your assets efficiently. Let's master the art of sprite sheet management! 🎮📋</p>
+    </div>
+
+    <h2>Understanding Sprite Sheets</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>📚 The Sticker Sheet Analogy</h3>
+        <p>Think of sprite sheets like a sticker sheet:</p>
+        <ul>
+            <li><strong>Single Sheet:</strong> All stickers on one page (one image file)</li>
+            <li><strong>Grid Layout:</strong> Organized in rows and columns</li>
+            <li><strong>Cut Out Pieces:</strong> Extract individual stickers (sprites)</li>
+            <li><strong>Atlas Map:</strong> Guide showing where each sticker is</li>
+            <li><strong>Efficient Storage:</strong> Better than individual sticker packs</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Sprite Sheets"] --> B["Types"]
+        A --> C["Loading"]
+        A --> D["Extraction"]
+        A --> E["Creation"]
+        B --> F["Grid-based"]
+        B --> G["Packed Atlas"]
+        B --> H["Animation Strips"]
+        C --> I["Single Load"]
+        C --> J["Memory Efficient"]
+        D --> K["Frame Extraction"]
+        D --> L["Subsurfaces"]
+        E --> M["Packing Tools"]
+        E --> N["Manual Creation"]
+    </div>
+
+    <h2>Interactive Sprite Sheet Visualizer</h2>
+    
+    <div class="canvas-wrapper">
+        <canvas id="sheetCanvas" width="600" height="400"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Explore sprite sheet extraction and animation!</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; max-width: 600px; margin: 10px auto;">
+            <button onclick="setSheetMode('grid')">Grid Sheet</button>
+            <button onclick="setSheetMode('packed')">Packed Atlas</button>
+            <button onclick="setSheetMode('animation')">Animation Strip</button>
+            <button onclick="setSheetMode('extract')">Extract Demo</button>
+        </div>
+        <div style="margin-top: 10px;">
+            <label>Frame: <input type="range" id="frameSlider" min="0" max="15" value="0" onchange="updateFrame(this.value)"></label>
+            <button onclick="toggleSheetAnimation()">Animate</button>
+            <button onclick="toggleGrid()">Toggle Grid</button>
+        </div>
+        <p>Mode: <strong id="sheetModeDisplay">Grid Sheet</strong> | Frame: <span id="frameIndexDisplay">0</span></p>
+    </div>
+
+    <script>
+        const sheetCanvas = document.getElementById('sheetCanvas');
+        const sCtx = sheetCanvas.getContext('2d');
+        const sheetModeDisplay = document.getElementById('sheetModeDisplay');
+        const frameIndexDisplay = document.getElementById('frameIndexDisplay');
+        const frameSlider = document.getElementById('frameSlider');
+        
+        let currentSheetMode = 'grid';
+        let currentFrameIndex = 0;
+        let isAnimating = false;
+        let animationTime = 0;
+        let showGrid = true;
+        let highlightedCell = null;
+        
+        // Create a sample sprite sheet
+        function createSpriteSheet() {
+            const sheet = document.createElement('canvas');
+            sheet.width = 256;
+            sheet.height = 256;
+            const ctx = sheet.getContext('2d');
+            
+            // Draw grid-based sprites (8x8 grid of 32x32 sprites)
+            for (let y = 0; y < 8; y++) {
+                for (let x = 0; x < 8; x++) {
+                    const spriteX = x * 32;
+                    const spriteY = y * 32;
+                    
+                    // Different sprite types based on position
+                    const hue = (x + y * 8) * (360 / 64);
+                    ctx.fillStyle = `hsl(${hue}, 70%, 50%)`;
+                    
+                    if (y < 2) {
+                        // Characters
+                        ctx.fillRect(spriteX + 8, spriteY + 4, 16, 24);
+                        ctx.fillStyle = '#fdbcb4';
+                        ctx.beginPath();
+                        ctx.arc(spriteX + 16, spriteY + 10, 6, 0, Math.PI * 2);
+                        ctx.fill();
+                    } else if (y < 4) {
+                        // Items
+                        ctx.beginPath();
+                        ctx.moveTo(spriteX + 16, spriteY + 6);
+                        ctx.lineTo(spriteX + 26, spriteY + 16);
+                        ctx.lineTo(spriteX + 16, spriteY + 26);
+                        ctx.lineTo(spriteX + 6, spriteY + 16);
+                        ctx.closePath();
+                        ctx.fill();
+                    } else if (y < 6) {
+                        // Tiles
+                        ctx.fillRect(spriteX + 2, spriteY + 2, 28, 28);
+                        ctx.fillStyle = 'rgba(0,0,0,0.2)';
+                        ctx.fillRect(spriteX + 2, spriteY + 2, 14, 14);
+                        ctx.fillRect(spriteX + 16, spriteY + 16, 14, 14);
+                    } else {
+                        // Effects
+                        for (let i = 0; i < 3; i++) {
+                            ctx.globalAlpha = 0.3 + i * 0.3;
+                            ctx.beginPath();
+                            ctx.arc(spriteX + 16, spriteY + 16, 12 - i * 4, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                        ctx.globalAlpha = 1;
+                    }
+                }
+            }
+            
+            return sheet;
+        }
+        
+        const spriteSheet = createSpriteSheet();
+        
+        // Create packed atlas example
+        function createPackedAtlas() {
+            const atlas = document.createElement('canvas');
+            atlas.width = 256;
+            atlas.height = 256;
+            const ctx = atlas.getContext('2d');
+            
+            // Simulate packed sprites of different sizes
+            const sprites = [
+                {x: 0, y: 0, w: 64, h: 64, color: '#ff6b6b'},
+                {x: 64, y: 0, w: 32, h: 48, color: '#4ecdc4'},
+                {x: 96, y: 0, w: 48, h: 32, color: '#45b7d1'},
+                {x: 144, y: 0, w: 32, h: 32, color: '#96ceb4'},
+                {x: 176, y: 0, w: 80, h: 48, color: '#ffeaa7'},
+                {x: 0, y: 64, w: 48, h: 64, color: '#dfe6e9'},
+                {x: 48, y: 64, w: 32, h: 32, color: '#fd79a8'},
+                {x: 80, y: 64, w: 64, h: 48, color: '#a29bfe'}
+            ];
+            
+            sprites.forEach(sprite => {
+                ctx.fillStyle = sprite.color;
+                ctx.fillRect(sprite.x, sprite.y, sprite.w, sprite.h);
+                ctx.strokeStyle = '#333';
+                ctx.strokeRect(sprite.x, sprite.y, sprite.w, sprite.h);
+                
+                // Add some detail
+                ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                ctx.fillRect(sprite.x + 4, sprite.y + 4, 8, 8);
+            });
+            
+            return {canvas: atlas, sprites: sprites};
+        }
+        
+        const packedAtlas = createPackedAtlas();
+        
+        function setSheetMode(mode) {
+            currentSheetMode = mode;
+            sheetModeDisplay.textContent = mode.charAt(0).toUpperCase() + mode.slice(1).replace('-', ' ');
+            currentFrameIndex = 0;
+            frameSlider.value = 0;
+        }
+        
+        function updateFrame(value) {
+            currentFrameIndex = parseInt(value);
+            frameIndexDisplay.textContent = currentFrameIndex;
+        }
+        
+        function toggleSheetAnimation() {
+            isAnimating = !isAnimating;
+        }
+        
+        function toggleGrid() {
+            showGrid = !showGrid;
+        }
+        
+        // Mouse interaction
+        sheetCanvas.addEventListener('mousemove', (e) => {
+            const rect = sheetCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            if (currentSheetMode === 'grid' || currentSheetMode === 'extract') {
+                // Calculate which cell is hovered
+                const displayX = 50;
+                const displayY = 50;
+                
+                if (x >= displayX && x < displayX + 256 && 
+                    y >= displayY && y < displayY + 256) {
+                    const cellX = Math.floor((x - displayX) / 32);
+                    const cellY = Math.floor((y - displayY) / 32);
+                    highlightedCell = {x: cellX, y: cellY};
+                } else {
+                    highlightedCell = null;
+                }
+            }
+        });
+        
+        function drawSpriteSheet() {
+            // Clear canvas
+            sCtx.fillStyle = '#2a2a2a';
+            sCtx.fillRect(0, 0, sheetCanvas.width, sheetCanvas.height);
+            
+            switch(currentSheetMode) {
+                case 'grid':
+                    drawGridSheet();
+                    break;
+                case 'packed':
+                    drawPackedSheet();
+                    break;
+                case 'animation':
+                    drawAnimationStrip();
+                    break;
+                case 'extract':
+                    drawExtractionDemo();
+                    break;
+            }
+            
+            // Update animation
+            if (isAnimating) {
+                animationTime += 16;
+                if (animationTime > 100) {
+                    animationTime = 0;
+                    currentFrameIndex = (currentFrameIndex + 1) % 16;
+                    frameSlider.value = currentFrameIndex;
+                    frameIndexDisplay.textContent = currentFrameIndex;
+                }
+            }
+            
+            requestAnimationFrame(drawSpriteSheet);
+        }
+        
+        function drawGridSheet() {
+            // Draw the sprite sheet
+            sCtx.drawImage(spriteSheet, 50, 50);
+            
+            // Draw grid overlay
+            if (showGrid) {
+                sCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                sCtx.lineWidth = 1;
+                for (let i = 0; i <= 8; i++) {
+                    sCtx.beginPath();
+                    sCtx.moveTo(50 + i * 32, 50);
+                    sCtx.lineTo(50 + i * 32, 50 + 256);
+                    sCtx.stroke();
+                    sCtx.beginPath();
+                    sCtx.moveTo(50, 50 + i * 32);
+                    sCtx.lineTo(50 + 256, 50 + i * 32);
+                    sCtx.stroke();
+                }
+            }
+            
+            // Highlight hovered cell
+            if (highlightedCell) {
+                sCtx.strokeStyle = '#ffeb3b';
+                sCtx.lineWidth = 2;
+                sCtx.strokeRect(50 + highlightedCell.x * 32, 
+                              50 + highlightedCell.y * 32, 32, 32);
+                
+                // Show info
+                sCtx.fillStyle = 'white';
+                sCtx.font = '12px Arial';
+                sCtx.fillText(`Cell: [${highlightedCell.x}, ${highlightedCell.y}]`, 
+                             50, 320);
+                sCtx.fillText(`Offset: ${highlightedCell.x * 32}, ${highlightedCell.y * 32}`, 
+                             50, 335);
+            }
+            
+            // Extract and display current frame
+            const frameX = (currentFrameIndex % 8) * 32;
+            const frameY = Math.floor(currentFrameIndex / 8) * 32;
+            
+            // Highlight source
+            sCtx.strokeStyle = '#4caf50';
+            sCtx.lineWidth = 2;
+            sCtx.strokeRect(50 + frameX, 50 + frameY, 32, 32);
+            
+            // Draw extracted sprite larger
+            sCtx.save();
+            sCtx.imageSmoothingEnabled = false;  // Pixel art style
+            sCtx.drawImage(spriteSheet, frameX, frameY, 32, 32,
+                          400, 150, 96, 96);
+            sCtx.restore();
+            
+            sCtx.fillStyle = 'white';
+            sCtx.font = '14px Arial';
+            sCtx.fillText('Extracted Sprite', 400, 140);
+            sCtx.fillText(`Frame ${currentFrameIndex}`, 400, 260);
+        }
+        
+        function drawPackedSheet() {
+            // Draw the packed atlas
+            sCtx.drawImage(packedAtlas.canvas, 50, 50);
+            
+            // Highlight current sprite
+            if (currentFrameIndex < packedAtlas.sprites.length) {
+                const sprite = packedAtlas.sprites[currentFrameIndex];
+                
+                sCtx.strokeStyle = '#4caf50';
+                sCtx.lineWidth = 2;
+                sCtx.strokeRect(50 + sprite.x, 50 + sprite.y, sprite.w, sprite.h);
+                
+                // Draw extracted sprite
+                sCtx.drawImage(packedAtlas.canvas, 
+                             sprite.x, sprite.y, sprite.w, sprite.h,
+                             400, 150, sprite.w, sprite.h);
+                
+                sCtx.fillStyle = 'white';
+                sCtx.font = '12px Arial';
+                sCtx.fillText(`Sprite ${currentFrameIndex}`, 400, 140);
+                sCtx.fillText(`Pos: ${sprite.x}, ${sprite.y}`, 400, 260);
+                sCtx.fillText(`Size: ${sprite.w}x${sprite.h}`, 400, 275);
+            }
+            
+            // Draw atlas info
+            sCtx.fillStyle = 'white';
+            sCtx.font = '12px Arial';
+            sCtx.fillText('Packed Atlas (Different Sizes)', 50, 320);
+            sCtx.fillText('Efficient space usage', 50, 335);
+        }
+        
+        function drawAnimationStrip() {
+            // Create animation strip
+            const stripHeight = 64;
+            const frameWidth = 32;
+            const frameCount = 8;
+            
+            // Draw strip background
+            sCtx.fillStyle = '#444';
+            sCtx.fillRect(50, 150, frameWidth * frameCount, stripHeight);
+            
+            // Draw animation frames
+            for (let i = 0; i < frameCount; i++) {
+                const x = 50 + i * frameWidth;
+                const y = 150;
+                
+                // Draw character in different poses
+                const progress = i / (frameCount - 1);
+                const bounceY = Math.sin(progress * Math.PI) * 10;
+                
+                // Body
+                sCtx.fillStyle = '#4a90e2';
+                sCtx.fillRect(x + 8, y + 20 - bounceY, 16, 24);
+                
+                // Head
+                sCtx.fillStyle = '#fdbcb4';
+                sCtx.beginPath();
+                sCtx.arc(x + 16, y + 14 - bounceY, 6, 0, Math.PI * 2);
+                sCtx.fill();
+            }
+            
+            // Draw grid
+            if (showGrid) {
+                sCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                sCtx.lineWidth = 1;
+                for (let i = 0; i <= frameCount; i++) {
+                    sCtx.beginPath();
+                    sCtx.moveTo(50 + i * frameWidth, 150);
+                    sCtx.lineTo(50 + i * frameWidth, 150 + stripHeight);
+                    sCtx.stroke();
+                }
+            }
+            
+            // Highlight current frame
+            const highlightFrame = currentFrameIndex % frameCount;
+            sCtx.strokeStyle = '#4caf50';
+            sCtx.lineWidth = 2;
+            sCtx.strokeRect(50 + highlightFrame * frameWidth, 150, frameWidth, stripHeight);
+            
+            // Info
+            sCtx.fillStyle = 'white';
+            sCtx.font = '14px Arial';
+            sCtx.fillText('Animation Strip (Walk Cycle)', 50, 140);
+            sCtx.fillText(`Playing Frame: ${highlightFrame}`, 50, 230);
+        }
+        
+        function drawExtractionDemo() {
+            // Show extraction process
+            sCtx.drawImage(spriteSheet, 50, 50, 128, 128);
+            
+            // Draw extraction guides
+            sCtx.strokeStyle = '#ff6b6b';
+            sCtx.lineWidth = 2;
+            sCtx.setLineDash([5, 5]);
+            
+            // Show different extraction methods
+            // Method 1: Single sprite
+            sCtx.strokeRect(50, 50, 32, 32);
+            sCtx.setLineDash([]);
+            sCtx.fillStyle = 'white';
+            sCtx.font = '12px Arial';
+            sCtx.fillText('1. Single', 10, 70);
+            
+            // Show extracted results
+            sCtx.drawImage(spriteSheet, 0, 0, 32, 32, 250, 50, 32, 32);
+            
+            sCtx.fillStyle = 'white';
+            sCtx.font = '14px Arial';
+            sCtx.fillText('Extraction Methods', 50, 200);
+            sCtx.fillText('Extracted Sprites', 300, 40);
+        }
+        
+        drawSpriteSheet();
+    </script>
+
+    <h2>Basic Sprite Sheet Loading</h2>
+    
+    <pre class="language-python"><code>import pygame
+
+class SpriteSheet:
+    def __init__(self, filename):
+        """Load sprite sheet file"""
+        self.sheet = pygame.image.load(filename).convert_alpha()
+        
+    def get_sprite(self, x, y, width, height):
+        """Extract a single sprite from the sheet"""
+        sprite = pygame.Surface((width, height), pygame.SRCALPHA)
+        sprite.blit(self.sheet, (0, 0), (x, y, width, height))
+        return sprite
+    
+    def get_sprites_from_row(self, row, width, height, count):
+        """Extract multiple sprites from a row"""
+        sprites = []
+        for i in range(count):
+            x = i * width
+            y = row * height
+            sprites.append(self.get_sprite(x, y, width, height))
+        return sprites</code></pre>
+
+    <h2>Complete Sprite Sheet Example</h2>
+    
+    <pre class="language-python"><code>import pygame
+import json
+
+class SpriteSheetDemo:
+    def __init__(self):
+        pygame.init()
+        self.screen = pygame.display.set_mode((800, 600))
+        pygame.display.set_caption("Sprite Sheet Demo")
+        self.clock = pygame.time.Clock()
+        
+        # Create demo sprite sheet
+        self.create_demo_sheet()
+        self.load_sprites()
+        
+        # Demo settings
+        self.show_grid = True
+        self.selected_sprite = 0
+        
+    def create_demo_sheet(self):
+        """Generate a demo sprite sheet"""
+        self.sheet_surface = pygame.Surface((256, 256), pygame.SRCALPHA)
+        
+        # Create different sprite types
+        for row in range(8):
+            for col in range(8):
+                x = col * 32
+                y = row * 32
+                
+                # Create unique sprite for each cell
+                sprite = pygame.Surface((32, 32), pygame.SRCALPHA)
+                
+                # Simple colored rectangles for demo
+                color = ((row * 32) % 256, (col * 32) % 256, 128)
+                pygame.draw.rect(sprite, color, (4, 4, 24, 24))
+                
+                self.sheet_surface.blit(sprite, (x, y))
+    
+    def load_sprites(self):
+        """Load sprites from the sheet"""
+        self.sprites = []
+        for row in range(8):
+            for col in range(8):
+                x = col * 32
+                y = row * 32
+                rect = pygame.Rect(x, y, 32, 32)
+                sprite = self.sheet_surface.subsurface(rect)
+                self.sprites.append(sprite)
+    
+    def handle_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_g:
+                    self.show_grid = not self.show_grid
+                elif event.key == pygame.K_LEFT:
+                    self.selected_sprite = (self.selected_sprite - 1) % 64
+                elif event.key == pygame.K_RIGHT:
+                    self.selected_sprite = (self.selected_sprite + 1) % 64
+        return True
+    
+    def draw(self):
+        self.screen.fill((40, 40, 50))
+        
+        # Draw sprite sheet
+        self.screen.blit(self.sheet_surface, (50, 50))
+        
+        # Draw grid
+        if self.show_grid:
+            for i in range(9):
+                pygame.draw.line(self.screen, (100, 100, 100),
+                               (50 + i * 32, 50), (50 + i * 32, 306))
+                pygame.draw.line(self.screen, (100, 100, 100),
+                               (50, 50 + i * 32), (306, 50 + i * 32))
+        
+        # Draw extracted sprite
+        extracted = self.sprites[self.selected_sprite]
+        enlarged = pygame.transform.scale(extracted, (128, 128))
+        self.screen.blit(enlarged, (400, 50))
+        
+        # Draw info
+        font = pygame.font.Font(None, 24)
+        info_lines = [
+            f"Selected: {self.selected_sprite}",
+            "G: Toggle Grid",
+            "Arrows: Select Sprite"
+        ]
+        
+        for i, line in enumerate(info_lines):
+            text = font.render(line, True, (255, 255, 255))
+            self.screen.blit(text, (400, 200 + i * 30))
+    
+    def run(self):
+        running = True
+        while running:
+            running = self.handle_events()
+            self.draw()
+            pygame.display.flip()
+            self.clock.tick(60)
+        pygame.quit()
+
+if __name__ == "__main__":
+    demo = SpriteSheetDemo()
+    demo.run()</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Sprite Sheet Optimization</h3>
+        <ul>
+            <li><strong>Power of 2:</strong> Use dimensions like 256x256, 512x512 for GPU efficiency</li>
+            <li><strong>Consistent Sizes:</strong> Keep sprites in same animation at same size</li>
+            <li><strong>Padding:</strong> Add 1-2 pixel padding to prevent bleeding</li>
+            <li><strong>Subsurfaces:</strong> Use subsurface() instead of copying</li>
+            <li><strong>Batch Similar:</strong> Group similar sprites (characters, tiles, effects)</li>
+            <li><strong>Compression:</strong> Use PNG for sprites with transparency</li>
+        </ul>
+    </div>
+
+    <h2>Practice Exercises</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎯 Sprite Sheet Challenges!</h3>
+        <ol>
+            <li><strong>Sheet Generator:</strong> Create tool to combine individual sprites</li>
+            <li><strong>Animation Extractor:</strong> Extract and preview animations from sheet</li>
+            <li><strong>Atlas Packer:</strong> Implement efficient packing algorithm</li>
+            <li><strong>Sheet Editor:</strong> Tool to modify sprites in existing sheet</li>
+            <li><strong>Auto-Slicer:</strong> Detect and extract sprites automatically</li>
+            <li><strong>Performance Test:</strong> Compare individual images vs sprite sheet</li>
+        </ol>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>📋 Sprite sheets reduce file I/O and improve performance</li>
+            <li>🔲 Grid-based sheets are simple and predictable</li>
+            <li>📦 Packed atlases maximize space efficiency</li>
+            <li>💾 Use subsurfaces to avoid memory duplication</li>
+            <li>📝 Metadata files add flexibility and maintainability</li>
+            <li>⚡ Batch rendering from sheets is faster</li>
+            <li>🛠️ Use tools or scripts for automatic packing</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you can manage sprite sheets efficiently, next we'll learn about sprite groups and layers - organizing multiple sprites for complex scenes and gameplay!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="sprite_animation.html" class="prev-lesson" aria-label="Previous lesson: Sprite Animation">Previous Lesson: Sprite Animation</a>
+        <a href="sprite_groups_layers.html" class="next-lesson" aria-label="Next lesson: Sprite Groups">Next Lesson: Sprite Groups and Layers</a>
+    </nav>
+    
+    </main>
+</body>
+</html>

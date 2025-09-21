@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Learn how to handle keyboard and mouse input in Pygame. Master event handling, continuous input, and create responsive game controls.">
+    <title>Handling Keyboard and Mouse Input - Pygame Basics</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script src="/js/course-enhancements.js" defer></script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Handling Keyboard and Mouse Input</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Lesson 3: Handling Input</span>
+    </nav>
+
+    <h2>Making Your Games Interactive!</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>A game without input is just a movie! In this lesson, you'll learn how to capture and respond to player actions through keyboard and mouse controls. By the end, you'll be creating games that feel responsive and fun to play! 🎮</p>
+    </div>
+
+    <h2>Two Ways to Handle Input</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎯 The Restaurant Analogy</h3>
+        <p>Think of input handling like a restaurant taking orders:</p>
+        <ul>
+            <li><strong>Event-Based (Discrete):</strong> Like a waiter taking individual orders - "Table 3 wants pizza!" Perfect for one-time actions like jumping or shooting.</li>
+            <li><strong>State-Based (Continuous):</strong> Like a buffet where you continuously check what's available - "Is there still pizza?" Perfect for continuous actions like moving or holding a button.</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A[Player Input] --> B{Input Type?}
+        B --> C[Event-Based]
+        B --> D[State-Based]
+        C --> E["KEYDOWN/KEYUP Events"]
+        C --> F["Mouse Click Events"]
+        D --> G["get_pressed()"]
+        D --> H["get_pos()"]
+        E --> I["Jump, Shoot, Menu Select"]
+        F --> J["Click Button, Place Item"]
+        G --> K["Move, Accelerate, Hold Action"]
+        H --> L["Aim, Draw, Hover Effects"]
+    </div>
+
+    <h2>Event-Based Input (Discrete Actions)</h2>
+    
+    <h3>Keyboard Events</h3>
+    <pre class="language-python"><code>import pygame
+import sys
+
+pygame.init()
+screen = pygame.display.set_mode((800, 600))
+clock = pygame.time.Clock()
+
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        
+        # Keyboard key pressed down
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                print("Spacebar pressed - Jump!")
+            elif event.key == pygame.K_RETURN:
+                print("Enter pressed - Start game!")
+            elif event.key == pygame.K_ESCAPE:
+                print("Escape pressed - Open menu!")
+        
+        # Keyboard key released
+        elif event.type == pygame.KEYUP:
+            if event.key == pygame.K_SPACE:
+                print("Spacebar released - Stop charging jump!")
+    
+    screen.fill((20, 20, 20))
+    pygame.display.flip()
+    clock.tick(60)
+
+pygame.quit()</code></pre>
+
+    <h3>Mouse Events</h3>
+    <pre class="language-python"><code># Mouse button events
+for event in pygame.event.get():
+    if event.type == pygame.MOUSEBUTTONDOWN:
+        if event.button == 1:  # Left click
+            print(f"Left clicked at {event.pos}")
+        elif event.button == 2:  # Middle click
+            print(f"Middle clicked at {event.pos}")
+        elif event.button == 3:  # Right click
+            print(f"Right clicked at {event.pos}")
+        elif event.button == 4:  # Scroll up
+            print("Scrolled up")
+        elif event.button == 5:  # Scroll down
+            print("Scrolled down")
+    
+    elif event.type == pygame.MOUSEBUTTONUP:
+        print(f"Mouse button {event.button} released")
+    
+    elif event.type == pygame.MOUSEMOTION:
+        # This fires continuously when mouse moves
+        print(f"Mouse at {event.pos}, moved by {event.rel}")</code></pre>
+
+    <h2>State-Based Input (Continuous Actions)</h2>
+    
+    <h3>Continuous Keyboard Input</h3>
+    <pre class="language-python"><code># Get the state of all keyboard keys
+keys = pygame.key.get_pressed()
+
+# Movement with arrow keys or WASD
+player_speed = 5
+
+if keys[pygame.K_LEFT] or keys[pygame.K_a]:
+    player_x -= player_speed
+if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+    player_x += player_speed
+if keys[pygame.K_UP] or keys[pygame.K_w]:
+    player_y -= player_speed
+if keys[pygame.K_DOWN] or keys[pygame.K_s]:
+    player_y += player_speed
+
+# Diagonal movement is faster unless normalized!
+# We'll fix this later with vector math</code></pre>
+
+    <h3>Continuous Mouse Input</h3>
+    <pre class="language-python"><code># Get mouse position
+mouse_x, mouse_y = pygame.mouse.get_pos()
+
+# Get mouse button states
+mouse_buttons = pygame.mouse.get_pressed()
+if mouse_buttons[0]:  # Left button held
+    print("Left mouse button is being held")
+if mouse_buttons[1]:  # Middle button held
+    print("Middle mouse button is being held")
+if mouse_buttons[2]:  # Right button held
+    print("Right mouse button is being held")
+
+# Hide/show mouse cursor
+pygame.mouse.set_visible(False)  # Hide cursor
+pygame.mouse.set_visible(True)   # Show cursor
+
+# Get relative mouse movement (useful for FPS games)
+mouse_rel = pygame.mouse.get_rel()</code></pre>
+
+    <h2>Interactive Input Demo</h2>
+    
+    <div class="canvas-wrapper">
+        <canvas id="inputCanvas" width="600" height="400"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Use WASD or Arrow Keys to move the blue square</p>
+        <p>Click to shoot projectiles • Right-click to place targets</p>
+        <p>Keys Pressed: <span id="keysDisplay">None</span></p>
+        <p>Mouse Position: <span id="mouseDisplay">0, 0</span></p>
+    </div>
+
+    <script>
+        const inputCanvas = document.getElementById('inputCanvas');
+        const inputCtx = inputCanvas.getContext('2d');
+        const keysDisplay = document.getElementById('keysDisplay');
+        const mouseDisplay = document.getElementById('mouseDisplay');
+        
+        // Player object
+        const player = {
+            x: 300,
+            y: 200,
+            size: 30,
+            speed: 3
+        };
+        
+        // Input state
+        const keys = {};
+        const mousePos = {x: 0, y: 0};
+        const projectiles = [];
+        const targets = [];
+        
+        // Projectile class
+        class Projectile {
+            constructor(x, y, targetX, targetY) {
+                this.x = x;
+                this.y = y;
+                const angle = Math.atan2(targetY - y, targetX - x);
+                this.vx = Math.cos(angle) * 5;
+                this.vy = Math.sin(angle) * 5;
+                this.size = 5;
+            }
+            
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+            }
+            
+            draw() {
+                inputCtx.fillStyle = '#ffeb3b';
+                inputCtx.beginPath();
+                inputCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                inputCtx.fill();
+            }
+            
+            isOffScreen() {
+                return this.x < 0 || this.x > inputCanvas.width || 
+                       this.y < 0 || this.y > inputCanvas.height;
+            }
+        }
+        
+        // Target class
+        class Target {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.size = 20;
+                this.hit = false;
+            }
+            
+            draw() {
+                inputCtx.strokeStyle = this.hit ? '#4caf50' : '#ff6b6b';
+                inputCtx.lineWidth = 3;
+                inputCtx.beginPath();
+                inputCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                inputCtx.stroke();
+                
+                // Draw crosshair
+                inputCtx.beginPath();
+                inputCtx.moveTo(this.x - this.size, this.y);
+                inputCtx.lineTo(this.x + this.size, this.y);
+                inputCtx.moveTo(this.x, this.y - this.size);
+                inputCtx.lineTo(this.x, this.y + this.size);
+                inputCtx.stroke();
+            }
+            
+            checkHit(projectile) {
+                const dist = Math.hypot(this.x - projectile.x, this.y - projectile.y);
+                if (dist < this.size + projectile.size) {
+                    this.hit = true;
+                    return true;
+                }
+                return false;
+            }
+        }
+        
+        // Keyboard events
+        window.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+            updateKeysDisplay();
+        });
+        
+        window.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
+            updateKeysDisplay();
+        });
+        
+        // Mouse events
+        inputCanvas.addEventListener('mousemove', (e) => {
+            const rect = inputCanvas.getBoundingClientRect();
+            mousePos.x = e.clientX - rect.left;
+            mousePos.y = e.clientY - rect.top;
+            mouseDisplay.textContent = `${Math.round(mousePos.x)}, ${Math.round(mousePos.y)}`;
+        });
+        
+        inputCanvas.addEventListener('click', (e) => {
+            projectiles.push(new Projectile(player.x, player.y, mousePos.x, mousePos.y));
+        });
+        
+        inputCanvas.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            targets.push(new Target(mousePos.x, mousePos.y));
+        });
+        
+        function updateKeysDisplay() {
+            const pressed = Object.keys(keys).filter(key => keys[key]);
+            keysDisplay.textContent = pressed.length > 0 ? pressed.join(', ') : 'None';
+        }
+        
+        function update() {
+            // Player movement
+            if (keys['w'] || keys['arrowup']) player.y -= player.speed;
+            if (keys['s'] || keys['arrowdown']) player.y += player.speed;
+            if (keys['a'] || keys['arrowleft']) player.x -= player.speed;
+            if (keys['d'] || keys['arrowright']) player.x += player.speed;
+            
+            // Keep player on screen
+            player.x = Math.max(player.size/2, Math.min(inputCanvas.width - player.size/2, player.x));
+            player.y = Math.max(player.size/2, Math.min(inputCanvas.height - player.size/2, player.y));
+            
+            // Update projectiles
+            for (let i = projectiles.length - 1; i >= 0; i--) {
+                projectiles[i].update();
+                
+                // Check target hits
+                for (let target of targets) {
+                    if (target.checkHit(projectiles[i])) {
+                        projectiles.splice(i, 1);
+                        break;
+                    }
+                }
+                
+                // Remove off-screen projectiles
+                if (projectiles[i] && projectiles[i].isOffScreen()) {
+                    projectiles.splice(i, 1);
+                }
+            }
+        }
+        
+        function draw() {
+            // Clear canvas
+            inputCtx.fillStyle = '#1a1a1a';
+            inputCtx.fillRect(0, 0, inputCanvas.width, inputCanvas.height);
+            
+            // Draw targets
+            targets.forEach(target => target.draw());
+            
+            // Draw projectiles
+            projectiles.forEach(proj => proj.draw());
+            
+            // Draw player
+            inputCtx.fillStyle = '#2196f3';
+            inputCtx.fillRect(player.x - player.size/2, player.y - player.size/2, player.size, player.size);
+            
+            // Draw mouse cursor indicator
+            inputCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            inputCtx.lineWidth = 1;
+            inputCtx.beginPath();
+            inputCtx.moveTo(player.x, player.y);
+            inputCtx.lineTo(mousePos.x, mousePos.y);
+            inputCtx.stroke();
+        }
+        
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        gameLoop();
+    </script>
+
+    <h2>Common Key Constants</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>📌 Pygame Key Constants Reference</h3>
+        <table>
+            <tr>
+                <th>Key</th>
+                <th>Constant</th>
+                <th>Key</th>
+                <th>Constant</th>
+            </tr>
+            <tr>
+                <td>Letters A-Z</td>
+                <td>pygame.K_a to pygame.K_z</td>
+                <td>Numbers 0-9</td>
+                <td>pygame.K_0 to pygame.K_9</td>
+            </tr>
+            <tr>
+                <td>Arrow Keys</td>
+                <td>K_UP, K_DOWN, K_LEFT, K_RIGHT</td>
+                <td>Space</td>
+                <td>pygame.K_SPACE</td>
+            </tr>
+            <tr>
+                <td>Enter/Return</td>
+                <td>pygame.K_RETURN</td>
+                <td>Escape</td>
+                <td>pygame.K_ESCAPE</td>
+            </tr>
+            <tr>
+                <td>Shift</td>
+                <td>K_LSHIFT, K_RSHIFT</td>
+                <td>Control</td>
+                <td>K_LCTRL, K_RCTRL</td>
+            </tr>
+            <tr>
+                <td>Tab</td>
+                <td>pygame.K_TAB</td>
+                <td>Backspace</td>
+                <td>pygame.K_BACKSPACE</td>
+            </tr>
+        </table>
+    </div>
+
+    <h2>Complete Example: Interactive Paint Program</h2>
+    
+    <pre class="language-python"><code>import pygame
+import sys
+
+class PaintProgram:
+    def __init__(self):
+        pygame.init()
+        self.screen = pygame.display.set_mode((800, 600))
+        pygame.display.set_caption("Paint with Input!")
+        self.clock = pygame.time.Clock()
+        
+        # Drawing surface
+        self.canvas = pygame.Surface((800, 600))
+        self.canvas.fill((255, 255, 255))
+        
+        # Drawing settings
+        self.drawing = False
+        self.current_color = (0, 0, 0)
+        self.brush_size = 5
+        self.last_pos = None
+        
+        # Color palette
+        self.colors = [
+            (0, 0, 0),      # Black
+            (255, 0, 0),    # Red
+            (0, 255, 0),    # Green
+            (0, 0, 255),    # Blue
+            (255, 255, 0),  # Yellow
+            (255, 0, 255),  # Magenta
+            (0, 255, 255),  # Cyan
+            (255, 255, 255) # White (eraser)
+        ]
+    
+    def handle_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
+            
+            elif event.type == pygame.KEYDOWN:
+                # Number keys select colors
+                if pygame.K_1 &lt;= event.key &lt;= pygame.K_8:
+                    color_index = event.key - pygame.K_1
+                    if color_index &lt; len(self.colors):
+                        self.current_color = self.colors[color_index]
+                
+                # Clear canvas
+                elif event.key == pygame.K_c:
+                    self.canvas.fill((255, 255, 255))
+                
+                # Adjust brush size
+                elif event.key == pygame.K_PLUS or event.key == pygame.K_EQUALS:
+                    self.brush_size = min(50, self.brush_size + 2)
+                elif event.key == pygame.K_MINUS:
+                    self.brush_size = max(1, self.brush_size - 2)
+            
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:  # Left click
+                    self.drawing = True
+                    self.last_pos = event.pos
+            
+            elif event.type == pygame.MOUSEBUTTONUP:
+                if event.button == 1:
+                    self.drawing = False
+                    self.last_pos = None
+            
+            elif event.type == pygame.MOUSEMOTION:
+                if self.drawing:
+                    if self.last_pos:
+                        pygame.draw.line(self.canvas, self.current_color,
+                                       self.last_pos, event.pos, 
+                                       self.brush_size)
+                    self.last_pos = event.pos
+            
+            elif event.type == pygame.MOUSEWHEEL:
+                # Scroll to change brush size
+                self.brush_size = max(1, min(50, 
+                                   self.brush_size + event.y * 2))
+        
+        return True
+    
+    def draw(self):
+        # Draw canvas
+        self.screen.blit(self.canvas, (0, 0))
+        
+        # Draw color palette
+        for i, color in enumerate(self.colors):
+            x = 10 + i * 40
+            pygame.draw.rect(self.screen, color, (x, 10, 30, 30))
+            if color == self.current_color:
+                pygame.draw.rect(self.screen, (0, 0, 0), 
+                               (x-2, 8, 34, 34), 2)
+        
+        # Draw brush preview at mouse position
+        mouse_pos = pygame.mouse.get_pos()
+        pygame.draw.circle(self.screen, self.current_color,
+                         mouse_pos, self.brush_size, 1)
+        
+        # Draw instructions
+        font = pygame.font.Font(None, 24)
+        instructions = [
+            f"Brush Size: {self.brush_size} (scroll or +/-)",
+            "Keys 1-8: Select Color",
+            "C: Clear Canvas",
+            "Click and Drag to Draw"
+        ]
+        for i, text in enumerate(instructions):
+            rendered = font.render(text, True, (0, 0, 0))
+            self.screen.blit(rendered, (10, 550 - i * 25))
+    
+    def run(self):
+        running = True
+        while running:
+            running = self.handle_events()
+            self.draw()
+            pygame.display.flip()
+            self.clock.tick(60)
+        
+        pygame.quit()
+        sys.exit()
+
+if __name__ == "__main__":
+    paint = PaintProgram()
+    paint.run()</code></pre>
+
+    <h2>Input Best Practices</h2>
+    
+    <div style="background-color: #f0fff4; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>💡 Pro Tips for Great Input</h3>
+        <ul>
+            <li><strong>Responsive Feedback:</strong> Always give immediate visual/audio feedback for inputs</li>
+            <li><strong>Input Buffering:</strong> Store inputs briefly to catch player intent</li>
+            <li><strong>Coyote Time:</strong> Allow jumps slightly after leaving platforms</li>
+            <li><strong>Dead Zones:</strong> Ignore tiny movements to prevent drift</li>
+            <li><strong>Customizable Controls:</strong> Let players remap keys</li>
+            <li><strong>Multiple Input Methods:</strong> Support both keyboard and gamepad</li>
+        </ul>
+    </div>
+
+    <h2>Practice Exercises</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎯 Challenge Yourself!</h3>
+        <ol>
+            <li><strong>Twin-Stick Shooter:</strong> WASD moves, mouse aims and shoots</li>
+            <li><strong>Combo System:</strong> Detect sequences like ↓↓↑ or rapid button presses</li>
+            <li><strong>Gesture Recognition:</strong> Detect mouse patterns (circles, lines)</li>
+            <li><strong>Virtual Joystick:</strong> Create on-screen controls for mobile-style input</li>
+            <li><strong>Input Replay:</strong> Record and replay player inputs</li>
+        </ol>
+    </div>
+
+    <h2>Gamepad Support</h2>
+    
+    <pre class="language-python"><code># Basic gamepad/joystick support
+pygame.joystick.init()
+
+# Check for joysticks
+joystick_count = pygame.joystick.get_count()
+
+if joystick_count > 0:
+    # Use first joystick
+    joystick = pygame.joystick.Joystick(0)
+    joystick.init()
+    
+    # In your game loop
+    # Get axis values (-1 to 1)
+    x_axis = joystick.get_axis(0)  # Left stick X
+    y_axis = joystick.get_axis(1)  # Left stick Y
+    
+    # Apply dead zone
+    if abs(x_axis) &lt; 0.1:
+        x_axis = 0
+    if abs(y_axis) &lt; 0.1:
+        y_axis = 0
+    
+    # Get button states
+    a_button = joystick.get_button(0)
+    b_button = joystick.get_button(1)
+    
+    # Get D-pad (hat)
+    hat = joystick.get_hat(0)  # Returns (x, y) tuple</code></pre>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>🎮 Use events for discrete actions (jump, shoot, menu)</li>
+            <li>🕹️ Use state polling for continuous actions (movement, aiming)</li>
+            <li>⌨️ pygame.key.get_pressed() returns all key states</li>
+            <li>🖱️ pygame.mouse.get_pos() gives current mouse position</li>
+            <li>💡 Combine both methods for best game feel</li>
+            <li>🎯 Always provide immediate feedback for inputs</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you can handle player input, next we'll learn about collision detection - how to know when game objects touch or overlap. This is crucial for making games where things can interact!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="pygame_basics_drawing.html" class="prev-lesson" aria-label="Previous lesson: Drawing Shapes">Previous Lesson: Drawing Shapes & Sprites</a>
+        <a href="pygame_basics_collision.html" class="next-lesson" aria-label="Next lesson: Collision Detection">Next Lesson: Collision Detection</a>
+    </nav>
+    
+    </main>
+</body>
+</html>

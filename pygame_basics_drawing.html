@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Learn how to draw shapes and sprites in Pygame. Master the fundamentals of game graphics, from simple shapes to animated sprites.">
+    <title>Drawing Shapes and Sprites - Pygame Basics</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script src="/js/course-enhancements.js" defer></script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Drawing Shapes and Sprites</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Lesson 2: Drawing Shapes & Sprites</span>
+    </nav>
+
+    <h2>Bringing Your Game World to Life!</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Now that you understand the game loop, it's time to make things appear on screen! In this lesson, you'll learn how to draw everything from simple shapes to complex sprites. By the end, you'll be creating colorful, animated game graphics! 🎨</p>
+    </div>
+
+    <h2>Understanding the Pygame Coordinate System</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>📐 The Canvas Analogy</h3>
+        <p>Imagine your game screen as a piece of graph paper. Each square has an address (x, y):</p>
+        <ul>
+            <li><strong>X-axis:</strong> Goes from left (0) to right (width)</li>
+            <li><strong>Y-axis:</strong> Goes from top (0) to bottom (height) - <em>this might feel backwards!</em></li>
+            <li><strong>Origin (0, 0):</strong> The top-left corner of your screen</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph LR
+        A["0,0 Top-Left"] --> B["800,0 Top-Right"]
+        A --> C["0,600 Bottom-Left"]
+        B --> D["800,600 Bottom-Right"]
+        style A fill:#ff6b6b
+        style D fill:#4caf50
+    </div>
+
+    <h2>Setting Up Your Drawing Surface</h2>
+    
+    <pre class="language-python"><code># Initialize Pygame and create a display surface
+import pygame
+import sys
+
+pygame.init()
+
+# Create the display surface (your canvas)
+screen = pygame.display.set_mode((800, 600))
+pygame.display.set_caption("Drawing Shapes and Sprites")
+
+# Define colors using RGB values (Red, Green, Blue)
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
+YELLOW = (255, 255, 0)
+PURPLE = (128, 0, 128)</code></pre>
+
+    <h2>Drawing Basic Shapes</h2>
+    
+    <h3>Drawing Lines</h3>
+    <pre class="language-python"><code># Draw a line from point A to point B
+pygame.draw.line(screen, WHITE, (100, 100), (300, 200), 5)
+# Parameters: surface, color, start_pos, end_pos, width</code></pre>
+
+    <h3>Drawing Rectangles</h3>
+    <pre class="language-python"><code># Draw a filled rectangle
+pygame.draw.rect(screen, RED, (150, 150, 200, 100))
+# Parameters: surface, color, (x, y, width, height)
+
+# Draw a rectangle outline
+pygame.draw.rect(screen, GREEN, (400, 150, 200, 100), 3)
+# The last parameter is the border width</code></pre>
+
+    <h3>Drawing Circles</h3>
+    <pre class="language-python"><code># Draw a filled circle
+pygame.draw.circle(screen, BLUE, (400, 300), 50)
+# Parameters: surface, color, center_pos, radius
+
+# Draw a circle outline
+pygame.draw.circle(screen, YELLOW, (200, 300), 50, 3)</code></pre>
+
+    <h3>Drawing Polygons</h3>
+    <pre class="language-python"><code># Draw a triangle (or any polygon)
+points = [(300, 100), (400, 200), (200, 200)]
+pygame.draw.polygon(screen, PURPLE, points)
+# Parameters: surface, color, list_of_points</code></pre>
+
+    <h2>Interactive Shape Drawing Demo</h2>
+    
+    <div style="background-color: #f9f9f9; padding: 20px; border-radius: 10px; margin: 20px 0; text-align: center;">
+        <h3>🎨 Draw Shapes Interactively!</h3>
+        <canvas id="shapesCanvas" width="600" height="400"></canvas>
+        <div>
+            <button onclick="drawRandomShape()">Draw Random Shape</button>
+            <button onclick="clearCanvas()">Clear Canvas</button>
+            <select id="shapeType" style="padding: 5px; margin: 5px;">
+                <option value="rect">Rectangle</option>
+                <option value="circle">Circle</option>
+                <option value="line">Line</option>
+                <option value="triangle">Triangle</option>
+            </select>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('shapesCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Initialize canvas
+        ctx.fillStyle = '#1a1a1a';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        function getRandomColor() {
+            const colors = ['#ff6b6b', '#4caf50', '#2196f3', '#ffeb3b', '#9c27b0', '#ff9800'];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+        
+        function drawRandomShape() {
+            const shapeType = document.getElementById('shapeType').value;
+            const color = getRandomColor();
+            ctx.fillStyle = color;
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 3;
+            
+            switch(shapeType) {
+                case 'rect':
+                    const x = Math.random() * 400;
+                    const y = Math.random() * 250;
+                    const w = Math.random() * 150 + 50;
+                    const h = Math.random() * 100 + 30;
+                    if (Math.random() > 0.5) {
+                        ctx.fillRect(x, y, w, h);
+                    } else {
+                        ctx.strokeRect(x, y, w, h);
+                    }
+                    break;
+                case 'circle':
+                    const cx = Math.random() * 500 + 50;
+                    const cy = Math.random() * 300 + 50;
+                    const r = Math.random() * 40 + 20;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                    if (Math.random() > 0.5) {
+                        ctx.fill();
+                    } else {
+                        ctx.stroke();
+                    }
+                    break;
+                case 'line':
+                    ctx.beginPath();
+                    ctx.moveTo(Math.random() * 600, Math.random() * 400);
+                    ctx.lineTo(Math.random() * 600, Math.random() * 400);
+                    ctx.stroke();
+                    break;
+                case 'triangle':
+                    ctx.beginPath();
+                    ctx.moveTo(Math.random() * 600, Math.random() * 400);
+                    ctx.lineTo(Math.random() * 600, Math.random() * 400);
+                    ctx.lineTo(Math.random() * 600, Math.random() * 400);
+                    ctx.closePath();
+                    if (Math.random() > 0.5) {
+                        ctx.fill();
+                    } else {
+                        ctx.stroke();
+                    }
+                    break;
+            }
+        }
+        
+        function clearCanvas() {
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        
+        // Draw some initial shapes
+        for(let i = 0; i < 3; i++) {
+            drawRandomShape();
+        }
+    </script>
+
+    <h2>Complete Shape Drawing Example</h2>
+    
+    <pre class="language-python"><code>import pygame
+import sys
+
+# Initialize Pygame
+pygame.init()
+
+# Set up display
+screen = pygame.display.set_mode((800, 600))
+pygame.display.set_caption("Shape Gallery")
+
+# Colors
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
+YELLOW = (255, 255, 0)
+CYAN = (0, 255, 255)
+MAGENTA = (255, 0, 255)
+
+# Clock for FPS
+clock = pygame.time.Clock()
+
+# Game loop
+running = True
+while running:
+    # Handle events
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+    
+    # Fill background
+    screen.fill(BLACK)
+    
+    # Draw shapes showcase
+    # Lines forming a star
+    center_x, center_y = 400, 100
+    for i in range(5):
+        angle = i * 72 * 3.14159 / 180
+        x = center_x + 50 * pygame.math.Vector2(1, 0).rotate(angle * 180/3.14159).x
+        y = center_y + 50 * pygame.math.Vector2(1, 0).rotate(angle * 180/3.14159).y
+        pygame.draw.line(screen, YELLOW, (center_x, center_y), (x, y), 2)
+    
+    # Rectangles
+    pygame.draw.rect(screen, RED, (50, 200, 100, 80))
+    pygame.draw.rect(screen, GREEN, (200, 200, 100, 80), 3)
+    
+    # Circles
+    pygame.draw.circle(screen, BLUE, (100, 400), 40)
+    pygame.draw.circle(screen, CYAN, (200, 400), 40, 5)
+    
+    # Ellipse
+    pygame.draw.ellipse(screen, MAGENTA, (350, 350, 150, 80))
+    
+    # Polygon (hexagon)
+    points = []
+    for i in range(6):
+        angle = i * 60 * 3.14159 / 180
+        x = 600 + 50 * pygame.math.cos(angle)
+        y = 400 + 50 * pygame.math.sin(angle)
+        points.append((x, y))
+    pygame.draw.polygon(screen, WHITE, points, 2)
+    
+    # Update display
+    pygame.display.flip()
+    clock.tick(60)
+
+# Quit
+pygame.quit()
+sys.exit()</code></pre>
+
+    <h2>Working with Sprites</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>What Are Sprites?</h3>
+        <p>Sprites are 2D images or animations that represent game objects. Think of them as the actors in your game - characters, enemies, items, backgrounds. In Pygame, sprites are more than just images; they're objects that know how to draw themselves and can have behaviors!</p>
+    </div>
+
+    <h2>Loading and Displaying Images</h2>
+    
+    <pre class="language-python"><code># Load an image
+player_image = pygame.image.load("player.png")
+
+# Optional: Convert for better performance
+player_image = player_image.convert_alpha()
+
+# Get the rectangle for positioning
+player_rect = player_image.get_rect()
+player_rect.center = (400, 300)
+
+# In your game loop:
+screen.blit(player_image, player_rect)
+# blit = Block Image Transfer (copying pixels to screen)</code></pre>
+
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚠️ Image Format Tips</h3>
+        <ul>
+            <li><strong>PNG:</strong> Best for sprites with transparency</li>
+            <li><strong>JPG:</strong> Good for backgrounds (no transparency)</li>
+            <li><strong>convert():</strong> Use for images without transparency</li>
+            <li><strong>convert_alpha():</strong> Use for images with transparency</li>
+        </ul>
+    </div>
+
+    <h2>Creating a Simple Sprite Class</h2>
+    
+    <pre class="language-python"><code>import pygame
+
+class Player(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        # Create a simple colored rectangle as our sprite
+        self.image = pygame.Surface((50, 50))
+        self.image.fill((0, 255, 0))  # Green square
+        
+        # Get the rectangle for positioning
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        
+        # Movement speed
+        self.speed = 5
+    
+    def update(self):
+        # Get keyboard input
+        keys = pygame.key.get_pressed()
+        
+        # Move based on input
+        if keys[pygame.K_LEFT]:
+            self.rect.x -= self.speed
+        if keys[pygame.K_RIGHT]:
+            self.rect.x += self.speed
+        if keys[pygame.K_UP]:
+            self.rect.y -= self.speed
+        if keys[pygame.K_DOWN]:
+            self.rect.y += self.speed
+    
+    def draw(self, screen):
+        screen.blit(self.image, self.rect)</code></pre>
+
+    <h2>Sprite Groups - Managing Multiple Sprites</h2>
+    
+    <pre class="language-python"><code># Create sprite groups
+all_sprites = pygame.sprite.Group()
+enemies = pygame.sprite.Group()
+bullets = pygame.sprite.Group()
+
+# Create and add sprites
+player = Player(400, 300)
+all_sprites.add(player)
+
+for i in range(5):
+    enemy = Enemy(100 + i * 150, 100)
+    all_sprites.add(enemy)
+    enemies.add(enemy)
+
+# In your game loop:
+# Update all sprites at once
+all_sprites.update()
+
+# Draw all sprites at once
+all_sprites.draw(screen)</code></pre>
+
+    <h2>Transforming Sprites</h2>
+    
+    <pre class="language-python"><code># Scale an image
+scaled_image = pygame.transform.scale(original_image, (100, 100))
+
+# Rotate an image
+rotated_image = pygame.transform.rotate(original_image, 45)
+
+# Flip an image
+flipped_image = pygame.transform.flip(original_image, True, False)
+# Parameters: image, flip_x, flip_y</code></pre>
+
+    <h2>Interactive Sprite Demo</h2>
+    
+    <div style="background-color: #f9f9f9; padding: 20px; border-radius: 10px; margin: 20px 0; text-align: center;">
+        <h3>🎮 Control the Bouncing Sprites!</h3>
+        <canvas id="spriteCanvas" width="600" height="400"></canvas>
+        <p>Click to add sprites! They'll bounce around automatically.</p>
+        <button onclick="clearSprites()">Clear All Sprites</button>
+    </div>
+
+    <script>
+        const spriteCanvas = document.getElementById('spriteCanvas');
+        const spriteCtx = spriteCanvas.getContext('2d');
+        let sprites = [];
+
+        class BouncingSprite {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 4;
+                this.vy = (Math.random() - 0.5) * 4;
+                this.size = Math.random() * 20 + 10;
+                this.color = `hsl(${Math.random() * 360}, 70%, 50%)`;
+                this.rotation = 0;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.rotation += 0.05;
+
+                // Bounce off walls
+                if (this.x - this.size < 0 || this.x + this.size > spriteCanvas.width) {
+                    this.vx = -this.vx;
+                }
+                if (this.y - this.size < 0 || this.y + this.size > spriteCanvas.height) {
+                    this.vy = -this.vy;
+                }
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.fillStyle = this.color;
+                ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size);
+                ctx.restore();
+            }
+        }
+
+        spriteCanvas.addEventListener('click', (e) => {
+            const rect = spriteCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            sprites.push(new BouncingSprite(x, y));
+        });
+
+        function clearSprites() {
+            sprites = [];
+        }
+
+        function animateSprites() {
+            spriteCtx.fillStyle = 'rgba(26, 26, 26, 0.1)';
+            spriteCtx.fillRect(0, 0, spriteCanvas.width, spriteCanvas.height);
+
+            sprites.forEach(sprite => {
+                sprite.update();
+                sprite.draw(spriteCtx);
+            });
+
+            requestAnimationFrame(animateSprites);
+        }
+
+        // Initialize with a few sprites
+        for(let i = 0; i < 3; i++) {
+            sprites.push(new BouncingSprite(
+                Math.random() * spriteCanvas.width,
+                Math.random() * spriteCanvas.height
+            ));
+        }
+
+        animateSprites();
+    </script>
+
+    <h2>Color Theory for Games</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎨 RGB Color System</h3>
+        <p>Colors in Pygame use RGB (Red, Green, Blue) values from 0 to 255:</p>
+        <ul>
+            <li><strong>(255, 0, 0)</strong> = Pure Red</li>
+            <li><strong>(0, 255, 0)</strong> = Pure Green</li>
+            <li><strong>(0, 0, 255)</strong> = Pure Blue</li>
+            <li><strong>(255, 255, 255)</strong> = White (all colors)</li>
+            <li><strong>(0, 0, 0)</strong> = Black (no color)</li>
+            <li><strong>(128, 128, 128)</strong> = Gray (balanced)</li>
+        </ul>
+    </div>
+
+    <h2>Performance Tips</h2>
+    
+    <div style="background-color: #f0fff4; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>💡 Optimize Your Graphics</h3>
+        <ul>
+            <li><strong>Use convert():</strong> Always convert images after loading for 2-3x speed boost</li>
+            <li><strong>Sprite Groups:</strong> Use groups to update and draw many sprites efficiently</li>
+            <li><strong>Dirty Rectangles:</strong> Only redraw parts of the screen that changed</li>
+            <li><strong>Pre-scale Images:</strong> Scale images once at load time, not every frame</li>
+            <li><strong>Limit Transparency:</strong> Transparent surfaces are slower to draw</li>
+        </ul>
+    </div>
+
+    <h2>Complete Sprite Example</h2>
+    
+    <pre class="language-python"><code>import pygame
+import random
+
+class Star(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.Surface((10, 10))
+        pygame.draw.circle(self.image, (255, 255, 0), (5, 5), 5)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        self.collected = False
+    
+    def update(self):
+        # Make the star pulse
+        pass
+
+class Player(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.image = pygame.Surface((30, 30))
+        self.image.fill((0, 100, 255))
+        self.rect = self.image.get_rect()
+        self.rect.center = (400, 300)
+        self.speed = 5
+    
+    def update(self):
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT]:
+            self.rect.x -= self.speed
+        if keys[pygame.K_RIGHT]:
+            self.rect.x += self.speed
+        if keys[pygame.K_UP]:
+            self.rect.y -= self.speed
+        if keys[pygame.K_DOWN]:
+            self.rect.y += self.speed
+        
+        # Keep player on screen
+        self.rect.clamp_ip(pygame.Rect(0, 0, 800, 600))
+
+# Initialize Pygame
+pygame.init()
+screen = pygame.display.set_mode((800, 600))
+pygame.display.set_caption("Collect the Stars!")
+clock = pygame.time.Clock()
+
+# Create sprite groups
+all_sprites = pygame.sprite.Group()
+stars = pygame.sprite.Group()
+
+# Create player
+player = Player()
+all_sprites.add(player)
+
+# Create stars
+for i in range(10):
+    star = Star(random.randint(50, 750), random.randint(50, 550))
+    all_sprites.add(star)
+    stars.add(star)
+
+# Game loop
+running = True
+score = 0
+
+while running:
+    # Handle events
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+    
+    # Update
+    all_sprites.update()
+    
+    # Check collisions
+    collected = pygame.sprite.spritecollide(player, stars, True)
+    score += len(collected)
+    
+    # Draw
+    screen.fill((20, 20, 40))  # Dark blue background
+    all_sprites.draw(screen)
+    
+    # Display score
+    font = pygame.font.Font(None, 36)
+    text = font.render(f"Stars: {score}", True, (255, 255, 255))
+    screen.blit(text, (10, 10))
+    
+    # Update display
+    pygame.display.flip()
+    clock.tick(60)
+
+pygame.quit()</code></pre>
+
+    <h2>Practice Exercises</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎯 Try These Challenges!</h3>
+        <ol>
+            <li><strong>Rainbow Circle:</strong> Draw a series of concentric circles with different colors</li>
+            <li><strong>Moving Shape:</strong> Make a shape that follows your mouse cursor</li>
+            <li><strong>Shape Painter:</strong> Create a program where you can draw shapes by clicking</li>
+            <li><strong>Animated Sprite:</strong> Make a sprite that changes color or size over time</li>
+            <li><strong>Sprite Trail:</strong> Create a sprite that leaves a fading trail as it moves</li>
+        </ol>
+    </div>
+
+    <h2>Common Mistakes to Avoid</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚠️ Watch Out For:</h3>
+        <ul>
+            <li><strong>Forgetting flip():</strong> Nothing appears without pygame.display.flip()</li>
+            <li><strong>Wrong coordinate system:</strong> Remember Y increases downward!</li>
+            <li><strong>Not clearing screen:</strong> Old frames remain visible creating trails</li>
+            <li><strong>Loading images in loop:</strong> Load once, use many times</li>
+            <li><strong>Forgetting convert():</strong> Huge performance impact</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>📐 Pygame uses a coordinate system with (0,0) at top-left</li>
+            <li>🎨 Basic shapes are drawn with pygame.draw functions</li>
+            <li>🖼️ Sprites are objects that combine images with behavior</li>
+            <li>👥 Sprite Groups help manage multiple sprites efficiently</li>
+            <li>🎯 Always convert images and use groups for better performance</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you can draw shapes and sprites, next we'll learn how to handle keyboard and mouse input to make your games interactive. You'll create games that respond to player actions!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="pygame_basics_game_loop.html" class="prev-lesson" aria-label="Previous lesson: Game Loop">Previous Lesson: Game Loop</a>
+        <a href="pygame_basics_input.html" class="next-lesson" aria-label="Next lesson: Handling Input">Next Lesson: Handling Input</a>
+    </nav>
+    
+    </main>
+</body>
+</html>

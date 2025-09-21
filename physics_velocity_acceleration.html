@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master velocity and acceleration in game physics. Learn to create realistic movement, forces, and motion for game objects.">
+    <title>Velocity and Acceleration - Game Physics</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script src="/js/course-enhancements.js" defer></script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Velocity and Acceleration</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Section 4: Game Physics - Lesson 1</span>
+    </nav>
+
+    <h2>The Foundation of Game Movement</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Velocity and acceleration are the heartbeat of game physics! They transform static objects into dynamic entities that move, respond to forces, and feel alive. Let's master the fundamentals of motion! 🚀📈</p>
+    </div>
+
+    <h2>Understanding Motion</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🚗 The Car Journey Analogy</h3>
+        <p>Think of game physics like driving a car:</p>
+        <ul>
+            <li><strong>Position:</strong> Where you are on the road (x, y coordinates)</li>
+            <li><strong>Velocity:</strong> How fast and in what direction you're going (speed + direction)</li>
+            <li><strong>Acceleration:</strong> Pressing the gas or brake (change in velocity)</li>
+            <li><strong>Forces:</strong> Engine power, brakes, wind resistance</li>
+            <li><strong>Integration:</strong> How position changes over time based on velocity</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Motion Physics"] --> B["Position"]
+        A --> C["Velocity"]
+        A --> D["Acceleration"]
+        A --> E["Forces"]
+        B --> F["x, y coordinates"]
+        B --> G["Rotation angle"]
+        C --> H["Speed"]
+        C --> I["Direction"]
+        D --> J["Linear"]
+        D --> K["Angular"]
+        E --> L["Gravity"]
+        E --> M["Thrust"]
+        E --> N["Friction"]
+    </div>
+
+    <h2>Interactive Physics Playground</h2>
+    
+    <div class="canvas-wrapper">
+        <canvas id="physicsCanvas" width="600" height="400"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Explore velocity and acceleration concepts!</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; max-width: 600px; margin: 10px auto;">
+            <button onclick="setDemo('constant')">Constant Velocity</button>
+            <button onclick="setDemo('acceleration')">Acceleration</button>
+            <button onclick="setDemo('deceleration')">Deceleration</button>
+            <button onclick="setDemo('circular')">Circular Motion</button>
+            <button onclick="setDemo('projectile')">Projectile</button>
+            <button onclick="setDemo('rocket')">Rocket</button>
+        </div>
+        <div style="margin-top: 10px;">
+            <label>Show Vectors: <input type="checkbox" id="showVectors" checked onchange="toggleVectors()"></label>
+            <label>Show Trail: <input type="checkbox" id="showTrail" checked onchange="toggleTrail()"></label>
+            <button onclick="resetDemo()">Reset</button>
+        </div>
+        <p>Demo: <strong id="demoDisplay">Constant Velocity</strong></p>
+        <p>Velocity: <span id="velocityDisplay">0, 0</span> | Acceleration: <span id="accelDisplay">0, 0</span></p>
+    </div>
+
+    <script>
+        const physicsCanvas = document.getElementById('physicsCanvas');
+        const pCtx = physicsCanvas.getContext('2d');
+        const demoDisplay = document.getElementById('demoDisplay');
+        const velocityDisplay = document.getElementById('velocityDisplay');
+        const accelDisplay = document.getElementById('accelDisplay');
+        const showVectorsCheck = document.getElementById('showVectors');
+        const showTrailCheck = document.getElementById('showTrail');
+        
+        let currentDemo = 'constant';
+        let showVectors = true;
+        let showTrail = true;
+        
+        class PhysicsObject {
+            constructor(x, y) {
+                this.position = { x: x, y: y };
+                this.velocity = { x: 0, y: 0 };
+                this.acceleration = { x: 0, y: 0 };
+                this.mass = 1;
+                this.radius = 10;
+                this.color = '#4ecdc4';
+                this.trail = [];
+                this.maxTrailLength = 50;
+                this.angle = 0;
+                this.angularVelocity = 0;
+                this.forces = [];
+            }
+            
+            applyForce(force) {
+                // F = ma, so a = F/m
+                this.acceleration.x += force.x / this.mass;
+                this.acceleration.y += force.y / this.mass;
+            }
+            
+            update(dt) {
+                // Update velocity based on acceleration (v = v0 + at)
+                this.velocity.x += this.acceleration.x * dt;
+                this.velocity.y += this.acceleration.y * dt;
+                
+                // Update position based on velocity (x = x0 + vt)
+                this.position.x += this.velocity.x * dt;
+                this.position.y += this.velocity.y * dt;
+                
+                // Update rotation
+                this.angle += this.angularVelocity * dt;
+                
+                // Add to trail
+                if (showTrail) {
+                    this.trail.push({ x: this.position.x, y: this.position.y });
+                    if (this.trail.length > this.maxTrailLength) {
+                        this.trail.shift();
+                    }
+                }
+                
+                // Reset acceleration (forces need to be applied each frame)
+                this.acceleration.x = 0;
+                this.acceleration.y = 0;
+                
+                // Boundary checking
+                if (this.position.x - this.radius < 0 || this.position.x + this.radius > physicsCanvas.width) {
+                    this.velocity.x *= -0.8; // Bounce with energy loss
+                    this.position.x = Math.max(this.radius, Math.min(physicsCanvas.width - this.radius, this.position.x));
+                }
+                if (this.position.y - this.radius < 0 || this.position.y + this.radius > physicsCanvas.height) {
+                    this.velocity.y *= -0.8;
+                    this.position.y = Math.max(this.radius, Math.min(physicsCanvas.height - this.radius, this.position.y));
+                }
+            }
+            
+            draw(ctx) {
+                // Draw trail
+                if (showTrail && this.trail.length > 1) {
+                    ctx.strokeStyle = this.color;
+                    ctx.globalAlpha = 0.3;
+                    ctx.beginPath();
+                    ctx.moveTo(this.trail[0].x, this.trail[0].y);
+                    for (let i = 1; i < this.trail.length; i++) {
+                        ctx.lineTo(this.trail[i].x, this.trail[i].y);
+                    }
+                    ctx.stroke();
+                    ctx.globalAlpha = 1;
+                }
+                
+                // Draw object
+                ctx.save();
+                ctx.translate(this.position.x, this.position.y);
+                ctx.rotate(this.angle);
+                
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw direction indicator
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(this.radius * 0.7, 0);
+                ctx.stroke();
+                
+                ctx.restore();
+                
+                // Draw vectors
+                if (showVectors) {
+                    this.drawVectors(ctx);
+                }
+            }
+            
+            drawVectors(ctx) {
+                const scale = 1;
+                
+                // Velocity vector (green)
+                if (Math.abs(this.velocity.x) > 0.1 || Math.abs(this.velocity.y) > 0.1) {
+                    this.drawArrow(ctx, this.position.x, this.position.y,
+                                  this.position.x + this.velocity.x * scale,
+                                  this.position.y + this.velocity.y * scale,
+                                  '#4caf50', 'V');
+                }
+                
+                // Acceleration vector (red)
+                if (Math.abs(this.acceleration.x) > 0.1 || Math.abs(this.acceleration.y) > 0.1) {
+                    this.drawArrow(ctx, this.position.x, this.position.y,
+                                  this.position.x + this.acceleration.x * scale * 10,
+                                  this.position.y + this.acceleration.y * scale * 10,
+                                  '#ff5252', 'A');
+                }
+            }
+            
+            drawArrow(ctx, fromX, fromY, toX, toY, color, label) {
+                const headlen = 10;
+                const dx = toX - fromX;
+                const dy = toY - fromY;
+                const angle = Math.atan2(dy, dx);
+                
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(fromX, fromY);
+                ctx.lineTo(toX, toY);
+                ctx.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), 
+                          toY - headlen * Math.sin(angle - Math.PI / 6));
+                ctx.moveTo(toX, toY);
+                ctx.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6),
+                          toY - headlen * Math.sin(angle + Math.PI / 6));
+                ctx.stroke();
+                
+                // Label
+                ctx.fillStyle = color;
+                ctx.font = '12px Arial';
+                ctx.fillText(label, toX + 5, toY - 5);
+            }
+        }
+        
+        // Create physics objects for different demos
+        let objects = [];
+        let time = 0;
+        
+        function initDemo(type) {
+            objects = [];
+            time = 0;
+            
+            switch(type) {
+                case 'constant':
+                    const obj1 = new PhysicsObject(100, 200);
+                    obj1.velocity = { x: 50, y: 0 };
+                    obj1.color = '#4ecdc4';
+                    objects.push(obj1);
+                    break;
+                    
+                case 'acceleration':
+                    const obj2 = new PhysicsObject(50, 200);
+                    obj2.velocity = { x: 0, y: 0 };
+                    obj2.acceleration = { x: 20, y: 0 };
+                    obj2.color = '#ff6b6b';
+                    objects.push(obj2);
+                    break;
+                    
+                case 'deceleration':
+                    const obj3 = new PhysicsObject(50, 200);
+                    obj3.velocity = { x: 100, y: 0 };
+                    obj3.color = '#ffd93d';
+                    objects.push(obj3);
+                    break;
+                    
+                case 'circular':
+                    const obj4 = new PhysicsObject(300, 200);
+                    obj4.velocity = { x: 0, y: 100 };
+                    obj4.color = '#6c5ce7';
+                    objects.push(obj4);
+                    break;
+                    
+                case 'projectile':
+                    const obj5 = new PhysicsObject(50, 350);
+                    obj5.velocity = { x: 80, y: -150 };
+                    obj5.color = '#95e1d3';
+                    objects.push(obj5);
+                    break;
+                    
+                case 'rocket':
+                    const obj6 = new PhysicsObject(300, 350);
+                    obj6.velocity = { x: 0, y: 0 };
+                    obj6.color = '#f38181';
+                    objects.push(obj6);
+                    break;
+            }
+        }
+        
+        function setDemo(type) {
+            currentDemo = type;
+            demoDisplay.textContent = type.charAt(0).toUpperCase() + type.slice(1).replace('-', ' ');
+            initDemo(type);
+        }
+        
+        function toggleVectors() {
+            showVectors = showVectorsCheck.checked;
+        }
+        
+        function toggleTrail() {
+            showTrail = showTrailCheck.checked;
+            if (!showTrail) {
+                objects.forEach(obj => obj.trail = []);
+            }
+        }
+        
+        function resetDemo() {
+            initDemo(currentDemo);
+        }
+        
+        function updatePhysics(dt) {
+            time += dt;
+            
+            objects.forEach(obj => {
+                // Apply demo-specific forces
+                switch(currentDemo) {
+                    case 'deceleration':
+                        // Apply friction
+                        obj.applyForce({ 
+                            x: -obj.velocity.x * 0.5, 
+                            y: -obj.velocity.y * 0.5 
+                        });
+                        break;
+                        
+                    case 'circular':
+                        // Centripetal force
+                        const centerX = 300;
+                        const centerY = 200;
+                        const dx = centerX - obj.position.x;
+                        const dy = centerY - obj.position.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        if (distance > 0) {
+                            const force = 100;
+                            obj.applyForce({
+                                x: (dx / distance) * force,
+                                y: (dy / distance) * force
+                            });
+                        }
+                        break;
+                        
+                    case 'projectile':
+                        // Gravity
+                        obj.applyForce({ x: 0, y: 98 });
+                        break;
+                        
+                    case 'rocket':
+                        // Thrust upward
+                        if (time < 2) {
+                            obj.applyForce({ x: 0, y: -200 });
+                            // Side thrust for curve
+                            obj.applyForce({ x: Math.sin(time * 2) * 50, y: 0 });
+                        }
+                        // Always apply gravity
+                        obj.applyForce({ x: 0, y: 98 });
+                        break;
+                }
+                
+                obj.update(dt);
+                
+                // Update display
+                if (objects.length > 0) {
+                    const mainObj = objects[0];
+                    velocityDisplay.textContent = `${mainObj.velocity.x.toFixed(1)}, ${mainObj.velocity.y.toFixed(1)}`;
+                    accelDisplay.textContent = `${mainObj.acceleration.x.toFixed(1)}, ${mainObj.acceleration.y.toFixed(1)}`;
+                }
+            });
+        }
+        
+        function drawPhysics() {
+            // Clear canvas
+            pCtx.fillStyle = '#1a1a2e';
+            pCtx.fillRect(0, 0, physicsCanvas.width, physicsCanvas.height);
+            
+            // Draw grid
+            pCtx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            pCtx.lineWidth = 1;
+            for (let x = 0; x <= physicsCanvas.width; x += 50) {
+                pCtx.beginPath();
+                pCtx.moveTo(x, 0);
+                pCtx.lineTo(x, physicsCanvas.height);
+                pCtx.stroke();
+            }
+            for (let y = 0; y <= physicsCanvas.height; y += 50) {
+                pCtx.beginPath();
+                pCtx.moveTo(0, y);
+                pCtx.lineTo(physicsCanvas.width, y);
+                pCtx.stroke();
+            }
+            
+            // Draw objects
+            objects.forEach(obj => obj.draw(pCtx));
+            
+            // Draw demo-specific elements
+            if (currentDemo === 'circular') {
+                // Draw center point
+                pCtx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                pCtx.beginPath();
+                pCtx.arc(300, 200, 5, 0, Math.PI * 2);
+                pCtx.fill();
+                
+                // Draw orbit path
+                pCtx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+                pCtx.beginPath();
+                pCtx.arc(300, 200, 100, 0, Math.PI * 2);
+                pCtx.stroke();
+            }
+        }
+        
+        // Animation loop
+        let lastTime = performance.now();
+        function animate(currentTime) {
+            const dt = (currentTime - lastTime) / 1000; // Convert to seconds
+            lastTime = currentTime;
+            
+            updatePhysics(dt);
+            drawPhysics();
+            
+            requestAnimationFrame(animate);
+        }
+        
+        // Initialize
+        initDemo('constant');
+        animate(performance.now());
+    </script>
+
+    <h2>Basic Position, Velocity, and Acceleration</h2>
+    
+    <pre class="language-python"><code>import pygame
+import math
+
+class PhysicsObject:
+    def __init__(self, x, y):
+        # Position (where the object is)
+        self.position = pygame.math.Vector2(x, y)
+        
+        # Velocity (how fast position changes)
+        self.velocity = pygame.math.Vector2(0, 0)
+        
+        # Acceleration (how fast velocity changes)
+        self.acceleration = pygame.math.Vector2(0, 0)
+        
+        # Physical properties
+        self.mass = 1.0
+        self.radius = 10
+    
+    def apply_force(self, force):
+        """Apply a force to the object (F = ma, so a = F/m)"""
+        if self.mass > 0:
+            self.acceleration += force / self.mass
+    
+    def update(self, dt):
+        """Update physics simulation"""
+        # Update velocity: v = v0 + a*t
+        self.velocity += self.acceleration * dt
+        
+        # Update position: x = x0 + v*t
+        self.position += self.velocity * dt
+        
+        # Reset acceleration (forces must be applied each frame)
+        self.acceleration = pygame.math.Vector2(0, 0)
+    
+    def draw(self, screen):
+        """Draw the object"""
+        pygame.draw.circle(screen, (100, 200, 255), 
+                         (int(self.position.x), int(self.position.y)), 
+                         self.radius)
+
+# Example: Basic motion
+def basic_motion_example():
+    pygame.init()
+    screen = pygame.display.set_mode((800, 600))
+    clock = pygame.time.Clock()
+    
+    # Create object
+    obj = PhysicsObject(100, 300)
+    
+    # Set initial velocity
+    obj.velocity.x = 100  # pixels per second
+    
+    running = True
+    while running:
+        dt = clock.tick(60) / 1000.0  # Delta time in seconds
+        
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+        
+        # Apply constant acceleration (like gravity)
+        obj.apply_force(pygame.math.Vector2(0, 200))  # Downward force
+        
+        # Update physics
+        obj.update(dt)
+        
+        # Bounce off floor
+        if obj.position.y > 580:
+            obj.position.y = 580
+            obj.velocity.y *= -0.8  # Bounce with energy loss
+        
+        # Draw
+        screen.fill((30, 30, 30))
+        obj.draw(screen)
+        pygame.display.flip()
+    
+    pygame.quit()</code></pre>
+
+    <h2>Types of Motion</h2>
+    
+    <pre class="language-python"><code># Different motion patterns
+
+class MotionExamples:
+    @staticmethod
+    def constant_velocity(obj, speed, direction):
+        """Move at constant speed in a direction"""
+        obj.velocity.x = speed * math.cos(direction)
+        obj.velocity.y = speed * math.sin(direction)
+    
+    @staticmethod
+    def constant_acceleration(obj, accel_x, accel_y):
+        """Apply constant acceleration"""
+        obj.apply_force(pygame.math.Vector2(accel_x, accel_y) * obj.mass)
+    
+    @staticmethod
+    def circular_motion(obj, center, radius, angular_speed):
+        """Move in a circle"""
+        angle = pygame.time.get_ticks() * angular_speed / 1000.0
+        obj.position.x = center[0] + radius * math.cos(angle)
+        obj.position.y = center[1] + radius * math.sin(angle)
+        
+        # Set velocity tangent to circle
+        obj.velocity.x = -radius * angular_speed * math.sin(angle)
+        obj.velocity.y = radius * angular_speed * math.cos(angle)
+    
+    @staticmethod
+    def oscillating_motion(obj, center, amplitude, frequency):
+        """Simple harmonic motion"""
+        time = pygame.time.get_ticks() / 1000.0
+        offset = amplitude * math.sin(2 * math.pi * frequency * time)
+        obj.position.x = center[0] + offset
+        
+        # Velocity is derivative of position
+        obj.velocity.x = amplitude * 2 * math.pi * frequency * \
+                        math.cos(2 * math.pi * frequency * time)
+    
+    @staticmethod
+    def projectile_motion(obj, initial_velocity, gravity):
+        """Projectile with gravity"""
+        obj.velocity = initial_velocity.copy()
+        obj.apply_force(pygame.math.Vector2(0, gravity * obj.mass))
+
+# Advanced physics object with more features
+class AdvancedPhysicsObject:
+    def __init__(self, x, y):
+        self.position = pygame.math.Vector2(x, y)
+        self.velocity = pygame.math.Vector2(0, 0)
+        self.acceleration = pygame.math.Vector2(0, 0)
+        
+        # Rotation
+        self.angle = 0  # radians
+        self.angular_velocity = 0  # radians per second
+        self.angular_acceleration = 0
+        
+        # Properties
+        self.mass = 1.0
+        self.max_speed = 500
+        self.max_force = 100
+        
+        # Damping (air resistance)
+        self.linear_damping = 0.99
+        self.angular_damping = 0.99
+    
+    def apply_force(self, force, point=None):
+        """Apply force at a point (for torque)"""
+        # Linear force
+        force_vector = pygame.math.Vector2(force)
+        
+        # Limit force magnitude
+        if force_vector.length() > self.max_force:
+            force_vector.scale_to_length(self.max_force)
+        
+        self.acceleration += force_vector / self.mass
+        
+        # Calculate torque if force applied off-center
+        if point:
+            r = point - self.position
+            torque = r.x * force[1] - r.y * force[0]
+            self.angular_acceleration += torque / self.mass
+    
+    def update(self, dt):
+        """Advanced physics update"""
+        # Update linear motion
+        self.velocity += self.acceleration * dt
+        
+        # Limit speed
+        if self.velocity.length() > self.max_speed:
+            self.velocity.scale_to_length(self.max_speed)
+        
+        # Apply damping
+        self.velocity *= self.linear_damping
+        
+        # Update position
+        self.position += self.velocity * dt
+        
+        # Update rotation
+        self.angular_velocity += self.angular_acceleration * dt
+        self.angular_velocity *= self.angular_damping
+        self.angle += self.angular_velocity * dt
+        
+        # Reset accelerations
+        self.acceleration = pygame.math.Vector2(0, 0)
+        self.angular_acceleration = 0</code></pre>
+
+    <h2>Integration Methods</h2>
+    
+    <pre class="language-python"><code># Different integration methods for more accurate physics
+
+class IntegrationMethods:
+    @staticmethod
+    def euler(obj, dt):
+        """Simple Euler integration (less accurate but fast)"""
+        obj.velocity += obj.acceleration * dt
+        obj.position += obj.velocity * dt
+    
+    @staticmethod
+    def velocity_verlet(obj, dt):
+        """Velocity Verlet integration (more accurate)"""
+        # Store old acceleration
+        old_acceleration = obj.acceleration.copy()
+        
+        # Update position
+        obj.position += obj.velocity * dt + old_acceleration * (0.5 * dt * dt)
+        
+        # Calculate new acceleration (would involve recalculating forces)
+        # new_acceleration = calculate_acceleration()
+        
+        # Update velocity
+        obj.velocity += (old_acceleration + obj.acceleration) * (0.5 * dt)
+    
+    @staticmethod
+    def runge_kutta_4(obj, dt):
+        """4th order Runge-Kutta (very accurate but slower)"""
+        # Store initial state
+        initial_pos = obj.position.copy()
+        initial_vel = obj.velocity.copy()
+        
+        # Calculate k1
+        k1_vel = obj.acceleration.copy()
+        k1_pos = obj.velocity.copy()
+        
+        # Calculate k2
+        obj.position = initial_pos + k1_pos * (dt/2)
+        obj.velocity = initial_vel + k1_vel * (dt/2)
+        k2_vel = obj.acceleration.copy()
+        k2_pos = obj.velocity.copy()
+        
+        # Calculate k3
+        obj.position = initial_pos + k2_pos * (dt/2)
+        obj.velocity = initial_vel + k2_vel * (dt/2)
+        k3_vel = obj.acceleration.copy()
+        k3_pos = obj.velocity.copy()
+        
+        # Calculate k4
+        obj.position = initial_pos + k3_pos * dt
+        obj.velocity = initial_vel + k3_vel * dt
+        k4_vel = obj.acceleration.copy()
+        k4_pos = obj.velocity.copy()
+        
+        # Final update
+        obj.position = initial_pos + (k1_pos + 2*k2_pos + 2*k3_pos + k4_pos) * (dt/6)
+        obj.velocity = initial_vel + (k1_vel + 2*k2_vel + 2*k3_vel + k4_vel) * (dt/6)</code></pre>
+
+    <h2>Practical Movement Systems</h2>
+    
+    <pre class="language-python"><code># Player movement with acceleration
+class PlayerPhysics:
+    def __init__(self, x, y):
+        self.position = pygame.math.Vector2(x, y)
+        self.velocity = pygame.math.Vector2(0, 0)
+        self.acceleration = pygame.math.Vector2(0, 0)
+        
+        # Movement parameters
+        self.move_speed = 300
+        self.jump_force = -500
+        self.gravity = 980
+        self.friction = 0.85
+        self.air_resistance = 0.98
+        
+        # State
+        self.on_ground = False
+        self.facing_right = True
+    
+    def handle_input(self, keys):
+        """Process player input"""
+        # Reset horizontal acceleration
+        self.acceleration.x = 0
+        
+        # Left/Right movement
+        if keys[pygame.K_LEFT]:
+            self.acceleration.x = -self.move_speed
+            self.facing_right = False
+        if keys[pygame.K_RIGHT]:
+            self.acceleration.x = self.move_speed
+            self.facing_right = True
+        
+        # Jump
+        if keys[pygame.K_SPACE] and self.on_ground:
+            self.velocity.y = self.jump_force
+            self.on_ground = False
+    
+    def update(self, dt):
+        """Update player physics"""
+        # Apply gravity
+        if not self.on_ground:
+            self.acceleration.y = self.gravity
+        else:
+            self.acceleration.y = 0
+            self.velocity.y = 0
+        
+        # Update velocity
+        self.velocity += self.acceleration * dt
+        
+        # Apply friction/air resistance
+        if self.on_ground:
+            self.velocity.x *= self.friction
+        else:
+            self.velocity.x *= self.air_resistance
+        
+        # Update position
+        self.position += self.velocity * dt
+        
+        # Ground collision (simple)
+        if self.position.y > 500:  # Ground at y=500
+            self.position.y = 500
+            self.on_ground = True
+            self.velocity.y = 0
+
+# Car physics example
+class CarPhysics:
+    def __init__(self, x, y):
+        self.position = pygame.math.Vector2(x, y)
+        self.velocity = pygame.math.Vector2(0, 0)
+        self.angle = 0  # Car's rotation
+        
+        # Car properties
+        self.max_speed = 400
+        self.acceleration_rate = 200
+        self.brake_rate = 300
+        self.turn_speed = 3
+        self.drag_coefficient = 0.95
+        
+        # Current state
+        self.speed = 0
+        self.steering = 0
+    
+    def accelerate(self, throttle):
+        """Apply acceleration (-1 to 1)"""
+        if throttle > 0:
+            self.speed += self.acceleration_rate * throttle
+        else:
+            self.speed += self.brake_rate * throttle
+        
+        self.speed = max(-self.max_speed/2, min(self.max_speed, self.speed))
+    
+    def steer(self, direction):
+        """Steer the car (-1 to 1)"""
+        self.steering = direction
+    
+    def update(self, dt):
+        """Update car physics"""
+        # Apply steering (only if moving)
+        if abs(self.speed) > 10:
+            self.angle += self.steering * self.turn_speed * dt * (self.speed / self.max_speed)
+        
+        # Calculate velocity from speed and angle
+        self.velocity.x = math.cos(self.angle) * self.speed
+        self.velocity.y = math.sin(self.angle) * self.speed
+        
+        # Apply drag
+        self.speed *= self.drag_coefficient
+        
+        # Update position
+        self.position += self.velocity * dt
+        
+        # Reset steering
+        self.steering = 0</code></pre>
+
+    <h2>Complete Physics Demo</h2>
+    
+    <pre class="language-python"><code>import pygame
+import math
+import random
+
+class PhysicsDemo:
+    def __init__(self):
+        pygame.init()
+        self.screen = pygame.display.set_mode((800, 600))
+        pygame.display.set_caption("Velocity and Acceleration Demo")
+        self.clock = pygame.time.Clock()
+        self.font = pygame.font.Font(None, 24)
+        
+        # Create physics objects
+        self.objects = []
+        self.create_demo_objects()
+        
+        # Demo settings
+        self.show_vectors = True
+        self.show_trails = True
+        self.selected_object = 0
+        self.gravity_enabled = True
+    
+    def create_demo_objects(self):
+        """Create various demo objects"""
+        # Bouncing ball
+        ball = PhysicsObject(100, 100)
+        ball.velocity = pygame.math.Vector2(150, 0)
+        ball.color = (100, 200, 255)
+        ball.name = "Bouncing Ball"
+        self.objects.append(ball)
+        
+        # Orbiting object
+        orbiter = PhysicsObject(400, 200)
+        orbiter.velocity = pygame.math.Vector2(0, 150)
+        orbiter.color = (255, 100, 100)
+        orbiter.name = "Orbiter"
+        orbiter.orbit_center = pygame.math.Vector2(400, 300)
+        self.objects.append(orbiter)
+        
+        # Rocket
+        rocket = PhysicsObject(600, 500)
+        rocket.velocity = pygame.math.Vector2(0, 0)
+        rocket.color = (100, 255, 100)
+        rocket.name = "Rocket"
+        rocket.has_thrust = True
+        self.objects.append(rocket)
+    
+    def handle_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_TAB:
+                    self.selected_object = (self.selected_object + 1) % len(self.objects)
+                elif event.key == pygame.K_v:
+                    self.show_vectors = not self.show_vectors
+                elif event.key == pygame.K_t:
+                    self.show_trails = not self.show_trails
+                elif event.key == pygame.K_g:
+                    self.gravity_enabled = not self.gravity_enabled
+                elif event.key == pygame.K_r:
+                    self.create_demo_objects()
+                elif event.key == pygame.K_SPACE:
+                    # Add random force to selected object
+                    if self.objects:
+                        obj = self.objects[self.selected_object]
+                        force = pygame.math.Vector2(
+                            random.uniform(-200, 200),
+                            random.uniform(-200, 200)
+                        )
+                        obj.apply_force(force)
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                # Create new object at mouse position
+                pos = pygame.mouse.get_pos()
+                new_obj = PhysicsObject(pos[0], pos[1])
+                new_obj.velocity = pygame.math.Vector2(
+                    random.uniform(-100, 100),
+                    random.uniform(-100, 100)
+                )
+                new_obj.color = (
+                    random.randint(100, 255),
+                    random.randint(100, 255),
+                    random.randint(100, 255)
+                )
+                new_obj.name = f"Object {len(self.objects) + 1}"
+                self.objects.append(new_obj)
+        
+        # Continuous input
+        keys = pygame.key.get_pressed()
+        if self.objects:
+            obj = self.objects[self.selected_object]
+            
+            # Apply forces with arrow keys
+            force_amount = 100
+            if keys[pygame.K_LEFT]:
+                obj.apply_force(pygame.math.Vector2(-force_amount, 0))
+            if keys[pygame.K_RIGHT]:
+                obj.apply_force(pygame.math.Vector2(force_amount, 0))
+            if keys[pygame.K_UP]:
+                obj.apply_force(pygame.math.Vector2(0, -force_amount))
+            if keys[pygame.K_DOWN]:
+                obj.apply_force(pygame.math.Vector2(0, force_amount))
+        
+        return True
+    
+    def update(self, dt):
+        """Update physics simulation"""
+        for obj in self.objects:
+            # Apply gravity if enabled
+            if self.gravity_enabled:
+                obj.apply_force(pygame.math.Vector2(0, 300 * obj.mass))
+            
+            # Special behaviors
+            if hasattr(obj, 'orbit_center'):
+                # Apply centripetal force
+                to_center = obj.orbit_center - obj.position
+                if to_center.length() > 0:
+                    to_center.normalize_ip()
+                    centripetal = to_center * (obj.velocity.length_squared() / 100)
+                    obj.apply_force(centripetal)
+            
+            if hasattr(obj, 'has_thrust') and obj.has_thrust:
+                # Apply upward thrust
+                thrust = pygame.math.Vector2(0, -500)
+                obj.apply_force(thrust)
+            
+            # Update physics
+            obj.update(dt)
+            
+            # Boundary collisions
+            if obj.position.x - obj.radius < 0:
+                obj.position.x = obj.radius
+                obj.velocity.x *= -0.8
+            elif obj.position.x + obj.radius > 800:
+                obj.position.x = 800 - obj.radius
+                obj.velocity.x *= -0.8
+            
+            if obj.position.y - obj.radius < 0:
+                obj.position.y = obj.radius
+                obj.velocity.y *= -0.8
+            elif obj.position.y + obj.radius > 600:
+                obj.position.y = 600 - obj.radius
+                obj.velocity.y *= -0.8
+    
+    def draw(self):
+        """Draw everything"""
+        self.screen.fill((20, 20, 30))
+        
+        # Draw grid
+        for x in range(0, 800, 50):
+            pygame.draw.line(self.screen, (30, 30, 40), (x, 0), (x, 600))
+        for y in range(0, 600, 50):
+            pygame.draw.line(self.screen, (30, 30, 40), (0, y), (800, y))
+        
+        # Draw objects
+        for i, obj in enumerate(self.objects):
+            # Draw trail
+            if self.show_trails and hasattr(obj, 'trail'):
+                if len(obj.trail) > 1:
+                    pygame.draw.lines(self.screen, obj.color, False, obj.trail, 1)
+            
+            # Draw object
+            color = obj.color
+            if i == self.selected_object:
+                # Highlight selected
+                pygame.draw.circle(self.screen, (255, 255, 255),
+                                 (int(obj.position.x), int(obj.position.y)),
+                                 obj.radius + 3, 2)
+            
+            pygame.draw.circle(self.screen, color,
+                             (int(obj.position.x), int(obj.position.y)),
+                             obj.radius)
+            
+            # Draw vectors
+            if self.show_vectors:
+                # Velocity vector (green)
+                vel_end = obj.position + obj.velocity * 0.2
+                pygame.draw.line(self.screen, (0, 255, 0),
+                               (obj.position.x, obj.position.y),
+                               (vel_end.x, vel_end.y), 2)
+                
+                # Acceleration vector (red)
+                acc_end = obj.position + obj.acceleration * 10
+                pygame.draw.line(self.screen, (255, 0, 0),
+                               (obj.position.x, obj.position.y),
+                               (acc_end.x, acc_end.y), 2)
+        
+        # Draw UI
+        self.draw_ui()
+    
+    def draw_ui(self):
+        """Draw user interface"""
+        y_offset = 10
+        
+        # Instructions
+        texts = [
+            "Tab: Select Object | V: Vectors | T: Trails | G: Gravity",
+            "Arrow Keys: Apply Force | Space: Random Force | Click: New Object",
+            f"Gravity: {'ON' if self.gravity_enabled else 'OFF'}",
+            ""
+        ]
+        
+        # Selected object info
+        if self.objects:
+            obj = self.objects[self.selected_object]
+            texts.extend([
+                f"Selected: {obj.name}",
+                f"Position: ({obj.position.x:.1f}, {obj.position.y:.1f})",
+                f"Velocity: ({obj.velocity.x:.1f}, {obj.velocity.y:.1f}) = {obj.velocity.length():.1f}",
+                f"Acceleration: ({obj.acceleration.x:.1f}, {obj.acceleration.y:.1f})"
+            ])
+        
+        for text in texts:
+            rendered = self.font.render(text, True, (255, 255, 255))
+            self.screen.blit(rendered, (10, y_offset))
+            y_offset += 25
+    
+    def run(self):
+        running = True
+        dt = 0
+        
+        while running:
+            running = self.handle_events()
+            self.update(dt)
+            self.draw()
+            pygame.display.flip()
+            dt = self.clock.tick(60) / 1000.0
+        
+        pygame.quit()
+
+# Enhanced PhysicsObject for the demo
+class PhysicsObject:
+    def __init__(self, x, y):
+        self.position = pygame.math.Vector2(x, y)
+        self.velocity = pygame.math.Vector2(0, 0)
+        self.acceleration = pygame.math.Vector2(0, 0)
+        self.mass = 1.0
+        self.radius = 15
+        self.color = (100, 200, 255)
+        self.name = "Object"
+        self.trail = []
+        self.max_trail_length = 50
+    
+    def apply_force(self, force):
+        if self.mass > 0:
+            self.acceleration += force / self.mass
+    
+    def update(self, dt):
+        # Update physics
+        self.velocity += self.acceleration * dt
+        self.position += self.velocity * dt
+        
+        # Update trail
+        self.trail.append((self.position.x, self.position.y))
+        if len(self.trail) > self.max_trail_length:
+            self.trail.pop(0)
+        
+        # Reset acceleration
+        self.acceleration = pygame.math.Vector2(0, 0)
+
+if __name__ == "__main__":
+    demo = PhysicsDemo()
+    demo.run()</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Physics Optimization Tips</h3>
+        <ul>
+            <li><strong>Use Delta Time:</strong> Always multiply by dt for frame-independent physics</li>
+            <li><strong>Fixed Timestep:</strong> Consider fixed timestep for deterministic physics</li>
+            <li><strong>Vector Math:</strong> Use pygame.math.Vector2 for cleaner code</li>
+            <li><strong>Force Accumulation:</strong> Reset acceleration after each update</li>
+            <li><strong>Limit Values:</strong> Cap maximum velocity and acceleration</li>
+            <li><strong>Energy Conservation:</strong> Use damping to prevent infinite energy</li>
+            <li><strong>Integration Method:</strong> Choose based on accuracy needs</li>
+        </ul>
+    </div>
+
+    <h2>Common Physics Patterns</h2>
+    
+    <div style="background-color: #f0fff4; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎮 Game Physics Applications</h3>
+        <ul>
+            <li><strong>Platformer:</strong> Gravity, jump arcs, momentum</li>
+            <li><strong>Racing:</strong> Acceleration, braking, turning forces</li>
+            <li><strong>Space Game:</strong> Thrust, inertia, orbital mechanics</li>
+            <li><strong>Puzzle:</strong> Trajectory prediction, force indicators</li>
+            <li><strong>Sports:</strong> Ball physics, spin, air resistance</li>
+            <li><strong>Action:</strong> Explosions, knockback, recoil</li>
+        </ul>
+    </div>
+
+    <h2>Practice Exercises</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎯 Physics Challenges!</h3>
+        <ol>
+            <li><strong>Lunar Lander:</strong> Control thrust to land safely</li>
+            <li><strong>Angry Birds Clone:</strong> Projectile motion with targets</li>
+            <li><strong>Racing Physics:</strong> Car with realistic acceleration/braking</li>
+            <li><strong>Pendulum:</strong> Swinging physics simulation</li>
+            <li><strong>Asteroid Field:</strong> Multiple objects with gravity</li>
+            <li><strong>Rocket Launch:</strong> Multi-stage rocket with fuel</li>
+        </ol>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>📍 Position defines where an object is</li>
+            <li>➡️ Velocity is the rate of change of position</li>
+            <li>⚡ Acceleration is the rate of change of velocity</li>
+            <li>🎯 Forces cause acceleration (F = ma)</li>
+            <li>⏱️ Always use delta time for consistent physics</li>
+            <li>🔄 Integration methods affect accuracy</li>
+            <li>🎮 Good physics makes games feel responsive</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you understand velocity and acceleration, next we'll add gravity to create more realistic physics simulations!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="particle_effects.html" class="prev-lesson" aria-label="Previous section: Sprite Management">Previous Section: Sprite Management</a>
+        <a href="physics_gravity.html" class="next-lesson" aria-label="Next lesson: Gravity Simulation">Next Lesson: Gravity Simulation</a>
+    </nav>
+    
+    </main>
+</body>
+</html>

@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Learn bounce and friction physics for games. Master elastic collisions, energy conservation, surface friction, and realistic material properties.">
+    <title>Bounce and Friction - Game Physics</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script src="/js/course-enhancements.js" defer></script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Bounce and Friction</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Section 4: Game Physics - Lesson 3</span>
+    </nav>
+
+    <h2>Making Objects Interact Realistically</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Bounce and friction bring surfaces to life! They determine how objects respond to collisions - whether they bounce like rubber balls, slide like ice, or stick like velcro. Let's master these essential physics properties! ⚽🎱</p>
+    </div>
+
+    <h2>Understanding Bounce and Friction</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎾 The Sports Equipment Analogy</h3>
+        <p>Different materials behave differently:</p>
+        <ul>
+            <li><strong>Basketball:</strong> High bounce (elastic), moderate friction</li>
+            <li><strong>Bowling Ball:</strong> No bounce (inelastic), low friction</li>
+            <li><strong>Tennis Ball:</strong> Medium bounce, high friction (fuzzy surface)</li>
+            <li><strong>Ice Puck:</strong> Low bounce, very low friction</li>
+            <li><strong>Putty:</strong> No bounce, high friction (sticks)</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Surface Physics"] --> B["Bounce/Restitution"]
+        A --> C["Friction"]
+        A --> D["Materials"]
+        B --> E["Elastic"]
+        B --> F["Inelastic"]
+        B --> G["Energy Loss"]
+        C --> H["Static Friction"]
+        C --> I["Kinetic Friction"]
+        C --> J["Rolling Friction"]
+        D --> K["Rubber"]
+        D --> L["Metal"]
+        D --> M["Ice"]
+    </div>
+
+    <h2>Interactive Bounce and Friction Lab</h2>
+    
+    <div class="canvas-wrapper">
+        <canvas id="bounceCanvas" width="600" height="400"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Click to drop balls with different materials!</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; max-width: 600px; margin: 10px auto;">
+            <button onclick="setMaterial('rubber')">Rubber Ball</button>
+            <button onclick="setMaterial('steel')">Steel Ball</button>
+            <button onclick="setMaterial('tennis')">Tennis Ball</button>
+            <button onclick="setMaterial('glass')">Glass Marble</button>
+            <button onclick="setMaterial('putty')">Clay/Putty</button>
+            <button onclick="setMaterial('superball')">Super Ball</button>
+        </div>
+        <div style="margin-top: 10px;">
+            <label>Restitution: <input type="range" id="restitutionSlider" min="0" max="1" step="0.05" value="0.8" onchange="updateRestitution(this.value)"> <span id="restitutionValue">0.8</span></label>
+            <br>
+            <label>Friction: <input type="range" id="frictionSlider" min="0" max="1" step="0.05" value="0.3" onchange="updateFriction(this.value)"> <span id="frictionValue">0.3</span></label>
+        </div>
+        <div style="margin-top: 10px;">
+            <button onclick="setSurface('normal')">Normal Floor</button>
+            <button onclick="setSurface('ice')">Ice</button>
+            <button onclick="setSurface('sand')">Sand</button>
+            <button onclick="setSurface('trampoline')">Trampoline</button>
+            <button onclick="clearBalls()">Clear All</button>
+        </div>
+        <p>Material: <strong id="materialDisplay">Rubber Ball</strong> | Surface: <strong id="surfaceDisplay">Normal Floor</strong> | Balls: <span id="ballCount">0</span></p>
+    </div>
+
+    <script>
+        const bounceCanvas = document.getElementById('bounceCanvas');
+        const bCtx = bounceCanvas.getContext('2d');
+        const materialDisplay = document.getElementById('materialDisplay');
+        const surfaceDisplay = document.getElementById('surfaceDisplay');
+        const ballCountDisplay = document.getElementById('ballCount');
+        const restitutionSlider = document.getElementById('restitutionSlider');
+        const restitutionValue = document.getElementById('restitutionValue');
+        const frictionSlider = document.getElementById('frictionSlider');
+        const frictionValue = document.getElementById('frictionValue');
+        
+        let currentMaterial = 'rubber';
+        let currentSurface = 'normal';
+        let balls = [];
+        let walls = [];
+        let gravity = 500;
+        
+        // Material properties
+        const materials = {
+            rubber: { 
+                restitution: 0.8, 
+                friction: 0.7, 
+                color: '#ff6b6b',
+                name: 'Rubber Ball'
+            },
+            steel: { 
+                restitution: 0.6, 
+                friction: 0.4, 
+                color: '#c0c0c0',
+                name: 'Steel Ball'
+            },
+            tennis: { 
+                restitution: 0.7, 
+                friction: 0.9, 
+                color: '#9acd32',
+                name: 'Tennis Ball'
+            },
+            glass: { 
+                restitution: 0.9, 
+                friction: 0.2, 
+                color: '#87ceeb',
+                name: 'Glass Marble'
+            },
+            putty: { 
+                restitution: 0.1, 
+                friction: 0.95, 
+                color: '#8b7355',
+                name: 'Clay/Putty'
+            },
+            superball: { 
+                restitution: 0.95, 
+                friction: 0.5, 
+                color: '#ff1493',
+                name: 'Super Ball'
+            }
+        };
+        
+        // Surface properties
+        const surfaces = {
+            normal: { 
+                restitutionMod: 1.0, 
+                frictionMod: 1.0,
+                color: '#606060'
+            },
+            ice: { 
+                restitutionMod: 1.1, 
+                frictionMod: 0.1,
+                color: '#e0f2ff'
+            },
+            sand: { 
+                restitutionMod: 0.3, 
+                frictionMod: 2.0,
+                color: '#f4d03f'
+            },
+            trampoline: { 
+                restitutionMod: 1.5, 
+                frictionMod: 0.8,
+                color: '#4a90e2'
+            }
+        };
+        
+        class BouncingBall {
+            constructor(x, y, material) {
+                this.position = { x: x, y: y };
+                this.velocity = { x: (Math.random() - 0.5) * 200, y: 0 };
+                this.radius = 15;
+                this.material = materials[material];
+                this.trail = [];
+                this.maxTrailLength = 20;
+                this.rotation = 0;
+                this.angularVelocity = 0;
+            }
+            
+            update(dt) {
+                // Apply gravity
+                this.velocity.y += gravity * dt;
+                
+                // Update position
+                this.position.x += this.velocity.x * dt;
+                this.position.y += this.velocity.y * dt;
+                
+                // Update rotation based on horizontal velocity
+                this.angularVelocity = -this.velocity.x / this.radius;
+                this.rotation += this.angularVelocity * dt;
+                
+                // Add to trail
+                this.trail.push({ x: this.position.x, y: this.position.y });
+                if (this.trail.length > this.maxTrailLength) {
+                    this.trail.shift();
+                }
+                
+                // Check boundaries
+                this.checkCollisions();
+            }
+            
+            checkCollisions() {
+                const surface = surfaces[currentSurface];
+                
+                // Floor collision
+                if (this.position.y + this.radius > bounceCanvas.height - 30) {
+                    this.position.y = bounceCanvas.height - 30 - this.radius;
+                    
+                    // Calculate effective restitution
+                    const effectiveRestitution = this.material.restitution * surface.restitutionMod;
+                    
+                    // Bounce with energy loss
+                    this.velocity.y *= -effectiveRestitution;
+                    
+                    // Apply friction to horizontal velocity
+                    const effectiveFriction = this.material.friction * surface.frictionMod;
+                    this.velocity.x *= (1 - effectiveFriction * 0.1);
+                    
+                    // Minimum bounce threshold
+                    if (Math.abs(this.velocity.y) < 50) {
+                        this.velocity.y = 0;
+                    }
+                }
+                
+                // Wall collisions
+                if (this.position.x - this.radius < 0) {
+                    this.position.x = this.radius;
+                    this.velocity.x *= -this.material.restitution;
+                } else if (this.position.x + this.radius > bounceCanvas.width) {
+                    this.position.x = bounceCanvas.width - this.radius;
+                    this.velocity.x *= -this.material.restitution;
+                }
+                
+                // Ceiling collision
+                if (this.position.y - this.radius < 0) {
+                    this.position.y = this.radius;
+                    this.velocity.y *= -this.material.restitution;
+                }
+            }
+            
+            draw(ctx) {
+                // Draw trail
+                if (this.trail.length > 1) {
+                    ctx.strokeStyle = this.material.color;
+                    for (let i = 1; i < this.trail.length; i++) {
+                        ctx.globalAlpha = i / this.trail.length * 0.3;
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.moveTo(this.trail[i - 1].x, this.trail[i - 1].y);
+                        ctx.lineTo(this.trail[i].x, this.trail[i].y);
+                        ctx.stroke();
+                    }
+                    ctx.globalAlpha = 1;
+                }
+                
+                // Draw ball with rotation indicator
+                ctx.save();
+                ctx.translate(this.position.x, this.position.y);
+                ctx.rotate(this.rotation);
+                
+                // Ball
+                ctx.fillStyle = this.material.color;
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Rotation indicator
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(0, -this.radius);
+                ctx.lineTo(0, this.radius);
+                ctx.moveTo(-this.radius, 0);
+                ctx.lineTo(this.radius, 0);
+                ctx.stroke();
+                
+                ctx.restore();
+                
+                // Draw energy indicator
+                const kineticEnergy = 0.5 * (this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
+                const maxEnergy = 100000;
+                const energyRatio = Math.min(kineticEnergy / maxEnergy, 1);
+                
+                // Energy bar
+                ctx.fillStyle = `hsl(${(1 - energyRatio) * 120}, 70%, 50%)`;
+                ctx.fillRect(this.position.x - 15, this.position.y - this.radius - 10, 30 * energyRatio, 3);
+            }
+        }
+        
+        function setMaterial(material) {
+            currentMaterial = material;
+            materialDisplay.textContent = materials[material].name;
+            restitutionSlider.value = materials[material].restitution;
+            frictionSlider.value = materials[material].friction;
+            restitutionValue.textContent = materials[material].restitution;
+            frictionValue.textContent = materials[material].friction;
+        }
+        
+        function setSurface(surface) {
+            currentSurface = surface;
+            surfaceDisplay.textContent = surface.charAt(0).toUpperCase() + surface.slice(1);
+        }
+        
+        function updateRestitution(value) {
+            materials[currentMaterial].restitution = parseFloat(value);
+            restitutionValue.textContent = value;
+        }
+        
+        function updateFriction(value) {
+            materials[currentMaterial].friction = parseFloat(value);
+            frictionValue.textContent = value;
+        }
+        
+        function clearBalls() {
+            balls = [];
+        }
+        
+        // Mouse click to create ball
+        bounceCanvas.addEventListener('click', (e) => {
+            const rect = bounceCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            balls.push(new BouncingBall(x, y, currentMaterial));
+        });
+        
+        // Create angled surface
+        class AngledSurface {
+            constructor(x1, y1, x2, y2) {
+                this.start = { x: x1, y: y1 };
+                this.end = { x: x2, y: y2 };
+                
+                // Calculate normal
+                const dx = x2 - x1;
+                const dy = y2 - y1;
+                const length = Math.sqrt(dx * dx + dy * dy);
+                this.normal = { x: -dy / length, y: dx / length };
+            }
+            
+            draw(ctx) {
+                ctx.strokeStyle = '#888';
+                ctx.lineWidth = 5;
+                ctx.beginPath();
+                ctx.moveTo(this.start.x, this.start.y);
+                ctx.lineTo(this.end.x, this.end.y);
+                ctx.stroke();
+            }
+        }
+        
+        // Add some angled surfaces
+        walls.push(new AngledSurface(100, 150, 250, 200));
+        walls.push(new AngledSurface(350, 200, 500, 150));
+        
+        function update(dt) {
+            balls.forEach(ball => ball.update(dt));
+            ballCountDisplay.textContent = balls.length;
+        }
+        
+        function draw() {
+            // Clear canvas
+            bCtx.fillStyle = '#1a1a1a';
+            bCtx.fillRect(0, 0, bounceCanvas.width, bounceCanvas.height);
+            
+            // Draw floor with surface type
+            const surface = surfaces[currentSurface];
+            bCtx.fillStyle = surface.color;
+            bCtx.fillRect(0, bounceCanvas.height - 30, bounceCanvas.width, 30);
+            
+            // Draw surface texture
+            if (currentSurface === 'ice') {
+                // Ice reflection
+                bCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                for (let x = 0; x < bounceCanvas.width; x += 50) {
+                    bCtx.beginPath();
+                    bCtx.moveTo(x, bounceCanvas.height - 30);
+                    bCtx.lineTo(x + 20, bounceCanvas.height);
+                    bCtx.stroke();
+                }
+            } else if (currentSurface === 'sand') {
+                // Sand texture
+                bCtx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+                for (let i = 0; i < 100; i++) {
+                    const x = Math.random() * bounceCanvas.width;
+                    const y = bounceCanvas.height - 30 + Math.random() * 30;
+                    bCtx.fillRect(x, y, 2, 2);
+                }
+            } else if (currentSurface === 'trampoline') {
+                // Spring lines
+                bCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                for (let x = 10; x < bounceCanvas.width; x += 20) {
+                    bCtx.beginPath();
+                    bCtx.moveTo(x, bounceCanvas.height - 30);
+                    for (let y = bounceCanvas.height - 30; y < bounceCanvas.height; y += 5) {
+                        bCtx.lineTo(x + 5, y + 2.5);
+                        bCtx.lineTo(x - 5, y + 5);
+                    }
+                    bCtx.stroke();
+                }
+            }
+            
+            // Draw angled surfaces
+            walls.forEach(wall => wall.draw(bCtx));
+            
+            // Draw balls
+            balls.forEach(ball => ball.draw(bCtx));
+            
+            // Draw material properties
+            bCtx.fillStyle = 'white';
+            bCtx.font = '12px Arial';
+            bCtx.fillText('Click to drop ball', 10, 20);
+            bCtx.fillText(`Gravity: ${gravity} px/s²`, 10, 40);
+        }
+        
+        // Animation loop
+        let lastTime = performance.now();
+        function animate(currentTime) {
+            const dt = Math.min((currentTime - lastTime) / 1000, 0.1);
+            lastTime = currentTime;
+            
+            update(dt);
+            draw();
+            
+            requestAnimationFrame(animate);
+        }
+        
+        animate(performance.now());
+    </script>
+
+    <h2>Coefficient of Restitution (Bounce)</h2>
+    
+    <pre class="language-python"><code>import pygame
+import math
+
+class BouncingObject:
+    """Object with bounce physics"""
+    def __init__(self, x, y):
+        self.position = pygame.math.Vector2(x, y)
+        self.velocity = pygame.math.Vector2(0, 0)
+        self.radius = 20
+        
+        # Coefficient of restitution (0 = no bounce, 1 = perfect bounce)
+        self.restitution = 0.8
+        
+        # Material properties
+        self.material = "rubber"
+        
+    def handle_bounce(self, surface_normal, surface_restitution=1.0):
+        """Handle bounce off a surface"""
+        # Calculate relative velocity along normal
+        velocity_along_normal = self.velocity.dot(surface_normal)
+        
+        # Don't bounce if moving away from surface
+        if velocity_along_normal > 0:
+            return
+        
+        # Calculate effective restitution (minimum of both materials)
+        effective_restitution = min(self.restitution, surface_restitution)
+        
+        # Calculate impulse
+        impulse = -(1 + effective_restitution) * velocity_along_normal
+        
+        # Apply impulse to velocity
+        self.velocity += impulse * surface_normal
+        
+        # Energy loss visualization
+        energy_before = self.velocity.length_squared()
+        energy_after = self.velocity.length_squared()
+        energy_lost = energy_before - energy_after
+        
+        return energy_lost
+
+# Different material bounces
+class MaterialBounce:
+    # Common material restitution values
+    MATERIALS = {
+        "super_ball": 0.95,    # Almost perfect bounce
+        "rubber": 0.8,          # Good bounce
+        "tennis_ball": 0.7,     # Moderate bounce
+        "leather": 0.5,         # Some bounce
+        "wood": 0.4,            # Little bounce
+        "clay": 0.1,            # Almost no bounce
+        "perfectly_elastic": 1.0,    # No energy loss
+        "perfectly_inelastic": 0.0   # Complete energy loss
+    }
+    
+    @staticmethod
+    def calculate_bounce_height(drop_height, restitution):
+        """Calculate how high object bounces"""
+        # h_bounce = h_drop * e²
+        return drop_height * (restitution ** 2)
+    
+    @staticmethod
+    def calculate_velocity_after_bounce(velocity_before, restitution):
+        """Calculate velocity after bounce"""
+        return -velocity_before * restitution
+    
+    @staticmethod
+    def successive_bounces(initial_height, restitution, num_bounces):
+        """Calculate heights of successive bounces"""
+        heights = [initial_height]
+        current_height = initial_height
+        
+        for _ in range(num_bounces):
+            current_height *= restitution ** 2
+            heights.append(current_height)
+        
+        return heights</code></pre>
+
+    <h2>Friction Forces</h2>
+    
+    <pre class="language-python"><code># Friction implementation
+class FrictionObject:
+    def __init__(self, x, y):
+        self.position = pygame.math.Vector2(x, y)
+        self.velocity = pygame.math.Vector2(0, 0)
+        self.mass = 1.0
+        
+        # Friction coefficients
+        self.static_friction = 0.6    # Friction when stationary
+        self.kinetic_friction = 0.4   # Friction when moving
+        self.rolling_friction = 0.01  # For rolling objects
+        
+        # State
+        self.is_rolling = False
+        self.on_surface = False
+        
+    def apply_friction(self, normal_force, dt):
+        """Apply friction force"""
+        if not self.on_surface or self.velocity.length() == 0:
+            return
+        
+        # Determine friction type
+        if self.is_rolling:
+            friction_coefficient = self.rolling_friction
+        elif self.velocity.length() < 0.1:  # Nearly stopped
+            friction_coefficient = self.static_friction
+        else:
+            friction_coefficient = self.kinetic_friction
+        
+        # Calculate friction force (F = μ * N)
+        friction_magnitude = friction_coefficient * normal_force
+        
+        # Friction opposes motion
+        if self.velocity.length() > 0:
+            friction_direction = -self.velocity.normalize()
+            friction_force = friction_direction * friction_magnitude
+            
+            # Apply friction
+            friction_acceleration = friction_force / self.mass
+            
+            # Don't reverse direction (stop at zero)
+            velocity_change = friction_acceleration * dt
+            if velocity_change.length() > self.velocity.length():
+                self.velocity = pygame.math.Vector2(0, 0)
+            else:
+                self.velocity += velocity_change
+
+# Different surface frictions
+class SurfaceFriction:
+    SURFACES = {
+        "ice": 0.02,           # Very slippery
+        "wet_ice": 0.05,       # Slippery
+        "metal": 0.15,         # Smooth
+        "wood": 0.3,           # Moderate
+        "concrete": 0.5,       # Rough
+        "rubber": 0.7,         # High friction
+        "sand": 0.9,           # Very high friction
+        "velcro": 1.5          # Extreme friction
+    }
+    
+    @staticmethod
+    def calculate_stopping_distance(initial_velocity, friction_coefficient, gravity=9.8):
+        """Calculate distance to stop under friction"""
+        if friction_coefficient <= 0:
+            return float('inf')
+        
+        deceleration = friction_coefficient * gravity
+        stopping_distance = (initial_velocity ** 2) / (2 * deceleration)
+        return stopping_distance
+    
+    @staticmethod
+    def calculate_stopping_time(initial_velocity, friction_coefficient, gravity=9.8):
+        """Calculate time to stop under friction"""
+        if friction_coefficient <= 0:
+            return float('inf')
+        
+        deceleration = friction_coefficient * gravity
+        stopping_time = initial_velocity / deceleration
+        return stopping_time
+
+# Air resistance (drag)
+class AirResistance:
+    def __init__(self, drag_coefficient=0.47):  # Sphere drag coefficient
+        self.drag_coefficient = drag_coefficient
+        self.air_density = 1.2  # kg/m³ at sea level
+        
+    def calculate_drag_force(self, velocity, cross_section_area):
+        """Calculate air resistance force"""
+        # F_drag = 0.5 * ρ * v² * C_d * A
+        speed = velocity.length()
+        if speed == 0:
+            return pygame.math.Vector2(0, 0)
+        
+        drag_magnitude = 0.5 * self.air_density * speed * speed * \
+                        self.drag_coefficient * cross_section_area
+        
+        # Drag opposes velocity
+        drag_direction = -velocity.normalize()
+        return drag_direction * drag_magnitude</code></pre>
+
+    <h2>Combined Bounce and Friction</h2>
+    
+    <pre class="language-python"><code># Complete physics object with bounce and friction
+class CompletePhysicsObject:
+    def __init__(self, x, y, material="rubber"):
+        self.position = pygame.math.Vector2(x, y)
+        self.velocity = pygame.math.Vector2(0, 0)
+        self.acceleration = pygame.math.Vector2(0, 0)
+        
+        # Physical properties
+        self.mass = 1.0
+        self.radius = 15
+        
+        # Material properties
+        self.set_material(material)
+        
+        # State
+        self.on_ground = False
+        self.rotation = 0
+        self.angular_velocity = 0
+        
+    def set_material(self, material):
+        """Set material properties"""
+        materials = {
+            "rubber": {
+                "restitution": 0.8,
+                "static_friction": 0.9,
+                "kinetic_friction": 0.7,
+                "rolling_friction": 0.02
+            },
+            "steel": {
+                "restitution": 0.6,
+                "static_friction": 0.4,
+                "kinetic_friction": 0.3,
+                "rolling_friction": 0.001
+            },
+            "wood": {
+                "restitution": 0.4,
+                "static_friction": 0.5,
+                "kinetic_friction": 0.4,
+                "rolling_friction": 0.05
+            },
+            "ice": {
+                "restitution": 0.9,
+                "static_friction": 0.05,
+                "kinetic_friction": 0.02,
+                "rolling_friction": 0.001
+            }
+        }
+        
+        if material in materials:
+            props = materials[material]
+            self.restitution = props["restitution"]
+            self.static_friction = props["static_friction"]
+            self.kinetic_friction = props["kinetic_friction"]
+            self.rolling_friction = props["rolling_friction"]
+    
+    def handle_collision_with_surface(self, surface_point, surface_normal, surface_properties):
+        """Handle collision with a surface"""
+        # Calculate relative velocity
+        relative_velocity = self.velocity
+        
+        # Decompose velocity into normal and tangential components
+        velocity_normal = relative_velocity.dot(surface_normal) * surface_normal
+        velocity_tangent = relative_velocity - velocity_normal
+        
+        # Apply restitution to normal component
+        effective_restitution = self.restitution * surface_properties.get("restitution", 1.0)
+        velocity_normal *= -effective_restitution
+        
+        # Apply friction to tangential component
+        if velocity_tangent.length() > 0:
+            # Calculate normal force
+            normal_force = abs(velocity_normal.length()) * self.mass
+            
+            # Determine friction coefficient
+            if velocity_tangent.length() < 0.1:
+                friction = self.static_friction
+            else:
+                friction = self.kinetic_friction
+            
+            # Apply surface friction modifier
+            friction *= surface_properties.get("friction", 1.0)
+            
+            # Calculate friction impulse
+            friction_impulse = min(friction * normal_force, velocity_tangent.length())
+            
+            # Apply friction
+            if velocity_tangent.length() > 0:
+                velocity_tangent -= velocity_tangent.normalize() * friction_impulse
+        
+        # Combine components
+        self.velocity = velocity_normal + velocity_tangent
+        
+        # Update rotation for rolling
+        if self.on_ground:
+            self.angular_velocity = -velocity_tangent.x / self.radius
+    
+    def update(self, dt):
+        """Update physics"""
+        # Apply forces
+        self.velocity += self.acceleration * dt
+        
+        # Apply air resistance
+        drag = self.velocity * self.velocity.length() * 0.001
+        self.velocity -= drag * dt
+        
+        # Update position
+        self.position += self.velocity * dt
+        
+        # Update rotation
+        self.rotation += self.angular_velocity * dt
+        
+        # Reset acceleration
+        self.acceleration = pygame.math.Vector2(0, 0)</code></pre>
+
+    <h2>Complete Bounce and Friction Demo</h2>
+    
+    <pre class="language-python"><code>import pygame
+import math
+import random
+
+class BounceAndFrictionDemo:
+    def __init__(self):
+        pygame.init()
+        self.screen = pygame.display.set_mode((800, 600))
+        pygame.display.set_caption("Bounce and Friction Demo")
+        self.clock = pygame.time.Clock()
+        self.font = pygame.font.Font(None, 24)
+        
+        # Physics
+        self.gravity = pygame.math.Vector2(0, 500)
+        
+        # Objects
+        self.balls = []
+        self.surfaces = []
+        
+        # Setup demo
+        self.setup_surfaces()
+        self.current_material = "rubber"
+        
+    def setup_surfaces(self):
+        """Create different surface types"""
+        # Floor sections with different properties
+        self.surfaces = [
+            {
+                "rect": pygame.Rect(0, 500, 200, 100),
+                "type": "ice",
+                "restitution": 0.9,
+                "friction": 0.05,
+                "color": (200, 230, 255)
+            },
+            {
+                "rect": pygame.Rect(200, 500, 200, 100),
+                "type": "wood",
+                "restitution": 0.5,
+                "friction": 0.4,
+                "color": (139, 90, 43)
+            },
+            {
+                "rect": pygame.Rect(400, 500, 200, 100),
+                "type": "rubber",
+                "restitution": 0.8,
+                "friction": 0.9,
+                "color": (50, 50, 50)
+            },
+            {
+                "rect": pygame.Rect(600, 500, 200, 100),
+                "type": "trampoline",
+                "restitution": 1.2,  # Adds energy!
+                "friction": 0.3,
+                "color": (100, 150, 255)
+            }
+        ]
+        
+        # Add angled surfaces
+        self.angled_surfaces = [
+            {
+                "start": (100, 300),
+                "end": (300, 400),
+                "restitution": 0.7,
+                "friction": 0.3
+            },
+            {
+                "start": (500, 400),
+                "end": (700, 300),
+                "restitution": 0.7,
+                "friction": 0.3
+            }
+        ]
+    
+    def create_ball(self, x, y, material):
+        """Create a new ball"""
+        ball = PhysicsBall(x, y, material)
+        self.balls.append(ball)
+        return ball
+    
+    def handle_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                # Create ball at mouse position
+                x, y = pygame.mouse.get_pos()
+                self.create_ball(x, y, self.current_material)
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_1:
+                    self.current_material = "rubber"
+                elif event.key == pygame.K_2:
+                    self.current_material = "steel"
+                elif event.key == pygame.K_3:
+                    self.current_material = "tennis"
+                elif event.key == pygame.K_4:
+                    self.current_material = "glass"
+                elif event.key == pygame.K_5:
+                    self.current_material = "putty"
+                elif event.key == pygame.K_c:
+                    self.balls.clear()
+                elif event.key == pygame.K_SPACE:
+                    # Create comparison test
+                    self.create_comparison_test()
+        
+        return True
+    
+    def create_comparison_test(self):
+        """Create balls of different materials for comparison"""
+        self.balls.clear()
+        materials = ["rubber", "steel", "tennis", "glass", "putty"]
+        
+        for i, material in enumerate(materials):
+            x = 100 + i * 140
+            y = 100
+            ball = self.create_ball(x, y, material)
+            ball.velocity.y = 0  # Drop from rest
+    
+    def update(self, dt):
+        """Update physics"""
+        for ball in self.balls[:]:
+            # Apply gravity
+            ball.apply_force(self.gravity * ball.mass)
+            
+            # Update ball
+            ball.update(dt)
+            
+            # Check surface collisions
+            self.check_surface_collisions(ball)
+            
+            # Check angled surface collisions
+            self.check_angled_collisions(ball)
+            
+            # Remove balls that fall off screen
+            if ball.position.y > 700:
+                self.balls.remove(ball)
+    
+    def check_surface_collisions(self, ball):
+        """Check collisions with floor surfaces"""
+        for surface in self.surfaces:
+            if (surface["rect"].left < ball.position.x < surface["rect"].right and
+                ball.position.y + ball.radius > surface["rect"].top):
+                
+                # Collision detected
+                ball.position.y = surface["rect"].top - ball.radius
+                
+                # Apply bounce
+                ball.velocity.y *= -surface["restitution"] * ball.restitution
+                
+                # Apply friction
+                friction_force = surface["friction"] * ball.friction * abs(ball.velocity.y)
+                if abs(ball.velocity.x) > friction_force:
+                    ball.velocity.x -= math.copysign(friction_force, ball.velocity.x)
+                else:
+                    ball.velocity.x = 0
+                
+                ball.on_ground = True
+                
+                # Special effects for trampoline
+                if surface["type"] == "trampoline" and ball.velocity.y < -100:
+                    # Add particle effect
+                    self.create_bounce_effect(ball.position.x, surface["rect"].top)
+    
+    def check_angled_collisions(self, ball):
+        """Check collisions with angled surfaces"""
+        for surface in self.angled_surfaces:
+            # Line segment collision detection
+            closest_point = self.get_closest_point_on_line(
+                ball.position,
+                surface["start"],
+                surface["end"]
+            )
+            
+            distance = (ball.position - pygame.math.Vector2(closest_point)).length()
+            
+            if distance < ball.radius:
+                # Calculate surface normal
+                dx = surface["end"][0] - surface["start"][0]
+                dy = surface["end"][1] - surface["start"][1]
+                length = math.sqrt(dx*dx + dy*dy)
+                normal = pygame.math.Vector2(-dy/length, dx/length)
+                
+                # Move ball out of surface
+                ball.position = pygame.math.Vector2(closest_point) + normal * ball.radius
+                
+                # Reflect velocity
+                dot = ball.velocity.dot(normal)
+                ball.velocity -= 2 * dot * normal
+                ball.velocity *= surface["restitution"] * ball.restitution
+    
+    def get_closest_point_on_line(self, point, line_start, line_end):
+        """Get closest point on line segment to a point"""
+        line_vec = pygame.math.Vector2(line_end) - pygame.math.Vector2(line_start)
+        point_vec = point - pygame.math.Vector2(line_start)
+        line_length = line_vec.length()
+        
+        if line_length == 0:
+            return line_start
+        
+        line_unitvec = line_vec / line_length
+        proj_length = min(max(point_vec.dot(line_unitvec), 0), line_length)
+        
+        return pygame.math.Vector2(line_start) + line_unitvec * proj_length
+    
+    def create_bounce_effect(self, x, y):
+        """Create visual effect for bounce"""
+        # Would create particles here
+        pass
+    
+    def draw(self):
+        """Draw everything"""
+        self.screen.fill((40, 40, 50))
+        
+        # Draw surfaces
+        for surface in self.surfaces:
+            pygame.draw.rect(self.screen, surface["color"], surface["rect"])
+            
+            # Draw surface label
+            label = self.font.render(surface["type"], True, (255, 255, 255))
+            label_rect = label.get_rect(center=(
+                surface["rect"].centerx,
+                surface["rect"].centery
+            ))
+            self.screen.blit(label, label_rect)
+        
+        # Draw angled surfaces
+        for surface in self.angled_surfaces:
+            pygame.draw.line(self.screen, (150, 150, 150),
+                           surface["start"], surface["end"], 5)
+        
+        # Draw balls
+        for ball in self.balls:
+            ball.draw(self.screen)
+        
+        # Draw UI
+        self.draw_ui()
+    
+    def draw_ui(self):
+        """Draw user interface"""
+        texts = [
+            f"Current Material: {self.current_material}",
+            "1-5: Select Material | Click: Drop Ball",
+            "Space: Comparison Test | C: Clear",
+            f"Balls: {len(self.balls)}"
+        ]
+        
+        y_offset = 10
+        for text in texts:
+            rendered = self.font.render(text, True, (255, 255, 255))
+            self.screen.blit(rendered, (10, y_offset))
+            y_offset += 30
+    
+    def run(self):
+        running = True
+        dt = 0
+        
+        while running:
+            running = self.handle_events()
+            self.update(dt)
+            self.draw()
+            pygame.display.flip()
+            dt = self.clock.tick(60) / 1000.0
+        
+        pygame.quit()
+
+# Physics ball class
+class PhysicsBall:
+    def __init__(self, x, y, material):
+        self.position = pygame.math.Vector2(x, y)
+        self.velocity = pygame.math.Vector2(random.uniform(-100, 100), 0)
+        self.acceleration = pygame.math.Vector2(0, 0)
+        
+        self.mass = 1.0
+        self.radius = 15
+        self.rotation = 0
+        self.angular_velocity = 0
+        
+        # Set material properties
+        self.set_material(material)
+        
+        self.on_ground = False
+        self.trail = []
+        self.max_trail = 20
+        
+    def set_material(self, material):
+        materials = {
+            "rubber": {
+                "restitution": 0.8,
+                "friction": 0.7,
+                "color": (255, 100, 100)
+            },
+            "steel": {
+                "restitution": 0.6,
+                "friction": 0.4,
+                "color": (192, 192, 192)
+            },
+            "tennis": {
+                "restitution": 0.7,
+                "friction": 0.9,
+                "color": (154, 205, 50)
+            },
+            "glass": {
+                "restitution": 0.9,
+                "friction": 0.2,
+                "color": (135, 206, 235)
+            },
+            "putty": {
+                "restitution": 0.1,
+                "friction": 0.95,
+                "color": (139, 115, 85)
+            }
+        }
+        
+        if material in materials:
+            props = materials[material]
+            self.restitution = props["restitution"]
+            self.friction = props["friction"]
+            self.color = props["color"]
+            self.material = material
+    
+    def apply_force(self, force):
+        self.acceleration += force / self.mass
+    
+    def update(self, dt):
+        # Update velocity and position
+        self.velocity += self.acceleration * dt
+        self.position += self.velocity * dt
+        
+        # Update rotation based on horizontal velocity
+        if self.on_ground:
+            self.angular_velocity = -self.velocity.x / self.radius
+        self.rotation += self.angular_velocity * dt
+        
+        # Add to trail
+        self.trail.append(self.position.copy())
+        if len(self.trail) > self.max_trail:
+            self.trail.pop(0)
+        
+        # Reset
+        self.acceleration = pygame.math.Vector2(0, 0)
+        self.on_ground = False
+        
+        # Wall bounces
+        if self.position.x - self.radius < 0:
+            self.position.x = self.radius
+            self.velocity.x *= -self.restitution
+        elif self.position.x + self.radius > 800:
+            self.position.x = 800 - self.radius
+            self.velocity.x *= -self.restitution
+    
+    def draw(self, screen):
+        # Draw trail
+        if len(self.trail) > 1:
+            for i in range(1, len(self.trail)):
+                alpha = i / len(self.trail)
+                pygame.draw.line(screen, 
+                               tuple(int(c * alpha) for c in self.color),
+                               self.trail[i-1], self.trail[i], 2)
+        
+        # Draw ball
+        pygame.draw.circle(screen, self.color,
+                         (int(self.position.x), int(self.position.y)),
+                         self.radius)
+        
+        # Draw rotation indicator
+        end_x = self.position.x + math.cos(self.rotation) * self.radius * 0.8
+        end_y = self.position.y + math.sin(self.rotation) * self.radius * 0.8
+        pygame.draw.line(screen, (0, 0, 0),
+                        (self.position.x, self.position.y),
+                        (end_x, end_y), 2)
+
+if __name__ == "__main__":
+    demo = BounceAndFrictionDemo()
+    demo.run()</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Bounce and Friction Tips</h3>
+        <ul>
+            <li><strong>Energy Conservation:</strong> Perfect bounce (e=1) is rare in reality</li>
+            <li><strong>Material Pairs:</strong> Use minimum restitution of colliding objects</li>
+            <li><strong>Static vs Kinetic:</strong> Static friction > kinetic for realism</li>
+            <li><strong>Rolling Friction:</strong> Much less than sliding friction</li>
+            <li><strong>Threshold Values:</strong> Stop objects when velocity is very small</li>
+            <li><strong>Surface Properties:</strong> Combine object and surface materials</li>
+            <li><strong>Visual Feedback:</strong> Show energy loss through trails/effects</li>
+        </ul>
+    </div>
+
+    <h2>Practice Exercises</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎯 Physics Challenges!</h3>
+        <ol>
+            <li><strong>Pinball Machine:</strong> Different bumpers with varying restitution</li>
+            <li><strong>Ice Hockey:</strong> Low friction puck physics</li>
+            <li><strong>Basketball Game:</strong> Realistic ball bouncing and rim physics</li>
+            <li><strong>Material Tester:</strong> Compare different materials side by side</li>
+            <li><strong>Rube Goldberg:</strong> Chain reactions with varied materials</li>
+            <li><strong>Friction Racing:</strong> Cars on different surface types</li>
+        </ol>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>⚡ Restitution controls bounce height (0=dead, 1=perfect)</li>
+            <li>🎾 Different materials have characteristic bounce values</li>
+            <li>🧊 Friction opposes motion and depends on surface contact</li>
+            <li>🎱 Combine object and surface properties for realism</li>
+            <li>📉 Energy is lost in real collisions</li>
+            <li>🔄 Rolling friction < sliding friction < static friction</li>
+            <li>🎮 Tune values for game feel over strict realism</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you understand bounce and friction, next we'll explore collision response - how objects react when they hit each other!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="physics_gravity.html" class="prev-lesson" aria-label="Previous lesson: Gravity">Previous Lesson: Gravity Simulation</a>
+        <a href="physics_collision_response.html" class="next-lesson" aria-label="Next lesson: Collision Response">Next Lesson: Collision Response</a>
+    </nav>
+    
+    </main>
+</body>
+</html>

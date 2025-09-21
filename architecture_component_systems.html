@@ -1,0 +1,1529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master component systems in game architecture. Learn Entity-Component-System (ECS) patterns for flexible, reusable game objects.">
+    <title>Component Systems - Game Architecture</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Component Systems</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Intermediate Module - Section 1: Game Architecture - Lesson 3</span>
+    </nav>
+
+    <h2>Building Flexible Game Objects with Components</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Component systems revolutionize how we build game objects! Instead of rigid inheritance hierarchies, we compose objects from reusable components. This Entity-Component-System (ECS) pattern makes games more flexible, maintainable, and performant! 🧩🎮</p>
+    </div>
+
+    <h2>Understanding Component Systems</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🧱 The LEGO Analogy</h3>
+        <p>Think of components like LEGO blocks:</p>
+        <ul>
+            <li><strong>Entities:</strong> The base plate (just an ID/container)</li>
+            <li><strong>Components:</strong> Individual LEGO pieces (position, health, sprite)</li>
+            <li><strong>Systems:</strong> Instructions for how pieces work together</li>
+            <li><strong>Composition:</strong> Combine blocks to build anything</li>
+            <li><strong>Reusability:</strong> Same blocks can build different things</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Entity-Component-System"] --> B["Entity"]
+        A --> C["Components"]
+        A --> D["Systems"]
+        B --> E["Unique ID"]
+        B --> F["Component List"]
+        C --> G["Transform"]
+        C --> H["Health"]
+        C --> I["Renderer"]
+        C --> J["Physics"]
+        C --> K["AI"]
+        D --> L["Movement System"]
+        D --> M["Render System"]
+        D --> N["Combat System"]
+        D --> O["Physics System"]
+    </div>
+
+    <h2>Interactive ECS Visualizer</h2>
+    
+    <div class="canvas-wrapper" style="text-align: center;">
+        <canvas id="ecsCanvas" width="600" height="400" style="border: 1px solid #333; background-color: #1a1a1a; display: inline-block;"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Create entities by combining components!</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; max-width: 600px; margin: 10px auto;">
+            <button onclick="createEntity('player')">Create Player</button>
+            <button onclick="createEntity('enemy')">Create Enemy</button>
+            <button onclick="createEntity('powerup')">Create PowerUp</button>
+            <button onclick="createEntity('particle')">Create Particle</button>
+            <button onclick="createCustomEntity()">Custom Entity</button>
+            <button onclick="clearAllEntities()">Clear All</button>
+        </div>
+        <div style="margin-top: 10px;">
+            <h4>Available Components:</h4>
+            <div id="componentCheckboxes" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 5px; max-width: 600px; margin: 10px auto; text-align: left;">
+                <label><input type="checkbox" id="comp-transform" checked> Transform</label>
+                <label><input type="checkbox" id="comp-velocity"> Velocity</label>
+                <label><input type="checkbox" id="comp-health"> Health</label>
+                <label><input type="checkbox" id="comp-sprite"> Sprite</label>
+                <label><input type="checkbox" id="comp-collider"> Collider</label>
+                <label><input type="checkbox" id="comp-ai"> AI</label>
+                <label><input type="checkbox" id="comp-input"> Input</label>
+                <label><input type="checkbox" id="comp-particle"> Particle</label>
+            </div>
+        </div>
+        <div style="margin-top: 10px;">
+            <label>
+                <input type="checkbox" id="showSystems" checked onchange="toggleSystems()"> Show Active Systems
+            </label>
+            <label>
+                <input type="checkbox" id="showComponents" checked onchange="toggleComponents()"> Show Components
+            </label>
+        </div>
+        <p>Entities: <span id="entityCount">0</span> | FPS: <span id="fpsDisplay">60</span></p>
+        <div id="systemsDisplay" style="margin-top: 10px; font-size: 12px;">
+            Active Systems: <span id="activeSystems"></span>
+        </div>
+    </div>
+
+    <script>
+        console.log('ECS Visualizer starting...');
+        
+        // Component Types
+        class Component {
+            constructor() {
+                this.enabled = true;
+            }
+        }
+        
+        class TransformComponent extends Component {
+            constructor(x = 0, y = 0) {
+                super();
+                this.x = x;
+                this.y = y;
+                this.rotation = 0;
+                this.scale = 1;
+            }
+        }
+        
+        class VelocityComponent extends Component {
+            constructor(vx = 0, vy = 0) {
+                super();
+                this.vx = vx;
+                this.vy = vy;
+                this.friction = 0.98;
+            }
+        }
+        
+        class HealthComponent extends Component {
+            constructor(maxHealth = 100) {
+                super();
+                this.maxHealth = maxHealth;
+                this.currentHealth = maxHealth;
+            }
+            
+            takeDamage(amount) {
+                this.currentHealth = Math.max(0, this.currentHealth - amount);
+            }
+            
+            heal(amount) {
+                this.currentHealth = Math.min(this.maxHealth, this.currentHealth + amount);
+            }
+        }
+        
+        class SpriteComponent extends Component {
+            constructor(color = '#ffffff', shape = 'circle', size = 10) {
+                super();
+                this.color = color;
+                this.shape = shape;
+                this.size = size;
+            }
+        }
+        
+        class ColliderComponent extends Component {
+            constructor(radius = 10) {
+                super();
+                this.radius = radius;
+                this.isColliding = false;
+            }
+        }
+        
+        class AIComponent extends Component {
+            constructor(behavior = 'wander') {
+                super();
+                this.behavior = behavior;
+                this.target = null;
+                this.state = 'idle';
+            }
+        }
+        
+        class InputComponent extends Component {
+            constructor() {
+                super();
+                this.keys = {};
+                this.mouse = { x: 0, y: 0, pressed: false };
+            }
+        }
+        
+        class ParticleComponent extends Component {
+            constructor(lifetime = 2) {
+                super();
+                this.lifetime = lifetime;
+                this.age = 0;
+                this.fadeRate = 1;
+            }
+        }
+        
+        // Entity class
+        class Entity {
+            constructor(id) {
+                this.id = id;
+                this.components = new Map();
+                this.active = true;
+            }
+            
+            addComponent(component) {
+                const componentType = component.constructor.name;
+                this.components.set(componentType, component);
+                return this;
+            }
+            
+            getComponent(componentType) {
+                return this.components.get(componentType);
+            }
+            
+            hasComponent(componentType) {
+                return this.components.has(componentType);
+            }
+            
+            removeComponent(componentType) {
+                this.components.delete(componentType);
+            }
+        }
+        
+        // System base class
+        class System {
+            constructor() {
+                this.requiredComponents = [];
+            }
+            
+            update(entities, dt) {
+                const validEntities = entities.filter(entity => 
+                    this.requiredComponents.every(comp => entity.hasComponent(comp))
+                );
+                
+                this.process(validEntities, dt);
+            }
+            
+            process(entities, dt) {
+                // Override in derived systems
+            }
+        }
+        
+        // Movement System
+        class MovementSystem extends System {
+            constructor() {
+                super();
+                this.requiredComponents = ['TransformComponent', 'VelocityComponent'];
+            }
+            
+            process(entities, dt) {
+                entities.forEach(entity => {
+                    const transform = entity.getComponent('TransformComponent');
+                    const velocity = entity.getComponent('VelocityComponent');
+                    
+                    if (transform && velocity) {
+                        transform.x += velocity.vx * dt;
+                        transform.y += velocity.vy * dt;
+                        
+                        // Apply friction
+                        velocity.vx *= velocity.friction;
+                        velocity.vy *= velocity.friction;
+                        
+                        // Bounce off walls
+                        if (transform.x < 20 || transform.x > 580) {
+                            velocity.vx *= -1;
+                            transform.x = Math.max(20, Math.min(580, transform.x));
+                        }
+                        if (transform.y < 20 || transform.y > 380) {
+                            velocity.vy *= -1;
+                            transform.y = Math.max(20, Math.min(380, transform.y));
+                        }
+                    }
+                });
+            }
+        }
+        
+        // Render System
+        class RenderSystem extends System {
+            constructor(ctx) {
+                super();
+                this.ctx = ctx;
+                this.requiredComponents = ['TransformComponent', 'SpriteComponent'];
+            }
+            
+            process(entities, dt) {
+                entities.forEach(entity => {
+                    const transform = entity.getComponent('TransformComponent');
+                    const sprite = entity.getComponent('SpriteComponent');
+                    
+                    if (transform && sprite) {
+                        this.ctx.save();
+                        this.ctx.translate(transform.x, transform.y);
+                        this.ctx.rotate(transform.rotation);
+                        this.ctx.scale(transform.scale, transform.scale);
+                        
+                        this.ctx.fillStyle = sprite.color;
+                        this.ctx.strokeStyle = sprite.color;
+                        this.ctx.lineWidth = 2;
+                        
+                        switch(sprite.shape) {
+                            case 'circle':
+                                this.ctx.beginPath();
+                                this.ctx.arc(0, 0, sprite.size, 0, Math.PI * 2);
+                                this.ctx.fill();
+                                break;
+                            case 'square':
+                                this.ctx.fillRect(-sprite.size, -sprite.size, sprite.size * 2, sprite.size * 2);
+                                break;
+                            case 'triangle':
+                                this.ctx.beginPath();
+                                this.ctx.moveTo(0, -sprite.size);
+                                this.ctx.lineTo(-sprite.size, sprite.size);
+                                this.ctx.lineTo(sprite.size, sprite.size);
+                                this.ctx.closePath();
+                                this.ctx.fill();
+                                break;
+                            case 'star':
+                                this.drawStar(0, 0, 5, sprite.size, sprite.size * 0.5);
+                                this.ctx.fill();
+                                break;
+                        }
+                        
+                        this.ctx.restore();
+                        
+                        // Draw health bar if entity has health
+                        const health = entity.getComponent('HealthComponent');
+                        if (health) {
+                            this.drawHealthBar(transform.x, transform.y - sprite.size - 10, health);
+                        }
+                        
+                        // Draw collision indicator
+                        const collider = entity.getComponent('ColliderComponent');
+                        if (collider && showComponents) {
+                            this.ctx.strokeStyle = collider.isColliding ? '#ff0000' : 'rgba(255, 255, 255, 0.2)';
+                            this.ctx.lineWidth = 1;
+                            this.ctx.beginPath();
+                            this.ctx.arc(transform.x, transform.y, collider.radius, 0, Math.PI * 2);
+                            this.ctx.stroke();
+                        }
+                    }
+                });
+            }
+            
+            drawStar(cx, cy, spikes, outerRadius, innerRadius) {
+                let rot = Math.PI / 2 * 3;
+                let x = cx;
+                let y = cy;
+                const step = Math.PI / spikes;
+                
+                this.ctx.beginPath();
+                this.ctx.moveTo(cx, cy - outerRadius);
+                
+                for (let i = 0; i < spikes; i++) {
+                    x = cx + Math.cos(rot) * outerRadius;
+                    y = cy + Math.sin(rot) * outerRadius;
+                    this.ctx.lineTo(x, y);
+                    rot += step;
+                    
+                    x = cx + Math.cos(rot) * innerRadius;
+                    y = cy + Math.sin(rot) * innerRadius;
+                    this.ctx.lineTo(x, y);
+                    rot += step;
+                }
+                
+                this.ctx.lineTo(cx, cy - outerRadius);
+                this.ctx.closePath();
+            }
+            
+            drawHealthBar(x, y, health) {
+                const width = 30;
+                const height = 4;
+                const percentage = health.currentHealth / health.maxHealth;
+                
+                // Background
+                this.ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+                this.ctx.fillRect(x - width/2, y, width, height);
+                
+                // Health
+                this.ctx.fillStyle = percentage > 0.3 ? '#00ff00' : '#ff0000';
+                this.ctx.fillRect(x - width/2, y, width * percentage, height);
+            }
+        }
+        
+        // AI System
+        class AISystem extends System {
+            constructor() {
+                super();
+                this.requiredComponents = ['TransformComponent', 'AIComponent'];
+            }
+            
+            process(entities, dt) {
+                entities.forEach(entity => {
+                    const transform = entity.getComponent('TransformComponent');
+                    const ai = entity.getComponent('AIComponent');
+                    const velocity = entity.getComponent('VelocityComponent');
+                    
+                    if (transform && ai && velocity) {
+                        switch(ai.behavior) {
+                            case 'wander':
+                                // Random movement
+                                if (Math.random() < 0.02) {
+                                    velocity.vx += (Math.random() - 0.5) * 100;
+                                    velocity.vy += (Math.random() - 0.5) * 100;
+                                }
+                                break;
+                            case 'seek':
+                                // Move toward target
+                                if (ai.target) {
+                                    const dx = ai.target.x - transform.x;
+                                    const dy = ai.target.y - transform.y;
+                                    const dist = Math.sqrt(dx * dx + dy * dy);
+                                    if (dist > 1) {
+                                        velocity.vx += (dx / dist) * 50 * dt;
+                                        velocity.vy += (dy / dist) * 50 * dt;
+                                    }
+                                }
+                                break;
+                            case 'flee':
+                                // Move away from target
+                                if (ai.target) {
+                                    const dx = transform.x - ai.target.x;
+                                    const dy = transform.y - ai.target.y;
+                                    const dist = Math.sqrt(dx * dx + dy * dy);
+                                    if (dist > 1 && dist < 100) {
+                                        velocity.vx += (dx / dist) * 100 * dt;
+                                        velocity.vy += (dy / dist) * 100 * dt;
+                                    }
+                                }
+                                break;
+                        }
+                    }
+                });
+            }
+        }
+        
+        // Particle System
+        class ParticleSystem extends System {
+            constructor() {
+                super();
+                this.requiredComponents = ['ParticleComponent'];
+            }
+            
+            process(entities, dt) {
+                entities.forEach(entity => {
+                    const particle = entity.getComponent('ParticleComponent');
+                    const sprite = entity.getComponent('SpriteComponent');
+                    
+                    if (particle) {
+                        particle.age += dt;
+                        
+                        if (particle.age >= particle.lifetime) {
+                            entity.active = false;
+                        }
+                        
+                        // Fade out
+                        if (sprite) {
+                            const alpha = 1 - (particle.age / particle.lifetime);
+                            const rgb = sprite.color.match(/\d+/g);
+                            if (rgb) {
+                                sprite.color = `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${alpha})`;
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+        // Collision System
+        class CollisionSystem extends System {
+            constructor() {
+                super();
+                this.requiredComponents = ['TransformComponent', 'ColliderComponent'];
+            }
+            
+            process(entities, dt) {
+                // Reset collision states
+                entities.forEach(entity => {
+                    const collider = entity.getComponent('ColliderComponent');
+                    if (collider) collider.isColliding = false;
+                });
+                
+                // Check collisions
+                for (let i = 0; i < entities.length; i++) {
+                    for (let j = i + 1; j < entities.length; j++) {
+                        this.checkCollision(entities[i], entities[j]);
+                    }
+                }
+            }
+            
+            checkCollision(entity1, entity2) {
+                const transform1 = entity1.getComponent('TransformComponent');
+                const transform2 = entity2.getComponent('TransformComponent');
+                const collider1 = entity1.getComponent('ColliderComponent');
+                const collider2 = entity2.getComponent('ColliderComponent');
+                
+                if (transform1 && transform2 && collider1 && collider2) {
+                    const dx = transform2.x - transform1.x;
+                    const dy = transform2.y - transform1.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < collider1.radius + collider2.radius) {
+                        collider1.isColliding = true;
+                        collider2.isColliding = true;
+                        
+                        // Separate entities
+                        const overlap = collider1.radius + collider2.radius - distance;
+                        const separationX = (dx / distance) * overlap * 0.5;
+                        const separationY = (dy / distance) * overlap * 0.5;
+                        
+                        transform1.x -= separationX;
+                        transform1.y -= separationY;
+                        transform2.x += separationX;
+                        transform2.y += separationY;
+                    }
+                }
+            }
+        }
+        
+        // ECS World
+        class World {
+            constructor(canvas, ctx) {
+                this.canvas = canvas;
+                this.ctx = ctx;
+                this.entities = [];
+                this.systems = [];
+                this.nextEntityId = 0;
+                
+                // Initialize systems
+                this.movementSystem = new MovementSystem();
+                this.renderSystem = new RenderSystem(ctx);
+                this.aiSystem = new AISystem();
+                this.particleSystem = new ParticleSystem();
+                this.collisionSystem = new CollisionSystem();
+                
+                this.systems.push(this.movementSystem);
+                this.systems.push(this.collisionSystem);
+                this.systems.push(this.aiSystem);
+                this.systems.push(this.particleSystem);
+                this.systems.push(this.renderSystem);
+            }
+            
+            createEntity() {
+                const entity = new Entity(this.nextEntityId++);
+                this.entities.push(entity);
+                return entity;
+            }
+            
+            removeEntity(entity) {
+                const index = this.entities.indexOf(entity);
+                if (index > -1) {
+                    this.entities.splice(index, 1);
+                }
+            }
+            
+            update(dt) {
+                // Remove inactive entities
+                this.entities = this.entities.filter(e => e.active);
+                
+                // Update all systems
+                this.systems.forEach(system => {
+                    system.update(this.entities, dt);
+                });
+            }
+            
+            draw() {
+                // Clear canvas
+                this.ctx.fillStyle = '#1a1a1a';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw grid
+                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+                this.ctx.lineWidth = 1;
+                for (let x = 0; x <= this.canvas.width; x += 50) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, 0);
+                    this.ctx.lineTo(x, this.canvas.height);
+                    this.ctx.stroke();
+                }
+                for (let y = 0; y <= this.canvas.height; y += 50) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, y);
+                    this.ctx.lineTo(this.canvas.width, y);
+                    this.ctx.stroke();
+                }
+                
+                // Component labels if enabled
+                if (showComponents) {
+                    this.drawComponentLabels();
+                }
+            }
+            
+            drawComponentLabels() {
+                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                this.ctx.font = '10px Arial';
+                
+                this.entities.forEach(entity => {
+                    const transform = entity.getComponent('TransformComponent');
+                    if (transform) {
+                        const components = Array.from(entity.components.keys())
+                            .map(c => c.replace('Component', ''))
+                            .join(', ');
+                        
+                        this.ctx.fillText(
+                            `[${components}]`,
+                            transform.x - 30,
+                            transform.y + 30
+                        );
+                    }
+                });
+            }
+        }
+        
+        // Initialize ECS
+        const ecsCanvas = document.getElementById('ecsCanvas');
+        const ctx = ecsCanvas.getContext('2d');
+        const world = new World(ecsCanvas, ctx);
+        
+        let showSystems = true;
+        let showComponents = true;
+        
+        // Entity factory functions
+        function createEntity(type) {
+            let entity;
+            
+            switch(type) {
+                case 'player':
+                    entity = world.createEntity();
+                    entity.addComponent(new TransformComponent(300, 200))
+                          .addComponent(new VelocityComponent(0, 0))
+                          .addComponent(new SpriteComponent('#00ff00', 'triangle', 15))
+                          .addComponent(new HealthComponent(100))
+                          .addComponent(new ColliderComponent(15))
+                          .addComponent(new InputComponent());
+                    break;
+                    
+                case 'enemy':
+                    entity = world.createEntity();
+                    entity.addComponent(new TransformComponent(
+                        Math.random() * 500 + 50,
+                        Math.random() * 300 + 50
+                    ))
+                    .addComponent(new VelocityComponent(
+                        (Math.random() - 0.5) * 100,
+                        (Math.random() - 0.5) * 100
+                    ))
+                    .addComponent(new SpriteComponent('#ff0000', 'square', 12))
+                    .addComponent(new HealthComponent(50))
+                    .addComponent(new ColliderComponent(12))
+                    .addComponent(new AIComponent('wander'));
+                    break;
+                    
+                case 'powerup':
+                    entity = world.createEntity();
+                    entity.addComponent(new TransformComponent(
+                        Math.random() * 500 + 50,
+                        Math.random() * 300 + 50
+                    ))
+                    .addComponent(new SpriteComponent('#ffff00', 'star', 10))
+                    .addComponent(new ColliderComponent(10));
+                    // Slow rotation
+                    const transform = entity.getComponent('TransformComponent');
+                    setInterval(() => {
+                        if (transform) transform.rotation += 0.02;
+                    }, 16);
+                    break;
+                    
+                case 'particle':
+                    entity = world.createEntity();
+                    entity.addComponent(new TransformComponent(
+                        Math.random() * 500 + 50,
+                        Math.random() * 300 + 50
+                    ))
+                    .addComponent(new VelocityComponent(
+                        (Math.random() - 0.5) * 200,
+                        (Math.random() - 0.5) * 200
+                    ))
+                    .addComponent(new SpriteComponent(
+                        `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`,
+                        'circle',
+                        Math.random() * 5 + 2
+                    ))
+                    .addComponent(new ParticleComponent(Math.random() * 2 + 1));
+                    break;
+            }
+            
+            updateEntityCount();
+        }
+        
+        function createCustomEntity() {
+            const entity = world.createEntity();
+            
+            // Always add transform
+            entity.addComponent(new TransformComponent(
+                Math.random() * 500 + 50,
+                Math.random() * 300 + 50
+            ));
+            
+            // Add selected components
+            if (document.getElementById('comp-velocity').checked) {
+                entity.addComponent(new VelocityComponent(
+                    (Math.random() - 0.5) * 150,
+                    (Math.random() - 0.5) * 150
+                ));
+            }
+            
+            if (document.getElementById('comp-health').checked) {
+                entity.addComponent(new HealthComponent(75));
+            }
+            
+            if (document.getElementById('comp-sprite').checked) {
+                const shapes = ['circle', 'square', 'triangle', 'star'];
+                entity.addComponent(new SpriteComponent(
+                    `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`,
+                    shapes[Math.floor(Math.random() * shapes.length)],
+                    Math.random() * 10 + 8
+                ));
+            }
+            
+            if (document.getElementById('comp-collider').checked) {
+                entity.addComponent(new ColliderComponent(10));
+            }
+            
+            if (document.getElementById('comp-ai').checked) {
+                const behaviors = ['wander', 'seek', 'flee'];
+                entity.addComponent(new AIComponent(
+                    behaviors[Math.floor(Math.random() * behaviors.length)]
+                ));
+            }
+            
+            if (document.getElementById('comp-input').checked) {
+                entity.addComponent(new InputComponent());
+            }
+            
+            if (document.getElementById('comp-particle').checked) {
+                entity.addComponent(new ParticleComponent(3));
+            }
+            
+            updateEntityCount();
+        }
+        
+        function clearAllEntities() {
+            world.entities = [];
+            updateEntityCount();
+        }
+        
+        function toggleSystems() {
+            showSystems = document.getElementById('showSystems').checked;
+            updateSystemsDisplay();
+        }
+        
+        function toggleComponents() {
+            showComponents = document.getElementById('showComponents').checked;
+        }
+        
+        function updateEntityCount() {
+            document.getElementById('entityCount').textContent = world.entities.length;
+        }
+        
+        function updateSystemsDisplay() {
+            const display = document.getElementById('activeSystems');
+            if (showSystems) {
+                const systemNames = world.systems.map(s => s.constructor.name.replace('System', '')).join(', ');
+                display.textContent = systemNames;
+            } else {
+                display.textContent = 'Hidden';
+            }
+        }
+        
+        // Animation loop
+        let lastTime = performance.now();
+        let frameCount = 0;
+        let fpsTime = 0;
+        
+        function animate(currentTime) {
+            const dt = (currentTime - lastTime) / 1000;
+            lastTime = currentTime;
+            
+            // Update FPS
+            frameCount++;
+            fpsTime += dt;
+            if (fpsTime >= 1) {
+                document.getElementById('fpsDisplay').textContent = Math.round(frameCount / fpsTime);
+                frameCount = 0;
+                fpsTime = 0;
+            }
+            
+            // Update and draw
+            world.update(dt);
+            world.draw();
+            
+            requestAnimationFrame(animate);
+        }
+        
+        // Create some initial entities
+        createEntity('player');
+        createEntity('enemy');
+        createEntity('enemy');
+        createEntity('powerup');
+        
+        // Initialize displays
+        updateSystemsDisplay();
+        
+        // Start animation
+        animate(performance.now());
+        
+        console.log('ECS Visualizer initialized successfully!');
+    </script>
+
+    <h2>Basic Component System Implementation</h2>
+    
+    <pre class="language-python"><code>import pygame
+from typing import Dict, List, Type, Optional
+from dataclasses import dataclass
+from abc import ABC, abstractmethod
+
+# Component base class
+class Component:
+    """Base class for all components"""
+    pass
+
+# Example Components
+@dataclass
+class TransformComponent(Component):
+    """Position and rotation component"""
+    x: float = 0
+    y: float = 0
+    rotation: float = 0
+    scale: float = 1
+
+@dataclass
+class VelocityComponent(Component):
+    """Velocity component for movement"""
+    vx: float = 0
+    vy: float = 0
+    angular_velocity: float = 0
+
+@dataclass
+class SpriteComponent(Component):
+    """Visual representation component"""
+    texture: pygame.Surface = None
+    color: tuple = (255, 255, 255)
+    layer: int = 0
+
+@dataclass
+class HealthComponent(Component):
+    """Health component for damageable entities"""
+    max_health: int = 100
+    current_health: int = 100
+    
+    def take_damage(self, amount: int):
+        self.current_health = max(0, self.current_health - amount)
+    
+    def heal(self, amount: int):
+        self.current_health = min(self.max_health, self.current_health + amount)
+    
+    def is_alive(self) -> bool:
+        return self.current_health > 0
+
+@dataclass
+class ColliderComponent(Component):
+    """Collision detection component"""
+    width: float = 32
+    height: float = 32
+    is_trigger: bool = False
+    collision_layer: int = 0
+    collision_mask: int = -1  # Collides with all layers by default
+
+# Entity class
+class Entity:
+    """Entity is just a container for components"""
+    def __init__(self, entity_id: int, name: str = ""):
+        self.id = entity_id
+        self.name = name
+        self.components: Dict[Type[Component], Component] = {}
+        self.active = True
+        
+    def add_component(self, component: Component) -> 'Entity':
+        """Add a component to this entity"""
+        self.components[type(component)] = component
+        return self
+    
+    def get_component(self, component_type: Type[Component]) -> Optional[Component]:
+        """Get a component of specified type"""
+        return self.components.get(component_type)
+    
+    def has_component(self, component_type: Type[Component]) -> bool:
+        """Check if entity has a component"""
+        return component_type in self.components
+    
+    def remove_component(self, component_type: Type[Component]):
+        """Remove a component from this entity"""
+        if component_type in self.components:
+            del self.components[component_type]
+
+# System base class
+class System(ABC):
+    """Base class for all systems"""
+    def __init__(self):
+        self.required_components: List[Type[Component]] = []
+        self.priority = 0  # Lower values update first
+    
+    def get_entities(self, world: 'World') -> List[Entity]:
+        """Get all entities that have required components"""
+        return [entity for entity in world.entities.values()
+                if entity.active and all(
+                    entity.has_component(comp_type) 
+                    for comp_type in self.required_components
+                )]
+    
+    @abstractmethod
+    def update(self, world: 'World', dt: float):
+        """Update system logic"""
+        pass
+
+# Movement System
+class MovementSystem(System):
+    """System that handles entity movement"""
+    def __init__(self):
+        super().__init__()
+        self.required_components = [TransformComponent, VelocityComponent]
+        
+    def update(self, world: 'World', dt: float):
+        entities = self.get_entities(world)
+        
+        for entity in entities:
+            transform = entity.get_component(TransformComponent)
+            velocity = entity.get_component(VelocityComponent)
+            
+            # Update position based on velocity
+            transform.x += velocity.vx * dt
+            transform.y += velocity.vy * dt
+            transform.rotation += velocity.angular_velocity * dt</code></pre>
+
+    <h2>Advanced ECS Architecture</h2>
+    
+    <pre class="language-python"><code># World/Manager class
+class World:
+    """ECS World that manages entities and systems"""
+    def __init__(self):
+        self.entities: Dict[int, Entity] = {}
+        self.systems: List[System] = []
+        self.next_entity_id = 0
+        self.component_pools: Dict[Type[Component], List[Component]] = {}
+        
+    def create_entity(self, name: str = "") -> Entity:
+        """Create a new entity"""
+        entity = Entity(self.next_entity_id, name)
+        self.entities[self.next_entity_id] = entity
+        self.next_entity_id += 1
+        return entity
+    
+    def destroy_entity(self, entity_id: int):
+        """Destroy an entity"""
+        if entity_id in self.entities:
+            # Return components to pools for reuse
+            entity = self.entities[entity_id]
+            for component in entity.components.values():
+                self.return_to_pool(component)
+            del self.entities[entity_id]
+    
+    def add_system(self, system: System):
+        """Add a system to the world"""
+        self.systems.append(system)
+        self.systems.sort(key=lambda s: s.priority)
+    
+    def update(self, dt: float):
+        """Update all systems"""
+        for system in self.systems:
+            system.update(self, dt)
+    
+    def get_entities_with_components(self, *component_types: Type[Component]) -> List[Entity]:
+        """Get all entities that have all specified components"""
+        return [entity for entity in self.entities.values()
+                if entity.active and all(
+                    entity.has_component(comp_type)
+                    for comp_type in component_types
+                )]
+    
+    def get_component_from_pool(self, component_type: Type[Component]) -> Component:
+        """Get a component from object pool for reuse"""
+        if component_type not in self.component_pools:
+            self.component_pools[component_type] = []
+        
+        pool = self.component_pools[component_type]
+        if pool:
+            return pool.pop()
+        return component_type()
+    
+    def return_to_pool(self, component: Component):
+        """Return component to pool for reuse"""
+        component_type = type(component)
+        if component_type not in self.component_pools:
+            self.component_pools[component_type] = []
+        self.component_pools[component_type].append(component)
+
+# Render System
+class RenderSystem(System):
+    """System that handles rendering"""
+    def __init__(self, screen: pygame.Surface):
+        super().__init__()
+        self.screen = screen
+        self.required_components = [TransformComponent, SpriteComponent]
+        self.priority = 100  # Render last
+    
+    def update(self, world: World, dt: float):
+        entities = self.get_entities(world)
+        
+        # Sort by layer for proper rendering order
+        entities.sort(key=lambda e: e.get_component(SpriteComponent).layer)
+        
+        for entity in entities:
+            transform = entity.get_component(TransformComponent)
+            sprite = entity.get_component(SpriteComponent)
+            
+            if sprite.texture:
+                # Rotate and scale texture
+                rotated = pygame.transform.rotate(sprite.texture, transform.rotation)
+                scaled = pygame.transform.scale(
+                    rotated,
+                    (int(rotated.get_width() * transform.scale),
+                     int(rotated.get_height() * transform.scale))
+                )
+                
+                # Center the sprite
+                rect = scaled.get_rect(center=(transform.x, transform.y))
+                self.screen.blit(scaled, rect)
+            else:
+                # Draw placeholder shape
+                pygame.draw.circle(
+                    self.screen,
+                    sprite.color,
+                    (int(transform.x), int(transform.y)),
+                    int(16 * transform.scale)
+                )
+
+# Physics System
+class PhysicsSystem(System):
+    """System that handles physics and collisions"""
+    def __init__(self):
+        super().__init__()
+        self.required_components = [TransformComponent, ColliderComponent]
+        self.priority = 10
+    
+    def update(self, world: World, dt: float):
+        entities = self.get_entities(world)
+        
+        # Check collisions
+        for i, entity1 in enumerate(entities):
+            for entity2 in entities[i + 1:]:
+                if self.check_collision(entity1, entity2):
+                    self.resolve_collision(entity1, entity2)
+    
+    def check_collision(self, entity1: Entity, entity2: Entity) -> bool:
+        """Check if two entities are colliding"""
+        transform1 = entity1.get_component(TransformComponent)
+        transform2 = entity2.get_component(TransformComponent)
+        collider1 = entity1.get_component(ColliderComponent)
+        collider2 = entity2.get_component(ColliderComponent)
+        
+        # Check layer masks
+        if not (collider1.collision_mask & (1 << collider2.collision_layer)):
+            return False
+        if not (collider2.collision_mask & (1 << collider1.collision_layer)):
+            return False
+        
+        # Simple AABB collision
+        return (abs(transform1.x - transform2.x) < (collider1.width + collider2.width) / 2 and
+                abs(transform1.y - transform2.y) < (collider1.height + collider2.height) / 2)
+    
+    def resolve_collision(self, entity1: Entity, entity2: Entity):
+        """Resolve collision between two entities"""
+        collider1 = entity1.get_component(ColliderComponent)
+        collider2 = entity2.get_component(ColliderComponent)
+        
+        # If either is a trigger, don't resolve physics
+        if collider1.is_trigger or collider2.is_trigger:
+            # Could emit collision event here
+            return
+        
+        # Simple separation
+        transform1 = entity1.get_component(TransformComponent)
+        transform2 = entity2.get_component(TransformComponent)
+        
+        dx = transform2.x - transform1.x
+        dy = transform2.y - transform1.y
+        
+        if abs(dx) > abs(dy):
+            # Horizontal separation
+            if dx > 0:
+                transform1.x -= 1
+                transform2.x += 1
+            else:
+                transform1.x += 1
+                transform2.x -= 1
+        else:
+            # Vertical separation
+            if dy > 0:
+                transform1.y -= 1
+                transform2.y += 1
+            else:
+                transform1.y += 1
+                transform2.y -= 1</code></pre>
+
+    <h2>Component Composition Patterns</h2>
+    
+    <pre class="language-python"><code># Entity Factory for common entity types
+class EntityFactory:
+    """Factory for creating common entity configurations"""
+    
+    @staticmethod
+    def create_player(world: World, x: float, y: float) -> Entity:
+        """Create a player entity"""
+        player = world.create_entity("Player")
+        player.add_component(TransformComponent(x, y))
+        player.add_component(VelocityComponent())
+        player.add_component(SpriteComponent(color=(0, 255, 0)))
+        player.add_component(HealthComponent(100))
+        player.add_component(ColliderComponent(32, 32, collision_layer=0))
+        player.add_component(InputComponent())
+        return player
+    
+    @staticmethod
+    def create_enemy(world: World, x: float, y: float, enemy_type: str = "basic") -> Entity:
+        """Create an enemy entity"""
+        enemy = world.create_entity(f"Enemy_{enemy_type}")
+        enemy.add_component(TransformComponent(x, y))
+        enemy.add_component(VelocityComponent())
+        enemy.add_component(ColliderComponent(24, 24, collision_layer=1))
+        
+        if enemy_type == "basic":
+            enemy.add_component(HealthComponent(50))
+            enemy.add_component(SpriteComponent(color=(255, 0, 0)))
+            enemy.add_component(AIComponent("patrol"))
+        elif enemy_type == "tank":
+            enemy.add_component(HealthComponent(200))
+            enemy.add_component(SpriteComponent(color=(128, 0, 0)))
+            enemy.add_component(AIComponent("guard"))
+        elif enemy_type == "fast":
+            enemy.add_component(HealthComponent(30))
+            enemy.add_component(SpriteComponent(color=(255, 128, 0)))
+            enemy.add_component(AIComponent("chase"))
+            velocity = enemy.get_component(VelocityComponent)
+            velocity.vx = 200  # Fast movement
+        
+        return enemy
+    
+    @staticmethod
+    def create_projectile(world: World, x: float, y: float, vx: float, vy: float) -> Entity:
+        """Create a projectile entity"""
+        projectile = world.create_entity("Projectile")
+        projectile.add_component(TransformComponent(x, y))
+        projectile.add_component(VelocityComponent(vx, vy))
+        projectile.add_component(SpriteComponent(color=(255, 255, 0)))
+        projectile.add_component(ColliderComponent(8, 8, is_trigger=True, collision_layer=2))
+        projectile.add_component(DamageComponent(10))
+        projectile.add_component(LifetimeComponent(3.0))  # Lives for 3 seconds
+        return projectile
+
+# Additional Components
+@dataclass
+class InputComponent(Component):
+    """Component for entities controlled by input"""
+    move_speed: float = 200
+    
+@dataclass
+class AIComponent(Component):
+    """AI behavior component"""
+    behavior_type: str = "idle"
+    target: Optional[Entity] = None
+    state: str = "idle"
+    
+@dataclass
+class DamageComponent(Component):
+    """Component for entities that deal damage"""
+    damage: int = 10
+    damage_type: str = "physical"
+    
+@dataclass
+class LifetimeComponent(Component):
+    """Component for entities with limited lifetime"""
+    lifetime: float = 1.0
+    elapsed: float = 0.0
+
+# Input System
+class InputSystem(System):
+    """System that handles player input"""
+    def __init__(self):
+        super().__init__()
+        self.required_components = [TransformComponent, VelocityComponent, InputComponent]
+        self.priority = 0  # Process input first
+        
+    def update(self, world: World, dt: float):
+        entities = self.get_entities(world)
+        keys = pygame.key.get_pressed()
+        
+        for entity in entities:
+            velocity = entity.get_component(VelocityComponent)
+            input_comp = entity.get_component(InputComponent)
+            
+            # Reset velocity
+            velocity.vx = 0
+            velocity.vy = 0
+            
+            # Apply input
+            if keys[pygame.K_LEFT]:
+                velocity.vx = -input_comp.move_speed
+            if keys[pygame.K_RIGHT]:
+                velocity.vx = input_comp.move_speed
+            if keys[pygame.K_UP]:
+                velocity.vy = -input_comp.move_speed
+            if keys[pygame.K_DOWN]:
+                velocity.vy = input_comp.move_speed
+
+# AI System
+class AISystem(System):
+    """System that handles AI behavior"""
+    def __init__(self):
+        super().__init__()
+        self.required_components = [TransformComponent, VelocityComponent, AIComponent]
+        self.priority = 5
+        
+    def update(self, world: World, dt: float):
+        entities = self.get_entities(world)
+        
+        for entity in entities:
+            ai = entity.get_component(AIComponent)
+            transform = entity.get_component(TransformComponent)
+            velocity = entity.get_component(VelocityComponent)
+            
+            if ai.behavior_type == "patrol":
+                # Simple back and forth movement
+                if transform.x < 100:
+                    velocity.vx = 100
+                elif transform.x > 700:
+                    velocity.vx = -100
+                elif velocity.vx == 0:
+                    velocity.vx = 100
+                    
+            elif ai.behavior_type == "chase":
+                # Chase target if exists
+                if ai.target:
+                    target_transform = ai.target.get_component(TransformComponent)
+                    if target_transform:
+                        dx = target_transform.x - transform.x
+                        dy = target_transform.y - transform.y
+                        dist = (dx*dx + dy*dy) ** 0.5
+                        
+                        if dist > 1:
+                            velocity.vx = (dx / dist) * 150
+                            velocity.vy = (dy / dist) * 150
+                            
+            elif ai.behavior_type == "guard":
+                # Stand still but rotate
+                velocity.vx = 0
+                velocity.vy = 0
+                velocity.angular_velocity = 30  # Slow rotation</code></pre>
+
+    <h2>Complete ECS Game Example</h2>
+    
+    <pre class="language-python"><code>import pygame
+import random
+
+class ECSGame:
+    """Complete game using Entity Component System"""
+    def __init__(self):
+        pygame.init()
+        self.screen = pygame.display.set_mode((800, 600))
+        pygame.display.set_caption("ECS Game Demo")
+        self.clock = pygame.time.Clock()
+        self.running = True
+        
+        # Create ECS world
+        self.world = World()
+        
+        # Add systems
+        self.world.add_system(InputSystem())
+        self.world.add_system(AISystem())
+        self.world.add_system(MovementSystem())
+        self.world.add_system(PhysicsSystem())
+        self.world.add_system(LifetimeSystem())
+        self.world.add_system(HealthSystem())
+        self.world.add_system(RenderSystem(self.screen))
+        
+        # Create initial entities
+        self.setup_entities()
+        
+    def setup_entities(self):
+        """Create initial game entities"""
+        # Create player
+        self.player = EntityFactory.create_player(self.world, 400, 300)
+        
+        # Create enemies
+        for i in range(5):
+            x = random.randint(100, 700)
+            y = random.randint(100, 500)
+            enemy_type = random.choice(["basic", "tank", "fast"])
+            enemy = EntityFactory.create_enemy(self.world, x, y, enemy_type)
+            
+            # Make fast enemies chase player
+            if enemy_type == "fast":
+                ai = enemy.get_component(AIComponent)
+                ai.target = self.player
+        
+        # Create some obstacles
+        for i in range(10):
+            obstacle = self.world.create_entity("Obstacle")
+            obstacle.add_component(TransformComponent(
+                random.randint(50, 750),
+                random.randint(50, 550)
+            ))
+            obstacle.add_component(SpriteComponent(color=(128, 128, 128)))
+            obstacle.add_component(ColliderComponent(40, 40, collision_layer=3))
+    
+    def handle_events(self):
+        """Handle game events"""
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    # Shoot projectile
+                    self.shoot_projectile()
+    
+    def shoot_projectile(self):
+        """Create a projectile from player position"""
+        player_transform = self.player.get_component(TransformComponent)
+        if player_transform:
+            # Get mouse position for direction
+            mx, my = pygame.mouse.get_pos()
+            dx = mx - player_transform.x
+            dy = my - player_transform.y
+            dist = (dx*dx + dy*dy) ** 0.5
+            
+            if dist > 0:
+                # Normalize and scale velocity
+                vx = (dx / dist) * 500
+                vy = (dy / dist) * 500
+                
+                EntityFactory.create_projectile(
+                    self.world,
+                    player_transform.x,
+                    player_transform.y,
+                    vx, vy
+                )
+    
+    def run(self):
+        """Main game loop"""
+        dt = 0
+        
+        while self.running:
+            self.handle_events()
+            
+            # Update world
+            self.world.update(dt)
+            
+            # Clear screen
+            self.screen.fill((20, 20, 30))
+            
+            # Draw grid
+            for x in range(0, 800, 50):
+                pygame.draw.line(self.screen, (40, 40, 50), (x, 0), (x, 600))
+            for y in range(0, 600, 50):
+                pygame.draw.line(self.screen, (40, 40, 50), (0, y), (800, y))
+            
+            # Systems handle their own drawing
+            # RenderSystem draws all entities
+            
+            # Draw UI
+            self.draw_ui()
+            
+            pygame.display.flip()
+            dt = self.clock.tick(60) / 1000.0
+    
+    def draw_ui(self):
+        """Draw game UI"""
+        font = pygame.font.Font(None, 24)
+        
+        # Entity count
+        text = font.render(f"Entities: {len(self.world.entities)}", True, (255, 255, 255))
+        self.screen.blit(text, (10, 10))
+        
+        # Player health
+        player_health = self.player.get_component(HealthComponent)
+        if player_health:
+            text = font.render(f"Health: {player_health.current_health}/{player_health.max_health}", 
+                             True, (255, 255, 255))
+            self.screen.blit(text, (10, 35))
+        
+        # Instructions
+        text = font.render("WASD: Move | Mouse: Aim | Space: Shoot", True, (200, 200, 200))
+        self.screen.blit(text, (10, 570))
+
+# Additional Systems
+class LifetimeSystem(System):
+    """System that handles entity lifetimes"""
+    def __init__(self):
+        super().__init__()
+        self.required_components = [LifetimeComponent]
+        self.priority = 90
+        
+    def update(self, world: World, dt: float):
+        entities = self.get_entities(world)
+        
+        for entity in entities:
+            lifetime = entity.get_component(LifetimeComponent)
+            lifetime.elapsed += dt
+            
+            if lifetime.elapsed >= lifetime.lifetime:
+                entity.active = False  # Mark for removal
+
+class HealthSystem(System):
+    """System that handles health and death"""
+    def __init__(self):
+        super().__init__()
+        self.required_components = [HealthComponent]
+        self.priority = 80
+        
+    def update(self, world: World, dt: float):
+        entities = self.get_entities(world)
+        
+        for entity in entities:
+            health = entity.get_component(HealthComponent)
+            
+            if not health.is_alive():
+                entity.active = False  # Mark for removal
+                
+                # Could spawn death particles here
+                self.spawn_death_effect(world, entity)
+    
+    def spawn_death_effect(self, world: World, entity: Entity):
+        """Spawn particle effects on entity death"""
+        transform = entity.get_component(TransformComponent)
+        if transform:
+            # Create explosion particles
+            for i in range(10):
+                particle = world.create_entity("Particle")
+                particle.add_component(TransformComponent(transform.x, transform.y))
+                particle.add_component(VelocityComponent(
+                    random.uniform(-200, 200),
+                    random.uniform(-200, 200)
+                ))
+                particle.add_component(SpriteComponent(color=(255, random.randint(0, 255), 0)))
+                particle.add_component(LifetimeComponent(random.uniform(0.5, 1.5)))
+
+if __name__ == "__main__":
+    game = ECSGame()
+    game.run()</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Component System Tips</h3>
+        <ul>
+            <li><strong>Single Responsibility:</strong> Each component holds one type of data</li>
+            <li><strong>No Logic in Components:</strong> Components are data, systems have logic</li>
+            <li><strong>Composition Over Inheritance:</strong> Build entities by combining components</li>
+            <li><strong>System Order Matters:</strong> Use priorities to control update order</li>
+            <li><strong>Cache Component Queries:</strong> Store frequently used entity queries</li>
+            <li><strong>Object Pooling:</strong> Reuse components and entities for performance</li>
+            <li><strong>Event Systems:</strong> Use events for system communication</li>
+            <li><strong>Data-Oriented Design:</strong> Group similar components for cache efficiency</li>
+        </ul>
+    </div>
+
+    <h2>Common Patterns</h2>
+    
+    <div style="background-color: #f0fff4; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎮 ECS Patterns</h3>
+        <ul>
+            <li><strong>Archetypes:</strong> Predefined component combinations</li>
+            <li><strong>Tags:</strong> Empty components for categorization</li>
+            <li><strong>Singleton Components:</strong> Global data accessible to systems</li>
+            <li><strong>Component Dependencies:</strong> Components that require others</li>
+            <li><strong>System Groups:</strong> Related systems that run together</li>
+            <li><strong>Entity Hierarchies:</strong> Parent-child relationships</li>
+        </ul>
+    </div>
+
+    <h2>Practice Exercises</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎯 Component System Challenges!</h3>
+        <ol>
+            <li><strong>RPG Character:</strong> Build complex characters with stats, inventory, skills</li>
+            <li><strong>Tower Defense:</strong> Towers, enemies, and projectiles with ECS</li>
+            <li><strong>Racing Game:</strong> Vehicles with physics, AI, and upgrades</li>
+            <li><strong>Particle System:</strong> Thousands of particles efficiently</li>
+            <li><strong>Spell System:</strong> Composable spell effects from components</li>
+            <li><strong>Save System:</strong> Serialize/deserialize ECS world</li>
+        </ol>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>🧩 ECS separates data (Components) from logic (Systems)</li>
+            <li>📦 Entities are just IDs with component collections</li>
+            <li>🔄 Systems process entities with specific components</li>
+            <li>🎯 Composition creates flexible game objects</li>
+            <li>⚡ Performance benefits from data-oriented design</li>
+            <li>🔧 Easy to add new features without changing existing code</li>
+            <li>🐛 Debugging is easier with isolated systems</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you understand component systems, next we'll explore event systems - how to create decoupled communication between game systems!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="architecture_scene_management.html" class="prev-lesson" aria-label="Previous lesson: Scene Management">Previous Lesson: Scene Management</a>
+        <a href="architecture_event_systems.html" class="next-lesson" aria-label="Next lesson: Event Systems">Next Lesson: Event Systems</a>
+    </nav>
+    
+    </main>
+    <script src="/js/course-enhancements.js" defer></script>
+</body>
+</html>

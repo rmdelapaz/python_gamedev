@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master scene management in game development. Learn to organize game levels, handle transitions, manage resources, and create seamless scene loading.">
+    <title>Scene Management - Game Architecture</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script src="/js/course-enhancements.js" defer></script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Scene Management</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Intermediate Module - Section 1: Game Architecture - Lesson 2</span>
+    </nav>
+
+    <h2>Organizing Game Worlds with Scenes</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Scene management is how we organize game content into manageable chunks - levels, menus, cutscenes, and more. It handles loading, unloading, and transitioning between different parts of your game world seamlessly! 🌍🎬</p>
+    </div>
+
+    <h2>Understanding Scene Management</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎬 The Movie Production Analogy</h3>
+        <p>Think of scenes like movie production:</p>
+        <ul>
+            <li><strong>Scenes:</strong> Individual sets or locations (Level 1, Boss Arena, Shop)</li>
+            <li><strong>Transitions:</strong> Moving between sets (Fade, Slide, Dissolve)</li>
+            <li><strong>Props/Assets:</strong> Objects needed for each scene</li>
+            <li><strong>Loading:</strong> Setting up the next scene while current plays</li>
+            <li><strong>Memory:</strong> Striking sets no longer needed</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Scene Manager"] --> B["Active Scene"]
+        A --> C["Scene Queue"]
+        A --> D["Resource Manager"]
+        A --> E["Transition System"]
+        B --> F["Game Objects"]
+        B --> G["Scene Data"]
+        C --> H["Pending Scenes"]
+        C --> I["Preloading"]
+        D --> J["Textures"]
+        D --> K["Sounds"]
+        D --> L["Scripts"]
+        E --> M["Fade"]
+        E --> N["Slide"]
+        E --> O["Custom"]
+    </div>
+
+    <h2>Interactive Scene Manager Demo</h2>
+    
+    <div class="canvas-wrapper">
+        <canvas id="sceneCanvas" width="600" height="400"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Experience different scene transitions and loading!</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; max-width: 600px; margin: 10px auto;">
+            <button onclick="loadScene('menu')">Main Menu</button>
+            <button onclick="loadScene('level1')">Level 1</button>
+            <button onclick="loadScene('level2')">Level 2</button>
+            <button onclick="loadScene('boss')">Boss Arena</button>
+            <button onclick="loadScene('shop')">Item Shop</button>
+            <button onclick="loadScene('cutscene')">Cutscene</button>
+        </div>
+        <div style="margin-top: 10px;">
+            <label>Transition: 
+                <select id="transitionType" onchange="setTransitionType(this.value)">
+                    <option value="fade">Fade</option>
+                    <option value="slide">Slide</option>
+                    <option value="dissolve">Dissolve</option>
+                    <option value="curtain">Curtain</option>
+                    <option value="zoom">Zoom</option>
+                    <option value="instant">Instant</option>
+                </select>
+            </label>
+            <label>Duration: <input type="range" id="transitionDuration" min="0.1" max="2" step="0.1" value="0.5" onchange="setTransitionDuration(this.value)"> <span id="durationDisplay">0.5s</span></label>
+        </div>
+        <p>Current Scene: <strong id="currentSceneDisplay">Main Menu</strong> | Resources: <span id="resourceCount">0</span> | Memory: <span id="memoryUsage">0 MB</span></p>
+        <div style="margin-top: 10px;">
+            <button onclick="toggleResourceMonitor()">Toggle Resource Monitor</button>
+            <button onclick="preloadNextLevel()">Preload Next</button>
+            <button onclick="clearCache()">Clear Cache</button>
+        </div>
+    </div>
+
+    <script>
+        const sceneCanvas = document.getElementById('sceneCanvas');
+        const scCtx = sceneCanvas.getContext('2d');
+        const currentSceneDisplay = document.getElementById('currentSceneDisplay');
+        const resourceCountDisplay = document.getElementById('resourceCount');
+        const memoryUsageDisplay = document.getElementById('memoryUsage');
+        const durationDisplay = document.getElementById('durationDisplay');
+        
+        // Scene System Classes
+        class Resource {
+            constructor(type, name, size) {
+                this.type = type;
+                this.name = name;
+                this.size = size; // in KB
+                this.loaded = false;
+                this.data = null;
+            }
+            
+            async load() {
+                // Simulate loading
+                return new Promise(resolve => {
+                    setTimeout(() => {
+                        this.loaded = true;
+                        this.data = `${this.type}:${this.name}`;
+                        resolve(this);
+                    }, Math.random() * 500 + 100);
+                });
+            }
+            
+            unload() {
+                this.loaded = false;
+                this.data = null;
+            }
+        }
+        
+        class Scene {
+            constructor(name, config) {
+                this.name = name;
+                this.config = config;
+                this.resources = [];
+                this.objects = [];
+                this.loaded = false;
+                this.backgroundColor = config.backgroundColor || '#1a1a1a';
+                this.theme = config.theme || 'default';
+            }
+            
+            async load() {
+                // Load scene resources
+                const promises = this.config.resources.map(resConfig => {
+                    const resource = new Resource(resConfig.type, resConfig.name, resConfig.size);
+                    this.resources.push(resource);
+                    return resource.load();
+                });
+                
+                await Promise.all(promises);
+                
+                // Create scene objects
+                this.createObjects();
+                this.loaded = true;
+            }
+            
+            unload() {
+                // Unload resources
+                this.resources.forEach(resource => resource.unload());
+                this.resources = [];
+                this.objects = [];
+                this.loaded = false;
+            }
+            
+            createObjects() {
+                // Create scene-specific objects
+                this.objects = [];
+                
+                switch(this.theme) {
+                    case 'menu':
+                        this.createMenuObjects();
+                        break;
+                    case 'level':
+                        this.createLevelObjects();
+                        break;
+                    case 'boss':
+                        this.createBossObjects();
+                        break;
+                    case 'shop':
+                        this.createShopObjects();
+                        break;
+                    case 'cutscene':
+                        this.createCutsceneObjects();
+                        break;
+                }
+            }
+            
+            createMenuObjects() {
+                // Menu decorations
+                for (let i = 0; i < 5; i++) {
+                    this.objects.push({
+                        type: 'menuItem',
+                        x: 300,
+                        y: 100 + i * 60,
+                        width: 200,
+                        height: 40,
+                        text: ['New Game', 'Continue', 'Settings', 'Credits', 'Exit'][i]
+                    });
+                }
+            }
+            
+            createLevelObjects() {
+                // Platforms
+                for (let i = 0; i < 8; i++) {
+                    this.objects.push({
+                        type: 'platform',
+                        x: Math.random() * 500 + 50,
+                        y: Math.random() * 300 + 50,
+                        width: Math.random() * 100 + 50,
+                        height: 20
+                    });
+                }
+                // Collectibles
+                for (let i = 0; i < 10; i++) {
+                    this.objects.push({
+                        type: 'collectible',
+                        x: Math.random() * 550 + 25,
+                        y: Math.random() * 350 + 25,
+                        radius: 10
+                    });
+                }
+            }
+            
+            createBossObjects() {
+                // Boss
+                this.objects.push({
+                    type: 'boss',
+                    x: 300,
+                    y: 100,
+                    width: 80,
+                    height: 80
+                });
+                // Arena boundaries
+                this.objects.push({
+                    type: 'arena',
+                    x: 50,
+                    y: 50,
+                    width: 500,
+                    height: 300
+                });
+            }
+            
+            createShopObjects() {
+                // Shop items
+                for (let row = 0; row < 3; row++) {
+                    for (let col = 0; col < 4; col++) {
+                        this.objects.push({
+                            type: 'shopItem',
+                            x: 100 + col * 120,
+                            y: 100 + row * 100,
+                            width: 80,
+                            height: 80,
+                            price: Math.floor(Math.random() * 900 + 100)
+                        });
+                    }
+                }
+            }
+            
+            createCutsceneObjects() {
+                // Cutscene frames
+                this.objects.push({
+                    type: 'cutsceneFrame',
+                    x: 100,
+                    y: 100,
+                    width: 400,
+                    height: 200,
+                    text: 'Story continues...'
+                });
+            }
+            
+            update(dt) {
+                // Update scene objects
+                this.objects.forEach(obj => {
+                    if (obj.type === 'collectible') {
+                        obj.rotation = (obj.rotation || 0) + dt * 2;
+                    }
+                    if (obj.type === 'boss') {
+                        obj.x = 300 + Math.sin(Date.now() / 1000) * 50;
+                    }
+                });
+            }
+            
+            draw(ctx) {
+                // Draw background
+                ctx.fillStyle = this.backgroundColor;
+                ctx.fillRect(0, 0, sceneCanvas.width, sceneCanvas.height);
+                
+                // Draw objects
+                this.objects.forEach(obj => {
+                    this.drawObject(ctx, obj);
+                });
+                
+                // Draw scene name
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+                ctx.font = '48px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(this.name, sceneCanvas.width / 2, sceneCanvas.height / 2);
+            }
+            
+            drawObject(ctx, obj) {
+                ctx.save();
+                
+                switch(obj.type) {
+                    case 'platform':
+                        ctx.fillStyle = '#8B4513';
+                        ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+                        break;
+                        
+                    case 'collectible':
+                        ctx.translate(obj.x, obj.y);
+                        ctx.rotate(obj.rotation || 0);
+                        ctx.fillStyle = '#FFD700';
+                        ctx.beginPath();
+                        ctx.arc(0, 0, obj.radius, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.restore();
+                        break;
+                        
+                    case 'boss':
+                        ctx.fillStyle = '#8B0000';
+                        ctx.fillRect(obj.x - obj.width/2, obj.y - obj.height/2, obj.width, obj.height);
+                        break;
+                        
+                    case 'arena':
+                        ctx.strokeStyle = '#FF0000';
+                        ctx.lineWidth = 3;
+                        ctx.strokeRect(obj.x, obj.y, obj.width, obj.height);
+                        break;
+                        
+                    case 'shopItem':
+                        ctx.fillStyle = '#4169E1';
+                        ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+                        ctx.fillStyle = '#FFD700';
+                        ctx.font = '16px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(`$${obj.price}`, obj.x + obj.width/2, obj.y + obj.height + 20);
+                        break;
+                        
+                    case 'menuItem':
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+                        ctx.fillRect(obj.x - obj.width/2, obj.y - obj.height/2, obj.width, obj.height);
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.font = '20px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(obj.text, obj.x, obj.y);
+                        break;
+                        
+                    case 'cutsceneFrame':
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                        ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+                        ctx.strokeStyle = '#FFFFFF';
+                        ctx.strokeRect(obj.x, obj.y, obj.width, obj.height);
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.font = '24px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(obj.text, obj.x + obj.width/2, obj.y + obj.height/2);
+                        break;
+                }
+                
+                ctx.restore();
+            }
+            
+            getMemoryUsage() {
+                return this.resources.reduce((total, res) => total + res.size, 0);
+            }
+        }
+        
+        class Transition {
+            constructor(type, duration) {
+                this.type = type;
+                this.duration = duration;
+                this.progress = 0;
+                this.active = false;
+            }
+            
+            start() {
+                this.progress = 0;
+                this.active = true;
+            }
+            
+            update(dt) {
+                if (!this.active) return;
+                
+                this.progress += dt / this.duration;
+                if (this.progress >= 1) {
+                    this.progress = 1;
+                    this.active = false;
+                }
+            }
+            
+            draw(ctx) {
+                if (!this.active) return;
+                
+                ctx.save();
+                
+                switch(this.type) {
+                    case 'fade':
+                        this.drawFade(ctx);
+                        break;
+                    case 'slide':
+                        this.drawSlide(ctx);
+                        break;
+                    case 'dissolve':
+                        this.drawDissolve(ctx);
+                        break;
+                    case 'curtain':
+                        this.drawCurtain(ctx);
+                        break;
+                    case 'zoom':
+                        this.drawZoom(ctx);
+                        break;
+                }
+                
+                ctx.restore();
+            }
+            
+            drawFade(ctx) {
+                const alpha = this.progress < 0.5 ? this.progress * 2 : 2 - this.progress * 2;
+                ctx.fillStyle = `rgba(0, 0, 0, ${alpha})`;
+                ctx.fillRect(0, 0, sceneCanvas.width, sceneCanvas.height);
+            }
+            
+            drawSlide(ctx) {
+                const offset = this.progress < 0.5 
+                    ? sceneCanvas.width * this.progress * 2
+                    : sceneCanvas.width * (2 - this.progress * 2);
+                
+                ctx.fillStyle = 'black';
+                ctx.fillRect(0, 0, offset, sceneCanvas.height);
+            }
+            
+            drawDissolve(ctx) {
+                // Pixelated dissolve effect
+                const blockSize = 20;
+                const alpha = this.progress < 0.5 ? this.progress * 2 : 2 - this.progress * 2;
+                
+                for (let x = 0; x < sceneCanvas.width; x += blockSize) {
+                    for (let y = 0; y < sceneCanvas.height; y += blockSize) {
+                        if (Math.random() < alpha) {
+                            ctx.fillStyle = 'black';
+                            ctx.fillRect(x, y, blockSize, blockSize);
+                        }
+                    }
+                }
+            }
+            
+            drawCurtain(ctx) {
+                const height = this.progress < 0.5
+                    ? sceneCanvas.height * this.progress * 2
+                    : sceneCanvas.height * (2 - this.progress * 2);
+                
+                ctx.fillStyle = '#8B0000';
+                ctx.fillRect(0, 0, sceneCanvas.width, height);
+                ctx.fillRect(0, sceneCanvas.height - height, sceneCanvas.width, height);
+            }
+            
+            drawZoom(ctx) {
+                const scale = this.progress < 0.5
+                    ? 1 - this.progress
+                    : this.progress;
+                
+                ctx.translate(sceneCanvas.width / 2, sceneCanvas.height / 2);
+                ctx.scale(scale, scale);
+                ctx.translate(-sceneCanvas.width / 2, -sceneCanvas.height / 2);
+                
+                if (this.progress < 0.5) {
+                    ctx.fillStyle = `rgba(0, 0, 0, ${this.progress * 2})`;
+                    ctx.fillRect(0, 0, sceneCanvas.width, sceneCanvas.height);
+                }
+            }
+        }
+        
+        class SceneManager {
+            constructor() {
+                this.scenes = new Map();
+                this.currentScene = null;
+                this.nextScene = null;
+                this.transition = new Transition('fade', 0.5);
+                this.resourceCache = new Map();
+                this.showResourceMonitor = false;
+                this.loadingQueue = [];
+                this.isLoading = false;
+                
+                this.initializeScenes();
+            }
+            
+            initializeScenes() {
+                // Define scene configurations
+                const sceneConfigs = {
+                    menu: {
+                        backgroundColor: '#2c3e50',
+                        theme: 'menu',
+                        resources: [
+                            { type: 'texture', name: 'menu_bg', size: 512 },
+                            { type: 'sound', name: 'menu_music', size: 2048 },
+                            { type: 'texture', name: 'logo', size: 256 }
+                        ]
+                    },
+                    level1: {
+                        backgroundColor: '#87ceeb',
+                        theme: 'level',
+                        resources: [
+                            { type: 'texture', name: 'tileset', size: 1024 },
+                            { type: 'texture', name: 'player', size: 128 },
+                            { type: 'sound', name: 'level1_music', size: 3072 },
+                            { type: 'texture', name: 'enemies', size: 256 }
+                        ]
+                    },
+                    level2: {
+                        backgroundColor: '#483d8b',
+                        theme: 'level',
+                        resources: [
+                            { type: 'texture', name: 'tileset2', size: 1024 },
+                            { type: 'texture', name: 'player', size: 128 },
+                            { type: 'sound', name: 'level2_music', size: 3072 },
+                            { type: 'texture', name: 'enemies2', size: 512 }
+                        ]
+                    },
+                    boss: {
+                        backgroundColor: '#8b0000',
+                        theme: 'boss',
+                        resources: [
+                            { type: 'texture', name: 'boss_arena', size: 2048 },
+                            { type: 'texture', name: 'boss_sprite', size: 512 },
+                            { type: 'sound', name: 'boss_music', size: 4096 },
+                            { type: 'sound', name: 'boss_roar', size: 256 }
+                        ]
+                    },
+                    shop: {
+                        backgroundColor: '#daa520',
+                        theme: 'shop',
+                        resources: [
+                            { type: 'texture', name: 'shop_bg', size: 768 },
+                            { type: 'texture', name: 'items', size: 512 },
+                            { type: 'sound', name: 'shop_music', size: 1024 }
+                        ]
+                    },
+                    cutscene: {
+                        backgroundColor: '#000000',
+                        theme: 'cutscene',
+                        resources: [
+                            { type: 'video', name: 'cutscene1', size: 8192 },
+                            { type: 'sound', name: 'narration', size: 2048 }
+                        ]
+                    }
+                };
+                
+                // Create scenes
+                for (const [name, config] of Object.entries(sceneConfigs)) {
+                    this.scenes.set(name, new Scene(name.charAt(0).toUpperCase() + name.slice(1), config));
+                }
+                
+                // Load initial scene
+                this.loadScene('menu');
+            }
+            
+            async loadScene(sceneName) {
+                const scene = this.scenes.get(sceneName);
+                if (!scene) return;
+                
+                // Start transition
+                this.transition.start();
+                this.nextScene = scene;
+                
+                // Load scene resources
+                this.isLoading = true;
+                await scene.load();
+                this.isLoading = false;
+                
+                // Wait for transition midpoint
+                setTimeout(() => {
+                    // Unload previous scene
+                    if (this.currentScene && this.currentScene !== scene) {
+                        this.currentScene.unload();
+                    }
+                    
+                    // Switch to new scene
+                    this.currentScene = scene;
+                    currentSceneDisplay.textContent = scene.name;
+                    this.updateResourceDisplay();
+                }, this.transition.duration * 500);
+            }
+            
+            preloadScene(sceneName) {
+                const scene = this.scenes.get(sceneName);
+                if (scene && !scene.loaded) {
+                    this.loadingQueue.push(scene);
+                    this.processLoadingQueue();
+                }
+            }
+            
+            async processLoadingQueue() {
+                if (this.isLoading || this.loadingQueue.length === 0) return;
+                
+                const scene = this.loadingQueue.shift();
+                await scene.load();
+                
+                // Continue processing queue
+                this.processLoadingQueue();
+            }
+            
+            update(dt) {
+                // Update transition
+                this.transition.update(dt);
+                
+                // Update current scene
+                if (this.currentScene && !this.transition.active) {
+                    this.currentScene.update(dt);
+                }
+            }
+            
+            draw(ctx) {
+                // Clear
+                ctx.fillStyle = 'black';
+                ctx.fillRect(0, 0, sceneCanvas.width, sceneCanvas.height);
+                
+                // Draw current scene
+                if (this.currentScene) {
+                    this.currentScene.draw(ctx);
+                }
+                
+                // Draw transition
+                this.transition.draw(ctx);
+                
+                // Draw resource monitor
+                if (this.showResourceMonitor) {
+                    this.drawResourceMonitor(ctx);
+                }
+                
+                // Draw loading indicator
+                if (this.isLoading) {
+                    this.drawLoadingIndicator(ctx);
+                }
+            }
+            
+            drawResourceMonitor(ctx) {
+                // Background
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                ctx.fillRect(10, 10, 200, 150);
+                
+                ctx.fillStyle = 'white';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'left';
+                
+                let y = 30;
+                ctx.fillText('Resource Monitor', 20, y);
+                y += 20;
+                
+                if (this.currentScene) {
+                    ctx.fillText(`Scene: ${this.currentScene.name}`, 20, y);
+                    y += 15;
+                    ctx.fillText(`Resources: ${this.currentScene.resources.length}`, 20, y);
+                    y += 15;
+                    ctx.fillText(`Memory: ${(this.currentScene.getMemoryUsage() / 1024).toFixed(1)} MB`, 20, y);
+                    y += 15;
+                    ctx.fillText(`Objects: ${this.currentScene.objects.length}`, 20, y);
+                    y += 20;
+                    
+                    // List resources
+                    this.currentScene.resources.slice(0, 3).forEach(res => {
+                        ctx.fillText(`• ${res.type}: ${res.name}`, 30, y);
+                        y += 12;
+                    });
+                }
+            }
+            
+            drawLoadingIndicator(ctx) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                ctx.fillRect(0, 0, sceneCanvas.width, sceneCanvas.height);
+                
+                // Spinner
+                ctx.save();
+                ctx.translate(sceneCanvas.width / 2, sceneCanvas.height / 2);
+                ctx.rotate(Date.now() / 200);
+                
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(0, 0, 20, 0, Math.PI * 1.5);
+                ctx.stroke();
+                
+                ctx.restore();
+                
+                ctx.fillStyle = 'white';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Loading...', sceneCanvas.width / 2, sceneCanvas.height / 2 + 50);
+            }
+            
+            updateResourceDisplay() {
+                if (this.currentScene) {
+                    resourceCountDisplay.textContent = this.currentScene.resources.length;
+                    memoryUsageDisplay.textContent = (this.currentScene.getMemoryUsage() / 1024).toFixed(1) + ' MB';
+                }
+            }
+            
+            clearCache() {
+                this.resourceCache.clear();
+                this.scenes.forEach(scene => {
+                    if (scene !== this.currentScene) {
+                        scene.unload();
+                    }
+                });
+                this.updateResourceDisplay();
+            }
+        }
+        
+        // Create scene manager
+        const sceneManager = new SceneManager();
+        
+        // UI Functions
+        function loadScene(sceneName) {
+            sceneManager.loadScene(sceneName);
+        }
+        
+        function setTransitionType(type) {
+            sceneManager.transition.type = type;
+        }
+        
+        function setTransitionDuration(duration) {
+            sceneManager.transition.duration = parseFloat(duration);
+            durationDisplay.textContent = duration + 's';
+        }
+        
+        function toggleResourceMonitor() {
+            sceneManager.showResourceMonitor = !sceneManager.showResourceMonitor;
+        }
+        
+        function preloadNextLevel() {
+            // Determine next level based on current scene
+            const currentName = sceneManager.currentScene ? sceneManager.currentScene.name.toLowerCase() : '';
+            let nextScene = 'level1';
+            
+            if (currentName === 'level1') nextScene = 'level2';
+            else if (currentName === 'level2') nextScene = 'boss';
+            
+            sceneManager.preloadScene(nextScene);
+            alert(`Preloading ${nextScene}...`);
+        }
+        
+        function clearCache() {
+            sceneManager.clearCache();
+        }
+        
+        // Animation loop
+        let lastTime = performance.now();
+        function animate(currentTime) {
+            const dt = (currentTime - lastTime) / 1000;
+            lastTime = currentTime;
+            
+            sceneManager.update(dt);
+            sceneManager.draw(scCtx);
+            
+            requestAnimationFrame(animate);
+        }
+        
+        animate(performance.now());
+    </script>
+
+    <h2>Basic Scene Management System</h2>
+    
+    <pre class="language-python"><code>import pygame
+import json
+import asyncio
+from enum import Enum
+from typing import Dict, List, Optional
+
+class SceneTransition(Enum):
+    """Types of scene transitions"""
+    NONE = 0
+    FADE = 1
+    SLIDE_LEFT = 2
+    SLIDE_RIGHT = 3
+    DISSOLVE = 4
+    ZOOM = 5
+
+class Scene:
+    """Base class for game scenes"""
+    def __init__(self, scene_manager, name: str):
+        self.scene_manager = scene_manager
+        self.name = name
+        self.loaded = False
+        self.resources = {}
+        self.game_objects = []
+        self.camera = None
+        
+    def load_resources(self):
+        """Load scene-specific resources"""
+        pass
+    
+    def unload_resources(self):
+        """Unload resources to free memory"""
+        for resource in self.resources.values():
+            if hasattr(resource, 'unload'):
+                resource.unload()
+        self.resources.clear()
+    
+    def on_enter(self):
+        """Called when scene becomes active"""
+        if not self.loaded:
+            self.load_resources()
+            self.loaded = True
+    
+    def on_exit(self):
+        """Called when leaving the scene"""
+        pass
+    
+    def on_pause(self):
+        """Called when scene is paused"""
+        pass
+    
+    def on_resume(self):
+        """Called when scene is resumed"""
+        pass
+    
+    def update(self, dt: float):
+        """Update scene logic"""
+        for obj in self.game_objects:
+            obj.update(dt)
+    
+    def draw(self, screen):
+        """Draw the scene"""
+        for obj in self.game_objects:
+            obj.draw(screen)
+    
+    def handle_event(self, event):
+        """Handle input events"""
+        pass
+
+class SceneManager:
+    """Manages scenes and transitions between them"""
+    def __init__(self, screen):
+        self.screen = screen
+        self.scenes: Dict[str, Scene] = {}
+        self.current_scene: Optional[Scene] = None
+        self.next_scene: Optional[Scene] = None
+        self.scene_stack: List[Scene] = []
+        
+        # Transition system
+        self.transition_active = False
+        self.transition_type = SceneTransition.FADE
+        self.transition_duration = 0.5
+        self.transition_progress = 0.0
+        self.transition_surface = None
+        
+        # Resource management
+        self.resource_cache = {}
+        self.loading_thread = None
+        
+    def register_scene(self, name: str, scene: Scene):
+        """Register a new scene"""
+        self.scenes[name] = scene
+    
+    def change_scene(self, scene_name: str, transition: SceneTransition = SceneTransition.FADE):
+        """Change to a different scene"""
+        if scene_name not in self.scenes:
+            print(f"Scene '{scene_name}' not found!")
+            return
+        
+        self.next_scene = self.scenes[scene_name]
+        self.transition_type = transition
+        self.start_transition()
+    
+    def push_scene(self, scene_name: str):
+        """Push a scene onto the stack (for overlays)"""
+        if self.current_scene:
+            self.current_scene.on_pause()
+            self.scene_stack.append(self.current_scene)
+        
+        if scene_name in self.scenes:
+            self.current_scene = self.scenes[scene_name]
+            self.current_scene.on_enter()
+    
+    def pop_scene(self):
+        """Pop the top scene from the stack"""
+        if self.scene_stack:
+            if self.current_scene:
+                self.current_scene.on_exit()
+            
+            self.current_scene = self.scene_stack.pop()
+            self.current_scene.on_resume()
+    
+    def start_transition(self):
+        """Start a scene transition"""
+        self.transition_active = True
+        self.transition_progress = 0.0
+        
+        # Create transition surface
+        self.transition_surface = pygame.Surface(self.screen.get_size())
+        self.transition_surface.set_alpha(0)
+    
+    def update_transition(self, dt: float):
+        """Update the transition effect"""
+        if not self.transition_active:
+            return
+        
+        self.transition_progress += dt / self.transition_duration
+        
+        if self.transition_progress >= 0.5 and self.next_scene:
+            # Switch scenes at halfway point
+            if self.current_scene:
+                self.current_scene.on_exit()
+            
+            self.current_scene = self.next_scene
+            self.current_scene.on_enter()
+            self.next_scene = None
+        
+        if self.transition_progress >= 1.0:
+            self.transition_active = False
+            self.transition_progress = 1.0
+    
+    def draw_transition(self):
+        """Draw the transition effect"""
+        if not self.transition_active:
+            return
+        
+        if self.transition_type == SceneTransition.FADE:
+            self.draw_fade_transition()
+        elif self.transition_type == SceneTransition.SLIDE_LEFT:
+            self.draw_slide_transition(-1)
+        elif self.transition_type == SceneTransition.SLIDE_RIGHT:
+            self.draw_slide_transition(1)
+        elif self.transition_type == SceneTransition.DISSOLVE:
+            self.draw_dissolve_transition()
+        elif self.transition_type == SceneTransition.ZOOM:
+            self.draw_zoom_transition()
+    
+    def draw_fade_transition(self):
+        """Draw fade transition"""
+        # Calculate alpha based on progress
+        if self.transition_progress < 0.5:
+            alpha = int(255 * (self.transition_progress * 2))
+        else:
+            alpha = int(255 * (2 - self.transition_progress * 2))
+        
+        self.transition_surface.fill((0, 0, 0))
+        self.transition_surface.set_alpha(alpha)
+        self.screen.blit(self.transition_surface, (0, 0))
+    
+    def draw_slide_transition(self, direction: int):
+        """Draw slide transition"""
+        width = self.screen.get_width()
+        offset = int(width * self.transition_progress * direction)
+        
+        if self.current_scene:
+            # Draw current scene with offset
+            temp_surface = pygame.Surface(self.screen.get_size())
+            self.current_scene.draw(temp_surface)
+            self.screen.blit(temp_surface, (offset, 0))
+    
+    def update(self, dt: float):
+        """Update current scene and transitions"""
+        self.update_transition(dt)
+        
+        if self.current_scene and not self.transition_active:
+            self.current_scene.update(dt)
+    
+    def draw(self):
+        """Draw current scene and transitions"""
+        if self.current_scene:
+            self.current_scene.draw(self.screen)
+        
+        self.draw_transition()
+    
+    def handle_event(self, event):
+        """Pass events to current scene"""
+        if self.current_scene and not self.transition_active:
+            self.current_scene.handle_event(event)</code></pre>
+
+    <h2>Resource Management</h2>
+    
+    <pre class="language-python"><code># Resource management for scenes
+class ResourceManager:
+    """Manages loading and caching of game resources"""
+    def __init__(self):
+        self.textures = {}
+        self.sounds = {}
+        self.fonts = {}
+        self.data = {}
+        self.loading_queue = []
+        self.cache_size_limit = 100 * 1024 * 1024  # 100MB limit
+        self.current_cache_size = 0
+        
+    def load_texture(self, path: str, name: str = None) -> pygame.Surface:
+        """Load and cache a texture"""
+        if name is None:
+            name = path
+        
+        if name in self.textures:
+            return self.textures[name]
+        
+        try:
+            texture = pygame.image.load(path).convert_alpha()
+            self.textures[name] = texture
+            self.current_cache_size += self.get_surface_size(texture)
+            return texture
+        except pygame.error as e:
+            print(f"Failed to load texture '{path}': {e}")
+            return None
+    
+    def load_sound(self, path: str, name: str = None) -> pygame.mixer.Sound:
+        """Load and cache a sound"""
+        if name is None:
+            name = path
+        
+        if name in self.sounds:
+            return self.sounds[name]
+        
+        try:
+            sound = pygame.mixer.Sound(path)
+            self.sounds[name] = sound
+            return sound
+        except pygame.error as e:
+            print(f"Failed to load sound '{path}': {e}")
+            return None
+    
+    def load_font(self, path: str, size: int, name: str = None) -> pygame.font.Font:
+        """Load and cache a font"""
+        if name is None:
+            name = f"{path}_{size}"
+        
+        if name in self.fonts:
+            return self.fonts[name]
+        
+        try:
+            font = pygame.font.Font(path, size)
+            self.fonts[name] = font
+            return font
+        except pygame.error as e:
+            print(f"Failed to load font '{path}': {e}")
+            return None
+    
+    def load_json(self, path: str, name: str = None) -> dict:
+        """Load and cache JSON data"""
+        if name is None:
+            name = path
+        
+        if name in self.data:
+            return self.data[name]
+        
+        try:
+            with open(path, 'r') as f:
+                data = json.load(f)
+            self.data[name] = data
+            return data
+        except (IOError, json.JSONDecodeError) as e:
+            print(f"Failed to load JSON '{path}': {e}")
+            return None
+    
+    def unload_texture(self, name: str):
+        """Unload a texture from cache"""
+        if name in self.textures:
+            texture = self.textures[name]
+            self.current_cache_size -= self.get_surface_size(texture)
+            del self.textures[name]
+    
+    def clear_cache(self):
+        """Clear all cached resources"""
+        self.textures.clear()
+        self.sounds.clear()
+        self.fonts.clear()
+        self.data.clear()
+        self.current_cache_size = 0
+    
+    def get_surface_size(self, surface: pygame.Surface) -> int:
+        """Calculate memory size of a surface"""
+        width, height = surface.get_size()
+        # Assuming 4 bytes per pixel (RGBA)
+        return width * height * 4
+    
+    def check_cache_limit(self):
+        """Check if cache exceeds limit and clean if necessary"""
+        if self.current_cache_size > self.cache_size_limit:
+            # Simple LRU-style cleanup (would need usage tracking in production)
+            self.clear_cache()
+
+# Async scene loading
+class AsyncSceneLoader:
+    """Handles asynchronous scene loading"""
+    def __init__(self, resource_manager: ResourceManager):
+        self.resource_manager = resource_manager
+        self.loading_progress = 0.0
+        self.loading_message = ""
+        self.is_loading = False
+        
+    async def load_scene_resources(self, resource_list: List[dict]):
+        """Load scene resources asynchronously"""
+        self.is_loading = True
+        total_resources = len(resource_list)
+        
+        for i, resource in enumerate(resource_list):
+            self.loading_progress = i / total_resources
+            self.loading_message = f"Loading {resource['name']}..."
+            
+            # Load based on type
+            if resource['type'] == 'texture':
+                await self.load_texture_async(resource['path'], resource['name'])
+            elif resource['type'] == 'sound':
+                await self.load_sound_async(resource['path'], resource['name'])
+            elif resource['type'] == 'data':
+                await self.load_data_async(resource['path'], resource['name'])
+            
+            # Small delay to prevent blocking
+            await asyncio.sleep(0.01)
+        
+        self.loading_progress = 1.0
+        self.is_loading = False
+    
+    async def load_texture_async(self, path: str, name: str):
+        """Load texture asynchronously"""
+        # In practice, you'd use threading for file I/O
+        self.resource_manager.load_texture(path, name)
+    
+    async def load_sound_async(self, path: str, name: str):
+        """Load sound asynchronously"""
+        self.resource_manager.load_sound(path, name)
+    
+    async def load_data_async(self, path: str, name: str):
+        """Load data asynchronously"""
+        self.resource_manager.load_json(path, name)</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Scene Management Tips</h3>
+        <ul>
+            <li><strong>Lazy Loading:</strong> Load resources only when needed</li>
+            <li><strong>Preloading:</strong> Load next scene while current plays</li>
+            <li><strong>Resource Sharing:</strong> Share common resources between scenes</li>
+            <li><strong>Memory Management:</strong> Unload unused resources</li>
+            <li><strong>Scene Pooling:</strong> Reuse scene instances when possible</li>
+            <li><strong>Async Loading:</strong> Load resources without blocking</li>
+            <li><strong>Transition Masking:</strong> Hide loading with smooth transitions</li>
+            <li><strong>Error Handling:</strong> Gracefully handle missing resources</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>🎬 Scenes organize game content into manageable chunks</li>
+            <li>📦 Resource management prevents memory issues</li>
+            <li>🔄 Smooth transitions hide loading times</li>
+            <li>📚 Scene stacks enable complex navigation</li>
+            <li>🎯 Cameras provide viewport into large worlds</li>
+            <li>⚡ Async loading keeps games responsive</li>
+            <li>🔧 Proper architecture makes games scalable</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you understand scene management, next we'll explore component systems - a powerful way to build flexible, reusable game objects!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="architecture_state_machines.html" class="prev-lesson" aria-label="Previous lesson: State Machines">Previous Lesson: State Machines</a>
+        <a href="architecture_component_systems.html" class="next-lesson" aria-label="Next lesson: Component Systems">Next Lesson: Component Systems</a>
+    </nav>
+    
+    </main>
+</body>
+</html>

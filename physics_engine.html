@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Build a simple physics engine for games. Combine velocity, gravity, collisions, and forces into a complete physics system.">
+    <title>Simple Physics Engine - Game Physics</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script src="/js/course-enhancements.js" defer></script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Simple Physics Engine</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Section 4: Game Physics - Lesson 5</span>
+    </nav>
+
+    <h2>Building Your Own Physics Engine</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Time to combine everything! A physics engine integrates all the concepts we've learned - velocity, gravity, collisions, and forces - into a unified system. Let's build a flexible physics engine you can use in your games! 🚀🎮</p>
+    </div>
+
+    <h2>Physics Engine Architecture</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🏗️ The Building Blocks</h3>
+        <p>A physics engine consists of:</p>
+        <ul>
+            <li><strong>World:</strong> Container for all physics objects and settings</li>
+            <li><strong>Bodies:</strong> Physical objects with mass, position, velocity</li>
+            <li><strong>Shapes:</strong> Collision geometry (circles, polygons)</li>
+            <li><strong>Constraints:</strong> Joints, springs, and connections</li>
+            <li><strong>Forces:</strong> Gravity, wind, explosions, user input</li>
+            <li><strong>Integrator:</strong> Updates positions and velocities over time</li>
+            <li><strong>Solver:</strong> Resolves collisions and constraints</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Physics Engine"] --> B["World"]
+        B --> C["Bodies"]
+        B --> D["Forces"]
+        B --> E["Constraints"]
+        B --> F["Collision System"]
+        C --> G["RigidBody"]
+        C --> H["StaticBody"]
+        D --> I["Gravity"]
+        D --> J["Springs"]
+        D --> K["User Forces"]
+        E --> L["Joints"]
+        E --> M["Distance"]
+        F --> N["Broad Phase"]
+        F --> O["Narrow Phase"]
+        F --> P["Resolution"]
+    </div>
+
+    <h2>Interactive Physics Engine Playground</h2>
+    
+    <div class="canvas-wrapper">
+        <canvas id="engineCanvas" width="600" height="400"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Complete physics simulation with all features!</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; max-width: 600px; margin: 10px auto;">
+            <button onclick="addBody('box')">Add Box</button>
+            <button onclick="addBody('circle')">Add Circle</button>
+            <button onclick="addBody('polygon')">Add Polygon</button>
+            <button onclick="createStack()">Stack Demo</button>
+            <button onclick="createChain()">Chain Demo</button>
+            <button onclick="createDominos()">Dominos</button>
+        </div>
+        <div style="margin-top: 10px;">
+            <label>Gravity: <input type="range" id="gravitySlider" min="0" max="1000" value="500" onchange="updateGravity(this.value)"></label>
+            <label>Time Scale: <input type="range" id="timeSlider" min="0" max="2" step="0.1" value="1" onchange="updateTimeScale(this.value)"></label>
+        </div>
+        <div style="margin-top: 10px;">
+            <button onclick="togglePause()">Pause/Resume</button>
+            <button onclick="stepSimulation()">Step</button>
+            <button onclick="clearWorld()">Clear</button>
+            <button onclick="toggleDebug()">Toggle Debug</button>
+        </div>
+        <p>Bodies: <span id="bodyCount">0</span> | FPS: <span id="fpsDisplay">60</span> | Paused: <span id="pausedDisplay">No</span></p>
+    </div>
+
+    <script>
+        const engineCanvas = document.getElementById('engineCanvas');
+        const eCtx = engineCanvas.getContext('2d');
+        const bodyCountDisplay = document.getElementById('bodyCount');
+        const fpsDisplay = document.getElementById('fpsDisplay');
+        const pausedDisplay = document.getElementById('pausedDisplay');
+        
+        // Physics Engine Classes
+        class Vec2 {
+            constructor(x = 0, y = 0) {
+                this.x = x;
+                this.y = y;
+            }
+            
+            add(v) { return new Vec2(this.x + v.x, this.y + v.y); }
+            subtract(v) { return new Vec2(this.x - v.x, this.y - v.y); }
+            multiply(s) { return new Vec2(this.x * s, this.y * s); }
+            dot(v) { return this.x * v.x + this.y * v.y; }
+            cross(v) { return this.x * v.y - this.y * v.x; }
+            length() { return Math.sqrt(this.x * this.x + this.y * this.y); }
+            normalize() {
+                const len = this.length();
+                if (len > 0) {
+                    return new Vec2(this.x / len, this.y / len);
+                }
+                return new Vec2(0, 0);
+            }
+            rotate(angle) {
+                const cos = Math.cos(angle);
+                const sin = Math.sin(angle);
+                return new Vec2(
+                    this.x * cos - this.y * sin,
+                    this.x * sin + this.y * cos
+                );
+            }
+        }
+        
+        class Body {
+            constructor(x, y, shape) {
+                this.position = new Vec2(x, y);
+                this.velocity = new Vec2(0, 0);
+                this.acceleration = new Vec2(0, 0);
+                this.angle = 0;
+                this.angularVelocity = 0;
+                this.angularAcceleration = 0;
+                
+                this.shape = shape; // 'circle', 'box', 'polygon'
+                this.radius = 20;
+                this.width = 40;
+                this.height = 40;
+                this.vertices = [];
+                
+                this.mass = 1;
+                this.inverseMass = 1;
+                this.inertia = 1;
+                this.inverseInertia = 1;
+                
+                this.restitution = 0.8;
+                this.friction = 0.3;
+                this.static = false;
+                
+                this.color = `hsl(${Math.random() * 360}, 70%, 50%)`;
+                
+                this.setupShape(shape);
+            }
+            
+            setupShape(shape) {
+                switch(shape) {
+                    case 'circle':
+                        this.inertia = 0.5 * this.mass * this.radius * this.radius;
+                        break;
+                    case 'box':
+                        this.inertia = this.mass * (this.width * this.width + this.height * this.height) / 12;
+                        this.vertices = this.getBoxVertices();
+                        break;
+                    case 'polygon':
+                        const sides = 5;
+                        this.vertices = [];
+                        for (let i = 0; i < sides; i++) {
+                            const angle = (i / sides) * Math.PI * 2;
+                            this.vertices.push(new Vec2(
+                                Math.cos(angle) * 25,
+                                Math.sin(angle) * 25
+                            ));
+                        }
+                        this.inertia = this.mass * 625; // Simplified
+                        break;
+                }
+                
+                if (!this.static) {
+                    this.inverseMass = 1 / this.mass;
+                    this.inverseInertia = 1 / this.inertia;
+                } else {
+                    this.inverseMass = 0;
+                    this.inverseInertia = 0;
+                }
+            }
+            
+            getBoxVertices() {
+                const hw = this.width / 2;
+                const hh = this.height / 2;
+                return [
+                    new Vec2(-hw, -hh),
+                    new Vec2(hw, -hh),
+                    new Vec2(hw, hh),
+                    new Vec2(-hw, hh)
+                ];
+            }
+            
+            getWorldVertices() {
+                const worldVertices = [];
+                for (const vertex of this.vertices) {
+                    worldVertices.push(vertex.rotate(this.angle).add(this.position));
+                }
+                return worldVertices;
+            }
+            
+            applyForce(force) {
+                if (!this.static) {
+                    this.acceleration = this.acceleration.add(force.multiply(this.inverseMass));
+                }
+            }
+            
+            applyImpulse(impulse, contactPoint) {
+                if (!this.static) {
+                    this.velocity = this.velocity.add(impulse.multiply(this.inverseMass));
+                    
+                    if (contactPoint) {
+                        const r = contactPoint.subtract(this.position);
+                        this.angularVelocity += r.cross(impulse) * this.inverseInertia;
+                    }
+                }
+            }
+            
+            integrate(dt) {
+                if (!this.static) {
+                    // Linear motion
+                    this.velocity = this.velocity.add(this.acceleration.multiply(dt));
+                    this.position = this.position.add(this.velocity.multiply(dt));
+                    
+                    // Angular motion
+                    this.angularVelocity += this.angularAcceleration * dt;
+                    this.angle += this.angularVelocity * dt;
+                    
+                    // Reset acceleration
+                    this.acceleration = new Vec2(0, 0);
+                    this.angularAcceleration = 0;
+                    
+                    // Damping
+                    this.velocity = this.velocity.multiply(0.99);
+                    this.angularVelocity *= 0.99;
+                }
+            }
+            
+            draw(ctx, debug) {
+                ctx.save();
+                ctx.translate(this.position.x, this.position.y);
+                ctx.rotate(this.angle);
+                
+                ctx.fillStyle = this.color;
+                ctx.strokeStyle = this.static ? '#888' : '#fff';
+                ctx.lineWidth = 2;
+                
+                switch(this.shape) {
+                    case 'circle':
+                        ctx.beginPath();
+                        ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
+                        
+                        // Direction indicator
+                        ctx.beginPath();
+                        ctx.moveTo(0, 0);
+                        ctx.lineTo(this.radius, 0);
+                        ctx.stroke();
+                        break;
+                        
+                    case 'box':
+                        ctx.fillRect(-this.width/2, -this.height/2, this.width, this.height);
+                        ctx.strokeRect(-this.width/2, -this.height/2, this.width, this.height);
+                        break;
+                        
+                    case 'polygon':
+                        ctx.beginPath();
+                        ctx.moveTo(this.vertices[0].x, this.vertices[0].y);
+                        for (let i = 1; i < this.vertices.length; i++) {
+                            ctx.lineTo(this.vertices[i].x, this.vertices[i].y);
+                        }
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+                        break;
+                }
+                
+                ctx.restore();
+                
+                // Debug info
+                if (debug) {
+                    // Velocity vector
+                    ctx.strokeStyle = '#0f0';
+                    ctx.beginPath();
+                    ctx.moveTo(this.position.x, this.position.y);
+                    const vel = this.position.add(this.velocity.multiply(0.2));
+                    ctx.lineTo(vel.x, vel.y);
+                    ctx.stroke();
+                }
+            }
+        }
+        
+        class Constraint {
+            constructor(bodyA, bodyB, restLength) {
+                this.bodyA = bodyA;
+                this.bodyB = bodyB;
+                this.restLength = restLength;
+                this.stiffness = 0.5;
+                this.damping = 0.1;
+            }
+            
+            solve() {
+                const delta = this.bodyB.position.subtract(this.bodyA.position);
+                const distance = delta.length();
+                
+                if (distance > 0) {
+                    const difference = this.restLength - distance;
+                    const percent = (difference / distance) * this.stiffness;
+                    const offset = delta.multiply(percent);
+                    
+                    const massTotal = this.bodyA.mass + this.bodyB.mass;
+                    if (!this.bodyA.static) {
+                        this.bodyA.position = this.bodyA.position.subtract(
+                            offset.multiply(this.bodyB.mass / massTotal)
+                        );
+                    }
+                    if (!this.bodyB.static) {
+                        this.bodyB.position = this.bodyB.position.add(
+                            offset.multiply(this.bodyA.mass / massTotal)
+                        );
+                    }
+                }
+            }
+            
+            draw(ctx) {
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(this.bodyA.position.x, this.bodyA.position.y);
+                ctx.lineTo(this.bodyB.position.x, this.bodyB.position.y);
+                ctx.stroke();
+            }
+        }
+        
+        class PhysicsWorld {
+            constructor() {
+                this.bodies = [];
+                this.constraints = [];
+                this.gravity = new Vec2(0, 500);
+                this.timeScale = 1;
+                this.iterations = 10;
+                this.debug = false;
+                this.paused = false;
+            }
+            
+            addBody(body) {
+                this.bodies.push(body);
+                return body;
+            }
+            
+            removeBody(body) {
+                const index = this.bodies.indexOf(body);
+                if (index > -1) {
+                    this.bodies.splice(index, 1);
+                }
+            }
+            
+            addConstraint(constraint) {
+                this.constraints.push(constraint);
+                return constraint;
+            }
+            
+            clear() {
+                this.bodies = [];
+                this.constraints = [];
+            }
+            
+            step(dt) {
+                if (this.paused) return;
+                
+                dt *= this.timeScale;
+                const subSteps = this.iterations;
+                const subDt = dt / subSteps;
+                
+                for (let i = 0; i < subSteps; i++) {
+                    // Apply forces
+                    this.applyForces();
+                    
+                    // Integrate velocities
+                    this.integrate(subDt);
+                    
+                    // Solve constraints
+                    this.solveConstraints();
+                    
+                    // Detect and resolve collisions
+                    this.detectCollisions();
+                    
+                    // Keep bodies on screen
+                    this.constrainToScreen();
+                }
+            }
+            
+            applyForces() {
+                for (const body of this.bodies) {
+                    if (!body.static) {
+                        // Apply gravity
+                        body.applyForce(this.gravity.multiply(body.mass));
+                    }
+                }
+            }
+            
+            integrate(dt) {
+                for (const body of this.bodies) {
+                    body.integrate(dt);
+                }
+            }
+            
+            solveConstraints() {
+                for (const constraint of this.constraints) {
+                    constraint.solve();
+                }
+            }
+            
+            detectCollisions() {
+                // Simple O(n²) collision detection
+                for (let i = 0; i < this.bodies.length; i++) {
+                    for (let j = i + 1; j < this.bodies.length; j++) {
+                        this.checkCollision(this.bodies[i], this.bodies[j]);
+                    }
+                }
+            }
+            
+            checkCollision(bodyA, bodyB) {
+                // Circle-circle collision
+                if (bodyA.shape === 'circle' && bodyB.shape === 'circle') {
+                    const delta = bodyB.position.subtract(bodyA.position);
+                    const distance = delta.length();
+                    const minDistance = bodyA.radius + bodyB.radius;
+                    
+                    if (distance < minDistance) {
+                        // Collision detected
+                        const normal = delta.normalize();
+                        const overlap = minDistance - distance;
+                        
+                        // Separate bodies
+                        const totalMass = bodyA.mass + bodyB.mass;
+                        if (!bodyA.static) {
+                            bodyA.position = bodyA.position.subtract(
+                                normal.multiply(overlap * bodyB.mass / totalMass)
+                            );
+                        }
+                        if (!bodyB.static) {
+                            bodyB.position = bodyB.position.add(
+                                normal.multiply(overlap * bodyA.mass / totalMass)
+                            );
+                        }
+                        
+                        // Calculate relative velocity
+                        const relativeVelocity = bodyB.velocity.subtract(bodyA.velocity);
+                        const velocityAlongNormal = relativeVelocity.dot(normal);
+                        
+                        // Don't resolve if velocities are separating
+                        if (velocityAlongNormal > 0) return;
+                        
+                        // Calculate restitution
+                        const e = Math.min(bodyA.restitution, bodyB.restitution);
+                        
+                        // Calculate impulse scalar
+                        let j = -(1 + e) * velocityAlongNormal;
+                        j /= bodyA.inverseMass + bodyB.inverseMass;
+                        
+                        // Apply impulse
+                        const impulse = normal.multiply(j);
+                        bodyA.applyImpulse(impulse.multiply(-1), null);
+                        bodyB.applyImpulse(impulse, null);
+                    }
+                }
+                // Box-box and other collisions would be implemented here
+            }
+            
+            constrainToScreen() {
+                for (const body of this.bodies) {
+                    // Keep bodies on screen
+                    if (body.shape === 'circle') {
+                        if (body.position.x - body.radius < 0) {
+                            body.position.x = body.radius;
+                            body.velocity.x *= -body.restitution;
+                        }
+                        if (body.position.x + body.radius > engineCanvas.width) {
+                            body.position.x = engineCanvas.width - body.radius;
+                            body.velocity.x *= -body.restitution;
+                        }
+                        if (body.position.y - body.radius < 0) {
+                            body.position.y = body.radius;
+                            body.velocity.y *= -body.restitution;
+                        }
+                        if (body.position.y + body.radius > engineCanvas.height) {
+                            body.position.y = engineCanvas.height - body.radius;
+                            body.velocity.y *= -body.restitution;
+                            body.angularVelocity *= 0.8; // Friction
+                        }
+                    }
+                }
+            }
+            
+            draw(ctx) {
+                // Clear
+                ctx.fillStyle = '#1a1a1a';
+                ctx.fillRect(0, 0, engineCanvas.width, engineCanvas.height);
+                
+                // Grid
+                if (this.debug) {
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+                    for (let x = 0; x <= engineCanvas.width; x += 50) {
+                        ctx.beginPath();
+                        ctx.moveTo(x, 0);
+                        ctx.lineTo(x, engineCanvas.height);
+                        ctx.stroke();
+                    }
+                    for (let y = 0; y <= engineCanvas.height; y += 50) {
+                        ctx.beginPath();
+                        ctx.moveTo(0, y);
+                        ctx.lineTo(engineCanvas.width, y);
+                        ctx.stroke();
+                    }
+                }
+                
+                // Draw constraints
+                for (const constraint of this.constraints) {
+                    constraint.draw(ctx);
+                }
+                
+                // Draw bodies
+                for (const body of this.bodies) {
+                    body.draw(ctx, this.debug);
+                }
+                
+                // Draw gravity vector
+                if (this.debug) {
+                    ctx.strokeStyle = '#ff0';
+                    ctx.beginPath();
+                    ctx.moveTo(30, 30);
+                    ctx.lineTo(30 + this.gravity.x * 0.1, 30 + this.gravity.y * 0.1);
+                    ctx.stroke();
+                    ctx.fillStyle = '#fff';
+                    ctx.font = '12px Arial';
+                    ctx.fillText('Gravity', 40, 35);
+                }
+            }
+        }
+        
+        // Create physics world
+        const world = new PhysicsWorld();
+        
+        // UI Functions
+        function addBody(type) {
+            const x = Math.random() * (engineCanvas.width - 100) + 50;
+            const y = Math.random() * 200 + 50;
+            const body = new Body(x, y, type);
+            body.velocity = new Vec2(
+                (Math.random() - 0.5) * 200,
+                (Math.random() - 0.5) * 200
+            );
+            world.addBody(body);
+        }
+        
+        function createStack() {
+            world.clear();
+            const startY = 350;
+            const boxSize = 30;
+            
+            for (let row = 0; row < 6; row++) {
+                for (let col = 0; col <= row; col++) {
+                    const x = 300 + (col - row/2) * (boxSize + 2);
+                    const y = startY - row * (boxSize + 2);
+                    const body = new Body(x, y, 'box');
+                    body.width = boxSize;
+                    body.height = boxSize;
+                    world.addBody(body);
+                }
+            }
+        }
+        
+        function createChain() {
+            world.clear();
+            let prevBody = null;
+            
+            for (let i = 0; i < 10; i++) {
+                const x = 200 + i * 30;
+                const y = 100;
+                const body = new Body(x, y, 'circle');
+                body.radius = 10;
+                
+                if (i === 0) {
+                    body.static = true; // Anchor first link
+                }
+                
+                world.addBody(body);
+                
+                if (prevBody) {
+                    const constraint = new Constraint(prevBody, body, 30);
+                    world.addConstraint(constraint);
+                }
+                
+                prevBody = body;
+            }
+        }
+        
+        function createDominos() {
+            world.clear();
+            
+            for (let i = 0; i < 15; i++) {
+                const x = 50 + i * 35;
+                const y = 350;
+                const body = new Body(x, y, 'box');
+                body.width = 10;
+                body.height = 60;
+                world.addBody(body);
+            }
+            
+            // Push first domino
+            setTimeout(() => {
+                if (world.bodies.length > 0) {
+                    world.bodies[0].applyImpulse(new Vec2(50, -20), null);
+                }
+            }, 1000);
+        }
+        
+        function updateGravity(value) {
+            world.gravity.y = parseFloat(value);
+        }
+        
+        function updateTimeScale(value) {
+            world.timeScale = parseFloat(value);
+        }
+        
+        function togglePause() {
+            world.paused = !world.paused;
+            pausedDisplay.textContent = world.paused ? 'Yes' : 'No';
+        }
+        
+        function stepSimulation() {
+            world.paused = false;
+            world.step(1/60);
+            world.paused = true;
+        }
+        
+        function clearWorld() {
+            world.clear();
+        }
+        
+        function toggleDebug() {
+            world.debug = !world.debug;
+        }
+        
+        // Mouse interaction
+        let mouseBody = null;
+        let mouseConstraint = null;
+        
+        engineCanvas.addEventListener('mousedown', (e) => {
+            const rect = engineCanvas.getBoundingClientRect();
+            const mousePos = new Vec2(
+                e.clientX - rect.left,
+                e.clientY - rect.top
+            );
+            
+            // Find body under mouse
+            for (const body of world.bodies) {
+                if (body.shape === 'circle') {
+                    const dist = mousePos.subtract(body.position).length();
+                    if (dist < body.radius) {
+                        mouseBody = body;
+                        break;
+                    }
+                }
+            }
+        });
+        
+        engineCanvas.addEventListener('mousemove', (e) => {
+            if (mouseBody) {
+                const rect = engineCanvas.getBoundingClientRect();
+                const mousePos = new Vec2(
+                    e.clientX - rect.left,
+                    e.clientY - rect.top
+                );
+                
+                // Apply force toward mouse
+                const force = mousePos.subtract(mouseBody.position).multiply(10);
+                mouseBody.applyForce(force);
+            }
+        });
+        
+        engineCanvas.addEventListener('mouseup', () => {
+            mouseBody = null;
+        });
+        
+        // Animation loop
+        let lastTime = performance.now();
+        let frameCount = 0;
+        let fpsTime = 0;
+        
+        function animate(currentTime) {
+            const dt = Math.min((currentTime - lastTime) / 1000, 1/30);
+            lastTime = currentTime;
+            
+            // Update FPS
+            frameCount++;
+            fpsTime += dt;
+            if (fpsTime >= 1) {
+                fpsDisplay.textContent = Math.round(frameCount / fpsTime);
+                frameCount = 0;
+                fpsTime = 0;
+            }
+            
+            // Update physics
+            world.step(dt);
+            
+            // Draw
+            world.draw(eCtx);
+            
+            // Update UI
+            bodyCountDisplay.textContent = world.bodies.length;
+            
+            requestAnimationFrame(animate);
+        }
+        
+        // Initialize with some bodies
+        createStack();
+        animate(performance.now());
+    </script>
+
+    <h2>Core Physics Engine Structure</h2>
+    
+    <pre class="language-python"><code>import pygame
+import math
+from enum import Enum
+
+class BodyType(Enum):
+    STATIC = 0
+    DYNAMIC = 1
+    KINEMATIC = 2
+
+class Shape:
+    """Base class for collision shapes"""
+    def __init__(self):
+        self.type = None
+        
+class CircleShape(Shape):
+    def __init__(self, radius):
+        super().__init__()
+        self.type = "circle"
+        self.radius = radius
+        
+class BoxShape(Shape):
+    def __init__(self, width, height):
+        super().__init__()
+        self.type = "box"
+        self.width = width
+        self.height = height
+        
+class PolygonShape(Shape):
+    def __init__(self, vertices):
+        super().__init__()
+        self.type = "polygon"
+        self.vertices = vertices  # List of Vec2
+
+class RigidBody:
+    """A physics body in the world"""
+    def __init__(self, x, y, shape, body_type=BodyType.DYNAMIC):
+        # Transform
+        self.position = pygame.math.Vector2(x, y)
+        self.angle = 0
+        
+        # Velocity
+        self.linear_velocity = pygame.math.Vector2(0, 0)
+        self.angular_velocity = 0
+        
+        # Acceleration
+        self.force = pygame.math.Vector2(0, 0)
+        self.torque = 0
+        
+        # Properties
+        self.shape = shape
+        self.body_type = body_type
+        self.mass = 1.0
+        self.inertia = 1.0
+        self.restitution = 0.8
+        self.friction = 0.3
+        self.linear_damping = 0.99
+        self.angular_damping = 0.99
+        
+        # Computed properties
+        self._update_mass_properties()
+        
+    def _update_mass_properties(self):
+        """Calculate mass and inertia based on shape"""
+        if self.body_type == BodyType.STATIC:
+            self.inv_mass = 0
+            self.inv_inertia = 0
+        else:
+            self.inv_mass = 1.0 / self.mass if self.mass > 0 else 0
+            
+            # Calculate moment of inertia based on shape
+            if isinstance(self.shape, CircleShape):
+                self.inertia = 0.5 * self.mass * self.shape.radius ** 2
+            elif isinstance(self.shape, BoxShape):
+                self.inertia = self.mass * (self.shape.width ** 2 + self.shape.height ** 2) / 12
+            else:
+                # Simplified for polygon
+                self.inertia = self.mass * 100  # Approximate
+            
+            self.inv_inertia = 1.0 / self.inertia if self.inertia > 0 else 0
+    
+    def apply_force(self, force, point=None):
+        """Apply a force to the body"""
+        if self.body_type != BodyType.DYNAMIC:
+            return
+            
+        self.force += force
+        
+        # Apply torque if force is off-center
+        if point:
+            r = point - self.position
+            self.torque += r.x * force.y - r.y * force.x
+    
+    def apply_impulse(self, impulse, point=None):
+        """Apply an instantaneous impulse"""
+        if self.body_type != BodyType.DYNAMIC:
+            return
+            
+        self.linear_velocity += impulse * self.inv_mass
+        
+        if point:
+            r = point - self.position
+            self.angular_velocity += (r.x * impulse.y - r.y * impulse.x) * self.inv_inertia
+    
+    def integrate(self, dt):
+        """Integrate forces and velocities"""
+        if self.body_type != BodyType.DYNAMIC:
+            return
+        
+        # Semi-implicit Euler integration
+        self.linear_velocity += self.force * self.inv_mass * dt
+        self.angular_velocity += self.torque * self.inv_inertia * dt
+        
+        # Apply damping
+        self.linear_velocity *= self.linear_damping
+        self.angular_velocity *= self.angular_damping
+        
+        # Update position
+        self.position += self.linear_velocity * dt
+        self.angle += self.angular_velocity * dt
+        
+        # Clear forces
+        self.force = pygame.math.Vector2(0, 0)
+        self.torque = 0</code></pre>
+
+    <h2>Physics World Implementation</h2>
+    
+    <pre class="language-python"><code>class PhysicsWorld:
+    """Main physics simulation world"""
+    def __init__(self):
+        self.bodies = []
+        self.constraints = []
+        self.gravity = pygame.math.Vector2(0, 980)  # Earth gravity
+        self.iterations = 10  # Solver iterations
+        self.time_scale = 1.0
+        
+        # Collision pairs
+        self.contacts = []
+        
+    def add_body(self, body):
+        """Add a body to the world"""
+        self.bodies.append(body)
+        return body
+    
+    def remove_body(self, body):
+        """Remove a body from the world"""
+        if body in self.bodies:
+            self.bodies.remove(body)
+    
+    def add_constraint(self, constraint):
+        """Add a constraint to the world"""
+        self.constraints.append(constraint)
+        return constraint
+    
+    def step(self, dt):
+        """Advance the simulation by dt seconds"""
+        dt *= self.time_scale
+        
+        # Sub-stepping for stability
+        sub_steps = self.iterations
+        sub_dt = dt / sub_steps
+        
+        for _ in range(sub_steps):
+            # Apply forces
+            self._apply_forces()
+            
+            # Integrate velocities
+            self._integrate(sub_dt)
+            
+            # Detect collisions
+            self._detect_collisions()
+            
+            # Solve constraints
+            self._solve_constraints()
+            
+            # Resolve collisions
+            self._resolve_collisions()
+    
+    def _apply_forces(self):
+        """Apply external forces like gravity"""
+        for body in self.bodies:
+            if body.body_type == BodyType.DYNAMIC:
+                # Apply gravity
+                body.apply_force(self.gravity * body.mass)
+    
+    def _integrate(self, dt):
+        """Integrate body velocities and positions"""
+        for body in self.bodies:
+            body.integrate(dt)
+    
+    def _detect_collisions(self):
+        """Broad and narrow phase collision detection"""
+        self.contacts.clear()
+        
+        # Simple O(n²) broad phase (should use spatial partitioning for optimization)
+        for i in range(len(self.bodies)):
+            for j in range(i + 1, len(self.bodies)):
+                contact = self._check_collision(self.bodies[i], self.bodies[j])
+                if contact:
+                    self.contacts.append(contact)
+    
+    def _check_collision(self, body_a, body_b):
+        """Check collision between two bodies"""
+        # Circle vs Circle
+        if isinstance(body_a.shape, CircleShape) and isinstance(body_b.shape, CircleShape):
+            return self._circle_circle_collision(body_a, body_b)
+        
+        # Circle vs Box
+        elif isinstance(body_a.shape, CircleShape) and isinstance(body_b.shape, BoxShape):
+            return self._circle_box_collision(body_a, body_b)
+        
+        # Box vs Box
+        elif isinstance(body_a.shape, BoxShape) and isinstance(body_b.shape, BoxShape):
+            return self._box_box_collision(body_a, body_b)
+        
+        return None
+    
+    def _circle_circle_collision(self, body_a, body_b):
+        """Detect collision between two circles"""
+        delta = body_b.position - body_a.position
+        distance = delta.length()
+        radius_sum = body_a.shape.radius + body_b.shape.radius
+        
+        if distance < radius_sum:
+            # Collision detected
+            if distance > 0:
+                normal = delta / distance
+            else:
+                normal = pygame.math.Vector2(1, 0)
+            
+            penetration = radius_sum - distance
+            
+            return Contact(body_a, body_b, normal, penetration, 
+                          body_a.position + normal * body_a.shape.radius)
+        
+        return None
+    
+    def _solve_constraints(self):
+        """Solve position constraints"""
+        for constraint in self.constraints:
+            constraint.solve()
+    
+    def _resolve_collisions(self):
+        """Resolve detected collisions"""
+        for contact in self.contacts:
+            self._resolve_contact(contact)
+    
+    def _resolve_contact(self, contact):
+        """Resolve a single contact"""
+        body_a = contact.body_a
+        body_b = contact.body_b
+        
+        # Skip if both static
+        if body_a.body_type == BodyType.STATIC and body_b.body_type == BodyType.STATIC:
+            return
+        
+        # Calculate relative velocity
+        relative_velocity = body_b.linear_velocity - body_a.linear_velocity
+        
+        # Velocity along collision normal
+        velocity_along_normal = relative_velocity.dot(contact.normal)
+        
+        # Don't resolve if velocities are separating
+        if velocity_along_normal > 0:
+            return
+        
+        # Calculate restitution
+        e = min(body_a.restitution, body_b.restitution)
+        
+        # Calculate impulse scalar
+        j = -(1 + e) * velocity_along_normal
+        j /= body_a.inv_mass + body_b.inv_mass
+        
+        # Apply impulse
+        impulse = contact.normal * j
+        body_a.apply_impulse(-impulse, contact.point)
+        body_b.apply_impulse(impulse, contact.point)
+        
+        # Position correction (to prevent sinking)
+        const percent = 0.2  # Penetration percentage to correct
+        const slop = 0.01  # Penetration allowance
+        correction = max(contact.penetration - slop, 0) / (body_a.inv_mass + body_b.inv_mass) * percent * contact.normal
+        
+        if body_a.body_type == BodyType.DYNAMIC:
+            body_a.position -= correction * body_a.inv_mass
+        if body_b.body_type == BodyType.DYNAMIC:
+            body_b.position += correction * body_b.inv_mass
+
+class Contact:
+    """Collision contact information"""
+    def __init__(self, body_a, body_b, normal, penetration, point):
+        self.body_a = body_a
+        self.body_b = body_b
+        self.normal = normal  # From A to B
+        self.penetration = penetration
+        self.point = point  # Contact point in world space</code></pre>
+
+    <h2>Constraints and Joints</h2>
+    
+    <pre class="language-python"><code># Constraint system for connected bodies
+class Constraint:
+    """Base class for constraints"""
+    def solve(self):
+        pass
+
+class DistanceConstraint(Constraint):
+    """Maintains fixed distance between two bodies"""
+    def __init__(self, body_a, body_b, rest_length=None):
+        self.body_a = body_a
+        self.body_b = body_b
+        
+        if rest_length is None:
+            # Use current distance
+            self.rest_length = (body_b.position - body_a.position).length()
+        else:
+            self.rest_length = rest_length
+        
+        self.stiffness = 0.5
+        self.damping = 0.1
+    
+    def solve(self):
+        """Solve distance constraint"""
+        delta = self.body_b.position - self.body_a.position
+        current_length = delta.length()
+        
+        if current_length == 0:
+            return
+        
+        # Calculate correction
+        difference = self.rest_length - current_length
+        percent = (difference / current_length) * self.stiffness
+        offset = delta * percent
+        
+        # Apply based on mass ratio
+        total_inv_mass = self.body_a.inv_mass + self.body_b.inv_mass
+        
+        if total_inv_mass > 0:
+            if self.body_a.body_type == BodyType.DYNAMIC:
+                self.body_a.position -= offset * (self.body_a.inv_mass / total_inv_mass)
+            if self.body_b.body_type == BodyType.DYNAMIC:
+                self.body_b.position += offset * (self.body_b.inv_mass / total_inv_mass)
+
+class HingeConstraint(Constraint):
+    """Connects two bodies at a pivot point"""
+    def __init__(self, body_a, body_b, anchor_a, anchor_b):
+        self.body_a = body_a
+        self.body_b = body_b
+        self.anchor_a = anchor_a  # Local space
+        self.anchor_b = anchor_b  # Local space
+    
+    def solve(self):
+        """Solve hinge constraint"""
+        # Transform anchors to world space
+        cos_a = math.cos(self.body_a.angle)
+        sin_a = math.sin(self.body_a.angle)
+        world_anchor_a = self.body_a.position + pygame.math.Vector2(
+            self.anchor_a.x * cos_a - self.anchor_a.y * sin_a,
+            self.anchor_a.x * sin_a + self.anchor_a.y * cos_a
+        )
+        
+        cos_b = math.cos(self.body_b.angle)
+        sin_b = math.sin(self.body_b.angle)
+        world_anchor_b = self.body_b.position + pygame.math.Vector2(
+            self.anchor_b.x * cos_b - self.anchor_b.y * sin_b,
+            self.anchor_b.x * sin_b + self.anchor_b.y * cos_b
+        )
+        
+        # Calculate correction
+        delta = world_anchor_b - world_anchor_a
+        
+        # Apply correction
+        total_inv_mass = self.body_a.inv_mass + self.body_b.inv_mass
+        
+        if total_inv_mass > 0:
+            if self.body_a.body_type == BodyType.DYNAMIC:
+                self.body_a.position -= delta * (self.body_a.inv_mass / total_inv_mass)
+            if self.body_b.body_type == BodyType.DYNAMIC:
+                self.body_b.position += delta * (self.body_b.inv_mass / total_inv_mass)
+
+class SpringConstraint(Constraint):
+    """Spring force between two bodies"""
+    def __init__(self, body_a, body_b, rest_length, spring_constant, damping):
+        self.body_a = body_a
+        self.body_b = body_b
+        self.rest_length = rest_length
+        self.spring_constant = spring_constant
+        self.damping = damping
+    
+    def solve(self):
+        """Apply spring force"""
+        delta = self.body_b.position - self.body_a.position
+        current_length = delta.length()
+        
+        if current_length == 0:
+            return
+        
+        # Spring force (Hooke's law)
+        x = current_length - self.rest_length
+        force_magnitude = -self.spring_constant * x
+        
+        # Damping force
+        relative_velocity = self.body_b.linear_velocity - self.body_a.linear_velocity
+        damping_force = -self.damping * relative_velocity.dot(delta / current_length)
+        
+        # Total force
+        total_force = (force_magnitude + damping_force) * (delta / current_length)
+        
+        # Apply forces
+        if self.body_a.body_type == BodyType.DYNAMIC:
+            self.body_a.apply_force(-total_force)
+        if self.body_b.body_type == BodyType.DYNAMIC:
+            self.body_b.apply_force(total_force)</code></pre>
+
+    <h2>Complete Physics Engine Example</h2>
+    
+    <pre class="language-python"><code>import pygame
+import math
+import random
+
+class SimplePhysicsEngine:
+    """Complete physics engine example"""
+    def __init__(self):
+        pygame.init()
+        self.screen = pygame.display.set_mode((800, 600))
+        pygame.display.set_caption("Simple Physics Engine")
+        self.clock = pygame.time.Clock()
+        self.font = pygame.font.Font(None, 24)
+        
+        # Create physics world
+        self.world = PhysicsWorld()
+        
+        # UI state
+        self.running = True
+        self.paused = False
+        self.debug_draw = False
+        self.selected_body = None
+        
+        # Initialize demo scene
+        self.create_demo_scene()
+    
+    def create_demo_scene(self):
+        """Create initial demo scene"""
+        # Ground
+        ground = RigidBody(400, 580, BoxShape(800, 40), BodyType.STATIC)
+        self.world.add_body(ground)
+        
+        # Walls
+        left_wall = RigidBody(10, 300, BoxShape(20, 600), BodyType.STATIC)
+        right_wall = RigidBody(790, 300, BoxShape(20, 600), BodyType.STATIC)
+        self.world.add_body(left_wall)
+        self.world.add_body(right_wall)
+        
+        # Create a pyramid of boxes
+        self.create_pyramid(400, 500, 8)
+        
+        # Create a chain
+        self.create_chain(100, 100, 8)
+        
+        # Add some bouncing balls
+        for _ in range(5):
+            x = random.randint(100, 700)
+            y = random.randint(50, 200)
+            ball = RigidBody(x, y, CircleShape(20))
+            ball.linear_velocity = pygame.math.Vector2(
+                random.uniform(-200, 200),
+                random.uniform(-200, 200)
+            )
+            ball.restitution = 0.9
+            self.world.add_body(ball)
+    
+    def create_pyramid(self, x, y, rows):
+        """Create a pyramid of boxes"""
+        box_size = 30
+        
+        for row in range(rows):
+            for col in range(rows - row):
+                box_x = x + (col - (rows - row - 1) / 2) * (box_size + 2)
+                box_y = y - row * (box_size + 2)
+                
+                box = RigidBody(box_x, box_y, BoxShape(box_size, box_size))
+                box.restitution = 0.4
+                self.world.add_body(box)
+    
+    def create_chain(self, x, y, length):
+        """Create a chain of connected bodies"""
+        prev_body = None
+        link_size = 20
+        
+        for i in range(length):
+            link_x = x + i * (link_size + 10)
+            link_y = y
+            
+            link = RigidBody(link_x, link_y, CircleShape(link_size / 2))
+            
+            if i == 0:
+                # Anchor first link
+                link.body_type = BodyType.STATIC
+            
+            self.world.add_body(link)
+            
+            if prev_body:
+                # Connect to previous link
+                constraint = DistanceConstraint(prev_body, link, link_size + 10)
+                self.world.add_constraint(constraint)
+            
+            prev_body = link
+    
+    def handle_events(self):
+        """Handle user input"""
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.running = False
+            
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    self.paused = not self.paused
+                elif event.key == pygame.K_d:
+                    self.debug_draw = not self.debug_draw
+                elif event.key == pygame.K_r:
+                    self.world = PhysicsWorld()
+                    self.create_demo_scene()
+                elif event.key == pygame.K_c:
+                    # Clear dynamic bodies
+                    self.world.bodies = [b for b in self.world.bodies 
+                                        if b.body_type == BodyType.STATIC]
+                elif event.key == pygame.K_g:
+                    # Toggle gravity
+                    if self.world.gravity.y > 0:
+                        self.world.gravity = pygame.math.Vector2(0, 0)
+                    else:
+                        self.world.gravity = pygame.math.Vector2(0, 980)
+            
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:  # Left click
+                    # Create body at mouse position
+                    x, y = pygame.mouse.get_pos()
+                    
+                    if pygame.key.get_pressed()[pygame.K_SHIFT]:
+                        # Create box with Shift
+                        body = RigidBody(x, y, BoxShape(40, 40))
+                    else:
+                        # Create circle
+                        body = RigidBody(x, y, CircleShape(20))
+                    
+                    # Random initial velocity
+                    body.linear_velocity = pygame.math.Vector2(
+                        random.uniform(-200, 200),
+                        random.uniform(-200, 200)
+                    )
+                    body.angular_velocity = random.uniform(-5, 5)
+                    
+                    self.world.add_body(body)
+                
+                elif event.button == 3:  # Right click
+                    # Select body for manipulation
+                    x, y = pygame.mouse.get_pos()
+                    mouse_pos = pygame.math.Vector2(x, y)
+                    
+                    for body in self.world.bodies:
+                        if body.body_type == BodyType.DYNAMIC:
+                            if isinstance(body.shape, CircleShape):
+                                if (mouse_pos - body.position).length() < body.shape.radius:
+                                    self.selected_body = body
+                                    break
+            
+            elif event.type == pygame.MOUSEBUTTONUP:
+                if event.button == 3:
+                    self.selected_body = None
+        
+        # Handle continuous input
+        if self.selected_body:
+            x, y = pygame.mouse.get_pos()
+            mouse_pos = pygame.math.Vector2(x, y)
+            
+            # Apply force toward mouse
+            force = (mouse_pos - self.selected_body.position) * 100
+            self.selected_body.apply_force(force)
+    
+    def update(self, dt):
+        """Update simulation"""
+        if not self.paused:
+            self.world.step(dt)
+    
+    def draw(self):
+        """Draw everything"""
+        self.screen.fill((30, 30, 40))
+        
+        # Draw grid
+        if self.debug_draw:
+            for x in range(0, 800, 50):
+                pygame.draw.line(self.screen, (40, 40, 50), (x, 0), (x, 600))
+            for y in range(0, 600, 50):
+                pygame.draw.line(self.screen, (40, 40, 50), (0, y), (800, y))
+        
+        # Draw constraints
+        for constraint in self.world.constraints:
+            if isinstance(constraint, DistanceConstraint):
+                pygame.draw.line(self.screen, (100, 100, 100),
+                               constraint.body_a.position,
+                               constraint.body_b.position, 1)
+        
+        # Draw bodies
+        for body in self.world.bodies:
+            self.draw_body(body)
+        
+        # Draw selected body highlight
+        if self.selected_body:
+            pygame.draw.circle(self.screen, (255, 255, 0),
+                             (int(self.selected_body.position.x),
+                              int(self.selected_body.position.y)),
+                             30, 2)
+        
+        # Draw UI
+        self.draw_ui()
+    
+    def draw_body(self, body):
+        """Draw a single body"""
+        # Choose color based on body type
+        if body.body_type == BodyType.STATIC:
+            color = (100, 100, 100)
+        else:
+            # Dynamic bodies get random colors
+            random.seed(id(body))
+            color = (random.randint(100, 255),
+                    random.randint(100, 255),
+                    random.randint(100, 255))
+        
+        if isinstance(body.shape, CircleShape):
+            # Draw circle
+            pygame.draw.circle(self.screen, color,
+                             (int(body.position.x), int(body.position.y)),
+                             int(body.shape.radius))
+            
+            # Draw rotation indicator
+            end_x = body.position.x + math.cos(body.angle) * body.shape.radius
+            end_y = body.position.y + math.sin(body.angle) * body.shape.radius
+            pygame.draw.line(self.screen, (255, 255, 255),
+                           (body.position.x, body.position.y),
+                           (end_x, end_y), 2)
+        
+        elif isinstance(body.shape, BoxShape):
+            # Draw rotated box
+            cos_a = math.cos(body.angle)
+            sin_a = math.sin(body.angle)
+            
+            # Calculate corners
+            hw = body.shape.width / 2
+            hh = body.shape.height / 2
+            
+            corners = [
+                (-hw, -hh), (hw, -hh), (hw, hh), (-hw, hh)
+            ]
+            
+            # Transform to world space
+            world_corners = []
+            for corner in corners:
+                x = corner[0] * cos_a - corner[1] * sin_a + body.position.x
+                y = corner[0] * sin_a + corner[1] * cos_a + body.position.y
+                world_corners.append((x, y))
+            
+            pygame.draw.polygon(self.screen, color, world_corners)
+        
+        # Draw velocity vector in debug mode
+        if self.debug_draw and body.body_type == BodyType.DYNAMIC:
+            vel_end = body.position + body.linear_velocity * 0.1
+            pygame.draw.line(self.screen, (0, 255, 0),
+                           (body.position.x, body.position.y),
+                           (vel_end.x, vel_end.y), 2)
+    
+    def draw_ui(self):
+        """Draw user interface"""
+        y_offset = 10
+        
+        texts = [
+            f"Bodies: {len(self.world.bodies)}",
+            f"Constraints: {len(self.world.constraints)}",
+            f"Gravity: {'ON' if self.world.gravity.y > 0 else 'OFF'}",
+            f"Paused: {'YES' if self.paused else 'NO'}",
+            "",
+            "Controls:",
+            "Click: Add circle | Shift+Click: Add box",
+            "Right Click + Drag: Manipulate body",
+            "Space: Pause | D: Debug | R: Reset",
+            "C: Clear dynamics | G: Toggle gravity"
+        ]
+        
+        for text in texts:
+            rendered = self.font.render(text, True, (255, 255, 255))
+            self.screen.blit(rendered, (10, y_offset))
+            y_offset += 25
+    
+    def run(self):
+        """Main game loop"""
+        dt = 0
+        
+        while self.running:
+            self.handle_events()
+            self.update(dt)
+            self.draw()
+            
+            pygame.display.flip()
+            dt = self.clock.tick(60) / 1000.0  # 60 FPS
+        
+        pygame.quit()
+
+if __name__ == "__main__":
+    engine = SimplePhysicsEngine()
+    engine.run()</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Physics Engine Tips</h3>
+        <ul>
+            <li><strong>Fixed Timestep:</strong> Use fixed timestep for deterministic physics</li>
+            <li><strong>Sub-stepping:</strong> Multiple small steps for stability</li>
+            <li><strong>Spatial Partitioning:</strong> Use quadtrees/grids for broad phase</li>
+            <li><strong>Sleep States:</strong> Don't simulate resting objects</li>
+            <li><strong>Continuous Collision:</strong> For fast-moving objects</li>
+            <li><strong>Constraint Solving:</strong> Iterate multiple times for accuracy</li>
+            <li><strong>Memory Pooling:</strong> Reuse objects to reduce allocation</li>
+            <li><strong>Profile Performance:</strong> Identify and optimize bottlenecks</li>
+        </ul>
+    </div>
+
+    <h2>Practice Exercises</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎯 Physics Engine Challenges!</h3>
+        <ol>
+            <li><strong>Ragdoll Physics:</strong> Connected bodies with joint limits</li>
+            <li><strong>Soft Bodies:</strong> Mass-spring systems for deformable objects</li>
+            <li><strong>Vehicle Simulation:</strong> Wheels, suspension, and steering</li>
+            <li><strong>Fluid Simulation:</strong> Particle-based water physics</li>
+            <li><strong>Destruction System:</strong> Breaking objects into fragments</li>
+            <li><strong>Rope Physics:</strong> Flexible constraints for rope simulation</li>
+        </ol>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>🏗️ Physics engines combine all physics concepts</li>
+            <li>⚙️ Separate concerns: bodies, shapes, constraints, forces</li>
+            <li>🔄 Integration moves objects based on forces</li>
+            <li>💥 Collision detection finds overlaps</li>
+            <li>⚡ Impulse resolution separates colliding objects</li>
+            <li>🔗 Constraints maintain relationships between bodies</li>
+            <li>⏱️ Sub-stepping improves stability</li>
+            <li>🎮 Balance accuracy with performance</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Congratulations! You've completed the Game Physics section! You now have a solid foundation in physics simulation for games. Next, move on to the Intermediate Module where you'll learn about AI, pathfinding, procedural generation, and more advanced game development techniques!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="physics_collision_response.html" class="prev-lesson" aria-label="Previous lesson: Collision Response">Previous Lesson: Collision Response</a>
+        <a href="index.html" class="next-lesson" aria-label="Course home">Return to Course Home</a>
+    </nav>
+    
+    </main>
+</body>
+</html>

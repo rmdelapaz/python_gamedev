@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master collision response in game physics. Learn impulse resolution, momentum conservation, separating axis theorem, and realistic collision handling.">
+    <title>Collision Response - Game Physics</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script src="/js/course-enhancements.js" defer></script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Collision Response</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Section 4: Game Physics - Lesson 4</span>
+    </nav>
+
+    <h2>Making Objects React to Collisions</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Collision response is where physics gets exciting! When objects collide, they exchange momentum, bounce apart, or stick together. Understanding collision response lets you create everything from billiard games to explosive effects! 💥🎱</p>
+    </div>
+
+    <h2>Understanding Collision Response</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎱 The Billiards Analogy</h3>
+        <p>Think of collision response like a pool table:</p>
+        <ul>
+            <li><strong>Momentum Transfer:</strong> Fast ball hits slow ball, speeds exchange</li>
+            <li><strong>Angle of Reflection:</strong> Balls bounce at predictable angles</li>
+            <li><strong>Energy Conservation:</strong> Total energy stays (mostly) the same</li>
+            <li><strong>Spin Effects:</strong> English adds complexity to collisions</li>
+            <li><strong>Multiple Collisions:</strong> Chain reactions and combinations</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Collision Response"] --> B["Detection Phase"]
+        A --> C["Resolution Phase"]
+        A --> D["Post-Processing"]
+        B --> E["Broad Phase"]
+        B --> F["Narrow Phase"]
+        C --> G["Impulse Calculation"]
+        C --> H["Position Correction"]
+        C --> I["Velocity Update"]
+        D --> J["Callbacks"]
+        D --> K["Effects"]
+        D --> L["Sound"]
+    </div>
+
+    <h2>Interactive Collision Response Simulator</h2>
+    
+    <div class="canvas-wrapper">
+        <canvas id="collisionCanvas" width="600" height="400"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Click and drag to launch balls! Watch momentum transfer!</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; max-width: 600px; margin: 10px auto;">
+            <button onclick="setCollisionMode('elastic')">Elastic (Billiards)</button>
+            <button onclick="setCollisionMode('inelastic')">Inelastic (Clay)</button>
+            <button onclick="setCollisionMode('partial')">Partial (Realistic)</button>
+            <button onclick="setCollisionMode('explosive')">Explosive</button>
+        </div>
+        <div style="margin-top: 10px;">
+            <button onclick="addBall('small')">Add Small Ball</button>
+            <button onclick="addBall('medium')">Add Medium Ball</button>
+            <button onclick="addBall('large')">Add Large Ball</button>
+            <button onclick="clearBalls()">Clear All</button>
+        </div>
+        <div style="margin-top: 10px;">
+            <label>
+                <input type="checkbox" id="showVelocity" checked onchange="toggleVelocity()"> Show Velocity
+            </label>
+            <label>
+                <input type="checkbox" id="showMomentum" onchange="toggleMomentum()"> Show Momentum
+            </label>
+            <label>
+                <input type="checkbox" id="showForces" onchange="toggleForces()"> Show Forces
+            </label>
+        </div>
+        <p>Mode: <strong id="modeDisplay">Elastic</strong> | Total Momentum: <span id="momentumDisplay">0</span> | Energy: <span id="energyDisplay">0</span></p>
+    </div>
+
+    <script>
+        const collisionCanvas = document.getElementById('collisionCanvas');
+        const cCtx = collisionCanvas.getContext('2d');
+        const modeDisplay = document.getElementById('modeDisplay');
+        const momentumDisplay = document.getElementById('momentumDisplay');
+        const energyDisplay = document.getElementById('energyDisplay');
+        
+        let collisionMode = 'elastic';
+        let balls = [];
+        let showVelocity = true;
+        let showMomentum = false;
+        let showForces = false;
+        let dragStart = null;
+        let dragEnd = null;
+        let isDragging = false;
+        
+        class CollisionBall {
+            constructor(x, y, radius, mass) {
+                this.position = { x: x, y: y };
+                this.velocity = { x: 0, y: 0 };
+                this.radius = radius;
+                this.mass = mass;
+                this.color = `hsl(${Math.random() * 360}, 70%, 50%)`;
+                this.collisionForce = { x: 0, y: 0 };
+                this.isColliding = false;
+                this.trail = [];
+                this.maxTrailLength = 20;
+            }
+            
+            update(dt) {
+                // Update position
+                this.position.x += this.velocity.x * dt;
+                this.position.y += this.velocity.y * dt;
+                
+                // Add friction
+                this.velocity.x *= 0.995;
+                this.velocity.y *= 0.995;
+                
+                // Add to trail
+                this.trail.push({ x: this.position.x, y: this.position.y });
+                if (this.trail.length > this.maxTrailLength) {
+                    this.trail.shift();
+                }
+                
+                // Wall collisions
+                if (this.position.x - this.radius < 0) {
+                    this.position.x = this.radius;
+                    this.velocity.x = Math.abs(this.velocity.x) * 0.9;
+                } else if (this.position.x + this.radius > collisionCanvas.width) {
+                    this.position.x = collisionCanvas.width - this.radius;
+                    this.velocity.x = -Math.abs(this.velocity.x) * 0.9;
+                }
+                
+                if (this.position.y - this.radius < 0) {
+                    this.position.y = this.radius;
+                    this.velocity.y = Math.abs(this.velocity.y) * 0.9;
+                } else if (this.position.y + this.radius > collisionCanvas.height) {
+                    this.position.y = collisionCanvas.height - this.radius;
+                    this.velocity.y = -Math.abs(this.velocity.y) * 0.9;
+                }
+                
+                // Reset collision state
+                this.isColliding = false;
+                this.collisionForce = { x: 0, y: 0 };
+            }
+            
+            draw(ctx) {
+                // Draw trail
+                if (this.trail.length > 1) {
+                    ctx.strokeStyle = this.color;
+                    for (let i = 1; i < this.trail.length; i++) {
+                        ctx.globalAlpha = i / this.trail.length * 0.3;
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.moveTo(this.trail[i - 1].x, this.trail[i - 1].y);
+                        ctx.lineTo(this.trail[i].x, this.trail[i].y);
+                        ctx.stroke();
+                    }
+                    ctx.globalAlpha = 1;
+                }
+                
+                // Draw ball
+                ctx.fillStyle = this.color;
+                if (this.isColliding) {
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 3;
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                    ctx.beginPath();
+                    ctx.arc(this.position.x, this.position.y, this.radius + 2, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+                
+                ctx.beginPath();
+                ctx.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw mass indicator
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.font = `${this.radius}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.mass.toFixed(1), this.position.x, this.position.y);
+                
+                // Draw velocity vector
+                if (showVelocity) {
+                    const scale = 0.5;
+                    ctx.strokeStyle = '#4caf50';
+                    ctx.lineWidth = 2;
+                    this.drawArrow(ctx, 
+                        this.position.x, this.position.y,
+                        this.position.x + this.velocity.x * scale,
+                        this.position.y + this.velocity.y * scale
+                    );
+                }
+                
+                // Draw momentum vector
+                if (showMomentum) {
+                    const scale = 0.1;
+                    const momentum = {
+                        x: this.velocity.x * this.mass,
+                        y: this.velocity.y * this.mass
+                    };
+                    ctx.strokeStyle = '#ff9800';
+                    ctx.lineWidth = 3;
+                    this.drawArrow(ctx,
+                        this.position.x, this.position.y,
+                        this.position.x + momentum.x * scale,
+                        this.position.y + momentum.y * scale
+                    );
+                }
+                
+                // Draw collision force
+                if (showForces && (Math.abs(this.collisionForce.x) > 0.1 || Math.abs(this.collisionForce.y) > 0.1)) {
+                    const scale = 2;
+                    ctx.strokeStyle = '#ff0000';
+                    ctx.lineWidth = 3;
+                    this.drawArrow(ctx,
+                        this.position.x, this.position.y,
+                        this.position.x + this.collisionForce.x * scale,
+                        this.position.y + this.collisionForce.y * scale
+                    );
+                }
+            }
+            
+            drawArrow(ctx, fromX, fromY, toX, toY) {
+                const headlen = 8;
+                const dx = toX - fromX;
+                const dy = toY - fromY;
+                const angle = Math.atan2(dy, dx);
+                
+                ctx.beginPath();
+                ctx.moveTo(fromX, fromY);
+                ctx.lineTo(toX, toY);
+                ctx.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6),
+                          toY - headlen * Math.sin(angle - Math.PI / 6));
+                ctx.moveTo(toX, toY);
+                ctx.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6),
+                          toY - headlen * Math.sin(angle + Math.PI / 6));
+                ctx.stroke();
+            }
+            
+            getMomentum() {
+                return {
+                    x: this.velocity.x * this.mass,
+                    y: this.velocity.y * this.mass
+                };
+            }
+            
+            getKineticEnergy() {
+                const speed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
+                return 0.5 * this.mass * speed * speed;
+            }
+        }
+        
+        function resolveCollision(ball1, ball2) {
+            // Calculate relative position
+            const dx = ball2.position.x - ball1.position.x;
+            const dy = ball2.position.y - ball1.position.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            // Check if colliding
+            if (distance < ball1.radius + ball2.radius) {
+                // Mark as colliding
+                ball1.isColliding = true;
+                ball2.isColliding = true;
+                
+                // Collision normal
+                const normal = { x: dx / distance, y: dy / distance };
+                
+                // Relative velocity
+                const relativeVelocity = {
+                    x: ball2.velocity.x - ball1.velocity.x,
+                    y: ball2.velocity.y - ball1.velocity.y
+                };
+                
+                // Velocity along normal
+                const velocityAlongNormal = relativeVelocity.x * normal.x + relativeVelocity.y * normal.y;
+                
+                // Don't resolve if velocities are separating
+                if (velocityAlongNormal > 0) return;
+                
+                // Restitution based on mode
+                let restitution = 1;
+                switch(collisionMode) {
+                    case 'elastic':
+                        restitution = 1.0;
+                        break;
+                    case 'inelastic':
+                        restitution = 0;
+                        break;
+                    case 'partial':
+                        restitution = 0.8;
+                        break;
+                    case 'explosive':
+                        restitution = 1.5; // Adds energy!
+                        break;
+                }
+                
+                // Calculate impulse scalar
+                const impulseScalar = -(1 + restitution) * velocityAlongNormal / (1/ball1.mass + 1/ball2.mass);
+                
+                // Apply impulse
+                const impulse = {
+                    x: impulseScalar * normal.x,
+                    y: impulseScalar * normal.y
+                };
+                
+                ball1.velocity.x -= impulse.x / ball1.mass;
+                ball1.velocity.y -= impulse.y / ball1.mass;
+                ball2.velocity.x += impulse.x / ball2.mass;
+                ball2.velocity.y += impulse.y / ball2.mass;
+                
+                // Store collision force for visualization
+                ball1.collisionForce = { x: -impulse.x, y: -impulse.y };
+                ball2.collisionForce = { x: impulse.x, y: impulse.y };
+                
+                // Separate balls to prevent overlap
+                const overlap = ball1.radius + ball2.radius - distance;
+                const separationX = normal.x * overlap * 0.5;
+                const separationY = normal.y * overlap * 0.5;
+                
+                ball1.position.x -= separationX;
+                ball1.position.y -= separationY;
+                ball2.position.x += separationX;
+                ball2.position.y += separationY;
+                
+                // Add explosion effect
+                if (collisionMode === 'explosive') {
+                    createExplosionEffect(
+                        (ball1.position.x + ball2.position.x) / 2,
+                        (ball1.position.y + ball2.position.y) / 2
+                    );
+                }
+            }
+        }
+        
+        function createExplosionEffect(x, y) {
+            // Visual effect for explosive collisions
+            // In a real game, this would create particles
+        }
+        
+        function setCollisionMode(mode) {
+            collisionMode = mode;
+            modeDisplay.textContent = mode.charAt(0).toUpperCase() + mode.slice(1);
+        }
+        
+        function toggleVelocity() {
+            showVelocity = document.getElementById('showVelocity').checked;
+        }
+        
+        function toggleMomentum() {
+            showMomentum = document.getElementById('showMomentum').checked;
+        }
+        
+        function toggleForces() {
+            showForces = document.getElementById('showForces').checked;
+        }
+        
+        function addBall(size) {
+            let radius, mass;
+            switch(size) {
+                case 'small':
+                    radius = 15;
+                    mass = 1;
+                    break;
+                case 'medium':
+                    radius = 25;
+                    mass = 3;
+                    break;
+                case 'large':
+                    radius = 35;
+                    mass = 6;
+                    break;
+            }
+            
+            const x = Math.random() * (collisionCanvas.width - radius * 2) + radius;
+            const y = Math.random() * (collisionCanvas.height - radius * 2) + radius;
+            const ball = new CollisionBall(x, y, radius, mass);
+            ball.velocity.x = (Math.random() - 0.5) * 200;
+            ball.velocity.y = (Math.random() - 0.5) * 200;
+            balls.push(ball);
+        }
+        
+        function clearBalls() {
+            balls = [];
+        }
+        
+        // Mouse interaction
+        collisionCanvas.addEventListener('mousedown', (e) => {
+            const rect = collisionCanvas.getBoundingClientRect();
+            dragStart = {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            };
+            isDragging = true;
+        });
+        
+        collisionCanvas.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const rect = collisionCanvas.getBoundingClientRect();
+                dragEnd = {
+                    x: e.clientX - rect.left,
+                    y: e.clientY - rect.top
+                };
+            }
+        });
+        
+        collisionCanvas.addEventListener('mouseup', (e) => {
+            if (isDragging && dragStart && dragEnd) {
+                const ball = new CollisionBall(dragStart.x, dragStart.y, 20, 2);
+                ball.velocity.x = (dragEnd.x - dragStart.x) * 2;
+                ball.velocity.y = (dragEnd.y - dragStart.y) * 2;
+                balls.push(ball);
+            }
+            isDragging = false;
+            dragStart = null;
+            dragEnd = null;
+        });
+        
+        function update(dt) {
+            // Update balls
+            balls.forEach(ball => ball.update(dt));
+            
+            // Check collisions
+            for (let i = 0; i < balls.length; i++) {
+                for (let j = i + 1; j < balls.length; j++) {
+                    resolveCollision(balls[i], balls[j]);
+                }
+            }
+            
+            // Calculate total momentum and energy
+            let totalMomentum = { x: 0, y: 0 };
+            let totalEnergy = 0;
+            
+            balls.forEach(ball => {
+                const momentum = ball.getMomentum();
+                totalMomentum.x += momentum.x;
+                totalMomentum.y += momentum.y;
+                totalEnergy += ball.getKineticEnergy();
+            });
+            
+            const momentumMagnitude = Math.sqrt(totalMomentum.x * totalMomentum.x + totalMomentum.y * totalMomentum.y);
+            momentumDisplay.textContent = momentumMagnitude.toFixed(1);
+            energyDisplay.textContent = totalEnergy.toFixed(1);
+        }
+        
+        function draw() {
+            // Clear canvas
+            cCtx.fillStyle = '#1a1a1a';
+            cCtx.fillRect(0, 0, collisionCanvas.width, collisionCanvas.height);
+            
+            // Draw grid
+            cCtx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            cCtx.lineWidth = 1;
+            for (let x = 0; x <= collisionCanvas.width; x += 50) {
+                cCtx.beginPath();
+                cCtx.moveTo(x, 0);
+                cCtx.lineTo(x, collisionCanvas.height);
+                cCtx.stroke();
+            }
+            for (let y = 0; y <= collisionCanvas.height; y += 50) {
+                cCtx.beginPath();
+                cCtx.moveTo(0, y);
+                cCtx.lineTo(collisionCanvas.width, y);
+                cCtx.stroke();
+            }
+            
+            // Draw drag line
+            if (isDragging && dragStart && dragEnd) {
+                cCtx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                cCtx.lineWidth = 2;
+                cCtx.setLineDash([5, 5]);
+                cCtx.beginPath();
+                cCtx.moveTo(dragStart.x, dragStart.y);
+                cCtx.lineTo(dragEnd.x, dragEnd.y);
+                cCtx.stroke();
+                cCtx.setLineDash([]);
+                
+                // Draw preview ball
+                cCtx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                cCtx.beginPath();
+                cCtx.arc(dragStart.x, dragStart.y, 20, 0, Math.PI * 2);
+                cCtx.fill();
+            }
+            
+            // Draw balls
+            balls.forEach(ball => ball.draw(cCtx));
+            
+            // Draw legend
+            if (showVelocity || showMomentum || showForces) {
+                cCtx.font = '12px Arial';
+                let y = 20;
+                
+                if (showVelocity) {
+                    cCtx.strokeStyle = '#4caf50';
+                    cCtx.lineWidth = 2;
+                    cCtx.beginPath();
+                    cCtx.moveTo(10, y - 5);
+                    cCtx.lineTo(30, y - 5);
+                    cCtx.stroke();
+                    cCtx.fillStyle = 'white';
+                    cCtx.fillText('Velocity', 35, y);
+                    y += 20;
+                }
+                
+                if (showMomentum) {
+                    cCtx.strokeStyle = '#ff9800';
+                    cCtx.lineWidth = 3;
+                    cCtx.beginPath();
+                    cCtx.moveTo(10, y - 5);
+                    cCtx.lineTo(30, y - 5);
+                    cCtx.stroke();
+                    cCtx.fillStyle = 'white';
+                    cCtx.fillText('Momentum', 35, y);
+                    y += 20;
+                }
+                
+                if (showForces) {
+                    cCtx.strokeStyle = '#ff0000';
+                    cCtx.lineWidth = 3;
+                    cCtx.beginPath();
+                    cCtx.moveTo(10, y - 5);
+                    cCtx.lineTo(30, y - 5);
+                    cCtx.stroke();
+                    cCtx.fillStyle = 'white';
+                    cCtx.fillText('Collision Force', 35, y);
+                }
+            }
+        }
+        
+        // Initialize with some balls
+        for (let i = 0; i < 3; i++) {
+            addBall(['small', 'medium', 'large'][i]);
+        }
+        
+        // Animation loop
+        let lastTime = performance.now();
+        function animate(currentTime) {
+            const dt = Math.min((currentTime - lastTime) / 1000, 0.1);
+            lastTime = currentTime;
+            
+            update(dt);
+            draw();
+            
+            requestAnimationFrame(animate);
+        }
+        
+        animate(performance.now());
+    </script>
+
+    <h2>Collision Detection and Response Basics</h2>
+    
+    <pre class="language-python"><code>import pygame
+import math
+
+class CollisionSystem:
+    """Basic collision detection and response"""
+    
+    @staticmethod
+    def check_circle_collision(obj1, obj2):
+        """Check if two circles are colliding"""
+        dx = obj2.position.x - obj1.position.x
+        dy = obj2.position.y - obj1.position.y
+        distance = math.sqrt(dx * dx + dy * dy)
+        
+        return distance < (obj1.radius + obj2.radius)
+    
+    @staticmethod
+    def resolve_collision(obj1, obj2, restitution=0.8):
+        """Resolve collision between two circular objects"""
+        # Calculate collision vector
+        dx = obj2.position.x - obj1.position.x
+        dy = obj2.position.y - obj1.position.y
+        distance = math.sqrt(dx * dx + dy * dy)
+        
+        # Check if actually colliding
+        if distance >= obj1.radius + obj2.radius:
+            return
+        
+        # Collision normal (unit vector)
+        if distance > 0:
+            nx = dx / distance
+            ny = dy / distance
+        else:
+            # Objects are on top of each other, use arbitrary normal
+            nx, ny = 1, 0
+            distance = 0.01
+        
+        # Relative velocity
+        dvx = obj2.velocity.x - obj1.velocity.x
+        dvy = obj2.velocity.y - obj1.velocity.y
+        
+        # Relative velocity along collision normal
+        dvn = dvx * nx + dvy * ny
+        
+        # Don't resolve if objects are separating
+        if dvn > 0:
+            return
+        
+        # Calculate impulse magnitude
+        impulse = 2 * dvn / (1/obj1.mass + 1/obj2.mass)
+        impulse *= (1 + restitution)
+        
+        # Apply impulse to velocities
+        obj1.velocity.x += (impulse * nx) / obj1.mass
+        obj1.velocity.y += (impulse * ny) / obj1.mass
+        obj2.velocity.x -= (impulse * nx) / obj2.mass
+        obj2.velocity.y -= (impulse * ny) / obj2.mass
+        
+        # Separate objects to prevent overlap
+        overlap = obj1.radius + obj2.radius - distance
+        if overlap > 0:
+            separate_x = nx * overlap * 0.5
+            separate_y = ny * overlap * 0.5
+            
+            obj1.position.x -= separate_x
+            obj1.position.y -= separate_y
+            obj2.position.x += separate_x
+            obj2.position.y += separate_y
+
+# Momentum conservation
+class MomentumSystem:
+    @staticmethod
+    def elastic_collision_1d(m1, v1, m2, v2):
+        """Calculate velocities after 1D elastic collision"""
+        # Conservation of momentum and energy
+        v1_final = ((m1 - m2) * v1 + 2 * m2 * v2) / (m1 + m2)
+        v2_final = ((m2 - m1) * v2 + 2 * m1 * v1) / (m1 + m2)
+        
+        return v1_final, v2_final
+    
+    @staticmethod
+    def inelastic_collision_1d(m1, v1, m2, v2):
+        """Calculate velocity after perfectly inelastic collision"""
+        # Objects stick together
+        v_final = (m1 * v1 + m2 * v2) / (m1 + m2)
+        return v_final, v_final
+    
+    @staticmethod
+    def partial_inelastic_collision(m1, v1, m2, v2, restitution):
+        """Calculate velocities with coefficient of restitution"""
+        # e = (v2_final - v1_final) / (v1_initial - v2_initial)
+        v1_final = (m1 * v1 + m2 * v2 - m2 * restitution * (v1 - v2)) / (m1 + m2)
+        v2_final = (m1 * v1 + m2 * v2 + m1 * restitution * (v1 - v2)) / (m1 + m2)
+        
+        return v1_final, v2_final</code></pre>
+
+    <h2>Advanced Collision Response</h2>
+    
+    <pre class="language-python"><code># 2D collision response with rotation
+class AdvancedCollisionResponse:
+    def __init__(self):
+        self.contact_points = []
+        
+    def resolve_collision_with_rotation(self, body1, body2, contact_point):
+        """Resolve collision including rotational effects"""
+        # Vector from center of mass to contact point
+        r1 = contact_point - body1.position
+        r2 = contact_point - body2.position
+        
+        # Relative velocity at contact point
+        v1_contact = body1.velocity + pygame.math.Vector2(-r1.y, r1.x) * body1.angular_velocity
+        v2_contact = body2.velocity + pygame.math.Vector2(-r2.y, r2.x) * body2.angular_velocity
+        relative_velocity = v2_contact - v1_contact
+        
+        # Contact normal
+        normal = (body2.position - body1.position).normalize()
+        
+        # Relative velocity along normal
+        velocity_along_normal = relative_velocity.dot(normal)
+        
+        if velocity_along_normal > 0:
+            return  # Objects are separating
+        
+        # Restitution
+        restitution = min(body1.restitution, body2.restitution)
+        
+        # Calculate impulse scalar
+        r1_cross_n = r1.x * normal.y - r1.y * normal.x
+        r2_cross_n = r2.x * normal.y - r2.y * normal.x
+        
+        inv_mass_sum = 1/body1.mass + 1/body2.mass
+        inv_mass_sum += r1_cross_n * r1_cross_n / body1.moment_of_inertia
+        inv_mass_sum += r2_cross_n * r2_cross_n / body2.moment_of_inertia
+        
+        impulse_magnitude = -(1 + restitution) * velocity_along_normal / inv_mass_sum
+        impulse = normal * impulse_magnitude
+        
+        # Apply linear impulse
+        body1.velocity -= impulse / body1.mass
+        body2.velocity += impulse / body2.mass
+        
+        # Apply angular impulse
+        body1.angular_velocity -= r1_cross_n * impulse_magnitude / body1.moment_of_inertia
+        body2.angular_velocity += r2_cross_n * impulse_magnitude / body2.moment_of_inertia
+        
+        # Apply friction
+        self.apply_friction(body1, body2, normal, impulse_magnitude, contact_point)
+    
+    def apply_friction(self, body1, body2, normal, normal_impulse, contact_point):
+        """Apply friction at contact point"""
+        # Calculate tangent vector
+        r1 = contact_point - body1.position
+        r2 = contact_point - body2.position
+        
+        v1_contact = body1.velocity + pygame.math.Vector2(-r1.y, r1.x) * body1.angular_velocity
+        v2_contact = body2.velocity + pygame.math.Vector2(-r2.y, r2.x) * body2.angular_velocity
+        relative_velocity = v2_contact - v1_contact
+        
+        # Remove normal component to get tangential velocity
+        tangent = relative_velocity - normal * relative_velocity.dot(normal)
+        
+        if tangent.length_squared() < 0.0001:
+            return  # No tangential velocity
+        
+        tangent = tangent.normalize()
+        
+        # Friction coefficient
+        friction = math.sqrt(body1.friction * body2.friction)
+        
+        # Calculate friction impulse
+        friction_impulse = tangent * (-friction * abs(normal_impulse))
+        
+        # Apply friction
+        body1.velocity -= friction_impulse / body1.mass
+        body2.velocity += friction_impulse / body2.mass
+        
+        # Apply rotational friction
+        r1_cross_t = r1.x * tangent.y - r1.y * tangent.x
+        r2_cross_t = r2.x * tangent.y - r2.y * tangent.x
+        
+        body1.angular_velocity -= r1_cross_t * friction * abs(normal_impulse) / body1.moment_of_inertia
+        body2.angular_velocity += r2_cross_t * friction * abs(normal_impulse) / body2.moment_of_inertia
+
+# Continuous collision detection
+class ContinuousCollisionDetection:
+    @staticmethod
+    def swept_circle_collision(obj1, obj2, dt):
+        """Detect collision between moving circles"""
+        # Future positions
+        future_pos1 = obj1.position + obj1.velocity * dt
+        future_pos2 = obj2.position + obj2.velocity * dt
+        
+        # Check if paths intersect
+        # This is simplified - full implementation would use ray-circle intersection
+        steps = 10
+        for i in range(steps + 1):
+            t = i / steps
+            
+            pos1 = obj1.position + obj1.velocity * (dt * t)
+            pos2 = obj2.position + obj2.velocity * (dt * t)
+            
+            distance = (pos2 - pos1).length()
+            if distance < obj1.radius + obj2.radius:
+                return t * dt  # Return time of collision
+        
+        return None  # No collision
+    
+    @staticmethod
+    def resolve_at_time(obj1, obj2, collision_time, dt):
+        """Resolve collision at specific time"""
+        # Move objects to collision point
+        obj1.position += obj1.velocity * collision_time
+        obj2.position += obj2.velocity * collision_time
+        
+        # Resolve collision
+        CollisionSystem.resolve_collision(obj1, obj2)
+        
+        # Continue movement for remaining time
+        remaining_time = dt - collision_time
+        obj1.position += obj1.velocity * remaining_time
+        obj2.position += obj2.velocity * remaining_time</code></pre>
+
+    <h2>Separating Axis Theorem (SAT)</h2>
+    
+    <pre class="language-python"><code># SAT for polygon collision
+class SATCollision:
+    @staticmethod
+    def get_axes(vertices):
+        """Get separating axes for a polygon"""
+        axes = []
+        for i in range(len(vertices)):
+            p1 = vertices[i]
+            p2 = vertices[(i + 1) % len(vertices)]
+            
+            # Edge vector
+            edge = pygame.math.Vector2(p2[0] - p1[0], p2[1] - p1[1])
+            
+            # Perpendicular (normal)
+            normal = pygame.math.Vector2(-edge.y, edge.x)
+            if normal.length() > 0:
+                normal = normal.normalize()
+                axes.append(normal)
+        
+        return axes
+    
+    @staticmethod
+    def project_polygon(vertices, axis):
+        """Project polygon onto axis"""
+        min_proj = float('inf')
+        max_proj = float('-inf')
+        
+        for vertex in vertices:
+            projection = vertex[0] * axis.x + vertex[1] * axis.y
+            min_proj = min(min_proj, projection)
+            max_proj = max(max_proj, projection)
+        
+        return min_proj, max_proj
+    
+    @staticmethod
+    def check_collision(poly1, poly2):
+        """Check collision between two polygons using SAT"""
+        axes = SATCollision.get_axes(poly1) + SATCollision.get_axes(poly2)
+        
+        min_overlap = float('inf')
+        min_axis = None
+        
+        for axis in axes:
+            min1, max1 = SATCollision.project_polygon(poly1, axis)
+            min2, max2 = SATCollision.project_polygon(poly2, axis)
+            
+            # Check for gap
+            if max1 < min2 or max2 < min1:
+                return None  # No collision
+            
+            # Calculate overlap
+            overlap = min(max1, max2) - max(min1, min2)
+            if overlap < min_overlap:
+                min_overlap = overlap
+                min_axis = axis
+        
+        # Collision detected
+        return {
+            'axis': min_axis,
+            'overlap': min_overlap
+        }
+    
+    @staticmethod
+    def resolve_sat_collision(obj1, obj2, collision_data):
+        """Resolve collision based on SAT data"""
+        if not collision_data:
+            return
+        
+        axis = collision_data['axis']
+        overlap = collision_data['overlap']
+        
+        # Determine separation direction
+        center1 = obj1.get_center()
+        center2 = obj2.get_center()
+        
+        direction = pygame.math.Vector2(center2.x - center1.x, center2.y - center1.y)
+        if direction.dot(axis) < 0:
+            axis = -axis
+        
+        # Separate objects
+        total_mass = obj1.mass + obj2.mass
+        obj1.position -= axis * (overlap * obj2.mass / total_mass)
+        obj2.position += axis * (overlap * obj1.mass / total_mass)
+        
+        # Apply impulse
+        relative_velocity = obj2.velocity - obj1.velocity
+        velocity_along_axis = relative_velocity.dot(axis)
+        
+        if velocity_along_axis > 0:
+            return
+        
+        restitution = min(obj1.restitution, obj2.restitution)
+        impulse = -(1 + restitution) * velocity_along_axis / (1/obj1.mass + 1/obj2.mass)
+        
+        obj1.velocity -= axis * (impulse / obj1.mass)
+        obj2.velocity += axis * (impulse / obj2.mass)</code></pre>
+
+    <h2>Complete Collision Response Demo</h2>
+    
+    <pre class="language-python"><code>import pygame
+import math
+import random
+
+class CollisionResponseDemo:
+    def __init__(self):
+        pygame.init()
+        self.screen = pygame.display.set_mode((800, 600))
+        pygame.display.set_caption("Collision Response Demo")
+        self.clock = pygame.time.Clock()
+        self.font = pygame.font.Font(None, 24)
+        
+        # Physics objects
+        self.circles = []
+        self.polygons = []
+        
+        # Collision settings
+        self.restitution = 0.8
+        self.show_collisions = True
+        self.show_vectors = True
+        
+        # Initialize demo
+        self.setup_demo()
+        
+    def setup_demo(self):
+        """Create demo objects"""
+        # Create circles of different sizes
+        for i in range(5):
+            x = 150 + i * 120
+            y = 200 + random.randint(-50, 50)
+            radius = 20 + i * 5
+            mass = radius / 10
+            
+            circle = CircleObject(x, y, radius, mass)
+            circle.velocity = pygame.math.Vector2(
+                random.uniform(-100, 100),
+                random.uniform(-100, 100)
+            )
+            self.circles.append(circle)
+        
+        # Create polygons
+        # Triangle
+        triangle = PolygonObject(
+            [(0, -20), (20, 20), (-20, 20)],
+            300, 400, 2
+        )
+        self.polygons.append(triangle)
+        
+        # Square
+        square = PolygonObject(
+            [(-20, -20), (20, -20), (20, 20), (-20, 20)],
+            500, 400, 3
+        )
+        self.polygons.append(square)
+    
+    def handle_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                # Add new circle at mouse position
+                x, y = pygame.mouse.get_pos()
+                circle = CircleObject(x, y, 25, 2)
+                circle.velocity = pygame.math.Vector2(
+                    random.uniform(-200, 200),
+                    random.uniform(-200, 200)
+                )
+                self.circles.append(circle)
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_c:
+                    self.circles.clear()
+                    self.polygons.clear()
+                elif event.key == pygame.K_r:
+                    self.setup_demo()
+                elif event.key == pygame.K_v:
+                    self.show_vectors = not self.show_vectors
+                elif event.key == pygame.K_SPACE:
+                    # Apply random impulse to all objects
+                    for circle in self.circles:
+                        impulse = pygame.math.Vector2(
+                            random.uniform(-100, 100),
+                            random.uniform(-100, 100)
+                        )
+                        circle.velocity += impulse
+        
+        return True
+    
+    def update(self, dt):
+        """Update physics simulation"""
+        # Update circles
+        for circle in self.circles:
+            circle.update(dt)
+            
+            # Wall collisions
+            if circle.position.x - circle.radius < 0:
+                circle.position.x = circle.radius
+                circle.velocity.x *= -self.restitution
+            elif circle.position.x + circle.radius > 800:
+                circle.position.x = 800 - circle.radius
+                circle.velocity.x *= -self.restitution
+            
+            if circle.position.y - circle.radius < 0:
+                circle.position.y = circle.radius
+                circle.velocity.y *= -self.restitution
+            elif circle.position.y + circle.radius > 600:
+                circle.position.y = 600 - circle.radius
+                circle.velocity.y *= -self.restitution
+        
+        # Update polygons
+        for poly in self.polygons:
+            poly.update(dt)
+            poly.constrain_to_screen(800, 600, self.restitution)
+        
+        # Circle-circle collisions
+        for i in range(len(self.circles)):
+            for j in range(i + 1, len(self.circles)):
+                self.resolve_circle_collision(self.circles[i], self.circles[j])
+        
+        # Circle-polygon collisions
+        for circle in self.circles:
+            for poly in self.polygons:
+                self.resolve_circle_polygon_collision(circle, poly)
+        
+        # Polygon-polygon collisions
+        for i in range(len(self.polygons)):
+            for j in range(i + 1, len(self.polygons)):
+                self.resolve_polygon_collision(self.polygons[i], self.polygons[j])
+    
+    def resolve_circle_collision(self, c1, c2):
+        """Resolve collision between two circles"""
+        dx = c2.position.x - c1.position.x
+        dy = c2.position.y - c1.position.y
+        distance = math.sqrt(dx * dx + dy * dy)
+        
+        if distance < c1.radius + c2.radius and distance > 0:
+            # Collision detected
+            normal = pygame.math.Vector2(dx / distance, dy / distance)
+            
+            # Mark collision for visualization
+            c1.is_colliding = True
+            c2.is_colliding = True
+            
+            # Separate
+            overlap = c1.radius + c2.radius - distance
+            c1.position -= normal * (overlap * 0.5)
+            c2.position += normal * (overlap * 0.5)
+            
+            # Calculate relative velocity
+            relative_velocity = c2.velocity - c1.velocity
+            velocity_along_normal = relative_velocity.dot(normal)
+            
+            if velocity_along_normal > 0:
+                return
+            
+            # Apply impulse
+            impulse = 2 * velocity_along_normal / (1/c1.mass + 1/c2.mass)
+            impulse_vector = normal * impulse * (1 + self.restitution)
+            
+            c1.velocity += impulse_vector / c1.mass
+            c2.velocity -= impulse_vector / c2.mass
+    
+    def resolve_circle_polygon_collision(self, circle, polygon):
+        """Resolve collision between circle and polygon"""
+        # Simplified - check against polygon edges
+        closest_point = None
+        min_distance = float('inf')
+        
+        vertices = polygon.get_world_vertices()
+        
+        for i in range(len(vertices)):
+            p1 = vertices[i]
+            p2 = vertices[(i + 1) % len(vertices)]
+            
+            # Find closest point on edge
+            edge_point = self.closest_point_on_segment(circle.position, p1, p2)
+            distance = (circle.position - edge_point).length()
+            
+            if distance < min_distance:
+                min_distance = distance
+                closest_point = edge_point
+        
+        if closest_point and min_distance < circle.radius:
+            # Collision detected
+            circle.is_colliding = True
+            polygon.is_colliding = True
+            
+            # Calculate normal
+            normal = (circle.position - closest_point).normalize()
+            
+            # Separate
+            overlap = circle.radius - min_distance
+            circle.position += normal * overlap
+            
+            # Apply impulse
+            relative_velocity = circle.velocity - polygon.velocity
+            velocity_along_normal = relative_velocity.dot(normal)
+            
+            if velocity_along_normal < 0:
+                impulse = -velocity_along_normal * (1 + self.restitution)
+                circle.velocity += normal * impulse
+    
+    def resolve_polygon_collision(self, poly1, poly2):
+        """Resolve collision between two polygons using SAT"""
+        collision = SATCollision.check_collision(
+            poly1.get_world_vertices(),
+            poly2.get_world_vertices()
+        )
+        
+        if collision:
+            poly1.is_colliding = True
+            poly2.is_colliding = True
+            SATCollision.resolve_sat_collision(poly1, poly2, collision)
+    
+    def closest_point_on_segment(self, point, seg_start, seg_end):
+        """Find closest point on line segment"""
+        segment = seg_end - seg_start
+        t = max(0, min(1, (point - seg_start).dot(segment) / segment.length_squared()))
+        return seg_start + segment * t
+    
+    def draw(self):
+        """Draw everything"""
+        self.screen.fill((30, 30, 40))
+        
+        # Draw grid
+        for x in range(0, 800, 50):
+            pygame.draw.line(self.screen, (40, 40, 50), (x, 0), (x, 600))
+        for y in range(0, 600, 50):
+            pygame.draw.line(self.screen, (40, 40, 50), (0, y), (800, y))
+        
+        # Draw circles
+        for circle in self.circles:
+            circle.draw(self.screen, self.show_vectors)
+        
+        # Draw polygons
+        for poly in self.polygons:
+            poly.draw(self.screen, self.show_vectors)
+        
+        # Draw UI
+        self.draw_ui()
+    
+    def draw_ui(self):
+        """Draw user interface"""
+        texts = [
+            f"Restitution: {self.restitution:.1f}",
+            f"Objects: {len(self.circles) + len(self.polygons)}",
+            "Click: Add Circle | C: Clear | R: Reset | V: Vectors",
+            "Space: Apply Impulse"
+        ]
+        
+        # Calculate total momentum and energy
+        total_momentum = pygame.math.Vector2(0, 0)
+        total_energy = 0
+        
+        for circle in self.circles:
+            total_momentum += circle.velocity * circle.mass
+            total_energy += 0.5 * circle.mass * circle.velocity.length_squared()
+        
+        texts.append(f"Momentum: {total_momentum.length():.1f}")
+        texts.append(f"Energy: {total_energy:.1f}")
+        
+        y_offset = 10
+        for text in texts:
+            rendered = self.font.render(text, True, (255, 255, 255))
+            self.screen.blit(rendered, (10, y_offset))
+            y_offset += 25
+    
+    def run(self):
+        running = True
+        dt = 0
+        
+        while running:
+            running = self.handle_events()
+            self.update(dt)
+            self.draw()
+            pygame.display.flip()
+            dt = self.clock.tick(60) / 1000.0
+        
+        pygame.quit()
+
+# Physics object classes
+class CircleObject:
+    def __init__(self, x, y, radius, mass):
+        self.position = pygame.math.Vector2(x, y)
+        self.velocity = pygame.math.Vector2(0, 0)
+        self.radius = radius
+        self.mass = mass
+        self.restitution = 0.8
+        self.is_colliding = False
+        self.color = (random.randint(100, 255),
+                     random.randint(100, 255),
+                     random.randint(100, 255))
+    
+    def update(self, dt):
+        self.position += self.velocity * dt
+        self.is_colliding = False
+    
+    def draw(self, screen, show_vectors):
+        # Draw circle
+        color = (255, 255, 255) if self.is_colliding else self.color
+        pygame.draw.circle(screen, color,
+                         (int(self.position.x), int(self.position.y)),
+                         self.radius, 2 if self.is_colliding else 0)
+        
+        if not self.is_colliding:
+            pygame.draw.circle(screen, self.color,
+                             (int(self.position.x), int(self.position.y)),
+                             self.radius - 2)
+        
+        # Draw velocity vector
+        if show_vectors and self.velocity.length() > 0.1:
+            end_pos = self.position + self.velocity * 0.3
+            pygame.draw.line(screen, (0, 255, 0),
+                           (self.position.x, self.position.y),
+                           (end_pos.x, end_pos.y), 2)
+
+class PolygonObject:
+    def __init__(self, vertices, x, y, mass):
+        self.vertices = vertices  # Local coordinates
+        self.position = pygame.math.Vector2(x, y)
+        self.velocity = pygame.math.Vector2(0, 0)
+        self.angle = 0
+        self.angular_velocity = 0
+        self.mass = mass
+        self.moment_of_inertia = self.calculate_moment_of_inertia()
+        self.restitution = 0.8
+        self.friction = 0.5
+        self.is_colliding = False
+        self.color = (random.randint(100, 255),
+                     random.randint(100, 255),
+                     random.randint(100, 255))
+    
+    def calculate_moment_of_inertia(self):
+        """Calculate moment of inertia for polygon"""
+        # Simplified - treat as point masses at vertices
+        moment = 0
+        for vertex in self.vertices:
+            r_squared = vertex[0]**2 + vertex[1]**2
+            moment += self.mass * r_squared / len(self.vertices)
+        return moment
+    
+    def get_world_vertices(self):
+        """Get vertices in world coordinates"""
+        world_vertices = []
+        cos_a = math.cos(self.angle)
+        sin_a = math.sin(self.angle)
+        
+        for vertex in self.vertices:
+            # Rotate
+            x = vertex[0] * cos_a - vertex[1] * sin_a
+            y = vertex[0] * sin_a + vertex[1] * cos_a
+            
+            # Translate
+            world_vertices.append(pygame.math.Vector2(
+                x + self.position.x,
+                y + self.position.y
+            ))
+        
+        return world_vertices
+    
+    def get_center(self):
+        return self.position
+    
+    def update(self, dt):
+        self.position += self.velocity * dt
+        self.angle += self.angular_velocity * dt
+        self.is_colliding = False
+    
+    def constrain_to_screen(self, width, height, restitution):
+        """Keep polygon on screen"""
+        vertices = self.get_world_vertices()
+        
+        for vertex in vertices:
+            if vertex.x < 0 or vertex.x > width:
+                self.velocity.x *= -restitution
+                self.position.x = max(50, min(width - 50, self.position.x))
+            
+            if vertex.y < 0 or vertex.y > height:
+                self.velocity.y *= -restitution
+                self.position.y = max(50, min(height - 50, self.position.y))
+    
+    def draw(self, screen, show_vectors):
+        vertices = self.get_world_vertices()
+        
+        # Draw polygon
+        points = [(v.x, v.y) for v in vertices]
+        color = (255, 255, 255) if self.is_colliding else self.color
+        pygame.draw.polygon(screen, color, points, 2 if self.is_colliding else 0)
+        
+        if not self.is_colliding:
+            # Fill with transparency effect
+            for i in range(len(points)):
+                p1 = points[i]
+                p2 = points[(i + 1) % len(points)]
+                p3 = (self.position.x, self.position.y)
+                pygame.draw.polygon(screen, self.color, [p1, p2, p3], 0)
+        
+        # Draw velocity vector
+        if show_vectors and self.velocity.length() > 0.1:
+            end_pos = self.position + self.velocity * 0.3
+            pygame.draw.line(screen, (0, 255, 0),
+                           (self.position.x, self.position.y),
+                           (end_pos.x, end_pos.y), 2)
+
+if __name__ == "__main__":
+    demo = CollisionResponseDemo()
+    demo.run()</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Collision Response Tips</h3>
+        <ul>
+            <li><strong>Separate First:</strong> Move objects apart before applying impulses</li>
+            <li><strong>Check Velocity:</strong> Don't resolve if objects are already separating</li>
+            <li><strong>Use Proper Mass:</strong> Heavier objects should move less</li>
+            <li><strong>Continuous Detection:</strong> For fast objects, check between frames</li>
+            <li><strong>Impulse Method:</strong> More stable than directly modifying velocities</li>
+            <li><strong>Energy Conservation:</strong> Monitor total energy to detect bugs</li>
+            <li><strong>Rotational Effects:</strong> Include angular momentum for realism</li>
+        </ul>
+    </div>
+
+    <h2>Practice Exercises</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎯 Collision Response Challenges!</h3>
+        <ol>
+            <li><strong>Pool Game:</strong> Realistic billiards with spin and friction</li>
+            <li><strong>Newton's Cradle:</strong> Conservation of momentum demonstration</li>
+            <li><strong>Breakout Clone:</strong> Ball bouncing off bricks and paddle</li>
+            <li><strong>Domino Effect:</strong> Chain reactions with falling dominoes</li>
+            <li><strong>Asteroid Field:</strong> Multiple objects with varying masses</li>
+            <li><strong>Soft Body:</strong> Objects that deform on collision</li>
+        </ol>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>💥 Collision response = detection + resolution</li>
+            <li>⚡ Impulse-based resolution is stable and realistic</li>
+            <li>🎱 Momentum is conserved in closed systems</li>
+            <li>📐 SAT works for any convex polygon</li>
+            <li>🔄 Include rotation for complex interactions</li>
+            <li>⏱️ Continuous detection prevents tunneling</li>
+            <li>🎮 Balance realism with gameplay needs</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you understand collision response, next we'll combine everything into a simple physics engine that can handle complex simulations!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="physics_bounce_friction.html" class="prev-lesson" aria-label="Previous lesson: Bounce">Previous Lesson: Bounce and Friction</a>
+        <a href="physics_engine.html" class="next-lesson" aria-label="Next lesson: Physics Engine">Next Lesson: Simple Physics Engine</a>
+    </nav>
+    
+    </main>
+</body>
+</html>

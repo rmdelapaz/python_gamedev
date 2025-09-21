@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master state machines in game architecture. Learn to manage game states, transitions, and create robust game flow systems.">
+    <title>State Machines - Game Architecture</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>State Machines</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Intermediate Module - Section 1: Game Architecture - Lesson 1</span>
+    </nav>
+
+    <h2>Managing Game Flow with State Machines</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>State machines are the backbone of game architecture! They manage everything from menu systems to character behavior, providing clean, organized ways to handle complex game logic. Let's master this essential pattern! 🎮🔄</p>
+    </div>
+
+    <h2>Understanding State Machines</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎭 The Theater Play Analogy</h3>
+        <p>Think of a state machine like scenes in a play:</p>
+        <ul>
+            <li><strong>States:</strong> Different scenes (Menu, Gameplay, Pause, Game Over)</li>
+            <li><strong>Transitions:</strong> Moving between scenes (Start Game, Pause, Resume)</li>
+            <li><strong>Current State:</strong> The active scene being performed</li>
+            <li><strong>Events:</strong> Cues that trigger scene changes</li>
+            <li><strong>Actions:</strong> What happens during each scene</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    stateDiagram-v2
+        [*] --> MainMenu
+        MainMenu --> Playing: Start Game
+        MainMenu --> Settings: Open Settings
+        Settings --> MainMenu: Back
+        Playing --> Paused: Pause
+        Paused --> Playing: Resume
+        Paused --> MainMenu: Quit to Menu
+        Playing --> GameOver: Player Dies
+        GameOver --> Playing: Retry
+        GameOver --> MainMenu: Main Menu
+        MainMenu --> [*]: Exit Game
+    </div>
+
+    <h2>Interactive State Machine Visualizer</h2>
+    
+    <div class="canvas-wrapper" style="text-align: center;">
+        <canvas id="stateCanvas" width="600" height="400" style="border: 1px solid #333; background-color: #1a1a1a; display: inline-block;"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Click buttons to trigger state transitions!</p>
+        <div id="stateButtons" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; max-width: 600px; margin: 10px auto;">
+            <!-- Buttons will be dynamically added based on current state -->
+        </div>
+        <p>Current State: <strong id="currentStateDisplay">MainMenu</strong></p>
+        <p>State History: <span id="stateHistory">MainMenu</span></p>
+        <p>Time in State: <span id="timeInState">0.0</span>s</p>
+    </div>
+
+    <script>
+        // Immediately check if script is running
+        console.log('State machine script starting...');
+        
+        // State Machine Implementation (not dependent on DOM)
+        class State {
+            constructor(name, color) {
+                this.name = name;
+                this.color = color;
+                this.transitions = new Map();
+                this.onEnter = null;
+                this.onUpdate = null;
+                this.onExit = null;
+                this.timeEntered = 0;
+            }
+            
+            addTransition(event, targetState, condition = null) {
+                this.transitions.set(event, { target: targetState, condition: condition });
+            }
+            
+            canTransition(event, context) {
+                const transition = this.transitions.get(event);
+                if (!transition) return false;
+                if (transition.condition) {
+                    return transition.condition(context);
+                }
+                return true;
+            }
+            
+            getNextState(event) {
+                const transition = this.transitions.get(event);
+                return transition ? transition.target : null;
+            }
+            
+            enter(context) {
+                this.timeEntered = Date.now();
+                if (this.onEnter) this.onEnter(context);
+            }
+            
+            update(context, dt) {
+                if (this.onUpdate) this.onUpdate(context, dt);
+            }
+            
+            exit(context) {
+                if (this.onExit) this.onExit(context);
+            }
+        }
+        
+        class StateMachine {
+            constructor(initialState) {
+                this.states = new Map();
+                this.currentState = null;
+                this.previousState = null;
+                this.history = [];
+                this.context = {};
+                this.listeners = [];
+                
+                if (initialState) {
+                    this.currentState = initialState;
+                    this.history.push(initialState.name);
+                    initialState.enter(this.context);
+                }
+            }
+            
+            addState(state) {
+                this.states.set(state.name, state);
+            }
+            
+            transition(event) {
+                if (!this.currentState) return false;
+                
+                if (this.currentState.canTransition(event, this.context)) {
+                    const nextState = this.currentState.getNextState(event);
+                    if (nextState) {
+                        this.currentState.exit(this.context);
+                        this.previousState = this.currentState;
+                        this.currentState = nextState;
+                        this.history.push(nextState.name);
+                        
+                        if (this.history.length > 10) {
+                            this.history.shift();
+                        }
+                        
+                        this.currentState.enter(this.context);
+                        this.notifyListeners(event, this.previousState, this.currentState);
+                        return true;
+                    }
+                }
+                return false;
+            }
+            
+            update(dt) {
+                if (this.currentState) {
+                    this.currentState.update(this.context, dt);
+                }
+            }
+            
+            addListener(callback) {
+                this.listeners.push(callback);
+            }
+            
+            notifyListeners(event, fromState, toState) {
+                this.listeners.forEach(callback => {
+                    callback(event, fromState, toState);
+                });
+            }
+            
+            getCurrentStateName() {
+                return this.currentState ? this.currentState.name : 'None';
+            }
+            
+            getTimeInCurrentState() {
+                if (!this.currentState) return 0;
+                return (Date.now() - this.currentState.timeEntered) / 1000;
+            }
+        }
+        
+        // Visualization Node class
+        class StateNode {
+            constructor(x, y, state) {
+                this.x = x;
+                this.y = y;
+                this.state = state;
+                this.radius = 40;
+                this.pulsePhase = 0;
+            }
+            
+            draw(ctx, isCurrent, allNodes) {
+                // Draw connections first
+                this.state.transitions.forEach((transition, event) => {
+                    if (transition.target) {
+                        const targetNode = allNodes.find(n => n.state === transition.target);
+                        if (targetNode) {
+                            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+                            ctx.lineWidth = 1;
+                            ctx.beginPath();
+                            ctx.moveTo(this.x, this.y);
+                            ctx.lineTo(targetNode.x, targetNode.y);
+                            ctx.stroke();
+                        }
+                    }
+                });
+                
+                // Draw pulsing effect for current state
+                if (isCurrent) {
+                    const pulse = Math.sin(this.pulsePhase) * 10;
+                    ctx.fillStyle = this.state.color;
+                    ctx.globalAlpha = 0.3;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius + pulse, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+                }
+                
+                // Draw node
+                ctx.fillStyle = isCurrent ? this.state.color : '#444';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.strokeStyle = isCurrent ? '#fff' : '#666';
+                ctx.lineWidth = isCurrent ? 3 : 1;
+                ctx.stroke();
+                
+                // Draw label
+                ctx.fillStyle = '#fff';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.state.name, this.x, this.y);
+            }
+            
+            update(dt) {
+                this.pulsePhase += dt * 3;
+            }
+        }
+        
+        // Create states
+        const menuState = new State('MainMenu', '#4CAF50');
+        const playingState = new State('Playing', '#2196F3');
+        const pausedState = new State('Paused', '#FF9800');
+        const gameOverState = new State('GameOver', '#f44336');
+        const settingsState = new State('Settings', '#9C27B0');
+        const loadingState = new State('Loading', '#607D8B');
+        
+        // Define transitions
+        menuState.addTransition('START_GAME', loadingState);
+        menuState.addTransition('SETTINGS', settingsState);
+        menuState.addTransition('EXIT', null);
+        
+        loadingState.addTransition('LOADING_COMPLETE', playingState);
+        
+        playingState.addTransition('PAUSE', pausedState);
+        playingState.addTransition('GAME_OVER', gameOverState);
+        playingState.addTransition('WIN', gameOverState);
+        
+        pausedState.addTransition('RESUME', playingState);
+        pausedState.addTransition('QUIT', menuState);
+        pausedState.addTransition('SETTINGS', settingsState);
+        
+        gameOverState.addTransition('RETRY', loadingState);
+        gameOverState.addTransition('MENU', menuState);
+        
+        settingsState.addTransition('BACK', menuState);
+        settingsState.addTransition('APPLY', menuState);
+        
+        // Create state machine
+        const gameStateMachine = new StateMachine(menuState);
+        gameStateMachine.addState(menuState);
+        gameStateMachine.addState(loadingState);
+        gameStateMachine.addState(playingState);
+        gameStateMachine.addState(pausedState);
+        gameStateMachine.addState(gameOverState);
+        gameStateMachine.addState(settingsState);
+        
+        // Create state nodes for visualization
+        const stateNodes = [
+            new StateNode(300, 100, menuState),
+            new StateNode(150, 200, settingsState),
+            new StateNode(450, 200, loadingState),
+            new StateNode(300, 300, playingState),
+            new StateNode(150, 350, pausedState),
+            new StateNode(450, 350, gameOverState)
+        ];
+        
+        // Global variables for DOM elements and animation
+        let stateCanvas, sCtx, currentStateDisplay, stateHistory, timeInStateDisplay, stateButtons;
+        let animationId = null;
+        let lastTime = performance.now();
+        
+        // Function to update buttons
+        function updateButtons() {
+            if (!stateButtons) return;
+            
+            stateButtons.innerHTML = '';
+            const currentState = gameStateMachine.currentState;
+            
+            if (!currentState) return;
+            
+            const buttonConfigs = {
+                'MainMenu': [
+                    { text: 'Start Game', event: 'START_GAME' },
+                    { text: 'Settings', event: 'SETTINGS' },
+                    { text: 'Exit', event: 'EXIT' }
+                ],
+                'Loading': [],
+                'Playing': [
+                    { text: 'Pause', event: 'PAUSE' },
+                    { text: 'Game Over (Test)', event: 'GAME_OVER' }
+                ],
+                'Paused': [
+                    { text: 'Resume', event: 'RESUME' },
+                    { text: 'Settings', event: 'SETTINGS' },
+                    { text: 'Quit to Menu', event: 'QUIT' }
+                ],
+                'GameOver': [
+                    { text: 'Retry', event: 'RETRY' },
+                    { text: 'Main Menu', event: 'MENU' }
+                ],
+                'Settings': [
+                    { text: 'Back', event: 'BACK' },
+                    { text: 'Apply', event: 'APPLY' }
+                ]
+            };
+            
+            const buttons = buttonConfigs[currentState.name] || [];
+            
+            buttons.forEach(config => {
+                const button = document.createElement('button');
+                button.textContent = config.text;
+                button.style.padding = '10px';
+                button.style.cursor = 'pointer';
+                button.onclick = () => {
+                    if (config.event === 'EXIT') {
+                        alert('Thanks for playing!');
+                    } else {
+                        gameStateMachine.transition(config.event);
+                    }
+                };
+                stateButtons.appendChild(button);
+            });
+        }
+        
+        function updateDisplay() {
+            if (currentStateDisplay) {
+                currentStateDisplay.textContent = gameStateMachine.getCurrentStateName();
+            }
+            if (stateHistory) {
+                stateHistory.textContent = gameStateMachine.history.join(' → ');
+            }
+            updateButtons();
+        }
+        
+        // Define state behaviors
+        menuState.onEnter = (context) => {
+            console.log('Entered Main Menu');
+            context.menuSelection = 0;
+            updateButtons();
+        };
+        
+        loadingState.onEnter = (context) => {
+            console.log('Loading game...');
+            context.loadingProgress = 0;
+            updateButtons();
+            setTimeout(() => {
+                gameStateMachine.transition('LOADING_COMPLETE');
+            }, 2000);
+        };
+        
+        loadingState.onUpdate = (context, dt) => {
+            context.loadingProgress = Math.min(100, (context.loadingProgress || 0) + dt * 50);
+        };
+        
+        playingState.onEnter = (context) => {
+            console.log('Game started!');
+            context.score = 0;
+            context.lives = 3;
+            updateButtons();
+        };
+        
+        playingState.onUpdate = (context, dt) => {
+            context.score = (context.score || 0) + dt * 10;
+            if (context.lives <= 0) {
+                gameStateMachine.transition('GAME_OVER');
+            }
+        };
+        
+        pausedState.onEnter = (context) => {
+            console.log('Game paused');
+            updateButtons();
+        };
+        
+        gameOverState.onEnter = (context) => {
+            console.log('Game Over!');
+            context.finalScore = context.score || 0;
+            updateButtons();
+        };
+        
+        settingsState.onEnter = (context) => {
+            console.log('Settings opened');
+            updateButtons();
+        };
+        
+        // Add transition listener
+        gameStateMachine.addListener((event, fromState, toState) => {
+            console.log(`Transition: ${fromState.name} -> ${toState.name} (${event})`);
+            updateDisplay();
+        });
+        
+        function drawStateMachine() {
+            if (!sCtx || !stateCanvas) return;
+            
+            // Clear canvas
+            sCtx.fillStyle = '#1a1a1a';
+            sCtx.fillRect(0, 0, stateCanvas.width, stateCanvas.height);
+            
+            // Draw grid
+            sCtx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            sCtx.lineWidth = 1;
+            for (let x = 0; x <= stateCanvas.width; x += 50) {
+                sCtx.beginPath();
+                sCtx.moveTo(x, 0);
+                sCtx.lineTo(x, stateCanvas.height);
+                sCtx.stroke();
+            }
+            for (let y = 0; y <= stateCanvas.height; y += 50) {
+                sCtx.beginPath();
+                sCtx.moveTo(0, y);
+                sCtx.lineTo(stateCanvas.width, y);
+                sCtx.stroke();
+            }
+            
+            // Draw state nodes
+            stateNodes.forEach(node => {
+                node.draw(sCtx, node.state === gameStateMachine.currentState, stateNodes);
+            });
+            
+            // Draw context info
+            sCtx.fillStyle = '#fff';
+            sCtx.font = '12px Arial';
+            sCtx.textAlign = 'left';
+            let y = 20;
+            
+            const context = gameStateMachine.context;
+            if (context.loadingProgress !== undefined && gameStateMachine.currentState === loadingState) {
+                sCtx.fillText(`Loading: ${context.loadingProgress.toFixed(0)}%`, 10, y);
+                y += 20;
+            }
+            if (context.score !== undefined) {
+                sCtx.fillText(`Score: ${context.score.toFixed(0)}`, 10, y);
+                y += 20;
+            }
+            if (context.lives !== undefined) {
+                sCtx.fillText(`Lives: ${context.lives}`, 10, y);
+                y += 20;
+            }
+            if (context.finalScore !== undefined && gameStateMachine.currentState === gameOverState) {
+                sCtx.fillText(`Final Score: ${context.finalScore.toFixed(0)}`, 10, y);
+                y += 20;
+            }
+        }
+        
+        function animate(currentTime) {
+            const dt = (currentTime - lastTime) / 1000;
+            lastTime = currentTime;
+            
+            // Update state machine
+            gameStateMachine.update(dt);
+            
+            // Update visualization
+            stateNodes.forEach(node => node.update(dt));
+            
+            // Update time display
+            if (timeInStateDisplay) {
+                timeInStateDisplay.textContent = gameStateMachine.getTimeInCurrentState().toFixed(1);
+            }
+            
+            // Draw
+            drawStateMachine();
+            
+            animationId = requestAnimationFrame(animate);
+        }
+        
+        // Initialize when DOM is ready
+        function initializeVisualization() {
+            console.log('Initializing visualization...');
+            
+            // Get DOM elements
+            stateCanvas = document.getElementById('stateCanvas');
+            currentStateDisplay = document.getElementById('currentStateDisplay');
+            stateHistory = document.getElementById('stateHistory');
+            timeInStateDisplay = document.getElementById('timeInState');
+            stateButtons = document.getElementById('stateButtons');
+            
+            if (!stateCanvas) {
+                console.error('Canvas not found!');
+                return;
+            }
+            
+            sCtx = stateCanvas.getContext('2d');
+            if (!sCtx) {
+                console.error('Could not get canvas context!');
+                return;
+            }
+            
+            console.log('Canvas and context initialized');
+            
+            // Initial display update
+            updateDisplay();
+            
+            // Start animation
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            animate(performance.now());
+            
+            console.log('Visualization started successfully!');
+        }
+        
+        // Try multiple initialization strategies
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeVisualization);
+        } else {
+            // DOM is already loaded
+            initializeVisualization();
+        }
+        
+        // Also try on window load as backup
+        window.addEventListener('load', function() {
+            if (!sCtx) {
+                console.log('Attempting initialization on window load...');
+                initializeVisualization();
+            }
+        });
+        
+        // Final fallback with timeout
+        setTimeout(function() {
+            if (!sCtx) {
+                console.log('Final initialization attempt...');
+                initializeVisualization();
+            }
+        }, 1000);
+    </script>
+
+    <h2>Basic State Machine Implementation</h2>
+    
+    <pre class="language-python"><code>import pygame
+from enum import Enum, auto
+
+class GameState(Enum):
+    """Enumeration of game states"""
+    MENU = auto()
+    PLAYING = auto()
+    PAUSED = auto()
+    GAME_OVER = auto()
+    LOADING = auto()
+    SETTINGS = auto()
+
+class State:
+    """Base class for game states"""
+    def __init__(self, state_manager):
+        self.state_manager = state_manager
+        self.game = state_manager.game
+        
+    def enter(self):
+        """Called when entering this state"""
+        pass
+    
+    def exit(self):
+        """Called when leaving this state"""
+        pass
+    
+    def update(self, dt):
+        """Update state logic"""
+        pass
+    
+    def draw(self, screen):
+        """Draw state visuals"""
+        pass
+    
+    def handle_event(self, event):
+        """Handle input events"""
+        pass
+
+class StateManager:
+    """Manages game states and transitions"""
+    def __init__(self, game):
+        self.game = game
+        self.states = {}
+        self.current_state = None
+        self.previous_state = None
+        self.state_stack = []
+        
+    def register_state(self, state_enum, state_class):
+        """Register a state with the manager"""
+        self.states[state_enum] = state_class(self)
+    
+    def change_state(self, new_state_enum):
+        """Change to a new state"""
+        if self.current_state:
+            self.current_state.exit()
+            self.previous_state = self.current_state
+        
+        self.current_state = self.states[new_state_enum]
+        self.current_state.enter()
+        
+        print(f"State changed to: {new_state_enum.name}")</code></pre>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>🔄 State machines organize complex game flow</li>
+            <li>📦 Each state encapsulates specific functionality</li>
+            <li>➡️ Transitions define how states connect</li>
+            <li>📚 State stacks enable overlays and menus</li>
+            <li>🎮 Clean architecture makes games maintainable</li>
+            <li>🐛 Easier debugging with clear state boundaries</li>
+            <li>🔧 Extensible design for adding new states</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you understand state machines, next we'll explore scene management - how to organize and transition between different game scenes and levels!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="physics_engine.html" class="prev-lesson" aria-label="Previous section: Physics Engine">Previous Section: Physics Engine</a>
+        <a href="architecture_scene_management.html" class="next-lesson" aria-label="Next lesson: Scene Management">Next Lesson: Scene Management</a>
+    </nav>
+    
+    </main>
+    <script src="/js/course-enhancements.js" defer></script>
+</body>
+</html>

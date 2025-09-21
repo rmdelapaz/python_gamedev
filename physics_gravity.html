@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master gravity simulation in game physics. Learn to implement realistic gravity, jumping mechanics, orbital physics, and multiple gravity sources.">
+    <title>Gravity Simulation - Game Physics</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script src="/js/course-enhancements.js" defer></script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Gravity Simulation</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Section 4: Game Physics - Lesson 2</span>
+    </nav>
+
+    <h2>The Universal Force in Games</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Gravity is one of the most fundamental forces in game physics! From simple platformer jumps to complex orbital mechanics, gravity creates the weight and feel that makes games believable. Let's explore how to implement various gravity systems! 🌍🚀</p>
+    </div>
+
+    <h2>Understanding Gravity</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🍎 The Falling Apple Analogy</h3>
+        <p>Think of gravity in games like Newton's apple:</p>
+        <ul>
+            <li><strong>Constant Gravity:</strong> Earth-like, always pulling down (9.8 m/s²)</li>
+            <li><strong>Variable Gravity:</strong> Different on each planet/level</li>
+            <li><strong>Point Gravity:</strong> Planets pulling objects toward their center</li>
+            <li><strong>Multiple Sources:</strong> Several gravity wells affecting objects</li>
+            <li><strong>Anti-Gravity:</strong> Reverse gravity zones or effects</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Gravity Types"] --> B["Linear Gravity"]
+        A --> C["Radial Gravity"]
+        A --> D["Multiple Sources"]
+        A --> E["Custom Fields"]
+        B --> F["Platformers"]
+        B --> G["Falling Objects"]
+        C --> H["Planetary"]
+        C --> I["Black Holes"]
+        D --> J["Solar Systems"]
+        D --> K["Magnetic Fields"]
+        E --> L["Wind Zones"]
+        E --> M["Water Physics"]
+    </div>
+
+    <h2>Interactive Gravity Simulator</h2>
+    
+    <div class="canvas-wrapper">
+        <canvas id="gravityCanvas" width="600" height="400"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Click to drop objects or create gravity wells!</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; max-width: 600px; margin: 10px auto;">
+            <button onclick="setGravityMode('earth')">Earth Gravity</button>
+            <button onclick="setGravityMode('moon')">Moon Gravity</button>
+            <button onclick="setGravityMode('space')">Zero Gravity</button>
+            <button onclick="setGravityMode('planet')">Planetary</button>
+            <button onclick="setGravityMode('binary')">Binary System</button>
+            <button onclick="setGravityMode('antigrav')">Anti-Gravity</button>
+        </div>
+        <div style="margin-top: 10px;">
+            <label>Gravity Strength: <input type="range" id="gravitySlider" min="0" max="2000" value="980" onchange="updateGravityStrength(this.value)"></label>
+            <label>Object Mass: <input type="range" id="massSlider" min="0.5" max="5" step="0.5" value="1" onchange="updateObjectMass(this.value)"></label>
+        </div>
+        <button onclick="clearAllObjects()">Clear All</button>
+        <button onclick="toggleTrails()">Toggle Trails</button>
+        <p>Mode: <strong id="modeDisplay">Earth Gravity</strong> | Objects: <span id="objectCount">0</span></p>
+    </div>
+
+    <script>
+        const gravityCanvas = document.getElementById('gravityCanvas');
+        const gCtx = gravityCanvas.getContext('2d');
+        const modeDisplay = document.getElementById('modeDisplay');
+        const objectCountDisplay = document.getElementById('objectCount');
+        const gravitySlider = document.getElementById('gravitySlider');
+        const massSlider = document.getElementById('massSlider');
+        
+        let currentMode = 'earth';
+        let gravityStrength = 980;
+        let defaultMass = 1;
+        let showTrails = true;
+        let objects = [];
+        let gravitySources = [];
+        let mousePos = { x: 0, y: 0 };
+        let isMouseDown = false;
+        
+        class GravityObject {
+            constructor(x, y, vx = 0, vy = 0) {
+                this.position = { x: x, y: y };
+                this.velocity = { x: vx, y: vy };
+                this.acceleration = { x: 0, y: 0 };
+                this.mass = defaultMass;
+                this.radius = 5 + this.mass * 2;
+                this.color = `hsl(${Math.random() * 360}, 70%, 50%)`;
+                this.trail = [];
+                this.maxTrailLength = 30;
+                this.age = 0;
+                this.maxAge = 10000;
+            }
+            
+            applyForce(fx, fy) {
+                this.acceleration.x += fx / this.mass;
+                this.acceleration.y += fy / this.mass;
+            }
+            
+            update(dt) {
+                // Apply gravity based on mode
+                this.acceleration = { x: 0, y: 0 };
+                
+                switch(currentMode) {
+                    case 'earth':
+                        this.applyForce(0, gravityStrength * this.mass);
+                        break;
+                    case 'moon':
+                        this.applyForce(0, gravityStrength * 0.165 * this.mass); // Moon is 1/6 Earth
+                        break;
+                    case 'space':
+                        // No gravity
+                        break;
+                    case 'planet':
+                    case 'binary':
+                        // Apply gravity from sources
+                        for (let source of gravitySources) {
+                            const dx = source.x - this.position.x;
+                            const dy = source.y - this.position.y;
+                            const distSq = dx * dx + dy * dy;
+                            
+                            if (distSq > 100) { // Avoid singularity
+                                const dist = Math.sqrt(distSq);
+                                const force = (gravityStrength * source.mass * this.mass) / distSq;
+                                this.applyForce(
+                                    (dx / dist) * force,
+                                    (dy / dist) * force
+                                );
+                            }
+                        }
+                        break;
+                    case 'antigrav':
+                        this.applyForce(0, -gravityStrength * this.mass * 0.5);
+                        break;
+                }
+                
+                // Update velocity and position
+                this.velocity.x += this.acceleration.x * dt;
+                this.velocity.y += this.acceleration.y * dt;
+                
+                // Add damping in atmosphere
+                if (currentMode === 'earth' || currentMode === 'moon') {
+                    this.velocity.x *= 0.999;
+                    this.velocity.y *= 0.999;
+                }
+                
+                this.position.x += this.velocity.x * dt;
+                this.position.y += this.velocity.y * dt;
+                
+                // Update trail
+                if (showTrails) {
+                    this.trail.push({ x: this.position.x, y: this.position.y });
+                    if (this.trail.length > this.maxTrailLength) {
+                        this.trail.shift();
+                    }
+                }
+                
+                // Bounce off ground (for earth/moon gravity)
+                if (currentMode === 'earth' || currentMode === 'moon') {
+                    if (this.position.y + this.radius > gravityCanvas.height - 20) {
+                        this.position.y = gravityCanvas.height - 20 - this.radius;
+                        this.velocity.y *= -0.7; // Energy loss on bounce
+                        this.velocity.x *= 0.9; // Friction
+                    }
+                }
+                
+                // Wrap around edges for space modes
+                if (currentMode === 'space' || currentMode === 'planet' || currentMode === 'binary') {
+                    if (this.position.x < 0) this.position.x = gravityCanvas.width;
+                    if (this.position.x > gravityCanvas.width) this.position.x = 0;
+                    if (this.position.y < 0) this.position.y = gravityCanvas.height;
+                    if (this.position.y > gravityCanvas.height) this.position.y = 0;
+                }
+                
+                this.age += dt * 1000;
+                return this.age < this.maxAge;
+            }
+            
+            draw(ctx) {
+                // Draw trail
+                if (showTrails && this.trail.length > 1) {
+                    ctx.strokeStyle = this.color;
+                    ctx.lineWidth = 2;
+                    for (let i = 1; i < this.trail.length; i++) {
+                        ctx.globalAlpha = i / this.trail.length * 0.5;
+                        ctx.beginPath();
+                        ctx.moveTo(this.trail[i - 1].x, this.trail[i - 1].y);
+                        ctx.lineTo(this.trail[i].x, this.trail[i].y);
+                        ctx.stroke();
+                    }
+                    ctx.globalAlpha = 1;
+                }
+                
+                // Draw object
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw velocity vector
+                ctx.strokeStyle = '#4caf50';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(this.position.x, this.position.y);
+                ctx.lineTo(
+                    this.position.x + this.velocity.x * 0.1,
+                    this.position.y + this.velocity.y * 0.1
+                );
+                ctx.stroke();
+            }
+        }
+        
+        class GravitySource {
+            constructor(x, y, mass = 100) {
+                this.x = x;
+                this.y = y;
+                this.mass = mass;
+                this.radius = Math.sqrt(mass) * 2;
+                this.angle = 0;
+            }
+            
+            update(dt) {
+                this.angle += dt * 0.5;
+            }
+            
+            draw(ctx) {
+                // Draw gravity well
+                const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius * 3);
+                gradient.addColorStop(0, 'rgba(138, 43, 226, 0.5)');
+                gradient.addColorStop(1, 'rgba(138, 43, 226, 0)');
+                
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius * 3, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw source
+                ctx.fillStyle = '#8a2be2';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw rotating indicator
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                for (let i = 0; i < 4; i++) {
+                    const angle = this.angle + (i * Math.PI / 2);
+                    ctx.beginPath();
+                    ctx.moveTo(
+                        this.x + Math.cos(angle) * this.radius,
+                        this.y + Math.sin(angle) * this.radius
+                    );
+                    ctx.lineTo(
+                        this.x + Math.cos(angle) * (this.radius + 5),
+                        this.y + Math.sin(angle) * (this.radius + 5)
+                    );
+                    ctx.stroke();
+                }
+            }
+        }
+        
+        function setGravityMode(mode) {
+            currentMode = mode;
+            modeDisplay.textContent = mode.charAt(0).toUpperCase() + mode.slice(1).replace('-', ' ');
+            
+            // Clear and setup gravity sources based on mode
+            gravitySources = [];
+            objects = [];
+            
+            switch(mode) {
+                case 'planet':
+                    // Single planet in center
+                    gravitySources.push(new GravitySource(300, 200, 200));
+                    // Add some orbiting objects
+                    for (let i = 0; i < 5; i++) {
+                        const angle = (Math.PI * 2 / 5) * i;
+                        const dist = 100 + i * 20;
+                        const x = 300 + Math.cos(angle) * dist;
+                        const y = 200 + Math.sin(angle) * dist;
+                        const speed = Math.sqrt(gravityStrength * 200 / dist);
+                        const vx = -Math.sin(angle) * speed;
+                        const vy = Math.cos(angle) * speed;
+                        objects.push(new GravityObject(x, y, vx, vy));
+                    }
+                    break;
+                case 'binary':
+                    // Binary star system
+                    gravitySources.push(new GravitySource(200, 200, 150));
+                    gravitySources.push(new GravitySource(400, 200, 150));
+                    break;
+            }
+        }
+        
+        function updateGravityStrength(value) {
+            gravityStrength = parseFloat(value);
+        }
+        
+        function updateObjectMass(value) {
+            defaultMass = parseFloat(value);
+        }
+        
+        function clearAllObjects() {
+            objects = [];
+            if (currentMode !== 'planet' && currentMode !== 'binary') {
+                gravitySources = [];
+            }
+        }
+        
+        function toggleTrails() {
+            showTrails = !showTrails;
+            if (!showTrails) {
+                objects.forEach(obj => obj.trail = []);
+            }
+        }
+        
+        // Mouse events
+        gravityCanvas.addEventListener('mousedown', (e) => {
+            isMouseDown = true;
+            const rect = gravityCanvas.getBoundingClientRect();
+            mousePos.x = e.clientX - rect.left;
+            mousePos.y = e.clientY - rect.top;
+        });
+        
+        gravityCanvas.addEventListener('mouseup', (e) => {
+            if (isMouseDown) {
+                const rect = gravityCanvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                if (e.shiftKey) {
+                    // Create gravity source
+                    gravitySources.push(new GravitySource(x, y, 100));
+                } else {
+                    // Create object with velocity based on drag
+                    const vx = (x - mousePos.x) * 2;
+                    const vy = (y - mousePos.y) * 2;
+                    objects.push(new GravityObject(mousePos.x, mousePos.y, vx, vy));
+                }
+            }
+            isMouseDown = false;
+        });
+        
+        gravityCanvas.addEventListener('mousemove', (e) => {
+            if (isMouseDown) {
+                const rect = gravityCanvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                // Draw velocity preview line
+                gCtx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                gCtx.lineWidth = 2;
+                gCtx.setLineDash([5, 5]);
+                gCtx.beginPath();
+                gCtx.moveTo(mousePos.x, mousePos.y);
+                gCtx.lineTo(x, y);
+                gCtx.stroke();
+                gCtx.setLineDash([]);
+            }
+        });
+        
+        function update(dt) {
+            // Update gravity sources
+            gravitySources.forEach(source => source.update(dt));
+            
+            // Update objects
+            objects = objects.filter(obj => obj.update(dt));
+            
+            objectCountDisplay.textContent = objects.length;
+        }
+        
+        function draw() {
+            // Clear canvas
+            gCtx.fillStyle = '#0a0a0a';
+            gCtx.fillRect(0, 0, gravityCanvas.width, gravityCanvas.height);
+            
+            // Draw stars background for space modes
+            if (currentMode === 'space' || currentMode === 'planet' || currentMode === 'binary') {
+                gCtx.fillStyle = '#ffffff';
+                for (let i = 0; i < 50; i++) {
+                    const x = (i * 73) % gravityCanvas.width;
+                    const y = (i * 37) % gravityCanvas.height;
+                    gCtx.fillRect(x, y, 1, 1);
+                }
+            }
+            
+            // Draw ground for earth/moon
+            if (currentMode === 'earth' || currentMode === 'moon') {
+                gCtx.fillStyle = currentMode === 'earth' ? '#8b7355' : '#c0c0c0';
+                gCtx.fillRect(0, gravityCanvas.height - 20, gravityCanvas.width, 20);
+            }
+            
+            // Draw gravity field visualization
+            if (currentMode === 'planet' || currentMode === 'binary') {
+                gCtx.strokeStyle = 'rgba(138, 43, 226, 0.1)';
+                gCtx.lineWidth = 1;
+                
+                for (let source of gravitySources) {
+                    for (let r = 50; r < 200; r += 30) {
+                        gCtx.beginPath();
+                        gCtx.arc(source.x, source.y, r, 0, Math.PI * 2);
+                        gCtx.stroke();
+                    }
+                }
+            }
+            
+            // Draw gravity sources
+            gravitySources.forEach(source => source.draw(gCtx));
+            
+            // Draw objects
+            objects.forEach(obj => obj.draw(gCtx));
+            
+            // Draw mode info
+            gCtx.fillStyle = '#ffffff';
+            gCtx.font = '14px Arial';
+            gCtx.fillText(`g = ${gravityStrength.toFixed(0)} px/s²`, 10, 20);
+            
+            // Instructions
+            gCtx.font = '12px Arial';
+            gCtx.fillText('Click & drag to launch object | Shift+click for gravity well', 10, gravityCanvas.height - 30);
+        }
+        
+        // Animation loop
+        let lastTime = performance.now();
+        function animate(currentTime) {
+            const dt = Math.min((currentTime - lastTime) / 1000, 0.1); // Cap dt to avoid instability
+            lastTime = currentTime;
+            
+            update(dt);
+            draw();
+            
+            requestAnimationFrame(animate);
+        }
+        
+        // Initialize
+        setGravityMode('earth');
+        animate(performance.now());
+    </script>
+
+    <h2>Basic Gravity Implementation</h2>
+    
+    <pre class="language-python"><code>import pygame
+import math
+
+class GravitySystem:
+    """Basic gravity system for games"""
+    def __init__(self, gravity_strength=980):
+        # Earth gravity is ~9.8 m/s², we use 980 px/s² for games
+        self.gravity = gravity_strength
+        self.direction = pygame.math.Vector2(0, 1)  # Down by default
+    
+    def apply_to_object(self, obj):
+        """Apply gravity force to an object"""
+        gravity_force = self.direction * self.gravity * obj.mass
+        obj.apply_force(gravity_force)
+    
+    def set_strength(self, strength):
+        """Change gravity strength"""
+        self.gravity = strength
+    
+    def set_direction(self, angle_degrees):
+        """Change gravity direction (for rotating levels)"""
+        angle_rad = math.radians(angle_degrees)
+        self.direction = pygame.math.Vector2(
+            math.sin(angle_rad),
+            math.cos(angle_rad)
+        )
+
+# Platformer gravity example
+class PlatformerCharacter:
+    def __init__(self, x, y):
+        self.position = pygame.math.Vector2(x, y)
+        self.velocity = pygame.math.Vector2(0, 0)
+        self.mass = 1.0
+        
+        # Platformer-specific physics
+        self.gravity = 1500  # Strong gravity for snappy jumps
+        self.jump_speed = -500
+        self.move_speed = 300
+        self.terminal_velocity = 600  # Max fall speed
+        
+        # State
+        self.on_ground = False
+        self.jump_buffer_time = 0  # Coyote time
+        self.jump_pressed = False
+    
+    def update(self, dt):
+        """Update with gravity"""
+        # Apply gravity if not on ground
+        if not self.on_ground:
+            self.velocity.y += self.gravity * dt
+            
+            # Cap fall speed
+            if self.velocity.y > self.terminal_velocity:
+                self.velocity.y = self.terminal_velocity
+        
+        # Update position
+        self.position += self.velocity * dt
+        
+        # Ground check (simple)
+        if self.position.y >= 400:  # Ground at y=400
+            self.position.y = 400
+            self.velocity.y = 0
+            self.on_ground = True
+        else:
+            self.on_ground = False
+    
+    def jump(self):
+        """Initiate jump"""
+        if self.on_ground or self.jump_buffer_time > 0:
+            self.velocity.y = self.jump_speed
+            self.on_ground = False
+            self.jump_buffer_time = 0
+    
+    def variable_jump_height(self, holding_jump):
+        """Allow variable jump height by releasing early"""
+        if not holding_jump and self.velocity.y < 0:
+            # Cut jump short
+            self.velocity.y *= 0.5</code></pre>
+
+    <h2>Planetary Gravity</h2>
+    
+    <pre class="language-python"><code># Point gravity (planets, black holes)
+class CelestialBody:
+    def __init__(self, x, y, mass):
+        self.position = pygame.math.Vector2(x, y)
+        self.mass = mass
+        self.radius = math.sqrt(mass) * 5  # Visual radius
+        self.gravitational_constant = 100  # Adjust for game feel
+    
+    def apply_gravity_to(self, obj):
+        """Apply gravitational force to another object"""
+        # Calculate distance vector
+        direction = self.position - obj.position
+        distance = direction.length()
+        
+        # Avoid division by zero and singularity
+        if distance < self.radius:
+            return
+        
+        # Newton's law of universal gravitation: F = G * m1 * m2 / r²
+        force_magnitude = (self.gravitational_constant * self.mass * obj.mass) / (distance * distance)
+        
+        # Normalize direction and apply force
+        if distance > 0:
+            direction.normalize_ip()
+            force = direction * force_magnitude
+            obj.apply_force(force)
+    
+    def get_orbital_velocity(self, distance):
+        """Calculate velocity needed for circular orbit"""
+        if distance > 0:
+            return math.sqrt(self.gravitational_constant * self.mass / distance)
+        return 0
+
+# Multiple gravity sources
+class GravityField:
+    def __init__(self):
+        self.sources = []
+        self.objects = []
+    
+    def add_source(self, source):
+        """Add a gravity source (planet, star, etc.)"""
+        self.sources.append(source)
+    
+    def add_object(self, obj):
+        """Add an object affected by gravity"""
+        self.objects.append(obj)
+    
+    def update(self, dt):
+        """Update all gravitational interactions"""
+        # Apply gravity from all sources to all objects
+        for obj in self.objects:
+            obj.acceleration = pygame.math.Vector2(0, 0)
+            
+            for source in self.sources:
+                source.apply_gravity_to(obj)
+            
+            # Update object physics
+            obj.update(dt)
+    
+    def get_field_strength_at(self, position):
+        """Get combined gravity field strength at position"""
+        total_field = pygame.math.Vector2(0, 0)
+        
+        for source in self.sources:
+            direction = source.position - position
+            distance = direction.length()
+            
+            if distance > 0:
+                strength = (source.gravitational_constant * source.mass) / (distance * distance)
+                direction.normalize_ip()
+                total_field += direction * strength
+        
+        return total_field</code></pre>
+
+    <h2>Advanced Gravity Effects</h2>
+    
+    <pre class="language-python"><code># Gravity zones and special effects
+class GravityZone:
+    def __init__(self, rect, gravity_vector):
+        self.rect = pygame.Rect(rect)
+        self.gravity = gravity_vector
+        self.active = True
+    
+    def affects(self, position):
+        """Check if position is in zone"""
+        return self.rect.collidepoint(position)
+    
+    def apply_to(self, obj):
+        """Apply zone gravity to object"""
+        if self.active and self.affects(obj.position):
+            obj.apply_force(self.gravity * obj.mass)
+
+class AntiGravityZone(GravityZone):
+    def __init__(self, rect, strength=500):
+        super().__init__(rect, pygame.math.Vector2(0, -strength))
+        self.particles = []  # Visual effect particles
+    
+    def update(self, dt):
+        """Update visual effects"""
+        # Create floating particles
+        if random.random() < 0.1:
+            x = random.randint(self.rect.left, self.rect.right)
+            y = self.rect.bottom
+            self.particles.append({
+                'pos': pygame.math.Vector2(x, y),
+                'vel': pygame.math.Vector2(random.uniform(-20, 20), -50),
+                'life': 1.0
+            })
+        
+        # Update particles
+        for p in self.particles[:]:
+            p['pos'] += p['vel'] * dt
+            p['life'] -= dt
+            if p['life'] <= 0:
+                self.particles.remove(p)
+
+# Orbital mechanics
+class OrbitalObject:
+    def __init__(self, center, distance, speed=None):
+        self.center = center  # CelestialBody to orbit
+        self.distance = distance
+        
+        # Calculate orbital velocity if not provided
+        if speed is None:
+            self.orbital_speed = self.center.get_orbital_velocity(distance)
+        else:
+            self.orbital_speed = speed
+        
+        # Initialize position and velocity
+        self.angle = 0
+        self.position = pygame.math.Vector2(
+            center.position.x + distance,
+            center.position.y
+        )
+        self.velocity = pygame.math.Vector2(0, -self.orbital_speed)
+        self.mass = 1.0
+        
+        # Orbital parameters
+        self.semi_major_axis = distance
+        self.semi_minor_axis = distance
+        self.eccentricity = 0  # 0 = circular, >0 = elliptical
+    
+    def update_orbit(self, dt):
+        """Update using orbital mechanics"""
+        # For elliptical orbit
+        if self.eccentricity > 0:
+            # Kepler's laws
+            self.angle += self.calculate_angular_velocity() * dt
+            
+            # Calculate radius at current angle
+            r = self.semi_major_axis * (1 - self.eccentricity**2) / \
+                (1 + self.eccentricity * math.cos(self.angle))
+            
+            # Update position
+            self.position.x = self.center.position.x + r * math.cos(self.angle)
+            self.position.y = self.center.position.y + r * math.sin(self.angle)
+        
+    def calculate_angular_velocity(self):
+        """Calculate angular velocity based on Kepler's laws"""
+        # Simplified for circular orbits
+        return self.orbital_speed / self.distance
+
+# Realistic jump with gravity
+class RealisticJump:
+    def __init__(self):
+        self.gravity = 980  # Earth gravity
+        self.jump_velocity = -400  # Initial jump speed
+        self.double_jump_velocity = -300
+        self.jumps_remaining = 2
+        
+    def calculate_jump_height(self):
+        """Calculate maximum jump height"""
+        # h = v² / (2g)
+        return (self.jump_velocity ** 2) / (2 * self.gravity)
+    
+    def calculate_jump_time(self):
+        """Calculate time to reach peak"""
+        # t = v / g
+        return abs(self.jump_velocity) / self.gravity
+    
+    def calculate_jump_distance(self, horizontal_velocity):
+        """Calculate horizontal distance of jump"""
+        time_in_air = 2 * self.calculate_jump_time()
+        return horizontal_velocity * time_in_air</code></pre>
+
+    <h2>Complete Gravity Demo Game</h2>
+    
+    <pre class="language-python"><code>import pygame
+import math
+import random
+
+class GravityDemo:
+    def __init__(self):
+        pygame.init()
+        self.screen = pygame.display.set_mode((800, 600))
+        pygame.display.set_caption("Gravity Simulation Demo")
+        self.clock = pygame.time.Clock()
+        self.font = pygame.font.Font(None, 24)
+        
+        # Physics settings
+        self.gravity_strength = 980
+        self.gravity_direction = pygame.math.Vector2(0, 1)
+        
+        # Objects
+        self.player = None
+        self.objects = []
+        self.planets = []
+        self.particles = []
+        
+        # Zones
+        self.gravity_zones = []
+        
+        # Demo modes
+        self.current_mode = 'platformer'
+        self.modes = ['platformer', 'space', 'planets', 'zones']
+        
+        # Initialize demo
+        self.setup_mode()
+    
+    def setup_mode(self):
+        """Setup current demo mode"""
+        self.objects.clear()
+        self.planets.clear()
+        self.gravity_zones.clear()
+        
+        if self.current_mode == 'platformer':
+            self.setup_platformer()
+        elif self.current_mode == 'space':
+            self.setup_space()
+        elif self.current_mode == 'planets':
+            self.setup_planets()
+        elif self.current_mode == 'zones':
+            self.setup_zones()
+    
+    def setup_platformer(self):
+        """Platformer with jumping"""
+        self.player = JumpingCharacter(100, 400)
+        self.objects = [self.player]
+        
+        # Add some platforms
+        self.platforms = [
+            pygame.Rect(0, 500, 800, 100),
+            pygame.Rect(200, 400, 150, 20),
+            pygame.Rect(450, 350, 150, 20),
+            pygame.Rect(650, 300, 100, 20)
+        ]
+    
+    def setup_space(self):
+        """Zero gravity space"""
+        # Create asteroids
+        for _ in range(10):
+            obj = SpaceObject(
+                random.randint(50, 750),
+                random.randint(50, 550),
+                random.uniform(-50, 50),
+                random.uniform(-50, 50)
+            )
+            self.objects.append(obj)
+    
+    def setup_planets(self):
+        """Planetary gravity system"""
+        # Create sun
+        sun = CelestialBody(400, 300, 500)
+        self.planets.append(sun)
+        
+        # Create orbiting planets
+        for i in range(3):
+            distance = 100 + i * 50
+            planet = OrbitingBody(sun, distance)
+            self.objects.append(planet)
+        
+        # Add some asteroids
+        for _ in range(5):
+            x = random.randint(50, 750)
+            y = random.randint(50, 550)
+            vx = random.uniform(-30, 30)
+            vy = random.uniform(-30, 30)
+            asteroid = PhysicsObject(x, y, vx, vy)
+            self.objects.append(asteroid)
+    
+    def setup_zones(self):
+        """Gravity zones demo"""
+        # Normal gravity zone
+        self.gravity_zones.append(
+            GravityZone((0, 400, 200, 200), pygame.math.Vector2(0, 500))
+        )
+        
+        # Anti-gravity zone
+        self.gravity_zones.append(
+            AntiGravityZone((300, 300, 200, 300), 500)
+        )
+        
+        # Sideways gravity
+        self.gravity_zones.append(
+            GravityZone((600, 0, 200, 600), pygame.math.Vector2(-300, 0))
+        )
+        
+        # Add test objects
+        for _ in range(20):
+            obj = PhysicsObject(
+                random.randint(50, 750),
+                random.randint(50, 250),
+                0, 0
+            )
+            self.objects.append(obj)
+    
+    def handle_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_TAB:
+                    # Switch mode
+                    idx = self.modes.index(self.current_mode)
+                    self.current_mode = self.modes[(idx + 1) % len(self.modes)]
+                    self.setup_mode()
+                elif event.key == pygame.K_r:
+                    # Reset current mode
+                    self.setup_mode()
+                elif event.key == pygame.K_g:
+                    # Toggle gravity
+                    self.gravity_strength = 0 if self.gravity_strength > 0 else 980
+                
+                # Player controls
+                if self.current_mode == 'platformer' and self.player:
+                    if event.key == pygame.K_SPACE:
+                        self.player.jump()
+            
+            elif event.type == pygame.KEYUP:
+                if self.current_mode == 'platformer' and self.player:
+                    if event.key == pygame.K_SPACE:
+                        # Variable jump height
+                        if self.player.velocity.y < 0:
+                            self.player.velocity.y *= 0.5
+            
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                # Create object at mouse
+                x, y = pygame.mouse.get_pos()
+                obj = PhysicsObject(x, y, 
+                                   random.uniform(-50, 50),
+                                   random.uniform(-50, 50))
+                self.objects.append(obj)
+        
+        # Continuous input
+        keys = pygame.key.get_pressed()
+        if self.current_mode == 'platformer' and self.player:
+            self.player.handle_input(keys)
+        
+        return True
+    
+    def update(self, dt):
+        """Update physics simulation"""
+        # Update based on mode
+        if self.current_mode == 'platformer':
+            self.update_platformer(dt)
+        elif self.current_mode == 'space':
+            self.update_space(dt)
+        elif self.current_mode == 'planets':
+            self.update_planets(dt)
+        elif self.current_mode == 'zones':
+            self.update_zones(dt)
+        
+        # Update particles
+        for particle in self.particles[:]:
+            particle.update(dt)
+            if particle.lifetime <= 0:
+                self.particles.remove(particle)
+    
+    def update_platformer(self, dt):
+        """Platformer physics"""
+        for obj in self.objects:
+            # Apply gravity
+            obj.velocity.y += self.gravity_strength * dt
+            
+            # Update position
+            obj.position += obj.velocity * dt
+            
+            # Platform collision
+            for platform in self.platforms:
+                if obj.position.y + obj.radius >= platform.top and \
+                   obj.position.y - obj.radius <= platform.bottom and \
+                   obj.position.x >= platform.left and \
+                   obj.position.x <= platform.right:
+                    
+                    if obj.velocity.y > 0:  # Falling
+                        obj.position.y = platform.top - obj.radius
+                        obj.velocity.y = 0
+                        if hasattr(obj, 'on_ground'):
+                            obj.on_ground = True
+    
+    def update_space(self, dt):
+        """Zero gravity physics"""
+        for obj in self.objects:
+            # No gravity, just update position
+            obj.position += obj.velocity * dt
+            
+            # Wrap around screen
+            if obj.position.x < 0:
+                obj.position.x = 800
+            elif obj.position.x > 800:
+                obj.position.x = 0
+            
+            if obj.position.y < 0:
+                obj.position.y = 600
+            elif obj.position.y > 600:
+                obj.position.y = 0
+    
+    def update_planets(self, dt):
+        """Planetary gravity"""
+        for obj in self.objects:
+            # Apply gravity from all planets
+            obj.acceleration = pygame.math.Vector2(0, 0)
+            
+            for planet in self.planets:
+                planet.apply_gravity_to(obj)
+            
+            # Update physics
+            obj.velocity += obj.acceleration * dt
+            obj.position += obj.velocity * dt
+            
+            # Check for planet collision
+            for planet in self.planets:
+                dist = (obj.position - planet.position).length()
+                if dist < planet.radius:
+                    # Bounce off planet
+                    normal = (obj.position - planet.position).normalize()
+                    obj.position = planet.position + normal * planet.radius
+                    obj.velocity = obj.velocity.reflect(normal) * 0.5
+    
+    def update_zones(self, dt):
+        """Gravity zones physics"""
+        for obj in self.objects:
+            # Reset acceleration
+            obj.acceleration = pygame.math.Vector2(0, 0)
+            
+            # Apply zone gravity
+            in_zone = False
+            for zone in self.gravity_zones:
+                if zone.affects(obj.position):
+                    zone.apply_to(obj)
+                    in_zone = True
+                    break
+            
+            # Default gravity if not in zone
+            if not in_zone:
+                obj.acceleration.y = self.gravity_strength
+            
+            # Update physics
+            obj.velocity += obj.acceleration * dt
+            obj.position += obj.velocity * dt
+            
+            # Boundary check
+            if obj.position.y > 580:
+                obj.position.y = 580
+                obj.velocity.y *= -0.7
+        
+        # Update zone effects
+        for zone in self.gravity_zones:
+            if hasattr(zone, 'update'):
+                zone.update(dt)
+    
+    def draw(self):
+        """Draw everything"""
+        self.screen.fill((10, 10, 20))
+        
+        # Draw based on mode
+        if self.current_mode == 'platformer':
+            self.draw_platformer()
+        elif self.current_mode == 'space':
+            self.draw_space()
+        elif self.current_mode == 'planets':
+            self.draw_planets()
+        elif self.current_mode == 'zones':
+            self.draw_zones()
+        
+        # Draw objects
+        for obj in self.objects:
+            obj.draw(self.screen)
+        
+        # Draw particles
+        for particle in self.particles:
+            particle.draw(self.screen)
+        
+        # Draw UI
+        self.draw_ui()
+    
+    def draw_platformer(self):
+        """Draw platformer elements"""
+        # Draw platforms
+        for platform in self.platforms:
+            pygame.draw.rect(self.screen, (100, 100, 100), platform)
+        
+        # Draw ground
+        pygame.draw.rect(self.screen, (80, 60, 40), (0, 500, 800, 100))
+    
+    def draw_space(self):
+        """Draw space background"""
+        # Stars
+        for i in range(50):
+            x = (i * 73) % 800
+            y = (i * 37) % 600
+            pygame.draw.circle(self.screen, (255, 255, 255), (x, y), 1)
+    
+    def draw_planets(self):
+        """Draw planets"""
+        for planet in self.planets:
+            planet.draw(self.screen)
+            
+            # Draw gravity field
+            for r in range(50, 250, 50):
+                alpha = max(0, 255 - r)
+                color = (138, 43, 226, alpha)
+                pygame.draw.circle(self.screen, color,
+                                 (int(planet.position.x), int(planet.position.y)),
+                                 r, 1)
+    
+    def draw_zones(self):
+        """Draw gravity zones"""
+        for zone in self.gravity_zones:
+            # Draw zone area
+            surf = pygame.Surface((zone.rect.width, zone.rect.height), pygame.SRCALPHA)
+            
+            if isinstance(zone, AntiGravityZone):
+                surf.fill((100, 200, 255, 50))
+                # Draw particles
+                for p in zone.particles:
+                    pygame.draw.circle(self.screen, (200, 200, 255),
+                                     (int(p['pos'].x), int(p['pos'].y)), 2)
+            else:
+                # Color based on gravity direction
+                if zone.gravity.x < 0:
+                    surf.fill((255, 100, 100, 50))
+                elif zone.gravity.x > 0:
+                    surf.fill((100, 255, 100, 50))
+                else:
+                    surf.fill((100, 100, 255, 50))
+            
+            self.screen.blit(surf, zone.rect.topleft)
+            pygame.draw.rect(self.screen, (255, 255, 255), zone.rect, 2)
+    
+    def draw_ui(self):
+        """Draw user interface"""
+        texts = [
+            f"Mode: {self.current_mode.upper()} (Tab to switch)",
+            f"Gravity: {self.gravity_strength:.0f} px/s²",
+            "R: Reset | G: Toggle Gravity | Click: Add Object"
+        ]
+        
+        if self.current_mode == 'platformer':
+            texts.append("Arrow Keys: Move | Space: Jump")
+        
+        y_offset = 10
+        for text in texts:
+            rendered = self.font.render(text, True, (255, 255, 255))
+            self.screen.blit(rendered, (10, y_offset))
+            y_offset += 25
+    
+    def run(self):
+        running = True
+        dt = 0
+        
+        while running:
+            running = self.handle_events()
+            self.update(dt)
+            self.draw()
+            pygame.display.flip()
+            dt = self.clock.tick(60) / 1000.0
+        
+        pygame.quit()
+
+# Helper classes
+class PhysicsObject:
+    def __init__(self, x, y, vx=0, vy=0):
+        self.position = pygame.math.Vector2(x, y)
+        self.velocity = pygame.math.Vector2(vx, vy)
+        self.acceleration = pygame.math.Vector2(0, 0)
+        self.mass = 1.0
+        self.radius = 5
+        self.color = (random.randint(100, 255),
+                     random.randint(100, 255),
+                     random.randint(100, 255))
+    
+    def apply_force(self, force):
+        self.acceleration += force / self.mass
+    
+    def draw(self, screen):
+        pygame.draw.circle(screen, self.color,
+                         (int(self.position.x), int(self.position.y)),
+                         self.radius)
+
+class JumpingCharacter(PhysicsObject):
+    def __init__(self, x, y):
+        super().__init__(x, y)
+        self.radius = 15
+        self.color = (100, 200, 255)
+        self.on_ground = False
+        self.move_speed = 200
+        self.jump_speed = -500
+    
+    def handle_input(self, keys):
+        # Horizontal movement
+        if keys[pygame.K_LEFT]:
+            self.velocity.x = -self.move_speed
+        elif keys[pygame.K_RIGHT]:
+            self.velocity.x = self.move_speed
+        else:
+            self.velocity.x *= 0.8  # Friction
+    
+    def jump(self):
+        if self.on_ground:
+            self.velocity.y = self.jump_speed
+            self.on_ground = False
+
+if __name__ == "__main__":
+    demo = GravityDemo()
+    demo.run()</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Gravity Implementation Tips</h3>
+        <ul>
+            <li><strong>Scale Appropriately:</strong> Use values that feel good (980 px/s² ≈ Earth)</li>
+            <li><strong>Terminal Velocity:</strong> Cap fall speed for better control</li>
+            <li><strong>Jump Buffering:</strong> Allow jump input slightly before landing</li>
+            <li><strong>Coyote Time:</strong> Allow jump slightly after leaving platform</li>
+            <li><strong>Variable Jump:</strong> Different heights based on button hold time</li>
+            <li><strong>Gravity Wells:</strong> Use inverse square law for realistic planets</li>
+            <li><strong>Performance:</strong> Use spatial partitioning for many gravity sources</li>
+        </ul>
+    </div>
+
+    <h2>Practice Exercises</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎯 Gravity Challenges!</h3>
+        <ol>
+            <li><strong>Moon Jumper:</strong> Platformer with different gravity on each level</li>
+            <li><strong>Orbit Simulator:</strong> Launch satellites into stable orbits</li>
+            <li><strong>Gravity Golf:</strong> Use planets' gravity to guide ball to hole</li>
+            <li><strong>Space Station:</strong> Rotating station with centrifugal "gravity"</li>
+            <li><strong>Gravity Puzzle:</strong> Switch gravity direction to solve puzzles</li>
+            <li><strong>N-Body Problem:</strong> Multiple objects affecting each other</li>
+        </ol>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>🌍 Constant gravity works for most platformers</li>
+            <li>🚀 Point gravity creates orbital mechanics</li>
+            <li>⬆️ Jump feel depends on gravity tuning</li>
+            <li>🎮 Terminal velocity prevents uncontrollable falling</li>
+            <li>🌌 Multiple gravity sources enable complex behaviors</li>
+            <li>⚡ Gravity zones add variety to levels</li>
+            <li>📐 Use proper physics equations for realism</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you've mastered gravity, next we'll explore bounce and friction to make objects interact realistically with surfaces!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="physics_velocity_acceleration.html" class="prev-lesson" aria-label="Previous lesson: Velocity">Previous Lesson: Velocity and Acceleration</a>
+        <a href="physics_bounce_friction.html" class="next-lesson" aria-label="Next lesson: Bounce and Friction">Next Lesson: Bounce and Friction</a>
+    </nav>
+    
+    </main>
+</body>
+</html>

@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master client-server synchronization in multiplayer games. Learn state management, delta compression, priority systems, and consistency techniques.">
+    <title>Client-Server Synchronization - Networking & Multiplayer</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Client-Server Synchronization</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Intermediate Module - Section 2: Networking & Multiplayer - Lesson 3</span>
+    </nav>
+
+    <h2>Keeping Game Worlds in Sync</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Client-server synchronization ensures all players see a consistent game world! Learn state management, delta compression, interest management, priority systems, and techniques for maintaining consistency across distributed systems! 🔄🌐🎮</p>
+    </div>
+
+    <h2>Understanding Synchronization Challenges</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎭 The Orchestra Conductor Analogy</h3>
+        <p>Think of synchronization like conducting an orchestra where musicians can't hear each other:</p>
+        <ul>
+            <li><strong>State Management:</strong> The complete musical score</li>
+            <li><strong>Delta Updates:</strong> Only sending changed notes</li>
+            <li><strong>Interest Management:</strong> Musicians only need their section's music</li>
+            <li><strong>Priority Systems:</strong> Lead instruments get attention first</li>
+            <li><strong>Consistency:</strong> Everyone plays in the same key and tempo</li>
+            <li><strong>Conflict Resolution:</strong> Deciding which version is correct</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["State Synchronization"] --> B["Full State"]
+        A --> C["Delta State"]
+        A --> D["Event-Based"]
+        
+        B --> E["Initial Sync"]
+        B --> F["Periodic Refresh"]
+        
+        C --> G["Changed Values"]
+        C --> H["Compression"]
+        C --> I["Bit Packing"]
+        
+        D --> J["Action Events"]
+        D --> K["State Changes"]
+        
+        L["Interest Management"] --> M["Spatial Partitioning"]
+        L --> N["Area of Interest"]
+        L --> O["Level of Detail"]
+        
+        P["Consistency"] --> Q["Eventually Consistent"]
+        P --> R["Strong Consistency"]
+        P --> S["Conflict Resolution"]
+    </div>
+
+    <h2>Interactive Synchronization Demo</h2>
+    
+    <div class="canvas-wrapper" style="text-align: center;">
+        <canvas id="syncCanvas" width="600" height="400" style="border: 1px solid #333; background-color: #1a1a1a; display: inline-block;"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Explore different synchronization strategies and see their effects!</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; max-width: 600px; margin: 10px auto;">
+            <button onclick="addEntity()">Add Entity</button>
+            <button onclick="removeEntity()">Remove Entity</button>
+            <button onclick="toggleSyncMethod()">Toggle Sync Method</button>
+            <button onclick="toggleInterestManagement()">Interest Management</button>
+            <button onclick="toggleDeltaCompression()">Delta Compression</button>
+            <button onclick="simulateDesync()">Simulate Desync</button>
+        </div>
+        <div style="margin-top: 10px;">
+            <label>Sync Rate: <input type="range" id="syncRate" min="1" max="60" value="10" onchange="setSyncRate(this.value)"> <span id="syncRateDisplay">10 Hz</span></label>
+            <label>Bandwidth Limit: <input type="range" id="bandwidth" min="1" max="100" value="50" onchange="setBandwidth(this.value)"> <span id="bandwidthDisplay">50 KB/s</span></label>
+            <label>Entity Count: <input type="range" id="entityCount" min="0" max="100" value="10" onchange="setEntityCount(this.value)"> <span id="entityCountDisplay">10</span></label>
+        </div>
+        <div style="margin-top: 10px;">
+            <label><input type="checkbox" id="showFullState" checked> Full State</label>
+            <label><input type="checkbox" id="showDeltaState" checked> Delta State</label>
+            <label><input type="checkbox" id="showInterest" checked> Interest Zones</label>
+            <label><input type="checkbox" id="showPriority" checked> Priority Levels</label>
+        </div>
+        <div style="margin-top: 10px; background-color: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;">
+            <p style="margin: 5px;">
+                Sync Method: <span id="syncMethod">Delta</span> | 
+                Entities: <span id="totalEntities">0</span> | 
+                Visible: <span id="visibleEntities">0</span>
+            </p>
+            <p style="margin: 5px;">
+                Data Sent: <span id="dataSent">0 B</span> | 
+                Data Rate: <span id="dataRate">0 KB/s</span> | 
+                Compression: <span id="compressionRatio">1.0x</span>
+            </p>
+            <p style="margin: 5px;">
+                Updates/sec: <span id="updateRate">0</span> | 
+                Dropped: <span id="droppedUpdates">0</span> | 
+                Desync Events: <span id="desyncCount">0</span>
+            </p>
+        </div>
+        <div id="syncLog" style="margin-top: 10px; height: 80px; overflow-y: auto; border: 1px solid #333; padding: 5px; text-align: left; font-size: 11px; background-color: rgba(0,0,0,0.5); font-family: monospace;">
+            <!-- Sync log entries will appear here -->
+        </div>
+    </div>
+
+    <script>
+        console.log('Client-Server Synchronization Demo starting...');
+
+        // Entity class
+        class SyncEntity {
+            constructor(id, x, y) {
+                this.id = id;
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 100;
+                this.vy = (Math.random() - 0.5) * 100;
+                this.color = `hsl(${Math.random() * 360}, 70%, 50%)`;
+                this.size = 10 + Math.random() * 20;
+                this.priority = Math.floor(Math.random() * 3); // 0: Low, 1: Medium, 2: High
+                this.lastSync = {};
+                this.dirty = true;
+                this.visible = true;
+                this.updateFrequency = 0;
+            }
+            
+            update(dt) {
+                // Simple physics
+                this.x += this.vx * dt;
+                this.y += this.vy * dt;
+                
+                // Bounce off walls
+                if (this.x < this.size || this.x > 600 - this.size) {
+                    this.vx *= -1;
+                    this.x = Math.max(this.size, Math.min(600 - this.size, this.x));
+                }
+                if (this.y < this.size || this.y > 400 - this.size) {
+                    this.vy *= -1;
+                    this.y = Math.max(this.size, Math.min(400 - this.size, this.y));
+                }
+                
+                // Random direction changes
+                if (Math.random() < 0.01) {
+                    this.vx = (Math.random() - 0.5) * 100;
+                    this.vy = (Math.random() - 0.5) * 100;
+                    this.dirty = true;
+                }
+            }
+            
+            getState() {
+                return {
+                    id: this.id,
+                    x: Math.round(this.x),
+                    y: Math.round(this.y),
+                    vx: Math.round(this.vx),
+                    vy: Math.round(this.vy),
+                    color: this.color,
+                    size: Math.round(this.size),
+                    priority: this.priority
+                };
+            }
+            
+            getDelta() {
+                const state = this.getState();
+                const delta = {};
+                
+                // Only include changed values
+                for (const key in state) {
+                    if (state[key] !== this.lastSync[key]) {
+                        delta[key] = state[key];
+                    }
+                }
+                
+                // Always include ID
+                delta.id = this.id;
+                
+                // Update last sync
+                this.lastSync = {...state};
+                this.dirty = false;
+                
+                return delta;
+            }
+            
+            hasChanged() {
+                const state = this.getState();
+                for (const key in state) {
+                    if (state[key] !== this.lastSync[key]) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+        }
+
+        // Interest Management
+        class InterestManager {
+            constructor() {
+                this.viewRadius = 200;
+                this.zones = [];
+                this.playerX = 300;
+                this.playerY = 200;
+            }
+            
+            isInView(entity) {
+                const dx = entity.x - this.playerX;
+                const dy = entity.y - this.playerY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                return distance <= this.viewRadius;
+            }
+            
+            getPriority(entity) {
+                const dx = entity.x - this.playerX;
+                const dy = entity.y - this.playerY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                // Closer entities have higher priority
+                if (distance < 100) return 2;
+                if (distance < 200) return 1;
+                return 0;
+            }
+            
+            filterEntities(entities) {
+                return entities.filter(e => this.isInView(e));
+            }
+        }
+
+        // Synchronization Manager
+        class SyncManager {
+            constructor(canvas, ctx) {
+                this.canvas = canvas;
+                this.ctx = ctx;
+                
+                this.entities = [];
+                this.clientEntities = new Map();
+                this.syncMethod = 'delta'; // 'full', 'delta', 'event'
+                this.syncRate = 10; // Hz
+                this.bandwidthLimit = 50 * 1024; // 50 KB/s
+                
+                this.interestManager = new InterestManager();
+                this.useInterestManagement = false;
+                this.useDeltaCompression = true;
+                this.usePrioritySystem = true;
+                
+                this.stats = {
+                    dataSent: 0,
+                    dataRate: 0,
+                    updatesSent: 0,
+                    droppedUpdates: 0,
+                    desyncCount: 0,
+                    lastRateCalc: Date.now()
+                };
+                
+                this.logEntries = [];
+                
+                // Start sync loop
+                this.lastSyncTime = Date.now();
+                this.syncInterval = setInterval(() => this.syncTick(), 1000 / this.syncRate);
+                
+                // Initialize with some entities
+                for (let i = 0; i < 10; i++) {
+                    this.addEntity();
+                }
+            }
+            
+            addEntity() {
+                const entity = new SyncEntity(
+                    `entity_${Date.now()}_${Math.random()}`,
+                    Math.random() * 600,
+                    Math.random() * 400
+                );
+                this.entities.push(entity);
+                this.log(`Added entity ${entity.id}`);
+            }
+            
+            removeEntity() {
+                if (this.entities.length > 0) {
+                    const removed = this.entities.pop();
+                    this.clientEntities.delete(removed.id);
+                    this.log(`Removed entity ${removed.id}`);
+                }
+            }
+            
+            syncTick() {
+                const now = Date.now();
+                const dt = (now - this.lastSyncTime) / 1000;
+                this.lastSyncTime = now;
+                
+                // Filter entities based on interest management
+                let entitiesToSync = this.entities;
+                if (this.useInterestManagement) {
+                    entitiesToSync = this.interestManager.filterEntities(this.entities);
+                }
+                
+                // Sort by priority if enabled
+                if (this.usePrioritySystem) {
+                    entitiesToSync.sort((a, b) => b.priority - a.priority);
+                }
+                
+                // Prepare sync data
+                let syncData;
+                switch (this.syncMethod) {
+                    case 'full':
+                        syncData = this.prepareFullState(entitiesToSync);
+                        break;
+                    case 'delta':
+                        syncData = this.prepareDeltaState(entitiesToSync);
+                        break;
+                    case 'event':
+                        syncData = this.prepareEventState(entitiesToSync);
+                        break;
+                }
+                
+                // Check bandwidth limit
+                const dataSize = JSON.stringify(syncData).length;
+                const dataRate = dataSize * this.syncRate;
+                
+                if (dataRate <= this.bandwidthLimit) {
+                    // Send update
+                    this.sendUpdate(syncData);
+                    this.stats.dataSent += dataSize;
+                    this.stats.updatesSent++;
+                } else {
+                    // Drop update or reduce quality
+                    this.stats.droppedUpdates++;
+                    this.log('Update dropped: bandwidth limit exceeded');
+                }
+                
+                // Update stats
+                this.updateStats();
+            }
+            
+            prepareFullState(entities) {
+                return {
+                    type: 'full',
+                    timestamp: Date.now(),
+                    entities: entities.map(e => e.getState())
+                };
+            }
+            
+            prepareDeltaState(entities) {
+                const deltas = [];
+                
+                for (const entity of entities) {
+                    if (entity.hasChanged() || !this.clientEntities.has(entity.id)) {
+                        deltas.push(entity.getDelta());
+                    }
+                }
+                
+                return {
+                    type: 'delta',
+                    timestamp: Date.now(),
+                    deltas: deltas
+                };
+            }
+            
+            prepareEventState(entities) {
+                const events = [];
+                
+                for (const entity of entities) {
+                    if (entity.dirty) {
+                        events.push({
+                            type: 'update',
+                            entity: entity.getDelta()
+                        });
+                    }
+                }
+                
+                return {
+                    type: 'event',
+                    timestamp: Date.now(),
+                    events: events
+                };
+            }
+            
+            sendUpdate(data) {
+                // Simulate sending to client
+                // Apply compression if enabled
+                if (this.useDeltaCompression) {
+                    data = this.compress(data);
+                }
+                
+                // Simulate network delay
+                setTimeout(() => {
+                    this.receiveUpdate(data);
+                }, 50 + Math.random() * 20);
+            }
+            
+            receiveUpdate(data) {
+                // Decompress if needed
+                if (this.useDeltaCompression) {
+                    data = this.decompress(data);
+                }
+                
+                // Apply update based on type
+                switch (data.type) {
+                    case 'full':
+                        this.applyFullState(data.entities);
+                        break;
+                    case 'delta':
+                        this.applyDeltaState(data.deltas);
+                        break;
+                    case 'event':
+                        this.applyEventState(data.events);
+                        break;
+                }
+            }
+            
+            applyFullState(entities) {
+                this.clientEntities.clear();
+                for (const state of entities) {
+                    const entity = new SyncEntity(state.id, state.x, state.y);
+                    Object.assign(entity, state);
+                    this.clientEntities.set(state.id, entity);
+                }
+            }
+            
+            applyDeltaState(deltas) {
+                for (const delta of deltas) {
+                    let entity = this.clientEntities.get(delta.id);
+                    if (!entity) {
+                        entity = new SyncEntity(delta.id, 0, 0);
+                        this.clientEntities.set(delta.id, entity);
+                    }
+                    Object.assign(entity, delta);
+                }
+            }
+            
+            applyEventState(events) {
+                for (const event of events) {
+                    if (event.type === 'update') {
+                        this.applyDeltaState([event.entity]);
+                    }
+                }
+            }
+            
+            compress(data) {
+                // Simple compression simulation
+                return {
+                    compressed: true,
+                    data: data,
+                    originalSize: JSON.stringify(data).length,
+                    compressedSize: JSON.stringify(data).length * 0.7
+                };
+            }
+            
+            decompress(data) {
+                if (data.compressed) {
+                    return data.data;
+                }
+                return data;
+            }
+            
+            simulateDesync() {
+                // Randomly modify some client entities
+                for (const [id, entity] of this.clientEntities) {
+                    if (Math.random() < 0.3) {
+                        entity.x += (Math.random() - 0.5) * 100;
+                        entity.y += (Math.random() - 0.5) * 100;
+                        this.stats.desyncCount++;
+                    }
+                }
+                this.log('Desync simulated!');
+            }
+            
+            update(dt) {
+                // Update server entities
+                for (const entity of this.entities) {
+                    entity.update(dt);
+                }
+                
+                // Update interest manager position (follow mouse)
+                if (this.mouseX !== undefined) {
+                    this.interestManager.playerX = this.mouseX;
+                    this.interestManager.playerY = this.mouseY;
+                }
+            }
+            
+            draw() {
+                // Clear canvas
+                this.ctx.fillStyle = '#1a1a1a';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw grid
+                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+                this.ctx.lineWidth = 1;
+                for (let x = 0; x <= this.canvas.width; x += 50) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, 0);
+                    this.ctx.lineTo(x, this.canvas.height);
+                    this.ctx.stroke();
+                }
+                for (let y = 0; y <= this.canvas.height; y += 50) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, y);
+                    this.ctx.lineTo(this.canvas.width, y);
+                    this.ctx.stroke();
+                }
+                
+                // Draw interest zone
+                if (this.useInterestManagement && document.getElementById('showInterest').checked) {
+                    this.ctx.strokeStyle = 'rgba(255, 255, 0, 0.3)';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.beginPath();
+                    this.ctx.arc(
+                        this.interestManager.playerX,
+                        this.interestManager.playerY,
+                        this.interestManager.viewRadius,
+                        0, Math.PI * 2
+                    );
+                    this.ctx.stroke();
+                    
+                    // Draw center point
+                    this.ctx.fillStyle = '#ffff00';
+                    this.ctx.fillRect(
+                        this.interestManager.playerX - 5,
+                        this.interestManager.playerY - 5,
+                        10, 10
+                    );
+                }
+                
+                // Draw server entities (true state)
+                if (document.getElementById('showFullState').checked) {
+                    for (const entity of this.entities) {
+                        const inView = !this.useInterestManagement || 
+                                      this.interestManager.isInView(entity);
+                        
+                        this.ctx.globalAlpha = inView ? 0.3 : 0.1;
+                        this.ctx.fillStyle = entity.color;
+                        this.ctx.beginPath();
+                        this.ctx.arc(entity.x, entity.y, entity.size, 0, Math.PI * 2);
+                        this.ctx.fill();
+                        
+                        // Priority indicator
+                        if (document.getElementById('showPriority').checked) {
+                            this.ctx.globalAlpha = 1;
+                            this.ctx.fillStyle = ['#666', '#ff0', '#0f0'][entity.priority];
+                            this.ctx.fillRect(entity.x - 2, entity.y - entity.size - 10, 4, 4);
+                        }
+                    }
+                }
+                
+                // Draw client entities (synced state)
+                if (document.getElementById('showDeltaState').checked) {
+                    this.ctx.globalAlpha = 1;
+                    for (const [id, entity] of this.clientEntities) {
+                        this.ctx.strokeStyle = entity.color;
+                        this.ctx.lineWidth = 2;
+                        this.ctx.beginPath();
+                        this.ctx.arc(entity.x, entity.y, entity.size, 0, Math.PI * 2);
+                        this.ctx.stroke();
+                        
+                        // Show sync status
+                        const serverEntity = this.entities.find(e => e.id === id);
+                        if (serverEntity) {
+                            const dx = Math.abs(entity.x - serverEntity.x);
+                            const dy = Math.abs(entity.y - serverEntity.y);
+                            const error = Math.sqrt(dx * dx + dy * dy);
+                            
+                            if (error > 5) {
+                                // Draw error line
+                                this.ctx.strokeStyle = 'rgba(255, 0, 0, 0.3)';
+                                this.ctx.lineWidth = 1;
+                                this.ctx.beginPath();
+                                this.ctx.moveTo(entity.x, entity.y);
+                                this.ctx.lineTo(serverEntity.x, serverEntity.y);
+                                this.ctx.stroke();
+                            }
+                        }
+                    }
+                }
+                
+                // Draw stats overlay
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.font = '12px Arial';
+                this.ctx.textAlign = 'left';
+                this.ctx.fillText(`Sync: ${this.syncMethod}`, 10, 20);
+                this.ctx.fillText(`Rate: ${this.syncRate} Hz`, 10, 35);
+                
+                this.ctx.globalAlpha = 1;
+            }
+            
+            updateStats() {
+                const now = Date.now();
+                const elapsed = (now - this.stats.lastRateCalc) / 1000;
+                
+                if (elapsed >= 1) {
+                    this.stats.dataRate = this.stats.dataSent / elapsed;
+                    this.stats.dataSent = 0;
+                    this.stats.lastRateCalc = now;
+                }
+                
+                // Update UI
+                document.getElementById('syncMethod').textContent = this.syncMethod;
+                document.getElementById('totalEntities').textContent = this.entities.length;
+                document.getElementById('visibleEntities').textContent = 
+                    this.useInterestManagement ? 
+                    this.entities.filter(e => this.interestManager.isInView(e)).length : 
+                    this.entities.length;
+                
+                document.getElementById('dataSent').textContent = 
+                    this.formatBytes(this.stats.dataSent);
+                document.getElementById('dataRate').textContent = 
+                    this.formatBytes(this.stats.dataRate) + '/s';
+                document.getElementById('compressionRatio').textContent = 
+                    this.useDeltaCompression ? '1.4x' : '1.0x';
+                
+                document.getElementById('updateRate').textContent = this.syncRate;
+                document.getElementById('droppedUpdates').textContent = this.stats.droppedUpdates;
+                document.getElementById('desyncCount').textContent = this.stats.desyncCount;
+            }
+            
+            formatBytes(bytes) {
+                if (bytes < 1024) return bytes + ' B';
+                if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+                return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+            }
+            
+            log(message) {
+                const timestamp = new Date().toLocaleTimeString();
+                this.logEntries.unshift(`[${timestamp}] ${message}`);
+                if (this.logEntries.length > 8) {
+                    this.logEntries.pop();
+                }
+                
+                const logDiv = document.getElementById('syncLog');
+                if (logDiv) {
+                    logDiv.innerHTML = this.logEntries.join('<br>');
+                }
+            }
+            
+            setSyncRate(rate) {
+                this.syncRate = rate;
+                clearInterval(this.syncInterval);
+                this.syncInterval = setInterval(() => this.syncTick(), 1000 / this.syncRate);
+                this.log(`Sync rate changed to ${rate} Hz`);
+            }
+        }
+
+        // Initialize
+        const syncCanvas = document.getElementById('syncCanvas');
+        const ctx = syncCanvas.getContext('2d');
+        const syncManager = new SyncManager(syncCanvas, ctx);
+
+        // Mouse tracking for interest management
+        syncCanvas.addEventListener('mousemove', (e) => {
+            const rect = syncCanvas.getBoundingClientRect();
+            syncManager.mouseX = e.clientX - rect.left;
+            syncManager.mouseY = e.clientY - rect.top;
+        });
+
+        // Control functions
+        window.addEntity = () => syncManager.addEntity();
+        window.removeEntity = () => syncManager.removeEntity();
+        window.simulateDesync = () => syncManager.simulateDesync();
+
+        window.toggleSyncMethod = function() {
+            const methods = ['full', 'delta', 'event'];
+            const currentIndex = methods.indexOf(syncManager.syncMethod);
+            syncManager.syncMethod = methods[(currentIndex + 1) % methods.length];
+            syncManager.log(`Sync method changed to ${syncManager.syncMethod}`);
+        };
+
+        window.toggleInterestManagement = function() {
+            syncManager.useInterestManagement = !syncManager.useInterestManagement;
+            syncManager.log(`Interest management ${syncManager.useInterestManagement ? 'enabled' : 'disabled'}`);
+        };
+
+        window.toggleDeltaCompression = function() {
+            syncManager.useDeltaCompression = !syncManager.useDeltaCompression;
+            syncManager.log(`Delta compression ${syncManager.useDeltaCompression ? 'enabled' : 'disabled'}`);
+        };
+
+        window.setSyncRate = function(value) {
+            syncManager.setSyncRate(parseInt(value));
+            document.getElementById('syncRateDisplay').textContent = value + ' Hz';
+        };
+
+        window.setBandwidth = function(value) {
+            syncManager.bandwidthLimit = parseInt(value) * 1024;
+            document.getElementById('bandwidthDisplay').textContent = value + ' KB/s';
+        };
+
+        window.setEntityCount = function(value) {
+            const target = parseInt(value);
+            while (syncManager.entities.length < target) {
+                syncManager.addEntity();
+            }
+            while (syncManager.entities.length > target) {
+                syncManager.removeEntity();
+            }
+            document.getElementById('entityCountDisplay').textContent = value;
+        };
+
+        // Animation loop
+        let lastTime = performance.now();
+        function animate(currentTime) {
+            const dt = (currentTime - lastTime) / 1000;
+            lastTime = currentTime;
+            
+            syncManager.update(dt);
+            syncManager.draw();
+            
+            requestAnimationFrame(animate);
+        }
+
+        animate(performance.now());
+
+        console.log('Client-Server Synchronization Demo initialized!');
+    </script>
+
+    <h2>State Management Implementation</h2>
+    
+    <pre class="language-python"><code>import time
+import json
+import hashlib
+from typing import Dict, List, Set, Optional
+from dataclasses import dataclass, field
+from enum import Enum
+
+class SyncMethod(Enum):
+    """Synchronization methods"""
+    FULL_STATE = "full"
+    DELTA_STATE = "delta"
+    EVENT_BASED = "event"
+
+@dataclass
+class EntityState:
+    """Entity state for synchronization"""
+    id: str
+    x: float
+    y: float
+    rotation: float = 0
+    velocity_x: float = 0
+    velocity_y: float = 0
+    health: int = 100
+    state: str = "idle"
+    last_modified: float = 0
+    version: int = 0
+    
+    def to_dict(self) -> Dict:
+        """Convert to dictionary"""
+        return {
+            'id': self.id,
+            'x': self.x,
+            'y': self.y,
+            'rotation': self.rotation,
+            'vx': self.velocity_x,
+            'vy': self.velocity_y,
+            'health': self.health,
+            'state': self.state,
+            'version': self.version
+        }
+    
+    def get_delta(self, previous: 'EntityState') -> Dict:
+        """Get delta from previous state"""
+        delta = {'id': self.id}
+        
+        current = self.to_dict()
+        prev = previous.to_dict() if previous else {}
+        
+        for key, value in current.items():
+            if key != 'id' and value != prev.get(key):
+                delta[key] = value
+        
+        return delta if len(delta) > 1 else None
+
+class StateManager:
+    """Manages game state synchronization"""
+    def __init__(self, sync_method: SyncMethod = SyncMethod.DELTA_STATE):
+        self.sync_method = sync_method
+        self.entities: Dict[str, EntityState] = {}
+        self.state_history: List[Dict] = []
+        self.client_states: Dict[str, Dict[str, EntityState]] = {}
+        self.state_version = 0
+        
+    def update_entity(self, entity_id: str, **kwargs):
+        """Update entity state"""
+        if entity_id not in self.entities:
+            self.entities[entity_id] = EntityState(id=entity_id, x=0, y=0)
+        
+        entity = self.entities[entity_id]
+        for key, value in kwargs.items():
+            if hasattr(entity, key):
+                setattr(entity, key, value)
+        
+        entity.last_modified = time.time()
+        entity.version += 1
+        self.state_version += 1
+    
+    def get_full_state(self) -> Dict:
+        """Get complete world state"""
+        return {
+            'type': 'full',
+            'version': self.state_version,
+            'timestamp': time.time(),
+            'entities': {
+                eid: entity.to_dict() 
+                for eid, entity in self.entities.items()
+            }
+        }
+    
+    def get_delta_state(self, client_id: str) -> Dict:
+        """Get delta state for specific client"""
+        if client_id not in self.client_states:
+            # First sync - send full state
+            self.client_states[client_id] = {}
+            return self.get_full_state()
+        
+        client_state = self.client_states[client_id]
+        deltas = {}
+        
+        # Find changed entities
+        for entity_id, entity in self.entities.items():
+            prev_entity = client_state.get(entity_id)
+            
+            if not prev_entity or entity.version != prev_entity.version:
+                delta = entity.get_delta(prev_entity)
+                if delta:
+                    deltas[entity_id] = delta
+        
+        # Find removed entities
+        removed = []
+        for entity_id in client_state:
+            if entity_id not in self.entities:
+                removed.append(entity_id)
+        
+        # Update client state
+        self.client_states[client_id] = {
+            eid: entity for eid, entity in self.entities.items()
+        }
+        
+        return {
+            'type': 'delta',
+            'version': self.state_version,
+            'timestamp': time.time(),
+            'deltas': deltas,
+            'removed': removed
+        }
+    
+    def get_event_updates(self, since_version: int) -> List[Dict]:
+        """Get event-based updates since version"""
+        events = []
+        
+        for entity_id, entity in self.entities.items():
+            if entity.version > since_version:
+                events.append({
+                    'type': 'entity_update',
+                    'entity_id': entity_id,
+                    'data': entity.to_dict(),
+                    'version': entity.version
+                })
+        
+        return {
+            'type': 'events',
+            'version': self.state_version,
+            'timestamp': time.time(),
+            'events': events
+        }</code></pre>
+
+    <h2>Interest Management & Spatial Partitioning</h2>
+    
+    <pre class="language-python"><code># Interest management for bandwidth optimization
+import math
+from typing import Tuple
+
+class InterestManagement:
+    """Manage entity visibility based on interest"""
+    def __init__(self, view_distance: float = 500):
+        self.view_distance = view_distance
+        self.grid_size = 100  # Spatial grid cell size
+        self.spatial_grid: Dict[Tuple[int, int], Set[str]] = {}
+        self.entity_cells: Dict[str, Tuple[int, int]] = {}
+        
+    def update_entity_position(self, entity_id: str, x: float, y: float):
+        """Update entity's spatial grid position"""
+        new_cell = self.get_cell(x, y)
+        old_cell = self.entity_cells.get(entity_id)
+        
+        if old_cell != new_cell:
+            # Remove from old cell
+            if old_cell and old_cell in self.spatial_grid:
+                self.spatial_grid[old_cell].discard(entity_id)
+                if not self.spatial_grid[old_cell]:
+                    del self.spatial_grid[old_cell]
+            
+            # Add to new cell
+            if new_cell not in self.spatial_grid:
+                self.spatial_grid[new_cell] = set()
+            self.spatial_grid[new_cell].add(entity_id)
+            self.entity_cells[entity_id] = new_cell
+    
+    def get_cell(self, x: float, y: float) -> Tuple[int, int]:
+        """Get grid cell for position"""
+        return (
+            int(x // self.grid_size),
+            int(y // self.grid_size)
+        )
+    
+    def get_visible_entities(self, observer_id: str, observer_pos: Tuple[float, float]) -> Set[str]:
+        """Get entities visible to observer"""
+        visible = set()
+        observer_x, observer_y = observer_pos
+        observer_cell = self.get_cell(observer_x, observer_y)
+        
+        # Check surrounding cells
+        cells_to_check = int(self.view_distance / self.grid_size) + 1
+        
+        for dx in range(-cells_to_check, cells_to_check + 1):
+            for dy in range(-cells_to_check, cells_to_check + 1):
+                cell = (observer_cell[0] + dx, observer_cell[1] + dy)
+                if cell in self.spatial_grid:
+                    # Check each entity in cell
+                    for entity_id in self.spatial_grid[cell]:
+                        if entity_id != observer_id:
+                            # Could add distance check here
+                            visible.add(entity_id)
+        
+        return visible
+    
+    def get_priority(self, observer_pos: Tuple[float, float], 
+                    entity_pos: Tuple[float, float]) -> int:
+        """Get update priority based on distance"""
+        dx = observer_pos[0] - entity_pos[0]
+        dy = observer_pos[1] - entity_pos[1]
+        distance = math.sqrt(dx * dx + dy * dy)
+        
+        if distance < 100:
+            return 3  # High priority
+        elif distance < 300:
+            return 2  # Medium priority
+        elif distance < 500:
+            return 1  # Low priority
+        else:
+            return 0  # Out of range
+
+# Priority-based update system
+class PriorityUpdateManager:
+    """Manage updates based on priority"""
+    def __init__(self, bandwidth_limit: int = 50000):  # bytes/sec
+        self.bandwidth_limit = bandwidth_limit
+        self.bandwidth_used = 0
+        self.last_reset = time.time()
+        
+    def prioritize_updates(self, updates: List[Dict]) -> List[Dict]:
+        """Sort and filter updates by priority"""
+        # Sort by priority (highest first)
+        updates.sort(key=lambda x: x.get('priority', 0), reverse=True)
+        
+        # Reset bandwidth counter if needed
+        now = time.time()
+        if now - self.last_reset >= 1.0:
+            self.bandwidth_used = 0
+            self.last_reset = now
+        
+        # Filter based on bandwidth
+        filtered = []
+        for update in updates:
+            size = len(json.dumps(update))
+            if self.bandwidth_used + size <= self.bandwidth_limit:
+                filtered.append(update)
+                self.bandwidth_used += size
+            else:
+                break  # Bandwidth limit reached
+        
+        return filtered</code></pre>
+
+    <h2>Delta Compression & Optimization</h2>
+    
+    <pre class="language-python"><code># Delta compression and bit packing
+import struct
+import zlib
+
+class DeltaCompression:
+    """Compress state updates efficiently"""
+    
+    @staticmethod
+    def compress_position(x: float, y: float, precision: int = 2) -> bytes:
+        """Compress position to bytes"""
+        # Quantize to reduce precision
+        x_int = int(x * (10 ** precision))
+        y_int = int(y * (10 ** precision))
+        
+        # Pack as 2 shorts (2 bytes each)
+        return struct.pack('!hh', x_int, y_int)
+    
+    @staticmethod
+    def decompress_position(data: bytes, precision: int = 2) -> Tuple[float, float]:
+        """Decompress position from bytes"""
+        x_int, y_int = struct.unpack('!hh', data)
+        return (
+            x_int / (10 ** precision),
+            y_int / (10 ** precision)
+        )
+    
+    @staticmethod
+    def pack_entity_state(entity: EntityState) -> bytes:
+        """Pack entity state efficiently"""
+        # Create bit field for boolean/enum values
+        flags = 0
+        if entity.state == "idle":
+            flags |= 0
+        elif entity.state == "moving":
+            flags |= 1
+        elif entity.state == "attacking":
+            flags |= 2
+        
+        # Pack data
+        packed = struct.pack(
+            '!16s'  # ID (16 bytes)
+            'ff'    # Position (8 bytes)
+            'f'     # Rotation (4 bytes)
+            'ff'    # Velocity (8 bytes)
+            'B'     # Health (1 byte)
+            'B'     # Flags (1 byte)
+            'I',    # Version (4 bytes)
+            entity.id.encode('utf-8')[:16].ljust(16, b'\0'),
+            entity.x, entity.y,
+            entity.rotation,
+            entity.velocity_x, entity.velocity_y,
+            min(255, max(0, entity.health)),
+            flags,
+            entity.version
+        )
+        
+        return packed
+    
+    @staticmethod
+    def unpack_entity_state(data: bytes) -> EntityState:
+        """Unpack entity state from bytes"""
+        unpacked = struct.unpack('!16sfffff2BI', data)
+        
+        entity_id = unpacked[0].decode('utf-8').rstrip('\0')
+        x, y = unpacked[1], unpacked[2]
+        rotation = unpacked[3]
+        velocity_x, velocity_y = unpacked[4], unpacked[5]
+        health = unpacked[6]
+        flags = unpacked[7]
+        version = unpacked[8]
+        
+        # Decode state from flags
+        state = "idle"
+        if flags & 3 == 1:
+            state = "moving"
+        elif flags & 3 == 2:
+            state = "attacking"
+        
+        return EntityState(
+            id=entity_id,
+            x=x, y=y,
+            rotation=rotation,
+            velocity_x=velocity_x,
+            velocity_y=velocity_y,
+            health=health,
+            state=state,
+            version=version
+        )
+    
+    @staticmethod
+    def compress_snapshot(snapshot: Dict) -> bytes:
+        """Compress entire snapshot"""
+        json_data = json.dumps(snapshot)
+        return zlib.compress(json_data.encode('utf-8'), level=6)
+    
+    @staticmethod
+    def decompress_snapshot(data: bytes) -> Dict:
+        """Decompress snapshot"""
+        json_data = zlib.decompress(data).decode('utf-8')
+        return json.loads(json_data)
+
+# Reliable UDP with acknowledgments
+class ReliableUDP:
+    """Implement reliability over UDP"""
+    def __init__(self):
+        self.sequence = 0
+        self.pending_acks: Dict[int, Dict] = {}
+        self.received_sequences: Set[int] = set()
+        self.ack_timeout = 1.0  # seconds
+        
+    def send_reliable(self, data: Dict, critical: bool = False) -> int:
+        """Send data reliably"""
+        seq = self.sequence
+        self.sequence += 1
+        
+        packet = {
+            'seq': seq,
+            'data': data,
+            'timestamp': time.time(),
+            'critical': critical
+        }
+        
+        if critical:
+            # Store for retransmission
+            self.pending_acks[seq] = packet
+        
+        return seq
+    
+    def receive_packet(self, packet: Dict) -> Optional[Dict]:
+        """Receive and acknowledge packet"""
+        seq = packet.get('seq')
+        
+        # Check for duplicate
+        if seq in self.received_sequences:
+            return None
+        
+        self.received_sequences.add(seq)
+        
+        # Send ACK if critical
+        if packet.get('critical'):
+            self.send_ack(seq)
+        
+        return packet.get('data')
+    
+    def send_ack(self, seq: int):
+        """Send acknowledgment"""
+        # Implementation would send ACK packet
+        pass
+    
+    def receive_ack(self, seq: int):
+        """Process received ACK"""
+        if seq in self.pending_acks:
+            del self.pending_acks[seq]
+    
+    def check_retransmissions(self):
+        """Check for packets needing retransmission"""
+        now = time.time()
+        to_retransmit = []
+        
+        for seq, packet in self.pending_acks.items():
+            if now - packet['timestamp'] > self.ack_timeout:
+                to_retransmit.append(packet)
+        
+        return to_retransmit</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Synchronization Tips</h3>
+        <ul>
+            <li><strong>Delta Updates:</strong> Send only changed values</li>
+            <li><strong>Interest Management:</strong> Update only visible entities</li>
+            <li><strong>Priority Systems:</strong> Important updates first</li>
+            <li><strong>Compression:</strong> Reduce bandwidth usage</li>
+            <li><strong>Reliable Delivery:</strong> Critical updates must arrive</li>
+            <li><strong>Snapshot Interpolation:</strong> Smooth between updates</li>
+            <li><strong>State Validation:</strong> Verify consistency</li>
+            <li><strong>Adaptive Quality:</strong> Adjust to network conditions</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>🔄 Synchronization keeps game worlds consistent</li>
+            <li>📊 Delta compression reduces bandwidth usage</li>
+            <li>👁️ Interest management optimizes visibility</li>
+            <li>⚡ Priority systems ensure important updates</li>
+            <li>🗜️ Compression techniques save bandwidth</li>
+            <li>🎯 Spatial partitioning improves performance</li>
+            <li>✅ Reliability layers ensure delivery</li>
+            <li>🔧 Multiple strategies work together</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you understand synchronization strategies, next we'll explore lag compensation techniques - ensuring fair gameplay despite network delays!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="networking_realtime_multiplayer.html" class="prev-lesson" aria-label="Previous lesson: Real-time Multiplayer">Previous Lesson: Real-time Multiplayer</a>
+        <a href="networking_lag_compensation.html" class="next-lesson" aria-label="Next lesson: Lag Compensation">Next Lesson: Lag Compensation</a>
+    </nav>
+    
+    </main>
+    <script src="/js/course-enhancements.js" defer></script>
+</body>
+</html>

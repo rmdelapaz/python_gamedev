@@ -1,0 +1,1512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master flocking and swarm behaviors for game AI. Learn boids algorithm, emergent behaviors, and creating realistic group movements.">
+    <title>Flocking/Swarm Behavior - AI for Games</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Flocking/Swarm Behavior</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Intermediate Module - Section 3: AI for Games - Lesson 4</span>
+    </nav>
+
+    <h2>Emergent Group Behaviors</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Create mesmerizing swarm behaviors with simple rules! Learn Craig Reynolds' boids algorithm, steering behaviors, and how separation, alignment, and cohesion create lifelike flocking patterns! 🐦🐟🦋</p>
+    </div>
+
+    <h2>Understanding Flocking</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🐦 The Bird Flock Analogy</h3>
+        <p>Think of flocking like a murmuration of starlings:</p>
+        <ul>
+            <li><strong>Separation:</strong> Don't crash into neighbors</li>
+            <li><strong>Alignment:</strong> Fly in the same direction as neighbors</li>
+            <li><strong>Cohesion:</strong> Stay close to the group</li>
+            <li><strong>Avoidance:</strong> Dodge obstacles</li>
+            <li><strong>Goal Seeking:</strong> Head towards objectives</li>
+            <li><strong>Emergent Patterns:</strong> Complex behaviors from simple rules</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Flocking System"] --> B["Core Rules"]
+        A --> C["Steering Behaviors"]
+        A --> D["Advanced Features"]
+        
+        B --> E["Separation"]
+        B --> F["Alignment"]
+        B --> G["Cohesion"]
+        
+        C --> H["Seek/Flee"]
+        C --> I["Arrive"]
+        C --> J["Wander"]
+        
+        D --> K["Obstacle Avoidance"]
+        D --> L["Leader Following"]
+        D --> M["Predator/Prey"]
+    </div>
+
+    <h2>Interactive Flocking Demo</h2>
+    
+    <div class="canvas-wrapper" style="text-align: center;">
+        <canvas id="flockingCanvas" width="600" height="400" style="border: 1px solid #333; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: inline-block;"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Click to attract boids, right-click to repel! Watch emergent behaviors form!</p>
+        
+        <!-- Swarm Types -->
+        <div style="margin: 10px auto; padding: 10px; background-color: rgba(0,0,0,0.3); border-radius: 5px; max-width: 600px;">
+            <p style="color: white; margin: 5px;">Spawn Swarms:</p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 5px;">
+                <button onclick="spawnSwarm('birds')" class="swarm-btn">🐦 Birds</button>
+                <button onclick="spawnSwarm('fish')" class="swarm-btn">🐟 Fish</button>
+                <button onclick="spawnSwarm('bees')" class="swarm-btn">🐝 Bees</button>
+                <button onclick="spawnSwarm('butterflies')" class="swarm-btn">🦋 Butterflies</button>
+                <button onclick="spawnSwarm('fireflies')" class="swarm-btn">✨ Fireflies</button>
+                <button onclick="spawnSwarm('bats')" class="swarm-btn">🦇 Bats</button>
+            </div>
+        </div>
+        
+        <!-- Controls -->
+        <div style="margin-top: 10px;">
+            <button onclick="clearBoids()">Clear All</button>
+            <button onclick="addObstacle()">Add Obstacle</button>
+            <button onclick="addPredator()">Add Predator</button>
+            <button onclick="addFood()">Add Food</button>
+            <button onclick="toggleWind()">Toggle Wind</button>
+            <button onclick="toggleTrails()">Toggle Trails</button>
+            <button onclick="pauseSimulation()" id="pauseBtn">⏸️ Pause</button>
+            <button onclick="resetDemo()">Reset Demo</button>
+        </div>
+        
+        <!-- Behavior Settings -->
+        <div style="margin-top: 10px;">
+            <label>Separation: <input type="range" id="separation" min="0" max="5" step="0.1" value="1.5" onchange="updateForce('separation', this.value)"> <span id="separationDisplay">1.5</span></label>
+            <label>Alignment: <input type="range" id="alignment" min="0" max="5" step="0.1" value="1.0" onchange="updateForce('alignment', this.value)"> <span id="alignmentDisplay">1.0</span></label>
+        </div>
+        <div style="margin-top: 10px;">
+            <label>Cohesion: <input type="range" id="cohesion" min="0" max="5" step="0.1" value="1.0" onchange="updateForce('cohesion', this.value)"> <span id="cohesionDisplay">1.0</span></label>
+            <label>Max Speed: <input type="range" id="maxSpeed" min="50" max="300" value="150" onchange="updateMaxSpeed(this.value)"> <span id="maxSpeedDisplay">150</span></label>
+        </div>
+        <div style="margin-top: 10px;">
+            <label>Vision Range: <input type="range" id="visionRange" min="20" max="150" value="50" onchange="updateVisionRange(this.value)"> <span id="visionRangeDisplay">50</span></label>
+            <label>Vision Angle: <input type="range" id="visionAngle" min="90" max="360" value="270" onchange="updateVisionAngle(this.value)"> <span id="visionAngleDisplay">270°</span></label>
+        </div>
+        
+        <!-- Visual Options -->
+        <div style="margin-top: 10px;">
+            <label><input type="checkbox" id="showVision"> Show Vision</label>
+            <label><input type="checkbox" id="showVelocity" checked> Show Velocity</label>
+            <label><input type="checkbox" id="showForces"> Show Forces</label>
+            <label><input type="checkbox" id="showNeighbors"> Show Neighbors</label>
+            <label><input type="checkbox" id="debugMode"> Debug Mode</label>
+        </div>
+        
+        <!-- Presets -->
+        <div style="margin-top: 10px;">
+            <button onclick="loadPreset('realistic')">🎯 Realistic</button>
+            <button onclick="loadPreset('tight')">🎱 Tight Flocking</button>
+            <button onclick="loadPreset('loose')">☁️ Loose Flocking</button>
+            <button onclick="loadPreset('chaotic')">🌪️ Chaotic</button>
+            <button onclick="loadPreset('vortex')">🌀 Vortex</button>
+            <button onclick="loadPreset('migration')">🗺️ Migration</button>
+        </div>
+        
+        <!-- Statistics -->
+        <div style="margin-top: 10px; background-color: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;">
+            <p style="margin: 5px; color: white;">
+                Boids: <span id="boidCount">0</span> | 
+                Avg Speed: <span id="avgSpeed">0</span> | 
+                Obstacles: <span id="obstacleCount">0</span> | 
+                Predators: <span id="predatorCount">0</span>
+            </p>
+            <p style="margin: 5px; color: white;">
+                FPS: <span id="fps">60</span> | 
+                Collisions Avoided: <span id="collisions">0</span> | 
+                Groups Formed: <span id="groups">0</span>
+            </p>
+        </div>
+    </div>
+
+    <style>
+        .swarm-btn {
+            padding: 8px;
+            border: 2px solid transparent;
+            background-color: #555;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        .swarm-btn:hover {
+            background-color: #666;
+        }
+    </style>
+
+    <script>
+        console.log('Flocking Behavior Demo starting...');
+
+        // Vector helper class
+        class Vector2D {
+            constructor(x = 0, y = 0) {
+                this.x = x;
+                this.y = y;
+            }
+            
+            add(v) {
+                return new Vector2D(this.x + v.x, this.y + v.y);
+            }
+            
+            subtract(v) {
+                return new Vector2D(this.x - v.x, this.y - v.y);
+            }
+            
+            multiply(scalar) {
+                return new Vector2D(this.x * scalar, this.y * scalar);
+            }
+            
+            divide(scalar) {
+                if (scalar !== 0) {
+                    return new Vector2D(this.x / scalar, this.y / scalar);
+                }
+                return new Vector2D(0, 0);
+            }
+            
+            magnitude() {
+                return Math.sqrt(this.x * this.x + this.y * this.y);
+            }
+            
+            normalize() {
+                const mag = this.magnitude();
+                if (mag > 0) {
+                    return this.divide(mag);
+                }
+                return new Vector2D(0, 0);
+            }
+            
+            limit(max) {
+                if (this.magnitude() > max) {
+                    return this.normalize().multiply(max);
+                }
+                return this;
+            }
+            
+            distance(v) {
+                const dx = this.x - v.x;
+                const dy = this.y - v.y;
+                return Math.sqrt(dx * dx + dy * dy);
+            }
+            
+            angle() {
+                return Math.atan2(this.y, this.x);
+            }
+            
+            static random(maxX, maxY) {
+                return new Vector2D(
+                    Math.random() * maxX,
+                    Math.random() * maxY
+                );
+            }
+        }
+
+        // Boid class
+        class Boid {
+            constructor(x, y, type = 'bird') {
+                this.position = new Vector2D(x, y);
+                this.velocity = new Vector2D(
+                    Math.random() * 2 - 1,
+                    Math.random() * 2 - 1
+                );
+                this.acceleration = new Vector2D(0, 0);
+                
+                this.type = type;
+                this.maxSpeed = 150;
+                this.maxForce = 0.2;
+                this.size = this.getSizeForType();
+                
+                // Vision parameters
+                this.visionRange = 50;
+                this.visionAngle = 270 * Math.PI / 180;
+                
+                // Force weights
+                this.separationWeight = 1.5;
+                this.alignmentWeight = 1.0;
+                this.cohesionWeight = 1.0;
+                
+                // Visual
+                this.color = this.getColorForType();
+                this.trail = [];
+                this.maxTrailLength = 10;
+                
+                // Debug
+                this.neighbors = [];
+                this.separationForce = new Vector2D(0, 0);
+                this.alignmentForce = new Vector2D(0, 0);
+                this.cohesionForce = new Vector2D(0, 0);
+            }
+            
+            getSizeForType() {
+                const sizes = {
+                    'bird': 6,
+                    'fish': 8,
+                    'bee': 4,
+                    'butterfly': 7,
+                    'firefly': 3,
+                    'bat': 5
+                };
+                return sizes[this.type] || 5;
+            }
+            
+            getColorForType() {
+                const colors = {
+                    'bird': '#4CAF50',
+                    'fish': '#2196F3',
+                    'bee': '#FFD700',
+                    'butterfly': '#E91E63',
+                    'firefly': '#FFFF00',
+                    'bat': '#9C27B0'
+                };
+                return colors[this.type] || '#FFFFFF';
+            }
+            
+            flock(boids) {
+                // Find neighbors
+                this.neighbors = [];
+                for (const other of boids) {
+                    if (other === this) continue;
+                    
+                    const distance = this.position.distance(other.position);
+                    
+                    if (distance < this.visionRange && this.canSee(other)) {
+                        this.neighbors.push(other);
+                    }
+                }
+                
+                // Calculate forces
+                this.separationForce = this.separation(this.neighbors);
+                this.alignmentForce = this.alignment(this.neighbors);
+                this.cohesionForce = this.cohesion(this.neighbors);
+                
+                // Apply forces
+                this.acceleration = this.acceleration.add(
+                    this.separationForce.multiply(this.separationWeight)
+                );
+                this.acceleration = this.acceleration.add(
+                    this.alignmentForce.multiply(this.alignmentWeight)
+                );
+                this.acceleration = this.acceleration.add(
+                    this.cohesionForce.multiply(this.cohesionWeight)
+                );
+            }
+            
+            canSee(other) {
+                const toOther = other.position.subtract(this.position);
+                const angle = Math.atan2(toOther.y, toOther.x);
+                const myAngle = this.velocity.angle();
+                
+                let angleDiff = Math.abs(angle - myAngle);
+                if (angleDiff > Math.PI) {
+                    angleDiff = 2 * Math.PI - angleDiff;
+                }
+                
+                return angleDiff < this.visionAngle / 2;
+            }
+            
+            separation(neighbors) {
+                const desiredSeparation = 25;
+                const steer = new Vector2D(0, 0);
+                let count = 0;
+                
+                for (const other of neighbors) {
+                    const distance = this.position.distance(other.position);
+                    
+                    if (distance > 0 && distance < desiredSeparation) {
+                        const diff = this.position.subtract(other.position);
+                        const normalized = diff.normalize().divide(distance);
+                        steer.x += normalized.x;
+                        steer.y += normalized.y;
+                        count++;
+                    }
+                }
+                
+                if (count > 0) {
+                    const averaged = steer.divide(count);
+                    
+                    if (averaged.magnitude() > 0) {
+                        const normalized = averaged.normalize().multiply(this.maxSpeed);
+                        const steering = normalized.subtract(this.velocity);
+                        return steering.limit(this.maxForce);
+                    }
+                }
+                
+                return new Vector2D(0, 0);
+            }
+            
+            alignment(neighbors) {
+                const steer = new Vector2D(0, 0);
+                let count = 0;
+                
+                for (const other of neighbors) {
+                    steer.x += other.velocity.x;
+                    steer.y += other.velocity.y;
+                    count++;
+                }
+                
+                if (count > 0) {
+                    const averaged = steer.divide(count);
+                    const normalized = averaged.normalize().multiply(this.maxSpeed);
+                    const steering = normalized.subtract(this.velocity);
+                    return steering.limit(this.maxForce);
+                }
+                
+                return new Vector2D(0, 0);
+            }
+            
+            cohesion(neighbors) {
+                const steer = new Vector2D(0, 0);
+                let count = 0;
+                
+                for (const other of neighbors) {
+                    steer.x += other.position.x;
+                    steer.y += other.position.y;
+                    count++;
+                }
+                
+                if (count > 0) {
+                    const averaged = steer.divide(count);
+                    return this.seek(averaged);
+                }
+                
+                return new Vector2D(0, 0);
+            }
+            
+            seek(target) {
+                const desired = target.subtract(this.position);
+                const normalized = desired.normalize().multiply(this.maxSpeed);
+                const steer = normalized.subtract(this.velocity);
+                return steer.limit(this.maxForce);
+            }
+            
+            flee(target) {
+                const desired = this.position.subtract(target);
+                const normalized = desired.normalize().multiply(this.maxSpeed);
+                const steer = normalized.subtract(this.velocity);
+                return steer.limit(this.maxForce);
+            }
+            
+            arrive(target) {
+                const desired = target.subtract(this.position);
+                const distance = desired.magnitude();
+                
+                const slowRadius = 100;
+                let speed = this.maxSpeed;
+                
+                if (distance < slowRadius) {
+                    speed = this.maxSpeed * (distance / slowRadius);
+                }
+                
+                const normalized = desired.normalize().multiply(speed);
+                const steer = normalized.subtract(this.velocity);
+                return steer.limit(this.maxForce);
+            }
+            
+            wander() {
+                const wanderRadius = 25;
+                const wanderDistance = 50;
+                const wanderJitter = 10;
+                
+                const circleCenter = this.velocity.normalize().multiply(wanderDistance);
+                
+                const displacement = new Vector2D(0, -1);
+                displacement.x = displacement.x * wanderRadius;
+                displacement.y = displacement.y * wanderRadius;
+                
+                // Randomly change the vector direction
+                const angle = Math.random() * Math.PI * 2;
+                displacement.x = Math.cos(angle) * wanderRadius;
+                displacement.y = Math.sin(angle) * wanderRadius;
+                
+                const wanderForce = circleCenter.add(displacement);
+                return wanderForce.limit(this.maxForce);
+            }
+            
+            avoidObstacles(obstacles) {
+                const avoidDistance = 50;
+                const steer = new Vector2D(0, 0);
+                
+                for (const obstacle of obstacles) {
+                    const distance = this.position.distance(obstacle.position);
+                    
+                    if (distance < avoidDistance + obstacle.radius) {
+                        const diff = this.position.subtract(obstacle.position);
+                        const force = diff.normalize().divide(distance);
+                        steer.x += force.x;
+                        steer.y += force.y;
+                    }
+                }
+                
+                return steer.multiply(3); // Strong avoidance
+            }
+            
+            update(dt) {
+                // Update velocity
+                this.velocity = this.velocity.add(this.acceleration);
+                this.velocity = this.velocity.limit(this.maxSpeed);
+                
+                // Update position
+                this.position.x += this.velocity.x * dt;
+                this.position.y += this.velocity.y * dt;
+                
+                // Reset acceleration
+                this.acceleration = new Vector2D(0, 0);
+                
+                // Update trail
+                if (this.velocity.magnitude() > 10) {
+                    this.trail.push({
+                        x: this.position.x,
+                        y: this.position.y,
+                        alpha: 1
+                    });
+                    
+                    if (this.trail.length > this.maxTrailLength) {
+                        this.trail.shift();
+                    }
+                }
+                
+                // Update trail alpha
+                for (let i = 0; i < this.trail.length; i++) {
+                    this.trail[i].alpha = (i + 1) / this.trail.length * 0.5;
+                }
+            }
+            
+            edges(width, height) {
+                // Wrap around edges
+                if (this.position.x < 0) this.position.x = width;
+                if (this.position.x > width) this.position.x = 0;
+                if (this.position.y < 0) this.position.y = height;
+                if (this.position.y > height) this.position.y = 0;
+            }
+            
+            draw(ctx) {
+                // Draw trail if enabled
+                if (showTrails) {
+                    for (const point of this.trail) {
+                        ctx.fillStyle = `${this.color}${Math.floor(point.alpha * 255).toString(16).padStart(2, '0')}`;
+                        ctx.fillRect(point.x - 1, point.y - 1, 2, 2);
+                    }
+                }
+                
+                // Draw vision range if enabled
+                if (document.getElementById('showVision').checked) {
+                    ctx.strokeStyle = `${this.color}33`;
+                    ctx.beginPath();
+                    ctx.arc(this.position.x, this.position.y, this.visionRange, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+                
+                // Draw neighbors connections if enabled
+                if (document.getElementById('showNeighbors').checked) {
+                    ctx.strokeStyle = `${this.color}44`;
+                    ctx.lineWidth = 0.5;
+                    for (const neighbor of this.neighbors) {
+                        ctx.beginPath();
+                        ctx.moveTo(this.position.x, this.position.y);
+                        ctx.lineTo(neighbor.position.x, neighbor.position.y);
+                        ctx.stroke();
+                    }
+                }
+                
+                // Draw forces if enabled
+                if (document.getElementById('showForces').checked) {
+                    // Separation force - red
+                    this.drawForce(ctx, this.separationForce, '#FF0000', 20);
+                    // Alignment force - green
+                    this.drawForce(ctx, this.alignmentForce, '#00FF00', 20);
+                    // Cohesion force - blue
+                    this.drawForce(ctx, this.cohesionForce, '#0000FF', 20);
+                }
+                
+                // Draw boid
+                ctx.save();
+                ctx.translate(this.position.x, this.position.y);
+                ctx.rotate(this.velocity.angle());
+                
+                // Draw shape based on type
+                ctx.fillStyle = this.color;
+                switch(this.type) {
+                    case 'bird':
+                        // Triangle shape
+                        ctx.beginPath();
+                        ctx.moveTo(this.size, 0);
+                        ctx.lineTo(-this.size, -this.size/2);
+                        ctx.lineTo(-this.size, this.size/2);
+                        ctx.closePath();
+                        ctx.fill();
+                        break;
+                        
+                    case 'fish':
+                        // Fish shape
+                        ctx.beginPath();
+                        ctx.ellipse(0, 0, this.size * 1.5, this.size * 0.7, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        // Tail
+                        ctx.beginPath();
+                        ctx.moveTo(-this.size, 0);
+                        ctx.lineTo(-this.size * 1.5, -this.size * 0.5);
+                        ctx.lineTo(-this.size * 1.5, this.size * 0.5);
+                        ctx.closePath();
+                        ctx.fill();
+                        break;
+                        
+                    case 'bee':
+                        // Circle with stripes
+                        ctx.beginPath();
+                        ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.fillStyle = '#000000';
+                        ctx.fillRect(-this.size, -1, this.size * 2, 2);
+                        break;
+                        
+                    case 'butterfly':
+                        // Wings
+                        ctx.beginPath();
+                        ctx.arc(-this.size/2, -this.size/2, this.size/2, 0, Math.PI * 2);
+                        ctx.arc(-this.size/2, this.size/2, this.size/2, 0, Math.PI * 2);
+                        ctx.arc(this.size/2, -this.size/2, this.size/2, 0, Math.PI * 2);
+                        ctx.arc(this.size/2, this.size/2, this.size/2, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+                        
+                    case 'firefly':
+                        // Glowing circle
+                        const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, this.size * 2);
+                        gradient.addColorStop(0, '#FFFF00');
+                        gradient.addColorStop(0.5, '#FFFF0066');
+                        gradient.addColorStop(1, '#FFFF0000');
+                        ctx.fillStyle = gradient;
+                        ctx.beginPath();
+                        ctx.arc(0, 0, this.size * 2, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+                        
+                    default:
+                        // Default circle
+                        ctx.beginPath();
+                        ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+                        ctx.fill();
+                }
+                
+                ctx.restore();
+                
+                // Draw velocity vector if enabled
+                if (document.getElementById('showVelocity').checked) {
+                    ctx.strokeStyle = this.color;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(this.position.x, this.position.y);
+                    const vel = this.velocity.normalize().multiply(20);
+                    ctx.lineTo(this.position.x + vel.x, this.position.y + vel.y);
+                    ctx.stroke();
+                }
+            }
+            
+            drawForce(ctx, force, color, scale) {
+                if (force.magnitude() > 0) {
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(this.position.x, this.position.y);
+                    const scaled = force.normalize().multiply(scale);
+                    ctx.lineTo(this.position.x + scaled.x, this.position.y + scaled.y);
+                    ctx.stroke();
+                    
+                    // Arrowhead
+                    ctx.save();
+                    ctx.translate(this.position.x + scaled.x, this.position.y + scaled.y);
+                    ctx.rotate(force.angle());
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(-5, -3);
+                    ctx.lineTo(-5, 3);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
+        }
+
+        // Obstacle class
+        class Obstacle {
+            constructor(x, y, radius) {
+                this.position = new Vector2D(x, y);
+                this.radius = radius;
+            }
+            
+            draw(ctx) {
+                ctx.fillStyle = '#666666';
+                ctx.beginPath();
+                ctx.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.strokeStyle = '#333333';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+        }
+
+        // Predator class
+        class Predator {
+            constructor(x, y) {
+                this.position = new Vector2D(x, y);
+                this.velocity = new Vector2D(0, 0);
+                this.maxSpeed = 100;
+                this.size = 12;
+            }
+            
+            hunt(boids) {
+                if (boids.length === 0) return;
+                
+                // Find nearest boid
+                let nearest = null;
+                let nearestDist = Infinity;
+                
+                for (const boid of boids) {
+                    const dist = this.position.distance(boid.position);
+                    if (dist < nearestDist) {
+                        nearest = boid;
+                        nearestDist = dist;
+                    }
+                }
+                
+                if (nearest) {
+                    // Chase nearest
+                    const desired = nearest.position.subtract(this.position);
+                    this.velocity = desired.normalize().multiply(this.maxSpeed);
+                }
+            }
+            
+            update(dt) {
+                this.position.x += this.velocity.x * dt;
+                this.position.y += this.velocity.y * dt;
+            }
+            
+            draw(ctx) {
+                ctx.fillStyle = '#FF0000';
+                ctx.beginPath();
+                ctx.arc(this.position.x, this.position.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw eyes
+                ctx.fillStyle = '#FFFFFF';
+                const angle = this.velocity.angle();
+                const eyeOffset = 5;
+                ctx.beginPath();
+                ctx.arc(
+                    this.position.x + Math.cos(angle - 0.5) * eyeOffset,
+                    this.position.y + Math.sin(angle - 0.5) * eyeOffset,
+                    2, 0, Math.PI * 2
+                );
+                ctx.arc(
+                    this.position.x + Math.cos(angle + 0.5) * eyeOffset,
+                    this.position.y + Math.sin(angle + 0.5) * eyeOffset,
+                    2, 0, Math.PI * 2
+                );
+                ctx.fill();
+            }
+        }
+
+        // Flocking simulation
+        class FlockingSimulation {
+            constructor(canvas, ctx) {
+                this.canvas = canvas;
+                this.ctx = ctx;
+                
+                this.boids = [];
+                this.obstacles = [];
+                this.predators = [];
+                this.food = [];
+                
+                this.mousePos = new Vector2D(300, 200);
+                this.mouseMode = 'none'; // 'attract', 'repel', 'none'
+                
+                this.wind = new Vector2D(0, 0);
+                this.windEnabled = false;
+                
+                this.paused = false;
+                this.showTrails = false;
+                
+                // Stats
+                this.collisionsAvoided = 0;
+                this.fps = 60;
+                this.frameCount = 0;
+                this.lastFpsUpdate = Date.now();
+                
+                this.setupEventListeners();
+                this.spawnInitialBoids();
+            }
+            
+            setupEventListeners() {
+                this.canvas.addEventListener('mousedown', (e) => {
+                    const rect = this.canvas.getBoundingClientRect();
+                    this.mousePos.x = e.clientX - rect.left;
+                    this.mousePos.y = e.clientY - rect.top;
+                    
+                    if (e.button === 0) {
+                        this.mouseMode = 'attract';
+                    } else if (e.button === 2) {
+                        this.mouseMode = 'repel';
+                    }
+                });
+                
+                this.canvas.addEventListener('mouseup', () => {
+                    this.mouseMode = 'none';
+                });
+                
+                this.canvas.addEventListener('mousemove', (e) => {
+                    const rect = this.canvas.getBoundingClientRect();
+                    this.mousePos.x = e.clientX - rect.left;
+                    this.mousePos.y = e.clientY - rect.top;
+                });
+                
+                this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+            }
+            
+            spawnInitialBoids() {
+                this.spawnSwarm('birds', 20);
+                this.spawnSwarm('fish', 15);
+            }
+            
+            spawnSwarm(type, count = 20) {
+                const centerX = Math.random() * 400 + 100;
+                const centerY = Math.random() * 300 + 50;
+                
+                for (let i = 0; i < count; i++) {
+                    const angle = (i / count) * Math.PI * 2;
+                    const radius = Math.random() * 50 + 20;
+                    
+                    const x = centerX + Math.cos(angle) * radius;
+                    const y = centerY + Math.sin(angle) * radius;
+                    
+                    const boid = new Boid(x, y, type);
+                    
+                    // Set initial velocity based on type
+                    if (type === 'migration') {
+                        boid.velocity = new Vector2D(100, 0);
+                    }
+                    
+                    this.boids.push(boid);
+                }
+            }
+            
+            addObstacle() {
+                const x = Math.random() * 500 + 50;
+                const y = Math.random() * 300 + 50;
+                const radius = Math.random() * 30 + 20;
+                
+                this.obstacles.push(new Obstacle(x, y, radius));
+            }
+            
+            addPredator() {
+                const x = Math.random() * 500 + 50;
+                const y = Math.random() * 300 + 50;
+                
+                this.predators.push(new Predator(x, y));
+            }
+            
+            update(dt) {
+                if (this.paused) return;
+                
+                // Update each boid
+                for (const boid of this.boids) {
+                    // Flocking behavior
+                    boid.flock(this.boids);
+                    
+                    // Mouse interaction
+                    if (this.mouseMode === 'attract') {
+                        const seekForce = boid.seek(this.mousePos);
+                        boid.acceleration = boid.acceleration.add(seekForce.multiply(2));
+                    } else if (this.mouseMode === 'repel') {
+                        const fleeForce = boid.flee(this.mousePos);
+                        boid.acceleration = boid.acceleration.add(fleeForce.multiply(2));
+                    }
+                    
+                    // Avoid obstacles
+                    if (this.obstacles.length > 0) {
+                        const avoidForce = boid.avoidObstacles(this.obstacles);
+                        boid.acceleration = boid.acceleration.add(avoidForce);
+                    }
+                    
+                    // Flee from predators
+                    for (const predator of this.predators) {
+                        const dist = boid.position.distance(predator.position);
+                        if (dist < 100) {
+                            const fleeForce = boid.flee(predator.position);
+                            boid.acceleration = boid.acceleration.add(fleeForce.multiply(3));
+                        }
+                    }
+                    
+                    // Apply wind
+                    if (this.windEnabled) {
+                        boid.acceleration = boid.acceleration.add(this.wind);
+                    }
+                    
+                    // Update boid
+                    boid.update(dt);
+                    boid.edges(this.canvas.width, this.canvas.height);
+                }
+                
+                // Update predators
+                for (const predator of this.predators) {
+                    predator.hunt(this.boids);
+                    predator.update(dt);
+                }
+                
+                // Update wind
+                if (this.windEnabled) {
+                    this.wind.x = Math.sin(Date.now() / 1000) * 0.1;
+                    this.wind.y = Math.cos(Date.now() / 1500) * 0.05;
+                }
+                
+                // Calculate stats
+                this.updateStats();
+            }
+            
+            updateStats() {
+                // FPS
+                this.frameCount++;
+                const now = Date.now();
+                if (now - this.lastFpsUpdate >= 1000) {
+                    this.fps = this.frameCount;
+                    this.frameCount = 0;
+                    this.lastFpsUpdate = now;
+                }
+                
+                // Average speed
+                let totalSpeed = 0;
+                for (const boid of this.boids) {
+                    totalSpeed += boid.velocity.magnitude();
+                }
+                const avgSpeed = this.boids.length > 0 ? totalSpeed / this.boids.length : 0;
+                
+                // Count groups (simplified - boids within range of each other)
+                const groups = this.countGroups();
+                
+                // Update UI
+                document.getElementById('boidCount').textContent = this.boids.length;
+                document.getElementById('avgSpeed').textContent = Math.round(avgSpeed);
+                document.getElementById('obstacleCount').textContent = this.obstacles.length;
+                document.getElementById('predatorCount').textContent = this.predators.length;
+                document.getElementById('fps').textContent = this.fps;
+                document.getElementById('collisions').textContent = this.collisionsAvoided;
+                document.getElementById('groups').textContent = groups;
+            }
+            
+            countGroups() {
+                const visited = new Set();
+                let groupCount = 0;
+                
+                for (let i = 0; i < this.boids.length; i++) {
+                    if (!visited.has(i)) {
+                        // Start new group
+                        groupCount++;
+                        const queue = [i];
+                        
+                        while (queue.length > 0) {
+                            const current = queue.pop();
+                            if (visited.has(current)) continue;
+                            visited.add(current);
+                            
+                            // Find neighbors
+                            const boid = this.boids[current];
+                            for (let j = 0; j < this.boids.length; j++) {
+                                if (!visited.has(j)) {
+                                    const other = this.boids[j];
+                                    if (boid.position.distance(other.position) < boid.visionRange * 2) {
+                                        queue.push(j);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                return groupCount;
+            }
+            
+            draw() {
+                // Clear canvas with gradient background
+                const gradient = this.ctx.createLinearGradient(0, 0, this.canvas.width, this.canvas.height);
+                gradient.addColorStop(0, '#667eea');
+                gradient.addColorStop(1, '#764ba2');
+                this.ctx.fillStyle = gradient;
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw obstacles
+                for (const obstacle of this.obstacles) {
+                    obstacle.draw(this.ctx);
+                }
+                
+                // Draw food
+                this.ctx.fillStyle = '#00FF00';
+                for (const food of this.food) {
+                    this.ctx.beginPath();
+                    this.ctx.arc(food.x, food.y, 5, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+                
+                // Draw boids
+                for (const boid of this.boids) {
+                    boid.draw(this.ctx);
+                }
+                
+                // Draw predators
+                for (const predator of this.predators) {
+                    predator.draw(this.ctx);
+                }
+                
+                // Draw mouse interaction
+                if (this.mouseMode !== 'none') {
+                    this.ctx.strokeStyle = this.mouseMode === 'attract' ? '#00FF00' : '#FF0000';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.setLineDash([5, 5]);
+                    this.ctx.beginPath();
+                    this.ctx.arc(this.mousePos.x, this.mousePos.y, 50, 0, Math.PI * 2);
+                    this.ctx.stroke();
+                    this.ctx.setLineDash([]);
+                }
+                
+                // Draw wind indicator
+                if (this.windEnabled) {
+                    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                    this.ctx.save();
+                    this.ctx.translate(50, 50);
+                    this.ctx.rotate(this.wind.angle());
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, 0);
+                    this.ctx.lineTo(30, -5);
+                    this.ctx.lineTo(30, 5);
+                    this.ctx.closePath();
+                    this.ctx.fill();
+                    this.ctx.restore();
+                }
+            }
+        }
+
+        // Global variables
+        let showTrails = false;
+        
+        // Initialize simulation
+        const flockingCanvas = document.getElementById('flockingCanvas');
+        const ctx = flockingCanvas.getContext('2d');
+        const simulation = new FlockingSimulation(flockingCanvas, ctx);
+
+        // Control functions
+        window.spawnSwarm = function(type) {
+            simulation.spawnSwarm(type, 20);
+        };
+
+        window.clearBoids = function() {
+            simulation.boids = [];
+        };
+
+        window.addObstacle = function() {
+            simulation.addObstacle();
+        };
+
+        window.addPredator = function() {
+            simulation.addPredator();
+        };
+
+        window.addFood = function() {
+            simulation.food.push({
+                x: Math.random() * 500 + 50,
+                y: Math.random() * 300 + 50
+            });
+        };
+
+        window.toggleWind = function() {
+            simulation.windEnabled = !simulation.windEnabled;
+        };
+
+        window.toggleTrails = function() {
+            showTrails = !showTrails;
+        };
+
+        window.pauseSimulation = function() {
+            simulation.paused = !simulation.paused;
+            const btn = document.getElementById('pauseBtn');
+            btn.textContent = simulation.paused ? '▶️ Resume' : '⏸️ Pause';
+        };
+
+        window.resetDemo = function() {
+            simulation.boids = [];
+            simulation.obstacles = [];
+            simulation.predators = [];
+            simulation.food = [];
+            simulation.spawnInitialBoids();
+        };
+
+        window.updateForce = function(force, value) {
+            const val = parseFloat(value);
+            for (const boid of simulation.boids) {
+                if (force === 'separation') {
+                    boid.separationWeight = val;
+                } else if (force === 'alignment') {
+                    boid.alignmentWeight = val;
+                } else if (force === 'cohesion') {
+                    boid.cohesionWeight = val;
+                }
+            }
+            document.getElementById(force + 'Display').textContent = val;
+        };
+
+        window.updateMaxSpeed = function(value) {
+            const speed = parseInt(value);
+            for (const boid of simulation.boids) {
+                boid.maxSpeed = speed;
+            }
+            document.getElementById('maxSpeedDisplay').textContent = speed;
+        };
+
+        window.updateVisionRange = function(value) {
+            const range = parseInt(value);
+            for (const boid of simulation.boids) {
+                boid.visionRange = range;
+            }
+            document.getElementById('visionRangeDisplay').textContent = range;
+        };
+
+        window.updateVisionAngle = function(value) {
+            const angle = parseInt(value);
+            for (const boid of simulation.boids) {
+                boid.visionAngle = angle * Math.PI / 180;
+            }
+            document.getElementById('visionAngleDisplay').textContent = angle + '°';
+        };
+
+        window.loadPreset = function(preset) {
+            const presets = {
+                'realistic': {
+                    separation: 1.5,
+                    alignment: 1.0,
+                    cohesion: 1.0,
+                    maxSpeed: 150,
+                    visionRange: 50,
+                    visionAngle: 270
+                },
+                'tight': {
+                    separation: 1.0,
+                    alignment: 1.5,
+                    cohesion: 2.0,
+                    maxSpeed: 100,
+                    visionRange: 70,
+                    visionAngle: 300
+                },
+                'loose': {
+                    separation: 2.5,
+                    alignment: 0.5,
+                    cohesion: 0.5,
+                    maxSpeed: 200,
+                    visionRange: 80,
+                    visionAngle: 240
+                },
+                'chaotic': {
+                    separation: 0.5,
+                    alignment: 0.2,
+                    cohesion: 0.2,
+                    maxSpeed: 250,
+                    visionRange: 30,
+                    visionAngle: 180
+                },
+                'vortex': {
+                    separation: 1.0,
+                    alignment: 3.0,
+                    cohesion: 1.5,
+                    maxSpeed: 200,
+                    visionRange: 60,
+                    visionAngle: 270
+                },
+                'migration': {
+                    separation: 1.2,
+                    alignment: 2.0,
+                    cohesion: 0.8,
+                    maxSpeed: 180,
+                    visionRange: 100,
+                    visionAngle: 300
+                }
+            };
+            
+            const settings = presets[preset];
+            if (settings) {
+                // Update sliders
+                document.getElementById('separation').value = settings.separation;
+                document.getElementById('alignment').value = settings.alignment;
+                document.getElementById('cohesion').value = settings.cohesion;
+                document.getElementById('maxSpeed').value = settings.maxSpeed;
+                document.getElementById('visionRange').value = settings.visionRange;
+                document.getElementById('visionAngle').value = settings.visionAngle;
+                
+                // Update displays
+                document.getElementById('separationDisplay').textContent = settings.separation;
+                document.getElementById('alignmentDisplay').textContent = settings.alignment;
+                document.getElementById('cohesionDisplay').textContent = settings.cohesion;
+                document.getElementById('maxSpeedDisplay').textContent = settings.maxSpeed;
+                document.getElementById('visionRangeDisplay').textContent = settings.visionRange;
+                document.getElementById('visionAngleDisplay').textContent = settings.visionAngle + '°';
+                
+                // Apply to boids
+                for (const boid of simulation.boids) {
+                    boid.separationWeight = settings.separation;
+                    boid.alignmentWeight = settings.alignment;
+                    boid.cohesionWeight = settings.cohesion;
+                    boid.maxSpeed = settings.maxSpeed;
+                    boid.visionRange = settings.visionRange;
+                    boid.visionAngle = settings.visionAngle * Math.PI / 180;
+                }
+            }
+        };
+
+        // Animation loop
+        let lastTime = performance.now();
+        function animate(currentTime) {
+            const dt = Math.min((currentTime - lastTime) / 1000, 0.1);
+            lastTime = currentTime;
+            
+            simulation.update(dt);
+            simulation.draw();
+            
+            requestAnimationFrame(animate);
+        }
+
+        animate(performance.now());
+
+        console.log('Flocking Simulation initialized!');
+    </script>
+
+    <h2>Flocking Implementation</h2>
+    
+    <pre class="language-python"><code>import pygame
+import math
+import random
+from typing import List, Tuple
+
+class Vector2D:
+    """2D Vector helper class"""
+    def __init__(self, x: float = 0, y: float = 0):
+        self.x = x
+        self.y = y
+    
+    def add(self, other: 'Vector2D') -> 'Vector2D':
+        return Vector2D(self.x + other.x, self.y + other.y)
+    
+    def subtract(self, other: 'Vector2D') -> 'Vector2D':
+        return Vector2D(self.x - other.x, self.y - other.y)
+    
+    def multiply(self, scalar: float) -> 'Vector2D':
+        return Vector2D(self.x * scalar, self.y * scalar)
+    
+    def divide(self, scalar: float) -> 'Vector2D':
+        if scalar != 0:
+            return Vector2D(self.x / scalar, self.y / scalar)
+        return Vector2D(0, 0)
+    
+    def magnitude(self) -> float:
+        return math.sqrt(self.x ** 2 + self.y ** 2)
+    
+    def normalize(self) -> 'Vector2D':
+        mag = self.magnitude()
+        if mag > 0:
+            return self.divide(mag)
+        return Vector2D(0, 0)
+    
+    def limit(self, max_val: float) -> 'Vector2D':
+        if self.magnitude() > max_val:
+            return self.normalize().multiply(max_val)
+        return self
+    
+    def distance(self, other: 'Vector2D') -> float:
+        return math.sqrt((self.x - other.x) ** 2 + (self.y - other.y) ** 2)
+    
+    def angle(self) -> float:
+        return math.atan2(self.y, self.x)
+
+class Boid:
+    """Individual boid in the flock"""
+    def __init__(self, x: float, y: float, max_speed: float = 150):
+        self.position = Vector2D(x, y)
+        self.velocity = Vector2D(random.uniform(-1, 1), random.uniform(-1, 1))
+        self.acceleration = Vector2D(0, 0)
+        
+        # Movement constraints
+        self.max_speed = max_speed
+        self.max_force = 0.2
+        
+        # Perception
+        self.vision_range = 50
+        self.vision_angle = math.radians(270)
+        
+        # Behavior weights
+        self.separation_weight = 1.5
+        self.alignment_weight = 1.0
+        self.cohesion_weight = 1.0
+        
+        # Visual
+        self.size = 5
+        self.color = (76, 175, 80)
+    
+    def flock(self, boids: List['Boid']):
+        """Apply flocking rules"""
+        neighbors = self.get_neighbors(boids)
+        
+        # Calculate forces
+        sep = self.separation(neighbors)
+        align = self.alignment(neighbors)
+        coh = self.cohesion(neighbors)
+        
+        # Weight forces
+        sep = sep.multiply(self.separation_weight)
+        align = align.multiply(self.alignment_weight)
+        coh = coh.multiply(self.cohesion_weight)
+        
+        # Apply forces
+        self.acceleration = self.acceleration.add(sep)
+        self.acceleration = self.acceleration.add(align)
+        self.acceleration = self.acceleration.add(coh)
+    
+    def get_neighbors(self, boids: List['Boid']) -> List['Boid']:
+        """Find nearby boids within vision"""
+        neighbors = []
+        
+        for other in boids:
+            if other == self:
+                continue
+            
+            distance = self.position.distance(other.position)
+            
+            if distance < self.vision_range:
+                # Check if within vision angle
+                if self.can_see(other):
+                    neighbors.append(other)
+        
+        return neighbors
+    
+    def can_see(self, other: 'Boid') -> bool:
+        """Check if another boid is within vision cone"""
+        to_other = other.position.subtract(self.position)
+        angle_to_other = to_other.angle()
+        my_angle = self.velocity.angle()
+        
+        angle_diff = abs(angle_to_other - my_angle)
+        if angle_diff > math.pi:
+            angle_diff = 2 * math.pi - angle_diff
+        
+        return angle_diff < self.vision_angle / 2
+    
+    def separation(self, neighbors: List['Boid']) -> Vector2D:
+        """Avoid crowding neighbors (separation)"""
+        desired_separation = 25
+        steer = Vector2D(0, 0)
+        count = 0
+        
+        for other in neighbors:
+            distance = self.position.distance(other.position)
+            
+            if 0 < distance < desired_separation:
+                # Calculate repulsion force
+                diff = self.position.subtract(other.position)
+                diff = diff.normalize()
+                diff = diff.divide(distance)  # Weight by distance
+                steer = steer.add(diff)
+                count += 1
+        
+        if count > 0:
+            steer = steer.divide(count)
+            
+            # Implement Reynolds: Steering = Desired - Velocity
+            if steer.magnitude() > 0:
+                steer = steer.normalize()
+                steer = steer.multiply(self.max_speed)
+                steer = steer.subtract(self.velocity)
+                steer = steer.limit(self.max_force)
+        
+        return steer
+    
+    def alignment(self, neighbors: List['Boid']) -> Vector2D:
+        """Align with average heading of neighbors"""
+        steer = Vector2D(0, 0)
+        count = 0
+        
+        for other in neighbors:
+            steer = steer.add(other.velocity)
+            count += 1
+        
+        if count > 0:
+            steer = steer.divide(count)
+            steer = steer.normalize()
+            steer = steer.multiply(self.max_speed)
+            steer = steer.subtract(self.velocity)
+            steer = steer.limit(self.max_force)
+        
+        return steer
+    
+    def cohesion(self, neighbors: List['Boid']) -> Vector2D:
+        """Steer towards average position of neighbors"""
+        steer = Vector2D(0, 0)
+        count = 0
+        
+        for other in neighbors:
+            steer = steer.add(other.position)
+            count += 1
+        
+        if count > 0:
+            steer = steer.divide(count)
+            return self.seek(steer)
+        
+        return steer
+    
+    def seek(self, target: Vector2D) -> Vector2D:
+        """Seek a target position"""
+        desired = target.subtract(self.position)
+        desired = desired.normalize()
+        desired = desired.multiply(self.max_speed)
+        
+        steer = desired.subtract(self.velocity)
+        steer = steer.limit(self.max_force)
+        
+        return steer
+    
+    def flee(self, target: Vector2D) -> Vector2D:
+        """Flee from a target position"""
+        desired = self.position.subtract(target)
+        desired = desired.normalize()
+        desired = desired.multiply(self.max_speed)
+        
+        steer = desired.subtract(self.velocity)
+        steer = steer.limit(self.max_force)
+        
+        return steer
+    
+    def update(self, dt: float):
+        """Update boid position"""
+        # Update velocity
+        self.velocity = self.velocity.add(self.acceleration)
+        self.velocity = self.velocity.limit(self.max_speed)
+        
+        # Update position
+        self.position.x += self.velocity.x * dt
+        self.position.y += self.velocity.y * dt
+        
+        # Reset acceleration
+        self.acceleration = Vector2D(0, 0)
+    
+    def edges(self, width: int, height: int):
+        """Wrap around screen edges"""
+        if self.position.x < 0:
+            self.position.x = width
+        elif self.position.x > width:
+            self.position.x = 0
+        
+        if self.position.y < 0:
+            self.position.y = height
+        elif self.position.y > height:
+            self.position.y = 0
+    
+    def draw(self, screen: pygame.Surface):
+        """Draw the boid"""
+        # Calculate angle for rotation
+        angle = math.degrees(self.velocity.angle())
+        
+        # Create triangle points
+        points = [
+            (self.size, 0),
+            (-self.size, -self.size // 2),
+            (-self.size, self.size // 2)
+        ]
+        
+        # Rotate and translate points
+        rotated_points = []
+        for px, py in points:
+            # Rotate
+            rx = px * math.cos(math.radians(angle)) - py * math.sin(math.radians(angle))
+            ry = px * math.sin(math.radians(angle)) + py * math.cos(math.radians(angle))
+            # Translate
+            rotated_points.append((self.position.x + rx, self.position.y + ry))
+        
+        # Draw boid
+        pygame.draw.polygon(screen, self.color, rotated_points)</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Flocking Tips</h3>
+        <ul>
+            <li><strong>Balance Forces:</strong> Adjust weights for different behaviors</li>
+            <li><strong>Spatial Partitioning:</strong> Use grids/quadtrees for optimization</li>
+            <li><strong>Vision Limits:</strong> Realistic perception constraints</li>
+            <li><strong>Smooth Movement:</strong> Limit acceleration for natural motion</li>
+            <li><strong>Obstacle Avoidance:</strong> Add steering to avoid collisions</li>
+            <li><strong>Leader Following:</strong> Designate leaders for directed movement</li>
+            <li><strong>Performance:</strong> Limit neighbor checks for large flocks</li>
+            <li><strong>Visual Variety:</strong> Add slight variations to individuals</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>🐦 Simple rules create complex behaviors</li>
+            <li>📏 Separation prevents collisions</li>
+            <li>🧭 Alignment creates coordinated movement</li>
+            <li>🎯 Cohesion keeps groups together</li>
+            <li>👁️ Vision constraints add realism</li>
+            <li>⚖️ Balance weights for different effects</li>
+            <li>🌊 Emergent patterns arise naturally</li>
+            <li>🎮 Great for crowds, particles, and swarms</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you've mastered flocking behaviors, next we'll explore simple decision-making systems for game AI!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="ai_behavior_trees.html" class="prev-lesson" aria-label="Previous lesson: Behavior Trees">Previous Lesson: Behavior Trees</a>
+        <a href="ai_decision_making.html" class="next-lesson" aria-label="Next lesson: Simple Decision Making">Next Lesson: Decision Making</a>
+    </nav>
+    
+    </main>
+    <script src="/js/course-enhancements.js" defer></script>
+</body>
+</html>

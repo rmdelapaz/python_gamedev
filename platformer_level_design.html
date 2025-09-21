@@ -1,0 +1,1560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Build level design tools for 2D platformers. Learn object placement, entity spawning, level scripting, and creating intuitive level editors.">
+    <title>Level Design Tools - 2D Platformer Development</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Level Design Tools</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Intermediate Module - Section 2: 2D Platformer Development - Lesson 4</span>
+    </nav>
+
+    <h2>Creating Powerful Level Design Tools</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Level design tools empower creators to build engaging game worlds efficiently! Learn object placement systems, entity spawning, triggers, scripting, path editing, and how to create intuitive visual level editors! 🎨🏗️🎮</p>
+    </div>
+
+    <h2>Understanding Level Design Systems</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🏗️ The Architect's Toolkit Analogy</h3>
+        <p>Think of level design tools like an architect's toolkit:</p>
+        <ul>
+            <li><strong>Object Palette:</strong> Your building materials catalog</li>
+            <li><strong>Placement Grid:</strong> The blueprint grid</li>
+            <li><strong>Entity System:</strong> Furniture and fixtures</li>
+            <li><strong>Triggers:</strong> Automatic doors and sensors</li>
+            <li><strong>Paths:</strong> Planned routes through the space</li>
+            <li><strong>Testing:</strong> Walking through your design</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Level Editor"] --> B["Object System"]
+        A --> C["Entity System"]
+        A --> D["Tools"]
+        
+        B --> E["Tiles/Blocks"]
+        B --> F["Decorations"]
+        B --> G["Collision"]
+        
+        C --> H["Enemies"]
+        C --> I["Pickups"]
+        C --> J["Triggers"]
+        
+        D --> K["Selection"]
+        D --> L["Brush Tools"]
+        D --> M["Path Editor"]
+        
+        N["Features"] --> O["Undo/Redo"]
+        N --> P["Copy/Paste"]
+        N --> Q["Test Mode"]
+    </div>
+
+    <h2>Interactive Level Editor Demo</h2>
+    
+    <div class="canvas-wrapper" style="text-align: center;">
+        <canvas id="editorCanvas" width="600" height="400" style="border: 1px solid #333; background-color: #2C3E50; display: inline-block;"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Design your level! Click to place objects, drag to create paths, test your creation!</p>
+        
+        <!-- Object Palette -->
+        <div style="margin: 10px auto; padding: 10px; background-color: rgba(0,0,0,0.3); border-radius: 5px; max-width: 600px;">
+            <p style="color: white; margin: 5px;">Object Palette:</p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); gap: 5px;">
+                <button onclick="selectTool('platform')" class="tool-btn" id="platformTool">🟫 Platform</button>
+                <button onclick="selectTool('spike')" class="tool-btn" id="spikeTool">🔺 Spike</button>
+                <button onclick="selectTool('coin')" class="tool-btn" id="coinTool">🪙 Coin</button>
+                <button onclick="selectTool('spring')" class="tool-btn" id="springTool">🔷 Spring</button>
+                <button onclick="selectTool('enemy')" class="tool-btn" id="enemyTool">👾 Enemy</button>
+                <button onclick="selectTool('checkpoint')" class="tool-btn" id="checkpointTool">🚩 Checkpoint</button>
+                <button onclick="selectTool('movingPlatform')" class="tool-btn" id="movingPlatformTool">⬌ Moving</button>
+                <button onclick="selectTool('portal')" class="tool-btn" id="portalTool">🌀 Portal</button>
+            </div>
+        </div>
+        
+        <!-- Tool Options -->
+        <div style="margin-top: 10px;">
+            <button onclick="setMode('place')" id="placeModeBtn">📍 Place</button>
+            <button onclick="setMode('select')" id="selectModeBtn">👆 Select</button>
+            <button onclick="setMode('delete')" id="deleteModeBtn">🗑️ Delete</button>
+            <button onclick="setMode('path')" id="pathModeBtn">🛤️ Path</button>
+            <button onclick="duplicateSelection()">📋 Duplicate</button>
+            <button onclick="rotateSelection()">🔄 Rotate</button>
+        </div>
+        
+        <!-- Editor Controls -->
+        <div style="margin-top: 10px;">
+            <button onclick="undoAction()">↶ Undo</button>
+            <button onclick="redoAction()">↷ Redo</button>
+            <button onclick="toggleGrid()">⊞ Grid</button>
+            <button onclick="toggleSnap()">🧲 Snap</button>
+            <button onclick="clearLevel()">🗑️ Clear</button>
+            <button onclick="saveLevel()">💾 Save</button>
+            <button onclick="loadLevel()">📁 Load</button>
+            <button onclick="generateTemplate('basic')">🎲 Generate</button>
+        </div>
+        
+        <!-- Test Controls -->
+        <div style="margin-top: 10px;">
+            <button onclick="toggleTestMode()" id="testModeBtn" style="background-color: #4CAF50;">▶️ Test Level</button>
+            <button onclick="resetTest()">🔄 Reset Test</button>
+            <button onclick="toggleDebugInfo()">🐛 Debug Info</button>
+            <button onclick="validateLevel()">✅ Validate</button>
+        </div>
+        
+        <!-- Properties Panel -->
+        <div style="margin-top: 10px;">
+            <label>Grid Size: <input type="range" id="gridSize" min="10" max="50" value="20" onchange="setGridSize(this.value)"> <span id="gridSizeDisplay">20</span></label>
+            <label>Zoom: <input type="range" id="zoom" min="0.5" max="2" step="0.1" value="1" onchange="setZoom(this.value)"> <span id="zoomDisplay">1.0x</span></label>
+        </div>
+        
+        <div id="propertiesPanel" style="margin-top: 10px; padding: 10px; background-color: rgba(0,0,0,0.5); border-radius: 5px; display: none;">
+            <p style="color: white; margin: 5px;">Object Properties:</p>
+            <div id="propertyFields"></div>
+        </div>
+        
+        <div style="margin-top: 10px; background-color: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;">
+            <p style="margin: 5px; color: white;">
+                Mode: <span id="currentMode">Place</span> | 
+                Tool: <span id="currentTool">Platform</span> | 
+                Objects: <span id="objectCount">0</span> | 
+                Selected: <span id="selectedCount">0</span>
+            </p>
+            <p style="margin: 5px; color: white;">
+                Mouse: (<span id="mouseX">0</span>, <span id="mouseY">0</span>) | 
+                Grid: (<span id="gridX">0</span>, <span id="gridY">0</span>) | 
+                Test Mode: <span id="testStatus">Off</span>
+            </p>
+        </div>
+    </div>
+
+    <style>
+        .tool-btn {
+            padding: 8px;
+            border: 2px solid transparent;
+            background-color: #555;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        .tool-btn:hover {
+            background-color: #666;
+        }
+        .tool-btn.active {
+            border-color: #4CAF50;
+            background-color: #4CAF50;
+        }
+    </style>
+
+    <script>
+        console.log('Level Design Tools Demo starting...');
+
+        // Object types
+        const ObjectType = {
+            PLATFORM: 'platform',
+            SPIKE: 'spike',
+            COIN: 'coin',
+            SPRING: 'spring',
+            ENEMY: 'enemy',
+            CHECKPOINT: 'checkpoint',
+            MOVING_PLATFORM: 'movingPlatform',
+            PORTAL: 'portal'
+        };
+
+        // Object properties
+        const ObjectProperties = {
+            [ObjectType.PLATFORM]: { 
+                name: 'Platform', 
+                color: '#8B4513', 
+                solid: true,
+                defaultWidth: 60,
+                defaultHeight: 20
+            },
+            [ObjectType.SPIKE]: { 
+                name: 'Spike', 
+                color: '#FF0000', 
+                solid: false,
+                damage: 1,
+                defaultWidth: 20,
+                defaultHeight: 20
+            },
+            [ObjectType.COIN]: { 
+                name: 'Coin', 
+                color: '#FFD700', 
+                solid: false,
+                value: 10,
+                defaultWidth: 20,
+                defaultHeight: 20
+            },
+            [ObjectType.SPRING]: { 
+                name: 'Spring', 
+                color: '#00CED1', 
+                solid: true,
+                power: 600,
+                defaultWidth: 30,
+                defaultHeight: 20
+            },
+            [ObjectType.ENEMY]: { 
+                name: 'Enemy', 
+                color: '#8B008B', 
+                solid: false,
+                speed: 50,
+                defaultWidth: 30,
+                defaultHeight: 30
+            },
+            [ObjectType.CHECKPOINT]: { 
+                name: 'Checkpoint', 
+                color: '#FF6347', 
+                solid: false,
+                defaultWidth: 40,
+                defaultHeight: 60
+            },
+            [ObjectType.MOVING_PLATFORM]: { 
+                name: 'Moving Platform', 
+                color: '#4682B4', 
+                solid: true,
+                speed: 50,
+                defaultWidth: 60,
+                defaultHeight: 20
+            },
+            [ObjectType.PORTAL]: { 
+                name: 'Portal', 
+                color: '#9370DB', 
+                solid: false,
+                defaultWidth: 40,
+                defaultHeight: 60
+            }
+        };
+
+        // Level object class
+        class LevelObject {
+            constructor(type, x, y, width = null, height = null) {
+                this.id = 'obj_' + Date.now() + '_' + Math.random();
+                this.type = type;
+                this.x = x;
+                this.y = y;
+                
+                const props = ObjectProperties[type];
+                this.width = width || props.defaultWidth;
+                this.height = height || props.defaultHeight;
+                
+                this.selected = false;
+                this.rotation = 0;
+                this.properties = { ...props };
+                
+                // Path for moving objects
+                this.path = [];
+                this.pathIndex = 0;
+                this.pathProgress = 0;
+                
+                // Runtime properties
+                this.vx = 0;
+                this.vy = 0;
+                this.active = true;
+            }
+            
+            update(dt) {
+                // Update moving platforms
+                if (this.type === ObjectType.MOVING_PLATFORM && this.path.length > 1) {
+                    this.updatePath(dt);
+                }
+                
+                // Update enemies
+                if (this.type === ObjectType.ENEMY) {
+                    this.updateEnemy(dt);
+                }
+                
+                // Update coins (rotation animation)
+                if (this.type === ObjectType.COIN) {
+                    this.rotation += dt * 2;
+                }
+            }
+            
+            updatePath(dt) {
+                if (this.path.length < 2) return;
+                
+                const speed = this.properties.speed || 50;
+                const currentPoint = this.path[this.pathIndex];
+                const nextPoint = this.path[(this.pathIndex + 1) % this.path.length];
+                
+                // Move along path
+                this.pathProgress += speed * dt / 100;
+                
+                if (this.pathProgress >= 1) {
+                    this.pathProgress = 0;
+                    this.pathIndex = (this.pathIndex + 1) % this.path.length;
+                }
+                
+                // Interpolate position
+                this.x = currentPoint.x + (nextPoint.x - currentPoint.x) * this.pathProgress;
+                this.y = currentPoint.y + (nextPoint.y - currentPoint.y) * this.pathProgress;
+            }
+            
+            updateEnemy(dt) {
+                // Simple back and forth movement
+                if (!this.startX) {
+                    this.startX = this.x;
+                    this.direction = 1;
+                }
+                
+                const speed = this.properties.speed || 50;
+                this.x += this.direction * speed * dt;
+                
+                if (Math.abs(this.x - this.startX) > 100) {
+                    this.direction *= -1;
+                }
+            }
+            
+            draw(ctx, camera = {x: 0, y: 0}) {
+                const screenX = this.x - camera.x;
+                const screenY = this.y - camera.y;
+                
+                ctx.save();
+                
+                // Selection highlight
+                if (this.selected) {
+                    ctx.strokeStyle = '#4CAF50';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(screenX - 2, screenY - 2, this.width + 4, this.height + 4);
+                }
+                
+                // Draw object
+                ctx.fillStyle = this.properties.color;
+                
+                switch(this.type) {
+                    case ObjectType.PLATFORM:
+                    case ObjectType.MOVING_PLATFORM:
+                        ctx.fillRect(screenX, screenY, this.width, this.height);
+                        ctx.strokeStyle = '#654321';
+                        ctx.lineWidth = 1;
+                        ctx.strokeRect(screenX, screenY, this.width, this.height);
+                        break;
+                        
+                    case ObjectType.SPIKE:
+                        ctx.beginPath();
+                        ctx.moveTo(screenX + this.width / 2, screenY);
+                        ctx.lineTo(screenX, screenY + this.height);
+                        ctx.lineTo(screenX + this.width, screenY + this.height);
+                        ctx.closePath();
+                        ctx.fill();
+                        break;
+                        
+                    case ObjectType.COIN:
+                        ctx.save();
+                        ctx.translate(screenX + this.width / 2, screenY + this.height / 2);
+                        ctx.rotate(this.rotation);
+                        ctx.fillStyle = '#FFD700';
+                        ctx.beginPath();
+                        ctx.arc(0, 0, this.width / 2, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.strokeStyle = '#FFA500';
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+                        ctx.restore();
+                        break;
+                        
+                    case ObjectType.SPRING:
+                        ctx.fillRect(screenX, screenY + this.height * 0.5, this.width, this.height * 0.5);
+                        ctx.strokeStyle = '#008B8B';
+                        for (let i = 0; i < 3; i++) {
+                            ctx.beginPath();
+                            ctx.moveTo(screenX, screenY + i * 5);
+                            ctx.lineTo(screenX + this.width, screenY + i * 5 + 5);
+                            ctx.stroke();
+                        }
+                        break;
+                        
+                    case ObjectType.ENEMY:
+                        ctx.fillRect(screenX, screenY, this.width, this.height);
+                        ctx.fillStyle = '#FF0000';
+                        ctx.fillRect(screenX + 5, screenY + 5, 5, 5);
+                        ctx.fillRect(screenX + this.width - 10, screenY + 5, 5, 5);
+                        break;
+                        
+                    case ObjectType.CHECKPOINT:
+                        ctx.fillRect(screenX + this.width / 2 - 2, screenY, 4, this.height);
+                        ctx.fillStyle = '#FF0000';
+                        ctx.beginPath();
+                        ctx.moveTo(screenX + this.width / 2, screenY);
+                        ctx.lineTo(screenX + this.width, screenY + 15);
+                        ctx.lineTo(screenX + this.width / 2, screenY + 30);
+                        ctx.closePath();
+                        ctx.fill();
+                        break;
+                        
+                    case ObjectType.PORTAL:
+                        ctx.save();
+                        ctx.translate(screenX + this.width / 2, screenY + this.height / 2);
+                        ctx.rotate(Date.now() / 500);
+                        ctx.strokeStyle = '#9370DB';
+                        ctx.lineWidth = 3;
+                        ctx.beginPath();
+                        ctx.arc(0, 0, this.width / 2, 0, Math.PI * 2);
+                        ctx.stroke();
+                        ctx.beginPath();
+                        ctx.arc(0, 0, this.width / 3, 0, Math.PI * 2);
+                        ctx.stroke();
+                        ctx.restore();
+                        break;
+                        
+                    default:
+                        ctx.fillRect(screenX, screenY, this.width, this.height);
+                }
+                
+                // Draw path for moving objects
+                if (this.path.length > 0 && this.selected) {
+                    ctx.strokeStyle = '#00FF00';
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([5, 5]);
+                    ctx.beginPath();
+                    for (let i = 0; i < this.path.length; i++) {
+                        const point = this.path[i];
+                        if (i === 0) {
+                            ctx.moveTo(point.x - camera.x, point.y - camera.y);
+                        } else {
+                            ctx.lineTo(point.x - camera.x, point.y - camera.y);
+                        }
+                    }
+                    if (this.path.length > 1) {
+                        ctx.lineTo(this.path[0].x - camera.x, this.path[0].y - camera.y);
+                    }
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    
+                    // Draw path points
+                    for (const point of this.path) {
+                        ctx.fillStyle = '#00FF00';
+                        ctx.fillRect(point.x - camera.x - 3, point.y - camera.y - 3, 6, 6);
+                    }
+                }
+                
+                ctx.restore();
+            }
+            
+            isPointInside(x, y) {
+                return x >= this.x && x <= this.x + this.width &&
+                       y >= this.y && y <= this.y + this.height;
+            }
+        }
+
+        // Level editor class
+        class LevelEditor {
+            constructor(canvas, ctx) {
+                this.canvas = canvas;
+                this.ctx = ctx;
+                
+                // Level data
+                this.objects = [];
+                this.selectedObjects = [];
+                
+                // Editor state
+                this.mode = 'place'; // place, select, delete, path
+                this.currentTool = ObjectType.PLATFORM;
+                this.gridSize = 20;
+                this.snapToGrid = true;
+                this.showGrid = true;
+                this.zoom = 1;
+                
+                // Test mode
+                this.testMode = false;
+                this.testPlayer = null;
+                
+                // Camera
+                this.camera = { x: 0, y: 0 };
+                
+                // Mouse state
+                this.mouseX = 0;
+                this.mouseY = 0;
+                this.mouseDown = false;
+                this.dragStart = null;
+                this.isDragging = false;
+                
+                // Path editing
+                this.currentPath = [];
+                this.editingPath = null;
+                
+                // History for undo/redo
+                this.history = [];
+                this.historyIndex = -1;
+                this.maxHistory = 50;
+                
+                // Debug
+                this.showDebug = false;
+                
+                // Initialize
+                this.setupEventListeners();
+                this.saveState();
+            }
+            
+            setupEventListeners() {
+                this.canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
+                this.canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
+                this.canvas.addEventListener('mouseup', (e) => this.onMouseUp(e));
+                this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+                
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if (e.ctrlKey || e.metaKey) {
+                        switch(e.key) {
+                            case 'z':
+                                e.preventDefault();
+                                if (e.shiftKey) this.redo();
+                                else this.undo();
+                                break;
+                            case 'c':
+                                e.preventDefault();
+                                this.copySelection();
+                                break;
+                            case 'v':
+                                e.preventDefault();
+                                this.pasteSelection();
+                                break;
+                            case 'd':
+                                e.preventDefault();
+                                this.duplicateSelection();
+                                break;
+                            case 'a':
+                                e.preventDefault();
+                                this.selectAll();
+                                break;
+                        }
+                    } else {
+                        switch(e.key) {
+                            case 'Delete':
+                                this.deleteSelection();
+                                break;
+                            case 'r':
+                                this.rotateSelection();
+                                break;
+                            case 'g':
+                                this.toggleGrid();
+                                break;
+                        }
+                    }
+                });
+            }
+            
+            onMouseDown(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                this.mouseX = e.clientX - rect.left;
+                this.mouseY = e.clientY - rect.top;
+                this.mouseDown = true;
+                
+                const worldX = this.mouseX + this.camera.x;
+                const worldY = this.mouseY + this.camera.y;
+                
+                if (this.testMode) return;
+                
+                switch(this.mode) {
+                    case 'place':
+                        this.placeObject(worldX, worldY);
+                        break;
+                    case 'select':
+                        this.startSelection(worldX, worldY);
+                        break;
+                    case 'delete':
+                        this.deleteAtPoint(worldX, worldY);
+                        break;
+                    case 'path':
+                        this.addPathPoint(worldX, worldY);
+                        break;
+                }
+            }
+            
+            onMouseMove(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                this.mouseX = e.clientX - rect.left;
+                this.mouseY = e.clientY - rect.top;
+                
+                const worldX = this.mouseX + this.camera.x;
+                const worldY = this.mouseY + this.camera.y;
+                
+                if (this.mouseDown && this.mode === 'select' && this.dragStart) {
+                    if (!this.isDragging && 
+                        (Math.abs(worldX - this.dragStart.x) > 5 || 
+                         Math.abs(worldY - this.dragStart.y) > 5)) {
+                        this.isDragging = true;
+                    }
+                    
+                    if (this.isDragging) {
+                        const dx = worldX - this.dragStart.x;
+                        const dy = worldY - this.dragStart.y;
+                        
+                        for (const obj of this.selectedObjects) {
+                            obj.x = obj.dragStartX + dx;
+                            obj.y = obj.dragStartY + dy;
+                            
+                            if (this.snapToGrid) {
+                                obj.x = Math.round(obj.x / this.gridSize) * this.gridSize;
+                                obj.y = Math.round(obj.y / this.gridSize) * this.gridSize;
+                            }
+                        }
+                    }
+                }
+                
+                this.updateUI();
+            }
+            
+            onMouseUp(e) {
+                this.mouseDown = false;
+                
+                if (this.isDragging) {
+                    this.saveState();
+                    this.isDragging = false;
+                }
+                
+                this.dragStart = null;
+            }
+            
+            placeObject(x, y) {
+                if (this.snapToGrid) {
+                    x = Math.round(x / this.gridSize) * this.gridSize;
+                    y = Math.round(y / this.gridSize) * this.gridSize;
+                }
+                
+                const obj = new LevelObject(this.currentTool, x, y);
+                this.objects.push(obj);
+                this.saveState();
+            }
+            
+            startSelection(x, y) {
+                // Check if clicking on object
+                let clickedObject = null;
+                for (let i = this.objects.length - 1; i >= 0; i--) {
+                    if (this.objects[i].isPointInside(x, y)) {
+                        clickedObject = this.objects[i];
+                        break;
+                    }
+                }
+                
+                if (clickedObject) {
+                    if (!clickedObject.selected) {
+                        // Clear selection unless holding shift
+                        if (!event.shiftKey) {
+                            this.clearSelection();
+                        }
+                        clickedObject.selected = true;
+                        this.selectedObjects.push(clickedObject);
+                    }
+                    
+                    // Start drag
+                    this.dragStart = { x, y };
+                    for (const obj of this.selectedObjects) {
+                        obj.dragStartX = obj.x;
+                        obj.dragStartY = obj.y;
+                    }
+                } else {
+                    this.clearSelection();
+                }
+                
+                this.updatePropertiesPanel();
+            }
+            
+            deleteAtPoint(x, y) {
+                for (let i = this.objects.length - 1; i >= 0; i--) {
+                    if (this.objects[i].isPointInside(x, y)) {
+                        this.objects.splice(i, 1);
+                        this.saveState();
+                        break;
+                    }
+                }
+            }
+            
+            addPathPoint(x, y) {
+                if (this.selectedObjects.length === 1) {
+                    const obj = this.selectedObjects[0];
+                    
+                    if (this.snapToGrid) {
+                        x = Math.round(x / this.gridSize) * this.gridSize;
+                        y = Math.round(y / this.gridSize) * this.gridSize;
+                    }
+                    
+                    obj.path.push({ x: x + obj.width / 2, y: y + obj.height / 2 });
+                    this.saveState();
+                }
+            }
+            
+            clearSelection() {
+                for (const obj of this.selectedObjects) {
+                    obj.selected = false;
+                }
+                this.selectedObjects = [];
+            }
+            
+            selectAll() {
+                this.clearSelection();
+                for (const obj of this.objects) {
+                    obj.selected = true;
+                    this.selectedObjects.push(obj);
+                }
+            }
+            
+            deleteSelection() {
+                if (this.selectedObjects.length > 0) {
+                    for (const obj of this.selectedObjects) {
+                        const index = this.objects.indexOf(obj);
+                        if (index !== -1) {
+                            this.objects.splice(index, 1);
+                        }
+                    }
+                    this.clearSelection();
+                    this.saveState();
+                }
+            }
+            
+            duplicateSelection() {
+                if (this.selectedObjects.length > 0) {
+                    const newObjects = [];
+                    for (const obj of this.selectedObjects) {
+                        const newObj = new LevelObject(obj.type, obj.x + 20, obj.y + 20, obj.width, obj.height);
+                        newObj.path = [...obj.path];
+                        this.objects.push(newObj);
+                        newObjects.push(newObj);
+                    }
+                    
+                    this.clearSelection();
+                    this.selectedObjects = newObjects;
+                    newObjects.forEach(obj => obj.selected = true);
+                    this.saveState();
+                }
+            }
+            
+            rotateSelection() {
+                for (const obj of this.selectedObjects) {
+                    obj.rotation += Math.PI / 2;
+                }
+                this.saveState();
+            }
+            
+            undo() {
+                if (this.historyIndex > 0) {
+                    this.historyIndex--;
+                    this.restoreState(this.history[this.historyIndex]);
+                }
+            }
+            
+            redo() {
+                if (this.historyIndex < this.history.length - 1) {
+                    this.historyIndex++;
+                    this.restoreState(this.history[this.historyIndex]);
+                }
+            }
+            
+            saveState() {
+                // Remove future history if we're not at the end
+                if (this.historyIndex < this.history.length - 1) {
+                    this.history = this.history.slice(0, this.historyIndex + 1);
+                }
+                
+                // Save current state
+                const state = {
+                    objects: this.objects.map(obj => ({
+                        ...obj,
+                        selected: false,
+                        path: [...obj.path]
+                    }))
+                };
+                
+                this.history.push(JSON.parse(JSON.stringify(state)));
+                this.historyIndex++;
+                
+                // Limit history size
+                if (this.history.length > this.maxHistory) {
+                    this.history.shift();
+                    this.historyIndex--;
+                }
+            }
+            
+            restoreState(state) {
+                this.objects = state.objects.map(data => {
+                    const obj = new LevelObject(data.type, data.x, data.y, data.width, data.height);
+                    obj.path = data.path || [];
+                    obj.rotation = data.rotation || 0;
+                    return obj;
+                });
+                this.clearSelection();
+            }
+            
+            update(dt) {
+                if (this.testMode) {
+                    // Update objects in test mode
+                    for (const obj of this.objects) {
+                        obj.update(dt);
+                    }
+                    
+                    // Update test player
+                    if (this.testPlayer) {
+                        this.testPlayer.update(dt, this.objects);
+                    }
+                }
+            }
+            
+            draw() {
+                // Clear canvas
+                this.ctx.fillStyle = '#2C3E50';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw grid
+                if (this.showGrid && !this.testMode) {
+                    this.drawGrid();
+                }
+                
+                // Draw objects
+                for (const obj of this.objects) {
+                    obj.draw(this.ctx, this.camera);
+                }
+                
+                // Draw test player
+                if (this.testMode && this.testPlayer) {
+                    this.testPlayer.draw(this.ctx, this.camera);
+                }
+                
+                // Draw cursor preview
+                if (!this.testMode && this.mode === 'place') {
+                    this.drawCursorPreview();
+                }
+                
+                // Draw selection box
+                if (this.isDragging && this.mode === 'select') {
+                    this.drawSelectionBox();
+                }
+                
+                // Debug info
+                if (this.showDebug) {
+                    this.drawDebugInfo();
+                }
+            }
+            
+            drawGrid() {
+                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+                this.ctx.lineWidth = 1;
+                
+                const startX = Math.floor(this.camera.x / this.gridSize) * this.gridSize - this.camera.x;
+                const startY = Math.floor(this.camera.y / this.gridSize) * this.gridSize - this.camera.y;
+                
+                for (let x = startX; x <= this.canvas.width; x += this.gridSize) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, 0);
+                    this.ctx.lineTo(x, this.canvas.height);
+                    this.ctx.stroke();
+                }
+                
+                for (let y = startY; y <= this.canvas.height; y += this.gridSize) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, y);
+                    this.ctx.lineTo(this.canvas.width, y);
+                    this.ctx.stroke();
+                }
+            }
+            
+            drawCursorPreview() {
+                let x = this.mouseX;
+                let y = this.mouseY;
+                
+                if (this.snapToGrid) {
+                    const worldX = x + this.camera.x;
+                    const worldY = y + this.camera.y;
+                    x = Math.round(worldX / this.gridSize) * this.gridSize - this.camera.x;
+                    y = Math.round(worldY / this.gridSize) * this.gridSize - this.camera.y;
+                }
+                
+                const props = ObjectProperties[this.currentTool];
+                this.ctx.fillStyle = props.color + '66';
+                this.ctx.fillRect(x, y, props.defaultWidth, props.defaultHeight);
+            }
+            
+            drawDebugInfo() {
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.font = '12px Arial';
+                let y = 20;
+                
+                this.ctx.fillText(`Objects: ${this.objects.length}`, 10, y);
+                y += 15;
+                this.ctx.fillText(`Selected: ${this.selectedObjects.length}`, 10, y);
+                y += 15;
+                this.ctx.fillText(`History: ${this.historyIndex + 1}/${this.history.length}`, 10, y);
+                y += 15;
+                this.ctx.fillText(`Camera: (${Math.round(this.camera.x)}, ${Math.round(this.camera.y)})`, 10, y);
+            }
+            
+            updatePropertiesPanel() {
+                const panel = document.getElementById('propertiesPanel');
+                const fields = document.getElementById('propertyFields');
+                
+                if (this.selectedObjects.length === 1) {
+                    const obj = this.selectedObjects[0];
+                    panel.style.display = 'block';
+                    
+                    fields.innerHTML = `
+                        <div style="color: white;">
+                            <p>Type: ${obj.properties.name}</p>
+                            <p>Position: (${Math.round(obj.x)}, ${Math.round(obj.y)})</p>
+                            <p>Size: ${obj.width} x ${obj.height}</p>
+                            ${obj.type === ObjectType.MOVING_PLATFORM ? 
+                                `<p>Path Points: ${obj.path.length}</p>` : ''}
+                        </div>
+                    `;
+                } else {
+                    panel.style.display = 'none';
+                }
+            }
+            
+            updateUI() {
+                document.getElementById('currentMode').textContent = 
+                    this.mode.charAt(0).toUpperCase() + this.mode.slice(1);
+                document.getElementById('currentTool').textContent = 
+                    ObjectProperties[this.currentTool].name;
+                document.getElementById('objectCount').textContent = this.objects.length;
+                document.getElementById('selectedCount').textContent = this.selectedObjects.length;
+                document.getElementById('mouseX').textContent = Math.round(this.mouseX + this.camera.x);
+                document.getElementById('mouseY').textContent = Math.round(this.mouseY + this.camera.y);
+                
+                const gridX = Math.floor((this.mouseX + this.camera.x) / this.gridSize);
+                const gridY = Math.floor((this.mouseY + this.camera.y) / this.gridSize);
+                document.getElementById('gridX').textContent = gridX;
+                document.getElementById('gridY').textContent = gridY;
+                
+                document.getElementById('testStatus').textContent = this.testMode ? 'On' : 'Off';
+            }
+        }
+
+        // Simple test player
+        class TestPlayer {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 20;
+                this.height = 30;
+                this.vx = 0;
+                this.vy = 0;
+                this.grounded = false;
+            }
+            
+            update(dt, objects) {
+                // Simple physics
+                this.vy += 1000 * dt;
+                this.x += this.vx * dt;
+                this.y += this.vy * dt;
+                
+                // Ground collision
+                if (this.y > 370) {
+                    this.y = 370;
+                    this.vy = 0;
+                    this.grounded = true;
+                }
+                
+                // Platform collision
+                for (const obj of objects) {
+                    if (obj.properties.solid) {
+                        // Simple AABB collision
+                        if (this.x < obj.x + obj.width &&
+                            this.x + this.width > obj.x &&
+                            this.y < obj.y + obj.height &&
+                            this.y + this.height > obj.y) {
+                            
+                            // Resolve collision (simple)
+                            if (this.vy > 0) {
+                                this.y = obj.y - this.height;
+                                this.vy = 0;
+                                this.grounded = true;
+                                
+                                // Spring bounce
+                                if (obj.type === ObjectType.SPRING) {
+                                    this.vy = -obj.properties.power;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            draw(ctx, camera) {
+                ctx.fillStyle = '#4CAF50';
+                ctx.fillRect(this.x - camera.x, this.y - camera.y, this.width, this.height);
+            }
+        }
+
+        // Initialize editor
+        const editorCanvas = document.getElementById('editorCanvas');
+        const ctx = editorCanvas.getContext('2d');
+        const editor = new LevelEditor(editorCanvas, ctx);
+
+        // Control functions
+        window.selectTool = function(tool) {
+            editor.currentTool = tool;
+            editor.mode = 'place';
+            
+            // Update UI
+            document.querySelectorAll('.tool-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(tool + 'Tool').classList.add('active');
+            
+            // Update mode buttons
+            document.getElementById('placeModeBtn').style.backgroundColor = '#4CAF50';
+            document.getElementById('selectModeBtn').style.backgroundColor = '#666';
+            document.getElementById('deleteModeBtn').style.backgroundColor = '#666';
+            document.getElementById('pathModeBtn').style.backgroundColor = '#666';
+        };
+
+        window.setMode = function(mode) {
+            editor.mode = mode;
+            
+            // Update UI
+            const buttons = {
+                'place': 'placeModeBtn',
+                'select': 'selectModeBtn',
+                'delete': 'deleteModeBtn',
+                'path': 'pathModeBtn'
+            };
+            
+            for (const [m, btnId] of Object.entries(buttons)) {
+                document.getElementById(btnId).style.backgroundColor = 
+                    m === mode ? '#4CAF50' : '#666';
+            }
+        };
+
+        window.toggleGrid = function() {
+            editor.showGrid = !editor.showGrid;
+        };
+
+        window.toggleSnap = function() {
+            editor.snapToGrid = !editor.snapToGrid;
+        };
+
+        window.clearLevel = function() {
+            if (confirm('Clear entire level?')) {
+                editor.objects = [];
+                editor.clearSelection();
+                editor.saveState();
+            }
+        };
+
+        window.undoAction = function() {
+            editor.undo();
+        };
+
+        window.redoAction = function() {
+            editor.redo();
+        };
+
+        window.duplicateSelection = function() {
+            editor.duplicateSelection();
+        };
+
+        window.rotateSelection = function() {
+            editor.rotateSelection();
+        };
+
+        window.setGridSize = function(size) {
+            editor.gridSize = parseInt(size);
+            document.getElementById('gridSizeDisplay').textContent = size;
+        };
+
+        window.setZoom = function(zoom) {
+            editor.zoom = parseFloat(zoom);
+            document.getElementById('zoomDisplay').textContent = zoom + 'x';
+        };
+
+        window.toggleTestMode = function() {
+            editor.testMode = !editor.testMode;
+            const btn = document.getElementById('testModeBtn');
+            
+            if (editor.testMode) {
+                btn.textContent = '⏹️ Stop Testing';
+                btn.style.backgroundColor = '#f44336';
+                editor.testPlayer = new TestPlayer(100, 200);
+            } else {
+                btn.textContent = '▶️ Test Level';
+                btn.style.backgroundColor = '#4CAF50';
+                editor.testPlayer = null;
+            }
+        };
+
+        window.resetTest = function() {
+            if (editor.testPlayer) {
+                editor.testPlayer = new TestPlayer(100, 200);
+            }
+        };
+
+        window.toggleDebugInfo = function() {
+            editor.showDebug = !editor.showDebug;
+        };
+
+        window.saveLevel = function() {
+            const levelData = {
+                objects: editor.objects.map(obj => ({
+                    type: obj.type,
+                    x: obj.x,
+                    y: obj.y,
+                    width: obj.width,
+                    height: obj.height,
+                    path: obj.path,
+                    rotation: obj.rotation
+                }))
+            };
+            
+            const json = JSON.stringify(levelData, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'level.json';
+            a.click();
+        };
+
+        window.loadLevel = function() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const levelData = JSON.parse(event.target.result);
+                        editor.objects = levelData.objects.map(data => {
+                            const obj = new LevelObject(data.type, data.x, data.y, data.width, data.height);
+                            obj.path = data.path || [];
+                            obj.rotation = data.rotation || 0;
+                            return obj;
+                        });
+                        editor.clearSelection();
+                        editor.saveState();
+                    } catch (error) {
+                        alert('Failed to load level file');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        };
+
+        window.generateTemplate = function(template) {
+            editor.objects = [];
+            
+            // Generate basic level template
+            const platforms = [
+                { x: 0, y: 380, w: 600, h: 20 },
+                { x: 100, y: 320, w: 80, h: 20 },
+                { x: 250, y: 280, w: 100, h: 20 },
+                { x: 420, y: 240, w: 80, h: 20 },
+                { x: 200, y: 200, w: 60, h: 20 },
+                { x: 350, y: 160, w: 100, h: 20 }
+            ];
+            
+            for (const p of platforms) {
+                const obj = new LevelObject(ObjectType.PLATFORM, p.x, p.y, p.w, p.h);
+                editor.objects.push(obj);
+            }
+            
+            // Add some coins
+            for (let i = 0; i < 10; i++) {
+                const x = Math.random() * 550 + 25;
+                const y = Math.random() * 300 + 50;
+                editor.objects.push(new LevelObject(ObjectType.COIN, x, y));
+            }
+            
+            // Add checkpoint
+            editor.objects.push(new LevelObject(ObjectType.CHECKPOINT, 550, 320));
+            
+            editor.saveState();
+        };
+
+        window.validateLevel = function() {
+            let issues = [];
+            
+            // Check for spawn point
+            const hasCheckpoint = editor.objects.some(obj => obj.type === ObjectType.CHECKPOINT);
+            if (!hasCheckpoint) {
+                issues.push('No checkpoint/spawn point');
+            }
+            
+            // Check for unreachable areas
+            // (simplified check)
+            
+            if (issues.length === 0) {
+                alert('Level validation passed!');
+            } else {
+                alert('Level issues:\n' + issues.join('\n'));
+            }
+        };
+
+        // Animation loop
+        let lastTime = performance.now();
+        function animate(currentTime) {
+            const dt = Math.min((currentTime - lastTime) / 1000, 0.1);
+            lastTime = currentTime;
+            
+            editor.update(dt);
+            editor.draw();
+            editor.updateUI();
+            
+            requestAnimationFrame(animate);
+        }
+
+        animate(performance.now());
+
+        // Initialize with platform tool selected
+        selectTool('platform');
+
+        console.log('Level Editor initialized!');
+    </script>
+
+    <h2>Level Editor Implementation</h2>
+    
+    <pre class="language-python"><code>import pygame
+import json
+from enum import Enum
+from typing import List, Dict, Optional, Tuple
+
+class ObjectType(Enum):
+    """Level object types"""
+    PLATFORM = "platform"
+    SPIKE = "spike"
+    COIN = "coin"
+    SPRING = "spring"
+    ENEMY = "enemy"
+    CHECKPOINT = "checkpoint"
+    MOVING_PLATFORM = "moving_platform"
+    PORTAL = "portal"
+
+class LevelObject:
+    """Base class for level objects"""
+    def __init__(self, obj_type: ObjectType, x: float, y: float, 
+                 width: float = 32, height: float = 32):
+        self.type = obj_type
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.properties = {}
+        self.selected = False
+        
+        # Path for moving objects
+        self.path = []
+        self.path_index = 0
+        self.path_progress = 0.0
+        
+    def get_rect(self) -> pygame.Rect:
+        """Get collision rectangle"""
+        return pygame.Rect(self.x, self.y, self.width, self.height)
+    
+    def update(self, dt: float):
+        """Update object logic"""
+        if self.type == ObjectType.MOVING_PLATFORM and len(self.path) > 1:
+            self.update_path_movement(dt)
+    
+    def update_path_movement(self, dt: float):
+        """Update movement along path"""
+        if len(self.path) < 2:
+            return
+        
+        speed = self.properties.get('speed', 50)
+        current = self.path[self.path_index]
+        next_point = self.path[(self.path_index + 1) % len(self.path)]
+        
+        # Move along path
+        self.path_progress += speed * dt / 100
+        
+        if self.path_progress >= 1.0:
+            self.path_progress = 0.0
+            self.path_index = (self.path_index + 1) % len(self.path)
+        
+        # Interpolate position
+        t = self.path_progress
+        self.x = current[0] + (next_point[0] - current[0]) * t
+        self.y = current[1] + (next_point[1] - current[1]) * t
+    
+    def to_dict(self) -> Dict:
+        """Serialize to dictionary"""
+        return {
+            'type': self.type.value,
+            'x': self.x,
+            'y': self.y,
+            'width': self.width,
+            'height': self.height,
+            'properties': self.properties,
+            'path': self.path
+        }
+    
+    @classmethod
+    def from_dict(cls, data: Dict) -> 'LevelObject':
+        """Deserialize from dictionary"""
+        obj = cls(
+            ObjectType(data['type']),
+            data['x'],
+            data['y'],
+            data.get('width', 32),
+            data.get('height', 32)
+        )
+        obj.properties = data.get('properties', {})
+        obj.path = data.get('path', [])
+        return obj
+
+class LevelEditor:
+    """Visual level editor"""
+    def __init__(self, screen_width: int, screen_height: int):
+        self.screen_width = screen_width
+        self.screen_height = screen_height
+        
+        # Level objects
+        self.objects: List[LevelObject] = []
+        self.selected_objects: List[LevelObject] = []
+        
+        # Editor state
+        self.mode = 'place'  # place, select, delete, path
+        self.current_tool = ObjectType.PLATFORM
+        self.grid_size = 32
+        self.snap_to_grid = True
+        self.show_grid = True
+        
+        # Camera
+        self.camera_x = 0
+        self.camera_y = 0
+        
+        # History for undo/redo
+        self.history = []
+        self.history_index = -1
+        self.max_history = 50
+        
+        # Clipboard
+        self.clipboard = []
+        
+    def place_object(self, x: float, y: float):
+        """Place new object at position"""
+        if self.snap_to_grid:
+            x = round(x / self.grid_size) * self.grid_size
+            y = round(y / self.grid_size) * self.grid_size
+        
+        # Default sizes for different object types
+        sizes = {
+            ObjectType.PLATFORM: (64, 32),
+            ObjectType.SPIKE: (32, 32),
+            ObjectType.COIN: (24, 24),
+            ObjectType.SPRING: (32, 32),
+            ObjectType.ENEMY: (32, 32),
+            ObjectType.CHECKPOINT: (32, 64),
+            ObjectType.MOVING_PLATFORM: (64, 32),
+            ObjectType.PORTAL: (48, 64)
+        }
+        
+        width, height = sizes.get(self.current_tool, (32, 32))
+        obj = LevelObject(self.current_tool, x, y, width, height)
+        
+        self.objects.append(obj)
+        self.save_history()
+    
+    def select_at_point(self, x: float, y: float, add_to_selection: bool = False):
+        """Select object at point"""
+        if not add_to_selection:
+            self.clear_selection()
+        
+        for obj in reversed(self.objects):  # Check top objects first
+            if obj.get_rect().collidepoint(x, y):
+                obj.selected = True
+                self.selected_objects.append(obj)
+                break
+    
+    def clear_selection(self):
+        """Clear all selections"""
+        for obj in self.selected_objects:
+            obj.selected = False
+        self.selected_objects.clear()
+    
+    def delete_selected(self):
+        """Delete selected objects"""
+        for obj in self.selected_objects:
+            if obj in self.objects:
+                self.objects.remove(obj)
+        self.clear_selection()
+        self.save_history()
+    
+    def move_selected(self, dx: float, dy: float):
+        """Move selected objects"""
+        for obj in self.selected_objects:
+            obj.x += dx
+            obj.y += dy
+            
+            if self.snap_to_grid:
+                obj.x = round(obj.x / self.grid_size) * self.grid_size
+                obj.y = round(obj.y / self.grid_size) * self.grid_size
+    
+    def copy_selected(self):
+        """Copy selected objects to clipboard"""
+        self.clipboard = [obj.to_dict() for obj in self.selected_objects]
+    
+    def paste(self, x: float, y: float):
+        """Paste objects from clipboard"""
+        if not self.clipboard:
+            return
+        
+        self.clear_selection()
+        
+        # Calculate offset from first object
+        if self.clipboard:
+            offset_x = x - self.clipboard[0]['x']
+            offset_y = y - self.clipboard[0]['y']
+            
+            for data in self.clipboard:
+                new_data = data.copy()
+                new_data['x'] += offset_x
+                new_data['y'] += offset_y
+                
+                obj = LevelObject.from_dict(new_data)
+                obj.selected = True
+                self.objects.append(obj)
+                self.selected_objects.append(obj)
+        
+        self.save_history()
+    
+    def save_history(self):
+        """Save current state to history"""
+        # Truncate future history
+        if self.history_index < len(self.history) - 1:
+            self.history = self.history[:self.history_index + 1]
+        
+        # Save state
+        state = [obj.to_dict() for obj in self.objects]
+        self.history.append(state)
+        self.history_index += 1
+        
+        # Limit history size
+        if len(self.history) > self.max_history:
+            self.history.pop(0)
+            self.history_index -= 1
+    
+    def undo(self):
+        """Undo last action"""
+        if self.history_index > 0:
+            self.history_index -= 1
+            self.restore_state(self.history[self.history_index])
+    
+    def redo(self):
+        """Redo action"""
+        if self.history_index < len(self.history) - 1:
+            self.history_index += 1
+            self.restore_state(self.history[self.history_index])
+    
+    def restore_state(self, state: List[Dict]):
+        """Restore objects from state"""
+        self.clear_selection()
+        self.objects = [LevelObject.from_dict(data) for data in state]
+    
+    def save_level(self, filename: str):
+        """Save level to file"""
+        level_data = {
+            'objects': [obj.to_dict() for obj in self.objects],
+            'properties': {
+                'width': self.screen_width,
+                'height': self.screen_height
+            }
+        }
+        
+        with open(filename, 'w') as f:
+            json.dump(level_data, f, indent=2)
+    
+    def load_level(self, filename: str):
+        """Load level from file"""
+        with open(filename, 'r') as f:
+            level_data = json.load(f)
+        
+        self.clear_selection()
+        self.objects = [LevelObject.from_dict(data) 
+                       for data in level_data['objects']]
+        self.save_history()
+    
+    def validate_level(self) -> List[str]:
+        """Validate level design"""
+        issues = []
+        
+        # Check for spawn point
+        has_spawn = any(obj.type == ObjectType.CHECKPOINT 
+                       for obj in self.objects)
+        if not has_spawn:
+            issues.append("No spawn point/checkpoint")
+        
+        # Check for unreachable areas
+        # (Simplified - would need pathfinding for full validation)
+        
+        # Check for impossible jumps
+        # (Would need physics simulation)
+        
+        return issues</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Level Design Tool Tips</h3>
+        <ul>
+            <li><strong>Grid Snapping:</strong> Align objects for clean layouts</li>
+            <li><strong>Object Palette:</strong> Quick access to common objects</li>
+            <li><strong>Undo/Redo:</strong> Essential for experimentation</li>
+            <li><strong>Copy/Paste:</strong> Speed up repetitive designs</li>
+            <li><strong>Test Mode:</strong> Immediate playtesting</li>
+            <li><strong>Validation:</strong> Check for design issues</li>
+            <li><strong>Prefabs:</strong> Reusable object groups</li>
+            <li><strong>Visual Feedback:</strong> Clear selection and placement</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>🎨 Visual editors speed up level creation</li>
+            <li>🧲 Grid snapping ensures alignment</li>
+            <li>📋 Copy/paste accelerates workflow</li>
+            <li>↶ Undo/redo enables experimentation</li>
+            <li>🛤️ Path editing creates dynamic levels</li>
+            <li>▶️ Test mode provides instant feedback</li>
+            <li>💾 Save/load preserves work</li>
+            <li>✅ Validation catches design issues</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>With powerful level design tools mastered, next we'll add visual depth with parallax scrolling to create immersive game worlds!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="platformer_character_controller.html" class="prev-lesson" aria-label="Previous lesson: Character Controllers">Previous Lesson: Character Controllers</a>
+        <a href="platformer_parallax.html" class="next-lesson" aria-label="Next lesson: Parallax Scrolling">Next Lesson: Parallax Scrolling</a>
+    </nav>
+    
+    </main>
+    <script src="/js/course-enhancements.js" defer></script>
+</body>
+</html>

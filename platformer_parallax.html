@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master parallax scrolling for 2D games. Learn multi-layer backgrounds, depth perception, infinite scrolling, and atmospheric effects.">
+    <title>Parallax Scrolling - 2D Platformer Development</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Parallax Scrolling</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Intermediate Module - Section 2: 2D Platformer Development - Lesson 5</span>
+    </nav>
+
+    <h2>Creating Depth with Parallax Scrolling</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Parallax scrolling creates stunning depth and immersion in 2D games! Learn multi-layer backgrounds, scrolling speeds, infinite tiling, atmospheric effects, and how to build beautiful living worlds! 🌄🎨✨</p>
+    </div>
+
+    <h2>Understanding Parallax</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🚂 The Train Window Analogy</h3>
+        <p>Think of parallax like looking out a train window:</p>
+        <ul>
+            <li><strong>Nearby Trees:</strong> Whiz by quickly (foreground)</li>
+            <li><strong>Houses:</strong> Move at moderate speed (midground)</li>
+            <li><strong>Mountains:</strong> Crawl slowly (background)</li>
+            <li><strong>Clouds:</strong> Barely move (far background)</li>
+            <li><strong>Sun/Moon:</strong> Appear stationary (skybox)</li>
+            <li><strong>The Train:</strong> Your camera moving through the world</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Parallax System"] --> B["Layer Management"]
+        A --> C["Scrolling Logic"]
+        A --> D["Visual Effects"]
+        
+        B --> E["Background Layers"]
+        B --> F["Midground Layers"]
+        B --> G["Foreground Layers"]
+        
+        C --> H["Speed Factors"]
+        C --> I["Infinite Tiling"]
+        C --> J["Auto-scrolling"]
+        
+        D --> K["Atmospheric Fog"]
+        D --> L["Particle Effects"]
+        D --> M["Dynamic Time"]
+    </div>
+
+    <h2>Interactive Parallax Demo</h2>
+    
+    <div class="canvas-wrapper" style="text-align: center;">
+        <canvas id="parallaxCanvas" width="600" height="400" style="border: 1px solid #333; background-color: #1a1a2e; display: inline-block;"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Use Arrow Keys/WASD to move and see the parallax effect! Mouse to look around!</p>
+        
+        <!-- Scene Selection -->
+        <div style="margin: 10px auto; padding: 10px; background-color: rgba(0,0,0,0.3); border-radius: 5px; max-width: 600px;">
+            <p style="color: white; margin: 5px;">Choose Scene:</p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 5px;">
+                <button onclick="loadScene('forest')" class="scene-btn" id="forestBtn">🌲 Forest</button>
+                <button onclick="loadScene('city')" class="scene-btn" id="cityBtn">🏙️ City</button>
+                <button onclick="loadScene('ocean')" class="scene-btn" id="oceanBtn">🌊 Ocean</button>
+                <button onclick="loadScene('space')" class="scene-btn" id="spaceBtn">🌌 Space</button>
+                <button onclick="loadScene('desert')" class="scene-btn" id="desertBtn">🏜️ Desert</button>
+                <button onclick="loadScene('cave')" class="scene-btn" id="caveBtn">⛰️ Cave</button>
+            </div>
+        </div>
+        
+        <!-- Controls -->
+        <div style="margin-top: 10px;">
+            <button onclick="toggleAutoScroll()">🔄 Auto-scroll</button>
+            <button onclick="toggleParticles()">✨ Particles</button>
+            <button onclick="toggleFog()">🌫️ Fog</button>
+            <button onclick="toggleDebug()">📊 Debug</button>
+            <button onclick="toggleDayNight()">🌙 Day/Night</button>
+            <button onclick="addLayer()">➕ Add Layer</button>
+            <button onclick="removeLayer()">➖ Remove Layer</button>
+            <button onclick="resetCamera()">🎯 Reset View</button>
+        </div>
+        
+        <!-- Layer Controls -->
+        <div style="margin-top: 10px;">
+            <label>Layer Count: <span id="layerCount">5</span></label>
+            <button onclick="selectLayer(0)">Select BG</button>
+            <button onclick="selectLayer(2)">Select Mid</button>
+            <button onclick="selectLayer(4)">Select FG</button>
+        </div>
+        
+        <!-- Selected Layer Controls -->
+        <div style="margin-top: 10px;">
+            <p style="color: white;">Selected Layer: <span id="selectedLayer">None</span></p>
+            <label>Speed X: <input type="range" id="speedX" min="0" max="200" value="100" onchange="updateLayerSpeed('x', this.value)"> <span id="speedXDisplay">100%</span></label>
+            <label>Speed Y: <input type="range" id="speedY" min="0" max="200" value="100" onchange="updateLayerSpeed('y', this.value)"> <span id="speedYDisplay">100%</span></label>
+        </div>
+        
+        <div style="margin-top: 10px;">
+            <label>Opacity: <input type="range" id="opacity" min="0" max="100" value="100" onchange="updateLayerOpacity(this.value)"> <span id="opacityDisplay">100%</span></label>
+            <label>Blur: <input type="range" id="blur" min="0" max="10" value="0" onchange="updateLayerBlur(this.value)"> <span id="blurDisplay">0px</span></label>
+        </div>
+        
+        <!-- Global Controls -->
+        <div style="margin-top: 10px;">
+            <label>Global Speed: <input type="range" id="globalSpeed" min="0" max="200" value="100" onchange="setGlobalSpeed(this.value)"> <span id="globalSpeedDisplay">100%</span></label>
+            <label>Time of Day: <input type="range" id="timeOfDay" min="0" max="24" step="0.1" value="12" onchange="setTimeOfDay(this.value)"> <span id="timeDisplay">12:00</span></label>
+        </div>
+        
+        <div style="margin-top: 10px; background-color: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;">
+            <p style="margin: 5px; color: white;">
+                Camera: (<span id="cameraX">0</span>, <span id="cameraY">0</span>) | 
+                Mouse Offset: (<span id="mouseOffsetX">0</span>, <span id="mouseOffsetY">0</span>) | 
+                FPS: <span id="fps">60</span>
+            </p>
+            <p style="margin: 5px; color: white;">
+                Active Layers: <span id="activeLayers">5</span> | 
+                Particles: <span id="particleCount">0</span> | 
+                Scene: <span id="currentScene">Forest</span>
+            </p>
+        </div>
+    </div>
+
+    <style>
+        .scene-btn {
+            padding: 8px;
+            border: 2px solid transparent;
+            background-color: #555;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        .scene-btn:hover {
+            background-color: #666;
+        }
+        .scene-btn.active {
+            border-color: #4CAF50;
+            background-color: #4CAF50;
+        }
+    </style>
+
+    <script>
+        console.log('Parallax Scrolling Demo starting...');
+
+        // Parallax layer class
+        class ParallaxLayer {
+            constructor(speedX, speedY, color, elements = []) {
+                this.speedX = speedX;  // 0 = static, 1 = normal, <1 = slower (farther)
+                this.speedY = speedY;
+                this.color = color;
+                this.elements = elements;
+                this.opacity = 1;
+                this.blur = 0;
+                this.autoScrollX = 0;
+                this.autoScrollY = 0;
+                this.offsetX = 0;
+                this.offsetY = 0;
+            }
+            
+            update(dt, camera, mouseOffset = {x: 0, y: 0}) {
+                // Auto-scrolling
+                this.offsetX += this.autoScrollX * dt;
+                this.offsetY += this.autoScrollY * dt;
+            }
+            
+            draw(ctx, camera, mouseOffset = {x: 0, y: 0}, screenWidth, screenHeight) {
+                ctx.save();
+                
+                // Apply opacity
+                ctx.globalAlpha = this.opacity;
+                
+                // Apply blur (simulated with shadow)
+                if (this.blur > 0) {
+                    ctx.shadowBlur = this.blur;
+                    ctx.shadowColor = this.color;
+                }
+                
+                // Calculate parallax offset
+                const parallaxX = (camera.x * this.speedX) + (mouseOffset.x * this.speedX * 0.05) + this.offsetX;
+                const parallaxY = (camera.y * this.speedY) + (mouseOffset.y * this.speedY * 0.05) + this.offsetY;
+                
+                // Draw elements
+                for (const element of this.elements) {
+                    this.drawElement(ctx, element, parallaxX, parallaxY, screenWidth, screenHeight);
+                }
+                
+                ctx.restore();
+            }
+            
+            drawElement(ctx, element, offsetX, offsetY, screenWidth, screenHeight) {
+                // Calculate position with wrapping for infinite scroll
+                let x = element.x - offsetX;
+                let y = element.y - offsetY;
+                
+                // Wrap horizontally
+                if (element.wrap) {
+                    const totalWidth = element.width || 100;
+                    while (x < -totalWidth) x += screenWidth + totalWidth;
+                    while (x > screenWidth) x -= screenWidth + totalWidth;
+                    
+                    // Draw multiple times for seamless wrapping
+                    for (let wx = x - totalWidth; wx < screenWidth + totalWidth; wx += totalWidth) {
+                        this.renderElement(ctx, element, wx, y);
+                    }
+                } else {
+                    this.renderElement(ctx, element, x, y);
+                }
+            }
+            
+            renderElement(ctx, element, x, y) {
+                ctx.fillStyle = element.color || this.color;
+                
+                switch(element.type) {
+                    case 'rect':
+                        ctx.fillRect(x, y, element.width, element.height);
+                        break;
+                    
+                    case 'circle':
+                        ctx.beginPath();
+                        ctx.arc(x, y, element.radius, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+                    
+                    case 'mountain':
+                        ctx.beginPath();
+                        ctx.moveTo(x, y);
+                        ctx.lineTo(x - element.width/2, y + element.height);
+                        ctx.lineTo(x + element.width/2, y + element.height);
+                        ctx.closePath();
+                        ctx.fill();
+                        break;
+                    
+                    case 'cloud':
+                        // Draw fluffy cloud
+                        for (let i = 0; i < 3; i++) {
+                            ctx.beginPath();
+                            ctx.arc(x + i * 20 - 20, y, 15 + i * 5, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                        break;
+                    
+                    case 'tree':
+                        // Trunk
+                        ctx.fillStyle = '#4a4a4a';
+                        ctx.fillRect(x - 5, y, 10, element.height * 0.4);
+                        // Leaves
+                        ctx.fillStyle = element.color;
+                        ctx.beginPath();
+                        ctx.moveTo(x, y - element.height * 0.3);
+                        ctx.lineTo(x - element.width/2, y + element.height * 0.3);
+                        ctx.lineTo(x + element.width/2, y + element.height * 0.3);
+                        ctx.closePath();
+                        ctx.fill();
+                        break;
+                    
+                    case 'building':
+                        ctx.fillRect(x, y, element.width, element.height);
+                        // Windows
+                        ctx.fillStyle = '#FFD700';
+                        for (let wy = 0; wy < element.height - 20; wy += 30) {
+                            for (let wx = 0; wx < element.width - 20; wx += 20) {
+                                if (Math.random() > 0.3) {
+                                    ctx.fillRect(x + wx + 10, y + wy + 10, 8, 12);
+                                }
+                            }
+                        }
+                        break;
+                    
+                    case 'star':
+                        ctx.beginPath();
+                        for (let i = 0; i < 5; i++) {
+                            const angle = (i * 144 - 90) * Math.PI / 180;
+                            const px = x + Math.cos(angle) * element.radius;
+                            const py = y + Math.sin(angle) * element.radius;
+                            if (i === 0) ctx.moveTo(px, py);
+                            else ctx.lineTo(px, py);
+                        }
+                        ctx.closePath();
+                        ctx.fill();
+                        break;
+                    
+                    default:
+                        ctx.fillRect(x, y, element.width || 50, element.height || 50);
+                }
+            }
+        }
+
+        // Particle system
+        class ParticleSystem {
+            constructor(maxParticles = 100) {
+                this.particles = [];
+                this.maxParticles = maxParticles;
+                this.emitting = true;
+            }
+            
+            emit(x, y, options = {}) {
+                if (!this.emitting || this.particles.length >= this.maxParticles) return;
+                
+                this.particles.push({
+                    x: x,
+                    y: y,
+                    vx: options.vx || (Math.random() - 0.5) * 50,
+                    vy: options.vy || (Math.random() - 0.5) * 50,
+                    size: options.size || Math.random() * 3 + 1,
+                    color: options.color || '#ffffff',
+                    life: options.life || 1,
+                    maxLife: options.life || 1,
+                    type: options.type || 'circle'
+                });
+            }
+            
+            update(dt) {
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    const p = this.particles[i];
+                    
+                    p.x += p.vx * dt;
+                    p.y += p.vy * dt;
+                    p.life -= dt;
+                    
+                    // Apply gravity for some types
+                    if (p.type === 'snow' || p.type === 'rain') {
+                        p.vy += 100 * dt;
+                    }
+                    
+                    if (p.life <= 0) {
+                        this.particles.splice(i, 1);
+                    }
+                }
+            }
+            
+            draw(ctx, camera) {
+                for (const p of this.particles) {
+                    ctx.save();
+                    ctx.globalAlpha = p.life / p.maxLife;
+                    ctx.fillStyle = p.color;
+                    
+                    const x = p.x - camera.x;
+                    const y = p.y - camera.y;
+                    
+                    switch(p.type) {
+                        case 'circle':
+                            ctx.beginPath();
+                            ctx.arc(x, y, p.size, 0, Math.PI * 2);
+                            ctx.fill();
+                            break;
+                        
+                        case 'star':
+                            ctx.fillRect(x - 1, y - p.size, 2, p.size * 2);
+                            ctx.fillRect(x - p.size, y - 1, p.size * 2, 2);
+                            break;
+                        
+                        case 'snow':
+                        case 'rain':
+                            ctx.fillRect(x, y, p.size, p.size * (p.type === 'rain' ? 3 : 1));
+                            break;
+                    }
+                    
+                    ctx.restore();
+                }
+            }
+        }
+
+        // Scene presets
+        const scenes = {
+            forest: {
+                name: 'Forest',
+                layers: [
+                    // Far background - sky
+                    new ParallaxLayer(0.1, 0.05, '#87CEEB', [
+                        { type: 'rect', x: 0, y: 0, width: 600, height: 400, color: '#87CEEB' }
+                    ]),
+                    // Mountains
+                    new ParallaxLayer(0.2, 0.1, '#8B7D82', [
+                        { type: 'mountain', x: 100, y: 150, width: 200, height: 250, color: '#8B7D82' },
+                        { type: 'mountain', x: 300, y: 100, width: 300, height: 300, color: '#9D8D92' },
+                        { type: 'mountain', x: 500, y: 180, width: 250, height: 220, color: '#8B7D82' }
+                    ]),
+                    // Far trees
+                    new ParallaxLayer(0.4, 0.2, '#2F5233', 
+                        Array.from({length: 20}, (_, i) => ({
+                            type: 'tree',
+                            x: i * 80 + Math.random() * 40,
+                            y: 250 + Math.random() * 50,
+                            width: 30,
+                            height: 60,
+                            color: '#2F5233',
+                            wrap: true
+                        }))
+                    ),
+                    // Near trees
+                    new ParallaxLayer(0.7, 0.3, '#3F6243', 
+                        Array.from({length: 15}, (_, i) => ({
+                            type: 'tree',
+                            x: i * 100 + Math.random() * 50,
+                            y: 280 + Math.random() * 40,
+                            width: 40,
+                            height: 80,
+                            color: '#3F6243',
+                            wrap: true
+                        }))
+                    ),
+                    // Foreground trees
+                    new ParallaxLayer(1.2, 0.5, '#4F7253', 
+                        Array.from({length: 10}, (_, i) => ({
+                            type: 'tree',
+                            x: i * 150 + Math.random() * 50,
+                            y: 320 + Math.random() * 30,
+                            width: 60,
+                            height: 120,
+                            color: '#4F7253',
+                            wrap: true
+                        }))
+                    )
+                ]
+            },
+            city: {
+                name: 'City',
+                layers: [
+                    // Sky
+                    new ParallaxLayer(0, 0, '#1a1a2e', [
+                        { type: 'rect', x: 0, y: 0, width: 600, height: 400, color: '#1a1a2e' }
+                    ]),
+                    // Far buildings
+                    new ParallaxLayer(0.3, 0.1, '#2a2a3e',
+                        Array.from({length: 8}, (_, i) => ({
+                            type: 'building',
+                            x: i * 120,
+                            y: 200 + Math.random() * 50,
+                            width: 80 + Math.random() * 40,
+                            height: 150 + Math.random() * 100,
+                            color: '#2a2a3e',
+                            wrap: true
+                        }))
+                    ),
+                    // Mid buildings
+                    new ParallaxLayer(0.6, 0.2, '#3a3a4e',
+                        Array.from({length: 6}, (_, i) => ({
+                            type: 'building',
+                            x: i * 150,
+                            y: 180 + Math.random() * 40,
+                            width: 100 + Math.random() * 50,
+                            height: 180 + Math.random() * 120,
+                            color: '#3a3a4e',
+                            wrap: true
+                        }))
+                    ),
+                    // Near buildings
+                    new ParallaxLayer(1.0, 0.3, '#4a4a5e',
+                        Array.from({length: 5}, (_, i) => ({
+                            type: 'building',
+                            x: i * 180,
+                            y: 150 + Math.random() * 30,
+                            width: 120 + Math.random() * 60,
+                            height: 250 + Math.random() * 100,
+                            color: '#4a4a5e',
+                            wrap: true
+                        }))
+                    )
+                ]
+            },
+            ocean: {
+                name: 'Ocean',
+                layers: [
+                    // Sky
+                    new ParallaxLayer(0, 0, '#87CEEB', [
+                        { type: 'rect', x: 0, y: 0, width: 600, height: 200, color: '#87CEEB' }
+                    ]),
+                    // Clouds
+                    new ParallaxLayer(0.2, 0.1, '#ffffff',
+                        Array.from({length: 5}, (_, i) => ({
+                            type: 'cloud',
+                            x: i * 200 + Math.random() * 100,
+                            y: 50 + Math.random() * 100,
+                            color: '#ffffff',
+                            wrap: true
+                        }))
+                    ),
+                    // Far water
+                    new ParallaxLayer(0.4, 0, '#4682B4', [
+                        { type: 'rect', x: 0, y: 200, width: 600, height: 200, color: '#4682B4' }
+                    ]),
+                    // Mid water
+                    new ParallaxLayer(0.7, 0, '#5F9EA0', [
+                        { type: 'rect', x: 0, y: 250, width: 600, height: 150, color: '#5F9EA0' }
+                    ]),
+                    // Near water
+                    new ParallaxLayer(1.2, 0, '#6FA8DC', [
+                        { type: 'rect', x: 0, y: 300, width: 600, height: 100, color: '#6FA8DC' }
+                    ])
+                ]
+            },
+            space: {
+                name: 'Space',
+                layers: [
+                    // Deep space
+                    new ParallaxLayer(0, 0, '#000000', [
+                        { type: 'rect', x: 0, y: 0, width: 600, height: 400, color: '#000000' }
+                    ]),
+                    // Far stars
+                    new ParallaxLayer(0.05, 0.05, '#ffffff',
+                        Array.from({length: 100}, () => ({
+                            type: 'circle',
+                            x: Math.random() * 800,
+                            y: Math.random() * 600,
+                            radius: Math.random() * 1.5,
+                            color: '#ffffff',
+                            wrap: true
+                        }))
+                    ),
+                    // Nebula
+                    new ParallaxLayer(0.2, 0.1, '#8B008B',
+                        Array.from({length: 3}, (_, i) => ({
+                            type: 'circle',
+                            x: i * 300 + 100,
+                            y: 200 + Math.random() * 100,
+                            radius: 100 + Math.random() * 50,
+                            color: `rgba(139, 0, 139, ${0.3 + Math.random() * 0.3})`,
+                            wrap: true
+                        }))
+                    ),
+                    // Near stars
+                    new ParallaxLayer(0.5, 0.3, '#ffffff',
+                        Array.from({length: 50}, () => ({
+                            type: 'star',
+                            x: Math.random() * 800,
+                            y: Math.random() * 600,
+                            radius: Math.random() * 3 + 1,
+                            color: '#FFD700',
+                            wrap: true
+                        }))
+                    ),
+                    // Asteroids
+                    new ParallaxLayer(1.5, 0.5, '#8B7355',
+                        Array.from({length: 10}, (_, i) => ({
+                            type: 'circle',
+                            x: i * 150 + Math.random() * 100,
+                            y: Math.random() * 400,
+                            radius: 5 + Math.random() * 15,
+                            color: '#8B7355',
+                            wrap: true
+                        }))
+                    )
+                ]
+            },
+            desert: {
+                name: 'Desert',
+                layers: [
+                    // Sky
+                    new ParallaxLayer(0, 0, '#FFE4B5', [
+                        { type: 'rect', x: 0, y: 0, width: 600, height: 400, color: '#FFE4B5' }
+                    ]),
+                    // Far dunes
+                    new ParallaxLayer(0.3, 0.1, '#DEB887',
+                        Array.from({length: 5}, (_, i) => ({
+                            type: 'mountain',
+                            x: i * 200,
+                            y: 200 + Math.sin(i) * 50,
+                            width: 300,
+                            height: 200,
+                            color: '#DEB887',
+                            wrap: true
+                        }))
+                    ),
+                    // Mid dunes
+                    new ParallaxLayer(0.6, 0.2, '#D2B48C',
+                        Array.from({length: 4}, (_, i) => ({
+                            type: 'mountain',
+                            x: i * 250 + 50,
+                            y: 250 + Math.sin(i * 1.5) * 30,
+                            width: 350,
+                            height: 150,
+                            color: '#D2B48C',
+                            wrap: true
+                        }))
+                    ),
+                    // Near dunes
+                    new ParallaxLayer(1.2, 0.3, '#C19A6B',
+                        Array.from({length: 3}, (_, i) => ({
+                            type: 'mountain',
+                            x: i * 300 + 100,
+                            y: 300,
+                            width: 400,
+                            height: 100,
+                            color: '#C19A6B',
+                            wrap: true
+                        }))
+                    )
+                ]
+            },
+            cave: {
+                name: 'Cave',
+                layers: [
+                    // Dark background
+                    new ParallaxLayer(0, 0, '#1a1a1a', [
+                        { type: 'rect', x: 0, y: 0, width: 600, height: 400, color: '#1a1a1a' }
+                    ]),
+                    // Far stalactites
+                    new ParallaxLayer(0.3, 0.1, '#2a2a2a',
+                        Array.from({length: 15}, (_, i) => ({
+                            type: 'mountain',
+                            x: i * 80,
+                            y: -50,
+                            width: 40,
+                            height: 100 + Math.random() * 50,
+                            color: '#2a2a2a',
+                            wrap: true
+                        }))
+                    ),
+                    // Mid rocks
+                    new ParallaxLayer(0.6, 0.2, '#3a3a3a',
+                        Array.from({length: 10}, (_, i) => ({
+                            type: 'circle',
+                            x: i * 100 + Math.random() * 50,
+                            y: 350 + Math.random() * 30,
+                            radius: 20 + Math.random() * 30,
+                            color: '#3a3a3a',
+                            wrap: true
+                        }))
+                    ),
+                    // Near stalactites
+                    new ParallaxLayer(1.0, 0.3, '#4a4a4a',
+                        Array.from({length: 8}, (_, i) => ({
+                            type: 'mountain',
+                            x: i * 120 + 60,
+                            y: -30,
+                            width: 60,
+                            height: 150 + Math.random() * 100,
+                            color: '#4a4a4a',
+                            wrap: true
+                        }))
+                    )
+                ]
+            }
+        };
+
+        // Parallax manager class
+        class ParallaxManager {
+            constructor(canvas, ctx) {
+                this.canvas = canvas;
+                this.ctx = ctx;
+                
+                this.camera = { x: 0, y: 0 };
+                this.targetCamera = { x: 0, y: 0 };
+                this.mouseOffset = { x: 0, y: 0 };
+                
+                this.currentScene = 'forest';
+                this.layers = [...scenes.forest.layers];
+                this.selectedLayerIndex = -1;
+                
+                // Effects
+                this.particleSystem = new ParticleSystem(200);
+                this.fogEnabled = false;
+                this.fogDensity = 0.3;
+                this.autoScroll = false;
+                this.autoScrollSpeed = 30;
+                
+                // Time of day
+                this.timeOfDay = 12; // 0-24
+                this.dayNightCycle = false;
+                
+                // Player (for testing)
+                this.player = {
+                    x: 300,
+                    y: 300,
+                    vx: 0,
+                    vy: 0
+                };
+                
+                // Debug
+                this.showDebug = false;
+                this.fps = 60;
+                this.frameCount = 0;
+                this.lastFpsUpdate = performance.now();
+                
+                // Input
+                this.keys = {};
+                this.mouse = { x: 0, y: 0 };
+                
+                this.setupEventListeners();
+            }
+            
+            setupEventListeners() {
+                document.addEventListener('keydown', (e) => {
+                    this.keys[e.key.toLowerCase()] = true;
+                });
+                
+                document.addEventListener('keyup', (e) => {
+                    this.keys[e.key.toLowerCase()] = false;
+                });
+                
+                this.canvas.addEventListener('mousemove', (e) => {
+                    const rect = this.canvas.getBoundingClientRect();
+                    this.mouse.x = e.clientX - rect.left;
+                    this.mouse.y = e.clientY - rect.top;
+                    
+                    // Calculate mouse offset for parallax
+                    this.mouseOffset.x = (this.mouse.x - this.canvas.width / 2) * 0.5;
+                    this.mouseOffset.y = (this.mouse.y - this.canvas.height / 2) * 0.5;
+                });
+            }
+            
+            loadScene(sceneName) {
+                if (scenes[sceneName]) {
+                    this.currentScene = sceneName;
+                    this.layers = scenes[sceneName].layers.map(layer => {
+                        const newLayer = new ParallaxLayer(
+                            layer.speedX,
+                            layer.speedY,
+                            layer.color,
+                            [...layer.elements]
+                        );
+                        return newLayer;
+                    });
+                    this.selectedLayerIndex = -1;
+                }
+            }
+            
+            update(dt) {
+                // Update player movement
+                const speed = 200;
+                if (this.keys['arrowleft'] || this.keys['a']) {
+                    this.player.vx = -speed;
+                } else if (this.keys['arrowright'] || this.keys['d']) {
+                    this.player.vx = speed;
+                } else {
+                    this.player.vx *= 0.9;
+                }
+                
+                if (this.keys['arrowup'] || this.keys['w']) {
+                    this.player.vy = -speed;
+                } else if (this.keys['arrowdown'] || this.keys['s']) {
+                    this.player.vy = speed;
+                } else {
+                    this.player.vy *= 0.9;
+                }
+                
+                this.player.x += this.player.vx * dt;
+                this.player.y += this.player.vy * dt;
+                
+                // Update camera to follow player
+                this.targetCamera.x = this.player.x - this.canvas.width / 2;
+                this.targetCamera.y = this.player.y - this.canvas.height / 2;
+                
+                // Smooth camera movement
+                this.camera.x += (this.targetCamera.x - this.camera.x) * 5 * dt;
+                this.camera.y += (this.targetCamera.y - this.camera.y) * 5 * dt;
+                
+                // Auto-scroll
+                if (this.autoScroll) {
+                    this.camera.x += this.autoScrollSpeed * dt;
+                    this.player.x = this.camera.x + this.canvas.width / 2;
+                }
+                
+                // Update layers
+                for (const layer of this.layers) {
+                    layer.update(dt, this.camera, this.mouseOffset);
+                }
+                
+                // Update particles
+                this.particleSystem.update(dt);
+                
+                // Emit new particles
+                if (this.currentScene === 'space' && Math.random() < 0.1) {
+                    this.particleSystem.emit(
+                        this.camera.x + Math.random() * this.canvas.width,
+                        this.camera.y,
+                        {
+                            vx: 0,
+                            vy: 50,
+                            color: '#ffffff',
+                            type: 'star',
+                            life: 3
+                        }
+                    );
+                } else if (this.currentScene === 'ocean' && Math.random() < 0.2) {
+                    this.particleSystem.emit(
+                        this.camera.x + Math.random() * this.canvas.width,
+                        this.camera.y,
+                        {
+                            vx: (Math.random() - 0.5) * 20,
+                            vy: 100,
+                            color: '#4682B4',
+                            type: 'rain',
+                            life: 2
+                        }
+                    );
+                }
+                
+                // Day/night cycle
+                if (this.dayNightCycle) {
+                    this.timeOfDay += dt * 2; // 2 hours per second
+                    if (this.timeOfDay >= 24) this.timeOfDay -= 24;
+                }
+                
+                // Update FPS
+                this.frameCount++;
+                const now = performance.now();
+                if (now - this.lastFpsUpdate >= 1000) {
+                    this.fps = this.frameCount;
+                    this.frameCount = 0;
+                    this.lastFpsUpdate = now;
+                }
+                
+                this.updateUI();
+            }
+            
+            draw() {
+                // Clear canvas
+                this.ctx.fillStyle = '#000000';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Apply time of day lighting
+                this.applyTimeOfDay();
+                
+                // Draw layers
+                for (let i = 0; i < this.layers.length; i++) {
+                    const layer = this.layers[i];
+                    
+                    // Highlight selected layer
+                    if (i === this.selectedLayerIndex) {
+                        this.ctx.save();
+                        this.ctx.strokeStyle = '#4CAF50';
+                        this.ctx.lineWidth = 2;
+                        this.ctx.strokeRect(2, 2, this.canvas.width - 4, this.canvas.height - 4);
+                        this.ctx.restore();
+                    }
+                    
+                    layer.draw(this.ctx, this.camera, this.mouseOffset, this.canvas.width, this.canvas.height);
+                }
+                
+                // Draw player
+                this.drawPlayer();
+                
+                // Draw particles
+                this.particleSystem.draw(this.ctx, this.camera);
+                
+                // Draw fog
+                if (this.fogEnabled) {
+                    this.drawFog();
+                }
+                
+                // Draw debug info
+                if (this.showDebug) {
+                    this.drawDebugInfo();
+                }
+            }
+            
+            applyTimeOfDay() {
+                const hour = this.timeOfDay;
+                let brightness = 1;
+                let tint = { r: 255, g: 255, b: 255 };
+                
+                if (hour < 6) {
+                    // Night
+                    brightness = 0.3;
+                    tint = { r: 100, g: 100, b: 150 };
+                } else if (hour < 8) {
+                    // Dawn
+                    brightness = 0.5 + (hour - 6) * 0.25;
+                    tint = { r: 255, g: 200, b: 150 };
+                } else if (hour < 18) {
+                    // Day
+                    brightness = 1;
+                } else if (hour < 20) {
+                    // Dusk
+                    brightness = 1 - (hour - 18) * 0.25;
+                    tint = { r: 255, g: 150, b: 100 };
+                } else {
+                    // Night
+                    brightness = 0.3;
+                    tint = { r: 100, g: 100, b: 150 };
+                }
+                
+                // Apply tint overlay
+                if (brightness < 1) {
+                    this.ctx.fillStyle = `rgba(${tint.r}, ${tint.g}, ${tint.b}, ${1 - brightness})`;
+                    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                }
+            }
+            
+            drawPlayer() {
+                const x = this.player.x - this.camera.x;
+                const y = this.player.y - this.camera.y;
+                
+                this.ctx.fillStyle = '#4CAF50';
+                this.ctx.fillRect(x - 10, y - 15, 20, 30);
+                
+                // Eyes
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.fillRect(x - 5, y - 10, 3, 3);
+                this.ctx.fillRect(x + 2, y - 10, 3, 3);
+            }
+            
+            drawFog() {
+                const gradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
+                gradient.addColorStop(0, `rgba(200, 200, 200, 0)`);
+                gradient.addColorStop(1, `rgba(200, 200, 200, ${this.fogDensity})`);
+                
+                this.ctx.fillStyle = gradient;
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            }
+            
+            drawDebugInfo() {
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.font = '12px Arial';
+                let y = 20;
+                
+                this.ctx.fillText(`FPS: ${this.fps}`, 10, y);
+                y += 15;
+                this.ctx.fillText(`Camera: (${Math.round(this.camera.x)}, ${Math.round(this.camera.y)})`, 10, y);
+                y += 15;
+                this.ctx.fillText(`Player: (${Math.round(this.player.x)}, ${Math.round(this.player.y)})`, 10, y);
+                y += 15;
+                this.ctx.fillText(`Layers: ${this.layers.length}`, 10, y);
+                y += 15;
+                this.ctx.fillText(`Particles: ${this.particleSystem.particles.length}`, 10, y);
+                y += 15;
+                this.ctx.fillText(`Time: ${Math.floor(this.timeOfDay)}:${Math.floor((this.timeOfDay % 1) * 60).toString().padStart(2, '0')}`, 10, y);
+                
+                // Draw layer speeds
+                y = 20;
+                for (let i = 0; i < this.layers.length; i++) {
+                    const layer = this.layers[i];
+                    this.ctx.fillText(`L${i}: ${layer.speedX.toFixed(2)}x, ${layer.speedY.toFixed(2)}y`, 
+                                     this.canvas.width - 100, y);
+                    y += 15;
+                }
+            }
+            
+            updateUI() {
+                document.getElementById('cameraX').textContent = Math.round(this.camera.x);
+                document.getElementById('cameraY').textContent = Math.round(this.camera.y);
+                document.getElementById('mouseOffsetX').textContent = Math.round(this.mouseOffset.x);
+                document.getElementById('mouseOffsetY').textContent = Math.round(this.mouseOffset.y);
+                document.getElementById('fps').textContent = this.fps;
+                document.getElementById('activeLayers').textContent = this.layers.length;
+                document.getElementById('particleCount').textContent = this.particleSystem.particles.length;
+                document.getElementById('currentScene').textContent = scenes[this.currentScene].name;
+                document.getElementById('layerCount').textContent = this.layers.length;
+                
+                const hours = Math.floor(this.timeOfDay);
+                const minutes = Math.floor((this.timeOfDay % 1) * 60);
+                document.getElementById('timeDisplay').textContent = 
+                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+                
+                if (this.selectedLayerIndex >= 0 && this.selectedLayerIndex < this.layers.length) {
+                    const layer = this.layers[this.selectedLayerIndex];
+                    document.getElementById('selectedLayer').textContent = `Layer ${this.selectedLayerIndex}`;
+                    document.getElementById('speedX').value = layer.speedX * 100;
+                    document.getElementById('speedXDisplay').textContent = Math.round(layer.speedX * 100) + '%';
+                    document.getElementById('speedY').value = layer.speedY * 100;
+                    document.getElementById('speedYDisplay').textContent = Math.round(layer.speedY * 100) + '%';
+                    document.getElementById('opacity').value = layer.opacity * 100;
+                    document.getElementById('opacityDisplay').textContent = Math.round(layer.opacity * 100) + '%';
+                    document.getElementById('blur').value = layer.blur;
+                    document.getElementById('blurDisplay').textContent = layer.blur + 'px';
+                } else {
+                    document.getElementById('selectedLayer').textContent = 'None';
+                }
+            }
+        }
+
+        // Initialize demo
+        const parallaxCanvas = document.getElementById('parallaxCanvas');
+        const ctx = parallaxCanvas.getContext('2d');
+        const manager = new ParallaxManager(parallaxCanvas, ctx);
+
+        // Control functions
+        window.loadScene = function(sceneName) {
+            manager.loadScene(sceneName);
+            
+            // Update UI
+            document.querySelectorAll('.scene-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(sceneName + 'Btn').classList.add('active');
+        };
+
+        window.toggleAutoScroll = function() {
+            manager.autoScroll = !manager.autoScroll;
+        };
+
+        window.toggleParticles = function() {
+            manager.particleSystem.emitting = !manager.particleSystem.emitting;
+        };
+
+        window.toggleFog = function() {
+            manager.fogEnabled = !manager.fogEnabled;
+        };
+
+        window.toggleDebug = function() {
+            manager.showDebug = !manager.showDebug;
+        };
+
+        window.toggleDayNight = function() {
+            manager.dayNightCycle = !manager.dayNightCycle;
+        };
+
+        window.addLayer = function() {
+            const newLayer = new ParallaxLayer(
+                0.5 + Math.random(),
+                0.2 + Math.random() * 0.3,
+                '#' + Math.floor(Math.random()*16777215).toString(16),
+                []
+            );
+            manager.layers.push(newLayer);
+        };
+
+        window.removeLayer = function() {
+            if (manager.layers.length > 1) {
+                manager.layers.pop();
+            }
+        };
+
+        window.resetCamera = function() {
+            manager.camera.x = 0;
+            manager.camera.y = 0;
+            manager.player.x = 300;
+            manager.player.y = 300;
+        };
+
+        window.selectLayer = function(index) {
+            manager.selectedLayerIndex = index;
+            manager.updateUI();
+        };
+
+        window.updateLayerSpeed = function(axis, value) {
+            if (manager.selectedLayerIndex >= 0 && manager.selectedLayerIndex < manager.layers.length) {
+                const layer = manager.layers[manager.selectedLayerIndex];
+                const speed = value / 100;
+                if (axis === 'x') {
+                    layer.speedX = speed;
+                    document.getElementById('speedXDisplay').textContent = value + '%';
+                } else {
+                    layer.speedY = speed;
+                    document.getElementById('speedYDisplay').textContent = value + '%';
+                }
+            }
+        };
+
+        window.updateLayerOpacity = function(value) {
+            if (manager.selectedLayerIndex >= 0 && manager.selectedLayerIndex < manager.layers.length) {
+                manager.layers[manager.selectedLayerIndex].opacity = value / 100;
+                document.getElementById('opacityDisplay').textContent = value + '%';
+            }
+        };
+
+        window.updateLayerBlur = function(value) {
+            if (manager.selectedLayerIndex >= 0 && manager.selectedLayerIndex < manager.layers.length) {
+                manager.layers[manager.selectedLayerIndex].blur = parseInt(value);
+                document.getElementById('blurDisplay').textContent = value + 'px';
+            }
+        };
+
+        window.setGlobalSpeed = function(value) {
+            const factor = value / 100;
+            for (const layer of manager.layers) {
+                // Store original speeds if not already stored
+                if (!layer.originalSpeedX) {
+                    layer.originalSpeedX = layer.speedX;
+                    layer.originalSpeedY = layer.speedY;
+                }
+                layer.speedX = layer.originalSpeedX * factor;
+                layer.speedY = layer.originalSpeedY * factor;
+            }
+            document.getElementById('globalSpeedDisplay').textContent = value + '%';
+        };
+
+        window.setTimeOfDay = function(value) {
+            manager.timeOfDay = parseFloat(value);
+            manager.updateUI();
+        };
+
+        // Animation loop
+        let lastTime = performance.now();
+        function animate(currentTime) {
+            const dt = Math.min((currentTime - lastTime) / 1000, 0.1);
+            lastTime = currentTime;
+            
+            manager.update(dt);
+            manager.draw();
+            
+            requestAnimationFrame(animate);
+        }
+
+        animate(performance.now());
+
+        // Set initial scene
+        loadScene('forest');
+
+        console.log('Parallax Manager initialized!');
+    </script>
+
+    <h2>Parallax Implementation</h2>
+    
+    <pre class="language-python"><code>import pygame
+import math
+from typing import List, Tuple, Optional
+
+class ParallaxLayer:
+    """Single parallax layer"""
+    def __init__(self, image: pygame.Surface, speed_x: float, speed_y: float,
+                 repeat: bool = True, alpha: int = 255):
+        self.image = image
+        self.speed_x = speed_x  # 0 = static, 1 = normal, <1 = farther
+        self.speed_y = speed_y
+        self.repeat = repeat
+        self.alpha = alpha
+        self.offset_x = 0
+        self.offset_y = 0
+        self.auto_scroll_x = 0
+        self.auto_scroll_y = 0
+        
+        # For infinite scrolling
+        self.width = image.get_width()
+        self.height = image.get_height()
+    
+    def update(self, dt: float):
+        """Update auto-scrolling"""
+        self.offset_x += self.auto_scroll_x * dt
+        self.offset_y += self.auto_scroll_y * dt
+    
+    def draw(self, screen: pygame.Surface, camera_x: float, camera_y: float):
+        """Draw layer with parallax effect"""
+        # Calculate parallax position
+        x = -(camera_x * self.speed_x + self.offset_x)
+        y = -(camera_y * self.speed_y + self.offset_y)
+        
+        # Set transparency
+        if self.alpha < 255:
+            self.image.set_alpha(self.alpha)
+        
+        if self.repeat:
+            # Tile the image for infinite scrolling
+            x = x % self.width
+            y = y % self.height
+            
+            # Calculate how many tiles we need
+            tiles_x = (screen.get_width() // self.width) + 2
+            tiles_y = (screen.get_height() // self.height) + 2
+            
+            # Draw tiles
+            for tx in range(tiles_x):
+                for ty in range(tiles_y):
+                    screen.blit(self.image, 
+                              (x + tx * self.width - self.width, 
+                               y + ty * self.height - self.height))
+        else:
+            # Draw single image
+            screen.blit(self.image, (x, y))
+
+class ParallaxBackground:
+    """Manages multiple parallax layers"""
+    def __init__(self, screen_width: int, screen_height: int):
+        self.screen_width = screen_width
+        self.screen_height = screen_height
+        self.layers: List[ParallaxLayer] = []
+        
+        # Effects
+        self.fog_enabled = False
+        self.fog_density = 0.5
+        self.fog_color = (200, 200, 200)
+        
+        # Time of day
+        self.time_of_day = 12.0  # 0-24 hours
+        self.day_night_cycle = False
+        self.day_duration = 120.0  # seconds for full day cycle
+        
+    def add_layer(self, layer: ParallaxLayer):
+        """Add a new parallax layer"""
+        self.layers.append(layer)
+    
+    def create_layer_from_color(self, width: int, height: int, 
+                                color: Tuple[int, int, int], 
+                                speed_x: float, speed_y: float) -> ParallaxLayer:
+        """Create a solid color layer"""
+        surface = pygame.Surface((width, height))
+        surface.fill(color)
+        return ParallaxLayer(surface, speed_x, speed_y)
+    
+    def create_gradient_layer(self, width: int, height: int,
+                             top_color: Tuple[int, int, int],
+                             bottom_color: Tuple[int, int, int],
+                             speed_x: float, speed_y: float) -> ParallaxLayer:
+        """Create a gradient layer"""
+        surface = pygame.Surface((width, height))
+        
+        for y in range(height):
+            ratio = y / height
+            color = [
+                int(top_color[i] * (1 - ratio) + bottom_color[i] * ratio)
+                for i in range(3)
+            ]
+            pygame.draw.line(surface, color, (0, y), (width, y))
+        
+        return ParallaxLayer(surface, speed_x, speed_y)
+    
+    def create_cloud_layer(self, screen_width: int, screen_height: int,
+                          cloud_count: int = 5, speed: float = 0.3) -> ParallaxLayer:
+        """Generate procedural cloud layer"""
+        surface = pygame.Surface((screen_width * 2, screen_height), pygame.SRCALPHA)
+        
+        for _ in range(cloud_count):
+            x = pygame.time.get_ticks() % (screen_width * 2)
+            y = pygame.time.get_ticks() % (screen_height // 2)
+            
+            # Draw fluffy cloud from circles
+            for i in range(3):
+                pygame.draw.circle(surface, (255, 255, 255, 180),
+                                 (x + i * 30, y), 20 + i * 10)
+        
+        return ParallaxLayer(surface, speed, speed * 0.5, repeat=True)
+    
+    def update(self, dt: float):
+        """Update all layers"""
+        # Update each layer
+        for layer in self.layers:
+            layer.update(dt)
+        
+        # Update time of day
+        if self.day_night_cycle:
+            self.time_of_day += (24.0 / self.day_duration) * dt
+            if self.time_of_day >= 24.0:
+                self.time_of_day -= 24.0
+    
+    def draw(self, screen: pygame.Surface, camera_x: float, camera_y: float):
+        """Draw all layers"""
+        # Draw layers from back to front
+        for layer in self.layers:
+            layer.draw(screen, camera_x, camera_y)
+        
+        # Apply time of day overlay
+        if self.day_night_cycle:
+            self.apply_time_overlay(screen)
+        
+        # Apply fog effect
+        if self.fog_enabled:
+            self.apply_fog(screen)
+    
+    def apply_time_overlay(self, screen: pygame.Surface):
+        """Apply lighting based on time of day"""
+        overlay = pygame.Surface((self.screen_width, self.screen_height))
+        
+        hour = self.time_of_day
+        
+        if hour < 6 or hour > 20:
+            # Night
+            overlay.fill((20, 20, 60))
+            overlay.set_alpha(180)
+        elif hour < 8:
+            # Dawn
+            overlay.fill((255, 200, 100))
+            overlay.set_alpha(100 - int((hour - 6) * 50))
+        elif hour > 18:
+            # Dusk
+            overlay.fill((255, 150, 50))
+            overlay.set_alpha(int((hour - 18) * 50))
+        else:
+            # Day
+            return  # No overlay during day
+        
+        screen.blit(overlay, (0, 0))
+    
+    def apply_fog(self, screen: pygame.Surface):
+        """Apply fog effect"""
+        fog = pygame.Surface((self.screen_width, self.screen_height))
+        fog.fill(self.fog_color)
+        fog.set_alpha(int(self.fog_density * 255))
+        
+        # Create gradient fog (thicker at bottom)
+        for y in range(self.screen_height):
+            alpha = int(self.fog_density * 255 * (y / self.screen_height))
+            pygame.draw.line(fog, (*self.fog_color, alpha), 
+                           (0, y), (self.screen_width, y))
+        
+        screen.blit(fog, (0, 0))
+
+class AnimatedParallaxLayer(ParallaxLayer):
+    """Animated parallax layer with sprite animation"""
+    def __init__(self, sprite_sheet: pygame.Surface, frame_width: int,
+                 frame_height: int, speed_x: float, speed_y: float,
+                 animation_speed: float = 10):
+        # Create frames from sprite sheet
+        self.frames = []
+        sheet_width = sprite_sheet.get_width()
+        sheet_height = sprite_sheet.get_height()
+        
+        for y in range(0, sheet_height, frame_height):
+            for x in range(0, sheet_width, frame_width):
+                frame = sprite_sheet.subsurface((x, y, frame_width, frame_height))
+                self.frames.append(frame)
+        
+        super().__init__(self.frames[0], speed_x, speed_y)
+        
+        self.current_frame = 0
+        self.animation_speed = animation_speed
+        self.animation_timer = 0
+    
+    def update(self, dt: float):
+        """Update animation"""
+        super().update(dt)
+        
+        self.animation_timer += dt * self.animation_speed
+        if self.animation_timer >= 1:
+            self.animation_timer = 0
+            self.current_frame = (self.current_frame + 1) % len(self.frames)
+            self.image = self.frames[self.current_frame]</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Parallax Tips</h3>
+        <ul>
+            <li><strong>Layer Ordering:</strong> Draw from back to front</li>
+            <li><strong>Speed Ratios:</strong> Consistent depth perception</li>
+            <li><strong>Infinite Scrolling:</strong> Seamless tiling for endless worlds</li>
+            <li><strong>Performance:</strong> Reuse textures, minimize overdraw</li>
+            <li><strong>Atmosphere:</strong> Use fog and color for depth</li>
+            <li><strong>Auto-scrolling:</strong> Great for runner games</li>
+            <li><strong>Mouse Parallax:</strong> Subtle depth on mouse movement</li>
+            <li><strong>Dynamic Elements:</strong> Animated layers add life</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>🌄 Parallax creates depth perception in 2D</li>
+            <li>📏 Speed factors control layer movement</li>
+            <li>♾️ Infinite scrolling enables endless worlds</li>
+            <li>🎨 Multiple layers build rich environments</li>
+            <li>🌫️ Atmospheric effects enhance immersion</li>
+            <li>🌙 Day/night cycles add dynamism</li>
+            <li>✨ Particle systems complement parallax</li>
+            <li>🎮 Mouse parallax adds interactivity</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Congratulations on completing the 2D Platformer Development section! Next, we'll dive into AI for Games, learning pathfinding, state machines, and intelligent NPC behavior!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="platformer_level_design.html" class="prev-lesson" aria-label="Previous lesson: Level Design Tools">Previous Lesson: Level Design Tools</a>
+        <a href="ai_pathfinding.html" class="next-lesson" aria-label="Next section: AI for Games - Pathfinding">Next Section: AI for Games</a>
+    </nav>
+    
+    </main>
+    <script src="/js/course-enhancements.js" defer></script>
+</body>
+</html>

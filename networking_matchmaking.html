@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master matchmaking and lobby systems for multiplayer games. Learn skill-based matching, queue management, and session handling.">
+    <title>Matchmaking & Lobbies - Networking & Multiplayer</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Matchmaking & Lobbies</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Intermediate Module - Section 2: Networking & Multiplayer - Lesson 5</span>
+    </nav>
+
+    <h2>Creating Balanced Matches and Managing Game Sessions</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Matchmaking systems create fair, balanced matches while lobby systems manage player sessions! Learn skill-based matching algorithms, queue management, party systems, and how to create engaging pre-game experiences! 🎮👥⚖️</p>
+    </div>
+
+    <h2>Understanding Matchmaking Systems</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎭 The Tournament Organizer Analogy</h3>
+        <p>Think of matchmaking like organizing a sports tournament:</p>
+        <ul>
+            <li><strong>Skill Rating:</strong> Player rankings and divisions</li>
+            <li><strong>Queue System:</strong> Waiting list for matches</li>
+            <li><strong>Team Balancing:</strong> Creating fair teams</li>
+            <li><strong>Party System:</strong> Friends playing together</li>
+            <li><strong>Region Selection:</strong> Local vs global matches</li>
+            <li><strong>Game Modes:</strong> Different tournament formats</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Matchmaking System"] --> B["Player Rating"]
+        A --> C["Queue Management"]
+        A --> D["Match Creation"]
+        
+        B --> E["ELO/MMR"]
+        B --> F["Skill Tracking"]
+        B --> G["Rank Tiers"]
+        
+        C --> H["Solo Queue"]
+        C --> I["Party Queue"]
+        C --> J["Priority Queue"]
+        
+        D --> K["Team Balance"]
+        D --> L["Region Selection"]
+        D --> M["Server Allocation"]
+        
+        N["Lobby System"] --> O["Pre-Game"]
+        N --> P["Team Selection"]
+        N --> Q["Ready Check"]
+        N --> R["Game Settings"]
+    </div>
+
+    <h2>Interactive Matchmaking Simulator</h2>
+    
+    <div class="canvas-wrapper" style="text-align: center;">
+        <canvas id="matchmakingCanvas" width="600" height="400" style="border: 1px solid #333; background-color: #1a1a1a; display: inline-block;"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Simulate matchmaking queue and lobby formation!</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; max-width: 600px; margin: 10px auto;">
+            <button onclick="addPlayer()">Add Player</button>
+            <button onclick="addParty()">Add Party</button>
+            <button onclick="startMatchmaking()">Find Match</button>
+            <button onclick="cancelMatchmaking()">Cancel Search</button>
+            <button onclick="simulateReadyCheck()">Ready Check</button>
+            <button onclick="resetSimulation()">Reset</button>
+        </div>
+        <div style="margin-top: 10px;">
+            <label>Match Size: 
+                <select id="matchSize" onchange="setMatchSize(this.value)">
+                    <option value="2">1v1</option>
+                    <option value="4">2v2</option>
+                    <option value="10" selected>5v5</option>
+                    <option value="20">10v10</option>
+                </select>
+            </label>
+            <label>Algorithm: 
+                <select id="algorithm" onchange="setAlgorithm(this.value)">
+                    <option value="elo">ELO Based</option>
+                    <option value="balanced">Balanced</option>
+                    <option value="fast">Fast Match</option>
+                    <option value="strict">Strict Skill</option>
+                </select>
+            </label>
+        </div>
+        <div style="margin-top: 10px;">
+            <label>Max Skill Gap: <input type="range" id="skillGap" min="50" max="500" value="200" onchange="setSkillGap(this.value)"> <span id="skillGapDisplay">200</span></label>
+            <label>Max Wait Time: <input type="range" id="maxWait" min="10" max="300" value="60" onchange="setMaxWait(this.value)"> <span id="maxWaitDisplay">60s</span></label>
+            <label>Region Lock: <input type="checkbox" id="regionLock" checked onchange="toggleRegionLock()"></label>
+        </div>
+        <div style="margin-top: 10px; background-color: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;">
+            <p style="margin: 5px;">
+                Queue: <span id="queueSize">0</span> | 
+                Searching: <span id="searchingCount">0</span> | 
+                In Lobby: <span id="lobbyCount">0</span> | 
+                Matches: <span id="matchCount">0</span>
+            </p>
+            <p style="margin: 5px;">
+                Avg Wait: <span id="avgWait">0s</span> | 
+                Avg Skill Diff: <span id="avgSkillDiff">0</span> | 
+                Match Quality: <span id="matchQuality">0%</span>
+            </p>
+        </div>
+        <div id="matchmakingLog" style="margin-top: 10px; height: 80px; overflow-y: auto; border: 1px solid #333; padding: 5px; text-align: left; font-size: 11px; background-color: rgba(0,0,0,0.5); font-family: monospace;">
+            <!-- Matchmaking log entries will appear here -->
+        </div>
+    </div>
+
+    <script>
+        console.log('Matchmaking & Lobbies Demo starting...');
+
+        // Player class
+        class Player {
+            constructor(id, skill = null) {
+                this.id = id;
+                this.name = `Player${id}`;
+                this.skill = skill || Math.floor(Math.random() * 2000) + 500; // 500-2500
+                this.rank = this.calculateRank(this.skill);
+                this.region = ['NA', 'EU', 'AS'][Math.floor(Math.random() * 3)];
+                this.partyId = null;
+                this.queueTime = 0;
+                this.state = 'idle'; // idle, queuing, matched, ready, in_game
+                this.x = Math.random() * 550 + 25;
+                this.y = Math.random() * 350 + 25;
+                this.targetX = this.x;
+                this.targetY = this.y;
+                this.ready = false;
+                this.team = null;
+            }
+            
+            calculateRank(skill) {
+                if (skill < 800) return 'Bronze';
+                if (skill < 1200) return 'Silver';
+                if (skill < 1600) return 'Gold';
+                if (skill < 2000) return 'Platinum';
+                if (skill < 2400) return 'Diamond';
+                return 'Master';
+            }
+            
+            getRankColor() {
+                const colors = {
+                    'Bronze': '#cd7f32',
+                    'Silver': '#c0c0c0',
+                    'Gold': '#ffd700',
+                    'Platinum': '#00ffff',
+                    'Diamond': '#b9f2ff',
+                    'Master': '#ff00ff'
+                };
+                return colors[this.rank] || '#ffffff';
+            }
+            
+            update(dt) {
+                // Update queue time
+                if (this.state === 'queuing') {
+                    this.queueTime += dt;
+                }
+                
+                // Move towards target position
+                const dx = this.targetX - this.x;
+                const dy = this.targetY - this.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance > 1) {
+                    const speed = 200;
+                    this.x += (dx / distance) * speed * dt;
+                    this.y += (dy / distance) * speed * dt;
+                }
+            }
+            
+            draw(ctx) {
+                // Draw player circle
+                ctx.fillStyle = this.state === 'queuing' ? '#ffff00' :
+                               this.state === 'matched' ? '#00ff00' :
+                               this.state === 'ready' ? '#00ffff' :
+                               this.getRankColor();
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 10, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw rank border
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Draw skill rating
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '10px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(this.skill, this.x, this.y - 15);
+                
+                // Draw state indicator
+                if (this.state === 'queuing') {
+                    const pulse = Math.sin(Date.now() / 200) * 5;
+                    ctx.strokeStyle = 'rgba(255, 255, 0, 0.5)';
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, 15 + pulse, 0, Math.PI * 2);
+                    ctx.stroke();
+                    
+                    // Queue time
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '9px Arial';
+                    ctx.fillText(`${this.queueTime.toFixed(0)}s`, this.x, this.y + 25);
+                }
+                
+                // Draw ready indicator
+                if (this.state === 'matched' && !this.ready) {
+                    ctx.fillStyle = '#ff0000';
+                    ctx.fillText('?', this.x, this.y + 4);
+                } else if (this.ready) {
+                    ctx.fillStyle = '#00ff00';
+                    ctx.fillText('✓', this.x, this.y + 4);
+                }
+                
+                // Draw region
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '8px Arial';
+                ctx.fillText(this.region, this.x, this.y + 35);
+            }
+        }
+
+        class Party {
+            constructor(players) {
+                this.id = `party_${Date.now()}`;
+                this.players = players;
+                this.avgSkill = this.calculateAvgSkill();
+                this.leader = players[0];
+                
+                // Set party ID for all players
+                players.forEach(p => p.partyId = this.id);
+            }
+            
+            calculateAvgSkill() {
+                const sum = this.players.reduce((acc, p) => acc + p.skill, 0);
+                return Math.floor(sum / this.players.length);
+            }
+        }
+
+        class Match {
+            constructor(players, matchSize) {
+                this.id = `match_${Date.now()}`;
+                this.players = players;
+                this.matchSize = matchSize;
+                this.team1 = [];
+                this.team2 = [];
+                this.state = 'lobby'; // lobby, ready_check, starting, in_progress
+                this.createdAt = Date.now();
+                this.startTime = null;
+                this.avgSkill = 0;
+                this.skillDifference = 0;
+                this.quality = 0;
+                
+                this.balanceTeams();
+                this.calculateStats();
+            }
+            
+            balanceTeams() {
+                // Sort players by skill
+                const sorted = [...this.players].sort((a, b) => b.skill - a.skill);
+                
+                // Distribute players to balance teams
+                for (let i = 0; i < sorted.length; i++) {
+                    if (i % 2 === 0) {
+                        this.team1.push(sorted[i]);
+                        sorted[i].team = 1;
+                    } else {
+                        this.team2.push(sorted[i]);
+                        sorted[i].team = 2;
+                    }
+                }
+            }
+            
+            calculateStats() {
+                // Calculate average skills
+                const team1Avg = this.team1.reduce((acc, p) => acc + p.skill, 0) / this.team1.length;
+                const team2Avg = this.team2.reduce((acc, p) => acc + p.skill, 0) / this.team2.length;
+                
+                this.avgSkill = (team1Avg + team2Avg) / 2;
+                this.skillDifference = Math.abs(team1Avg - team2Avg);
+                
+                // Calculate match quality (0-100)
+                const balanceFactor = Math.max(0, 100 - this.skillDifference / 2);
+                const skillSpread = Math.max(...this.players.map(p => p.skill)) - 
+                                   Math.min(...this.players.map(p => p.skill));
+                const spreadFactor = Math.max(0, 100 - skillSpread / 10);
+                
+                this.quality = Math.floor((balanceFactor + spreadFactor) / 2);
+            }
+            
+            checkReady() {
+                return this.players.every(p => p.ready);
+            }
+        }
+
+        class MatchmakingSystem {
+            constructor(canvas, ctx) {
+                this.canvas = canvas;
+                this.ctx = ctx;
+                
+                this.players = [];
+                this.queue = [];
+                this.matches = [];
+                this.parties = [];
+                
+                this.matchSize = 10; // 5v5
+                this.algorithm = 'balanced';
+                this.maxSkillGap = 200;
+                this.maxWaitTime = 60;
+                this.regionLock = true;
+                
+                this.stats = {
+                    totalMatches: 0,
+                    totalWaitTime: 0,
+                    totalPlayers: 0,
+                    avgSkillDiff: 0
+                };
+                
+                this.logEntries = [];
+                
+                // Start matchmaking loop
+                setInterval(() => this.processQueue(), 1000);
+            }
+            
+            addPlayer(skill = null) {
+                const player = new Player(this.players.length + 1, skill);
+                this.players.push(player);
+                this.log(`${player.name} joined (${player.skill} ${player.rank})`);
+                return player;
+            }
+            
+            addParty() {
+                const partySize = Math.floor(Math.random() * 3) + 2; // 2-4 players
+                const players = [];
+                const baseSkill = Math.floor(Math.random() * 1500) + 500;
+                
+                for (let i = 0; i < partySize; i++) {
+                    const skillVariation = Math.floor(Math.random() * 200) - 100;
+                    const player = this.addPlayer(baseSkill + skillVariation);
+                    players.push(player);
+                }
+                
+                const party = new Party(players);
+                this.parties.push(party);
+                this.log(`Party created with ${partySize} players (avg: ${party.avgSkill})`);
+                
+                return party;
+            }
+            
+            startMatchmaking(player = null) {
+                if (player) {
+                    this.queuePlayer(player);
+                } else {
+                    // Queue random idle players
+                    const idle = this.players.filter(p => p.state === 'idle');
+                    const toQueue = Math.min(5, idle.length);
+                    
+                    for (let i = 0; i < toQueue; i++) {
+                        const randomPlayer = idle[Math.floor(Math.random() * idle.length)];
+                        this.queuePlayer(randomPlayer);
+                        idle.splice(idle.indexOf(randomPlayer), 1);
+                    }
+                }
+            }
+            
+            queuePlayer(player) {
+                if (player.state !== 'idle') return;
+                
+                player.state = 'queuing';
+                player.queueTime = 0;
+                this.queue.push(player);
+                this.log(`${player.name} joined queue`);
+            }
+            
+            cancelMatchmaking() {
+                const queuing = this.queue.splice(0, Math.min(3, this.queue.length));
+                queuing.forEach(p => {
+                    p.state = 'idle';
+                    p.queueTime = 0;
+                    this.log(`${p.name} left queue`);
+                });
+            }
+            
+            processQueue() {
+                if (this.queue.length < this.matchSize) return;
+                
+                // Try to form matches based on algorithm
+                let match = null;
+                
+                switch (this.algorithm) {
+                    case 'fast':
+                        match = this.fastMatch();
+                        break;
+                    case 'strict':
+                        match = this.strictMatch();
+                        break;
+                    case 'balanced':
+                        match = this.balancedMatch();
+                        break;
+                    case 'elo':
+                        match = this.eloMatch();
+                        break;
+                }
+                
+                if (match) {
+                    this.createMatch(match);
+                }
+                
+                // Expand search range for waiting players
+                this.expandSearchRange();
+            }
+            
+            fastMatch() {
+                // Just take first players in queue
+                if (this.queue.length >= this.matchSize) {
+                    return this.queue.splice(0, this.matchSize);
+                }
+                return null;
+            }
+            
+            strictMatch() {
+                // Find players within strict skill range
+                const candidates = [];
+                
+                for (const player of this.queue) {
+                    const compatible = this.queue.filter(p => 
+                        p !== player &&
+                        Math.abs(p.skill - player.skill) <= this.maxSkillGap &&
+                        (!this.regionLock || p.region === player.region)
+                    );
+                    
+                    if (compatible.length >= this.matchSize - 1) {
+                        candidates.push(player, ...compatible.slice(0, this.matchSize - 1));
+                        break;
+                    }
+                }
+                
+                if (candidates.length === this.matchSize) {
+                    // Remove from queue
+                    candidates.forEach(p => {
+                        const index = this.queue.indexOf(p);
+                        if (index !== -1) this.queue.splice(index, 1);
+                    });
+                    return candidates;
+                }
+                
+                return null;
+            }
+            
+            balancedMatch() {
+                // Balance between speed and quality
+                const waitingLong = this.queue.filter(p => p.queueTime > 30);
+                
+                if (waitingLong.length >= this.matchSize) {
+                    // Prioritize players waiting long
+                    const sorted = waitingLong.sort((a, b) => b.queueTime - a.queueTime);
+                    const players = sorted.slice(0, this.matchSize);
+                    
+                    // Remove from queue
+                    players.forEach(p => {
+                        const index = this.queue.indexOf(p);
+                        if (index !== -1) this.queue.splice(index, 1);
+                    });
+                    
+                    return players;
+                }
+                
+                return this.strictMatch() || this.fastMatch();
+            }
+            
+            eloMatch() {
+                // Sort by skill and take closest group
+                const sorted = [...this.queue].sort((a, b) => a.skill - b.skill);
+                
+                for (let i = 0; i <= sorted.length - this.matchSize; i++) {
+                    const group = sorted.slice(i, i + this.matchSize);
+                    const skillRange = group[group.length - 1].skill - group[0].skill;
+                    
+                    if (skillRange <= this.maxSkillGap * 2) {
+                        // Remove from queue
+                        group.forEach(p => {
+                            const index = this.queue.indexOf(p);
+                            if (index !== -1) this.queue.splice(index, 1);
+                        });
+                        return group;
+                    }
+                }
+                
+                return null;
+            }
+            
+            expandSearchRange() {
+                // Gradually expand skill gap for waiting players
+                for (const player of this.queue) {
+                    if (player.queueTime > this.maxWaitTime) {
+                        // Force match for players waiting too long
+                        const available = this.queue.filter(p => p !== player);
+                        if (available.length >= this.matchSize - 1) {
+                            const players = [player, ...available.slice(0, this.matchSize - 1)];
+                            this.createMatch(players);
+                            
+                            // Remove from queue
+                            players.forEach(p => {
+                                const index = this.queue.indexOf(p);
+                                if (index !== -1) this.queue.splice(index, 1);
+                            });
+                            
+                            this.log(`Force matched after ${player.queueTime.toFixed(0)}s wait`);
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            createMatch(players) {
+                const match = new Match(players, this.matchSize);
+                this.matches.push(match);
+                
+                // Update player states
+                players.forEach(p => {
+                    p.state = 'matched';
+                    p.ready = false;
+                    
+                    // Update stats
+                    this.stats.totalWaitTime += p.queueTime;
+                    this.stats.totalPlayers++;
+                });
+                
+                this.stats.totalMatches++;
+                this.stats.avgSkillDiff = 
+                    (this.stats.avgSkillDiff * (this.stats.totalMatches - 1) + match.skillDifference) / 
+                    this.stats.totalMatches;
+                
+                this.log(`Match created! Quality: ${match.quality}% Skill diff: ${match.skillDifference}`);
+                
+                // Position players in lobby formation
+                this.arrangePlayersInLobby(match);
+            }
+            
+            arrangePlayersInLobby(match) {
+                // Team 1 on left
+                match.team1.forEach((player, i) => {
+                    player.targetX = 150;
+                    player.targetY = 100 + i * 50;
+                });
+                
+                // Team 2 on right
+                match.team2.forEach((player, i) => {
+                    player.targetX = 450;
+                    player.targetY = 100 + i * 50;
+                });
+            }
+            
+            simulateReadyCheck() {
+                // Simulate players readying up
+                for (const match of this.matches) {
+                    if (match.state === 'lobby') {
+                        match.players.forEach(p => {
+                            if (Math.random() < 0.8) { // 80% chance to ready
+                                p.ready = true;
+                            }
+                        });
+                        
+                        if (match.checkReady()) {
+                            match.state = 'starting';
+                            this.log(`Match ${match.id} starting!`);
+                            
+                            // Remove match after delay
+                            setTimeout(() => {
+                                match.players.forEach(p => {
+                                    p.state = 'in_game';
+                                });
+                                this.matches.splice(this.matches.indexOf(match), 1);
+                                
+                                // Return players to idle after "game"
+                                setTimeout(() => {
+                                    match.players.forEach(p => {
+                                        p.state = 'idle';
+                                        p.ready = false;
+                                        p.team = null;
+                                        p.queueTime = 0;
+                                    });
+                                }, 3000);
+                            }, 2000);
+                        }
+                    }
+                }
+            }
+            
+            update(dt) {
+                // Update all players
+                for (const player of this.players) {
+                    player.update(dt);
+                }
+                
+                // Update stats display
+                this.updateStats();
+            }
+            
+            draw() {
+                // Clear canvas
+                this.ctx.fillStyle = '#1a1a1a';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw zones
+                this.drawZones();
+                
+                // Draw players
+                for (const player of this.players) {
+                    player.draw(this.ctx);
+                }
+                
+                // Draw matches
+                this.drawMatches();
+                
+                // Draw queue visualization
+                this.drawQueue();
+            }
+            
+            drawZones() {
+                // Queue zone
+                this.ctx.strokeStyle = 'rgba(255, 255, 0, 0.2)';
+                this.ctx.lineWidth = 2;
+                this.ctx.setLineDash([5, 5]);
+                this.ctx.strokeRect(10, 10, 120, 380);
+                this.ctx.setLineDash([]);
+                
+                this.ctx.fillStyle = 'rgba(255, 255, 0, 0.05)';
+                this.ctx.fillRect(10, 10, 120, 380);
+                
+                this.ctx.fillStyle = '#ffff00';
+                this.ctx.font = '12px Arial';
+                this.ctx.fillText('QUEUE', 50, 30);
+                
+                // Lobby zones
+                if (this.matches.length > 0) {
+                    this.ctx.strokeStyle = 'rgba(0, 255, 0, 0.2)';
+                    this.ctx.strokeRect(140, 10, 450, 380);
+                    
+                    this.ctx.fillStyle = 'rgba(0, 255, 0, 0.05)';
+                    this.ctx.fillRect(140, 10, 450, 380);
+                    
+                    this.ctx.fillStyle = '#00ff00';
+                    this.ctx.fillText('LOBBY', 350, 30);
+                }
+            }
+            
+            drawMatches() {
+                for (const match of this.matches) {
+                    // Draw team divider
+                    this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                    this.ctx.lineWidth = 1;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(300, 50);
+                    this.ctx.lineTo(300, 350);
+                    this.ctx.stroke();
+                    
+                    // Team labels
+                    this.ctx.fillStyle = '#ff0000';
+                    this.ctx.font = '14px Arial';
+                    this.ctx.fillText('Team 1', 150, 70);
+                    
+                    this.ctx.fillStyle = '#0000ff';
+                    this.ctx.fillText('Team 2', 450, 70);
+                    
+                    // Match info
+                    this.ctx.fillStyle = '#ffffff';
+                    this.ctx.font = '10px Arial';
+                    this.ctx.fillText(`Quality: ${match.quality}%`, 280, 370);
+                    this.ctx.fillText(`Avg: ${Math.floor(match.avgSkill)}`, 280, 385);
+                }
+            }
+            
+            drawQueue() {
+                // Queue position indicators
+                let queueY = 50;
+                for (let i = 0; i < Math.min(7, this.queue.length); i++) {
+                    const player = this.queue[i];
+                    
+                    this.ctx.fillStyle = '#ffffff';
+                    this.ctx.font = '9px Arial';
+                    this.ctx.fillText(`#${i + 1}`, 15, queueY);
+                    
+                    // Mini player indicator
+                    this.ctx.fillStyle = player.getRankColor();
+                    this.ctx.fillRect(35, queueY - 5, 60, 3);
+                    
+                    queueY += 50;
+                }
+                
+                if (this.queue.length > 7) {
+                    this.ctx.fillStyle = '#ffffff';
+                    this.ctx.fillText(`+${this.queue.length - 7} more`, 50, queueY);
+                }
+            }
+            
+            updateStats() {
+                document.getElementById('queueSize').textContent = this.queue.length;
+                document.getElementById('searchingCount').textContent = 
+                    this.players.filter(p => p.state === 'queuing').length;
+                document.getElementById('lobbyCount').textContent = 
+                    this.players.filter(p => p.state === 'matched').length;
+                document.getElementById('matchCount').textContent = this.matches.length;
+                
+                const avgWait = this.stats.totalPlayers > 0 ? 
+                    (this.stats.totalWaitTime / this.stats.totalPlayers).toFixed(0) : 0;
+                document.getElementById('avgWait').textContent = avgWait + 's';
+                
+                document.getElementById('avgSkillDiff').textContent = 
+                    Math.floor(this.stats.avgSkillDiff);
+                
+                const avgQuality = this.matches.length > 0 ?
+                    this.matches.reduce((acc, m) => acc + m.quality, 0) / this.matches.length :
+                    0;
+                document.getElementById('matchQuality').textContent = 
+                    Math.floor(avgQuality) + '%';
+            }
+            
+            log(message) {
+                const timestamp = new Date().toLocaleTimeString();
+                this.logEntries.unshift(`[${timestamp}] ${message}`);
+                if (this.logEntries.length > 8) {
+                    this.logEntries.pop();
+                }
+                
+                const logDiv = document.getElementById('matchmakingLog');
+                if (logDiv) {
+                    logDiv.innerHTML = this.logEntries.join('<br>');
+                }
+            }
+            
+            reset() {
+                this.players = [];
+                this.queue = [];
+                this.matches = [];
+                this.parties = [];
+                this.stats = {
+                    totalMatches: 0,
+                    totalWaitTime: 0,
+                    totalPlayers: 0,
+                    avgSkillDiff: 0
+                };
+                this.log('Simulation reset');
+            }
+        }
+
+        // Initialize
+        const matchmakingCanvas = document.getElementById('matchmakingCanvas');
+        const ctx = matchmakingCanvas.getContext('2d');
+        const matchmaking = new MatchmakingSystem(matchmakingCanvas, ctx);
+
+        // Add initial players
+        for (let i = 0; i < 15; i++) {
+            matchmaking.addPlayer();
+        }
+
+        // Control functions
+        window.addPlayer = () => matchmaking.addPlayer();
+        window.addParty = () => matchmaking.addParty();
+        window.startMatchmaking = () => matchmaking.startMatchmaking();
+        window.cancelMatchmaking = () => matchmaking.cancelMatchmaking();
+        window.simulateReadyCheck = () => matchmaking.simulateReadyCheck();
+        window.resetSimulation = () => matchmaking.reset();
+
+        window.setMatchSize = function(value) {
+            matchmaking.matchSize = parseInt(value);
+            matchmaking.log(`Match size set to ${value}`);
+        };
+
+        window.setAlgorithm = function(value) {
+            matchmaking.algorithm = value;
+            matchmaking.log(`Algorithm set to ${value}`);
+        };
+
+        window.setSkillGap = function(value) {
+            matchmaking.maxSkillGap = parseInt(value);
+            document.getElementById('skillGapDisplay').textContent = value;
+        };
+
+        window.setMaxWait = function(value) {
+            matchmaking.maxWaitTime = parseInt(value);
+            document.getElementById('maxWaitDisplay').textContent = value + 's';
+        };
+
+        window.toggleRegionLock = function() {
+            matchmaking.regionLock = document.getElementById('regionLock').checked;
+            matchmaking.log(`Region lock ${matchmaking.regionLock ? 'enabled' : 'disabled'}`);
+        };
+
+        // Animation loop
+        let lastTime = performance.now();
+        function animate(currentTime) {
+            const dt = (currentTime - lastTime) / 1000;
+            lastTime = currentTime;
+            
+            matchmaking.update(dt);
+            matchmaking.draw();
+            
+            requestAnimationFrame(animate);
+        }
+
+        animate(performance.now());
+
+        console.log('Matchmaking & Lobbies Demo initialized!');
+    </script>
+
+    <h2>Matchmaking System Implementation</h2>
+    
+    <pre class="language-python"><code>import time
+import heapq
+import statistics
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional, Set
+from enum import Enum
+
+class Rank(Enum):
+    """Player rank tiers"""
+    BRONZE = (0, 799)
+    SILVER = (800, 1199)
+    GOLD = (1200, 1599)
+    PLATINUM = (1600, 1999)
+    DIAMOND = (2000, 2399)
+    MASTER = (2400, 9999)
+
+@dataclass
+class Player:
+    """Player in matchmaking system"""
+    id: str
+    name: str
+    skill_rating: int  # ELO/MMR
+    rank: Rank = field(init=False)
+    region: str = "NA"
+    party_id: Optional[str] = None
+    preferences: Dict = field(default_factory=dict)
+    stats: Dict = field(default_factory=dict)
+    queue_start_time: Optional[float] = None
+    
+    def __post_init__(self):
+        self.rank = self.calculate_rank()
+    
+    def calculate_rank(self) -> Rank:
+        """Calculate rank from skill rating"""
+        for rank in Rank:
+            min_rating, max_rating = rank.value
+            if min_rating <= self.skill_rating <= max_rating:
+                return rank
+        return Rank.BRONZE
+
+class MatchmakingQueue:
+    """Manages player queue for matchmaking"""
+    def __init__(self, match_size: int = 10):
+        self.match_size = match_size
+        self.queue: List[Player] = []
+        self.priority_queue = []  # Heap for priority
+        self.parties: Dict[str, List[Player]] = {}
+        
+        # Settings
+        self.max_skill_gap = 200
+        self.max_wait_time = 120  # seconds
+        self.expansion_rate = 50  # skill gap expansion per 30s
+        
+    def add_player(self, player: Player):
+        """Add player to queue"""
+        player.queue_start_time = time.time()
+        self.queue.append(player)
+        
+        # Add to priority queue (negative time for min heap)
+        priority = -player.queue_start_time
+        heapq.heappush(self.priority_queue, (priority, player.id))
+        
+    def add_party(self, players: List[Player]):
+        """Add party of players to queue"""
+        party_id = f"party_{time.time()}"
+        for player in players:
+            player.party_id = party_id
+            self.add_player(player)
+        self.parties[party_id] = players
+    
+    def remove_player(self, player: Player):
+        """Remove player from queue"""
+        if player in self.queue:
+            self.queue.remove(player)
+            player.queue_start_time = None
+    
+    def get_wait_time(self, player: Player) -> float:
+        """Get player's wait time"""
+        if player.queue_start_time:
+            return time.time() - player.queue_start_time
+        return 0
+    
+    def get_skill_range(self, player: Player) -> tuple:
+        """Get acceptable skill range for player"""
+        wait_time = self.get_wait_time(player)
+        base_range = self.max_skill_gap
+        
+        # Expand range based on wait time
+        expansions = int(wait_time / 30)
+        expanded_range = base_range + (expansions * self.expansion_rate)
+        
+        return (
+            player.skill_rating - expanded_range,
+            player.skill_rating + expanded_range
+        )
+    
+    def find_match(self) -> Optional[List[Player]]:
+        """Try to find a match from queue"""
+        if len(self.queue) < self.match_size:
+            return None
+        
+        # Try different strategies
+        match = self.find_balanced_match()
+        if not match:
+            match = self.find_quick_match()
+        if not match:
+            match = self.find_forced_match()
+        
+        return match
+    
+    def find_balanced_match(self) -> Optional[List[Player]]:
+        """Find balanced match based on skill"""
+        # Sort by skill rating
+        sorted_queue = sorted(self.queue, key=lambda p: p.skill_rating)
+        
+        # Sliding window to find best group
+        best_match = None
+        best_quality = 0
+        
+        for i in range(len(sorted_queue) - self.match_size + 1):
+            candidates = sorted_queue[i:i + self.match_size]
+            
+            # Check skill range
+            skill_range = candidates[-1].skill_rating - candidates[0].skill_rating
+            if skill_range <= self.max_skill_gap * 2:
+                quality = self.evaluate_match_quality(candidates)
+                if quality > best_quality:
+                    best_match = candidates
+                    best_quality = quality
+        
+        return best_match if best_quality > 0.6 else None
+    
+    def find_quick_match(self) -> Optional[List[Player]]:
+        """Quick match for players waiting long"""
+        # Find players waiting over 60 seconds
+        long_wait = [p for p in self.queue if self.get_wait_time(p) > 60]
+        
+        if len(long_wait) >= self.match_size:
+            # Sort by wait time (longest first)
+            long_wait.sort(key=lambda p: self.get_wait_time(p), reverse=True)
+            return long_wait[:self.match_size]
+        
+        return None
+    
+    def find_forced_match(self) -> Optional[List[Player]]:
+        """Force match for players at max wait"""
+        # Find players at max wait time
+        max_wait = [p for p in self.queue 
+                   if self.get_wait_time(p) >= self.max_wait_time]
+        
+        if max_wait:
+            # Take any available players
+            match = max_wait[:1]  # Start with longest waiting
+            remaining = [p for p in self.queue if p not in match]
+            match.extend(remaining[:self.match_size - 1])
+            
+            if len(match) == self.match_size:
+                return match
+        
+        return None
+    
+    def evaluate_match_quality(self, players: List[Player]) -> float:
+        """Evaluate match quality (0-1)"""
+        # Skill balance
+        skills = [p.skill_rating for p in players]
+        skill_std = statistics.stdev(skills) if len(skills) > 1 else 0
+        skill_factor = max(0, 1 - skill_std / 500)
+        
+        # Wait time factor
+        avg_wait = statistics.mean([self.get_wait_time(p) for p in players])
+        wait_factor = min(1, avg_wait / 30)  # Prioritize after 30s
+        
+        # Region factor
+        regions = set(p.region for p in players)
+        region_factor = 1.0 if len(regions) == 1 else 0.8
+        
+        # Party factor (keep parties together)
+        party_factor = self.evaluate_party_cohesion(players)
+        
+        # Weighted average
+        quality = (
+            skill_factor * 0.4 +
+            wait_factor * 0.2 +
+            region_factor * 0.2 +
+            party_factor * 0.2
+        )
+        
+        return quality
+    
+    def evaluate_party_cohesion(self, players: List[Player]) -> float:
+        """Check if parties are kept together"""
+        party_players = {}
+        for player in players:
+            if player.party_id:
+                if player.party_id not in party_players:
+                    party_players[player.party_id] = []
+                party_players[player.party_id].append(player)
+        
+        if not party_players:
+            return 1.0
+        
+        # Check if complete parties
+        cohesion = 1.0
+        for party_id, members in party_players.items():
+            party_size = len(self.parties.get(party_id, []))
+            if len(members) < party_size:
+                cohesion *= len(members) / party_size
+        
+        return cohesion</code></pre>
+
+    <h2>Lobby System Implementation</h2>
+    
+    <pre class="language-python"><code># Lobby management system
+class LobbyState(Enum):
+    """Lobby states"""
+    FORMING = "forming"
+    WAITING = "waiting"
+    READY_CHECK = "ready_check"
+    STARTING = "starting"
+    IN_GAME = "in_game"
+    DISBANDED = "disbanded"
+
+@dataclass
+class Lobby:
+    """Game lobby"""
+    id: str
+    players: List[Player]
+    match_size: int
+    state: LobbyState = LobbyState.FORMING
+    created_at: float = field(default_factory=time.time)
+    ready_players: Set[str] = field(default_factory=set)
+    settings: Dict = field(default_factory=dict)
+    
+    # Teams
+    team_1: List[Player] = field(default_factory=list)
+    team_2: List[Player] = field(default_factory=list)
+    
+    def balance_teams(self):
+        """Balance teams by skill"""
+        # Sort by skill
+        sorted_players = sorted(self.players, 
+                               key=lambda p: p.skill_rating, 
+                               reverse=True)
+        
+        # Snake draft assignment
+        for i, player in enumerate(sorted_players):
+            if i % 2 == 0:
+                self.team_1.append(player)
+            else:
+                self.team_2.append(player)
+    
+    def get_team_stats(self, team: int) -> Dict:
+        """Get team statistics"""
+        team_players = self.team_1 if team == 1 else self.team_2
+        
+        if not team_players:
+            return {}
+        
+        skills = [p.skill_rating for p in team_players]
+        
+        return {
+            'avg_skill': statistics.mean(skills),
+            'min_skill': min(skills),
+            'max_skill': max(skills),
+            'skill_std': statistics.stdev(skills) if len(skills) > 1 else 0,
+            'players': len(team_players)
+        }
+    
+    def ready_check(self):
+        """Start ready check"""
+        self.state = LobbyState.READY_CHECK
+        self.ready_players.clear()
+    
+    def player_ready(self, player_id: str):
+        """Mark player as ready"""
+        self.ready_players.add(player_id)
+        
+        # Check if all ready
+        if len(self.ready_players) == len(self.players):
+            self.start_game()
+    
+    def start_game(self):
+        """Start the game"""
+        self.state = LobbyState.STARTING
+        # Game server allocation would happen here
+    
+    def disband(self):
+        """Disband lobby"""
+        self.state = LobbyState.DISBANDED
+
+class LobbyManager:
+    """Manages all game lobbies"""
+    def __init__(self):
+        self.lobbies: Dict[str, Lobby] = {}
+        self.player_lobbies: Dict[str, str] = {}  # player_id -> lobby_id
+        
+    def create_lobby(self, players: List[Player], match_size: int) -> Lobby:
+        """Create new lobby"""
+        lobby_id = f"lobby_{time.time()}"
+        lobby = Lobby(
+            id=lobby_id,
+            players=players,
+            match_size=match_size
+        )
+        
+        # Balance teams
+        lobby.balance_teams()
+        
+        # Register lobby
+        self.lobbies[lobby_id] = lobby
+        for player in players:
+            self.player_lobbies[player.id] = lobby_id
+        
+        # Start ready check after delay
+        self.schedule_ready_check(lobby, delay=5)
+        
+        return lobby
+    
+    def schedule_ready_check(self, lobby: Lobby, delay: float):
+        """Schedule ready check"""
+        # In real implementation, use async/threading
+        import threading
+        def start_check():
+            time.sleep(delay)
+            if lobby.state == LobbyState.FORMING:
+                lobby.ready_check()
+        
+        thread = threading.Thread(target=start_check)
+        thread.daemon = True
+        thread.start()
+    
+    def handle_ready_timeout(self, lobby: Lobby):
+        """Handle ready check timeout"""
+        if lobby.state != LobbyState.READY_CHECK:
+            return
+        
+        # Find players who didn't ready
+        not_ready = [p for p in lobby.players 
+                    if p.id not in lobby.ready_players]
+        
+        if not_ready:
+            # Remove unready players
+            for player in not_ready:
+                self.remove_player_from_lobby(player, lobby)
+            
+            # Try to find replacements or disband
+            if len(lobby.players) < lobby.match_size * 0.8:
+                lobby.disband()
+            else:
+                # Find replacements
+                self.find_replacements(lobby)
+    
+    def remove_player_from_lobby(self, player: Player, lobby: Lobby):
+        """Remove player from lobby"""
+        if player in lobby.players:
+            lobby.players.remove(player)
+            
+        if player in lobby.team_1:
+            lobby.team_1.remove(player)
+        elif player in lobby.team_2:
+            lobby.team_2.remove(player)
+        
+        if player.id in self.player_lobbies:
+            del self.player_lobbies[player.id]
+    
+    def find_replacements(self, lobby: Lobby):
+        """Find replacement players"""
+        # Would integrate with matchmaking queue
+        pass</code></pre>
+
+    <h2>Skill Rating System</h2>
+    
+    <pre class="language-python"><code># ELO/MMR rating system
+class SkillRatingSystem:
+    """Manages player skill ratings"""
+    def __init__(self, k_factor: float = 32):
+        self.k_factor = k_factor  # ELO K-factor
+        self.rating_history: Dict[str, List[int]] = {}
+        
+    def calculate_expected_score(self, rating_a: int, rating_b: int) -> float:
+        """Calculate expected score (ELO formula)"""
+        return 1 / (1 + 10 ** ((rating_b - rating_a) / 400))
+    
+    def update_ratings(self, winners: List[Player], losers: List[Player]):
+        """Update ratings after match"""
+        # Calculate team averages
+        winner_avg = statistics.mean([p.skill_rating for p in winners])
+        loser_avg = statistics.mean([p.skill_rating for p in losers])
+        
+        # Expected scores
+        winner_expected = self.calculate_expected_score(winner_avg, loser_avg)
+        loser_expected = 1 - winner_expected
+        
+        # Update individual ratings
+        for player in winners:
+            self.update_player_rating(player, 1, winner_expected)
+        
+        for player in losers:
+            self.update_player_rating(player, 0, loser_expected)
+    
+    def update_player_rating(self, player: Player, score: float, expected: float):
+        """Update individual player rating"""
+        # Store history
+        if player.id not in self.rating_history:
+            self.rating_history[player.id] = []
+        self.rating_history[player.id].append(player.skill_rating)
+        
+        # Calculate rating change
+        rating_change = self.k_factor * (score - expected)
+        
+        # Apply change
+        player.skill_rating = max(0, int(player.skill_rating + rating_change))
+        
+        # Update rank
+        player.rank = player.calculate_rank()
+    
+    def get_rating_trend(self, player_id: str, games: int = 10) -> List[int]:
+        """Get recent rating trend"""
+        history = self.rating_history.get(player_id, [])
+        return history[-games:] if history else []
+
+# Session management
+class SessionManager:
+    """Manages player sessions"""
+    def __init__(self):
+        self.sessions: Dict[str, Dict] = {}
+        self.session_timeout = 300  # 5 minutes
+        
+    def create_session(self, player: Player) -> str:
+        """Create player session"""
+        session_id = f"session_{player.id}_{time.time()}"
+        
+        self.sessions[session_id] = {
+            'player_id': player.id,
+            'start_time': time.time(),
+            'last_activity': time.time(),
+            'state': 'active',
+            'match_history': []
+        }
+        
+        return session_id
+    
+    def update_activity(self, session_id: str):
+        """Update session activity"""
+        if session_id in self.sessions:
+            self.sessions[session_id]['last_activity'] = time.time()
+    
+    def end_session(self, session_id: str):
+        """End player session"""
+        if session_id in self.sessions:
+            session = self.sessions[session_id]
+            session['state'] = 'ended'
+            session['end_time'] = time.time()
+            
+            # Calculate session stats
+            duration = session['end_time'] - session['start_time']
+            matches = len(session['match_history'])
+            
+            return {
+                'duration': duration,
+                'matches_played': matches,
+                'avg_match_time': duration / matches if matches > 0 else 0
+            }
+    
+    def cleanup_inactive_sessions(self):
+        """Remove inactive sessions"""
+        current_time = time.time()
+        to_remove = []
+        
+        for session_id, session in self.sessions.items():
+            if current_time - session['last_activity'] > self.session_timeout:
+                to_remove.append(session_id)
+        
+        for session_id in to_remove:
+            self.end_session(session_id)</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Matchmaking & Lobby Tips</h3>
+        <ul>
+            <li><strong>Skill Balance:</strong> Prioritize fair matches over speed</li>
+            <li><strong>Wait Time:</strong> Expand search criteria gradually</li>
+            <li><strong>Party Support:</strong> Keep friends together</li>
+            <li><strong>Region Preference:</strong> Balance ping vs population</li>
+            <li><strong>Ready Checks:</strong> Ensure all players are present</li>
+            <li><strong>Backfill:</strong> Replace disconnected players quickly</li>
+            <li><strong>Rating Protection:</strong> Limit losses from unfair matches</li>
+            <li><strong>Queue Feedback:</strong> Show estimated wait times</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>🎯 Matchmaking creates balanced, fair matches</li>
+            <li>📊 Skill rating systems track player progression</li>
+            <li>⏱️ Queue management balances wait time vs quality</li>
+            <li>👥 Party systems keep friends together</li>
+            <li>🏠 Lobbies manage pre-game experience</li>
+            <li>✅ Ready checks ensure player availability</li>
+            <li>🌍 Region selection affects latency and population</li>
+            <li>📈 Analytics improve matchmaking over time</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Congratulations! You've completed Section 2: Networking & Multiplayer! Next, we'll move on to Section 3: Advanced Graphics, where you'll learn shaders, lighting, post-processing, and visual effects!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="networking_lag_compensation.html" class="prev-lesson" aria-label="Previous lesson: Lag Compensation">Previous Lesson: Lag Compensation</a>
+        <a href="graphics_shaders.html" class="next-lesson" aria-label="Next section: Advanced Graphics - Shaders">Next Section: Advanced Graphics</a>
+    </nav>
+    
+    </main>
+    <script src="/js/course-enhancements.js" defer></script>
+</body>
+</html>

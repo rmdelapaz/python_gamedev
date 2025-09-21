@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master pathfinding algorithms for game AI. Learn A* algorithm, Dijkstra's algorithm, navigation meshes, and optimization techniques.">
+    <title>Pathfinding (A* Algorithm) - AI for Games</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Pathfinding (A* Algorithm)</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Intermediate Module - Section 3: AI for Games - Lesson 1</span>
+    </nav>
+
+    <h2>Intelligent Navigation with Pathfinding</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Pathfinding is the foundation of intelligent game AI movement! Learn the A* algorithm, heuristics, optimization techniques, and how to create NPCs that navigate complex environments efficiently! 🧭🤖🎯</p>
+    </div>
+
+    <h2>Understanding Pathfinding</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🗺️ The GPS Navigation Analogy</h3>
+        <p>Think of pathfinding like GPS navigation:</p>
+        <ul>
+            <li><strong>Start:</strong> Your current location</li>
+            <li><strong>Goal:</strong> Your destination</li>
+            <li><strong>Graph:</strong> The road network</li>
+            <li><strong>Costs:</strong> Distance or travel time</li>
+            <li><strong>Heuristic:</strong> "As the crow flies" estimate</li>
+            <li><strong>Obstacles:</strong> Roads under construction</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Pathfinding"] --> B["Graph Representation"]
+        A --> C["Search Algorithms"]
+        A --> D["Optimization"]
+        
+        B --> E["Grid-based"]
+        B --> F["NavMesh"]
+        B --> G["Waypoints"]
+        
+        C --> H["A* Algorithm"]
+        C --> I["Dijkstra's"]
+        C --> J["BFS/DFS"]
+        
+        D --> K["Hierarchical"]
+        D --> L["Jump Point Search"]
+        D --> M["Path Smoothing"]
+    </div>
+
+    <h2>Interactive A* Pathfinding Demo</h2>
+    
+    <div class="canvas-wrapper" style="text-align: center;">
+        <canvas id="pathfindingCanvas" width="600" height="400" style="border: 1px solid #333; background-color: #2C3E50; display: inline-block;"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Click to set start (green), right-click to set goal (red), drag to create walls!</p>
+        
+        <!-- Tool Selection -->
+        <div style="margin: 10px auto; padding: 10px; background-color: rgba(0,0,0,0.3); border-radius: 5px; max-width: 600px;">
+            <p style="color: white; margin: 5px;">Tools:</p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 5px;">
+                <button onclick="setTool('start')" class="tool-btn" id="startTool">🟢 Start</button>
+                <button onclick="setTool('goal')" class="tool-btn" id="goalTool">🔴 Goal</button>
+                <button onclick="setTool('wall')" class="tool-btn" id="wallTool">🧱 Wall</button>
+                <button onclick="setTool('forest')" class="tool-btn" id="forestTool">🌲 Forest</button>
+                <button onclick="setTool('water')" class="tool-btn" id="waterTool">💧 Water</button>
+                <button onclick="setTool('sand')" class="tool-btn" id="sandTool">🏖️ Sand</button>
+                <button onclick="setTool('erase')" class="tool-btn" id="eraseTool">🧹 Erase</button>
+            </div>
+        </div>
+        
+        <!-- Algorithm Controls -->
+        <div style="margin-top: 10px;">
+            <button onclick="findPath()" style="background-color: #4CAF50; font-size: 16px; padding: 10px;">🔍 Find Path</button>
+            <button onclick="clearPath()">Clear Path</button>
+            <button onclick="clearGrid()">Clear Grid</button>
+            <button onclick="generateMaze()">Generate Maze</button>
+            <button onclick="generateRandom()">Random Map</button>
+            <button onclick="stepThrough()" id="stepBtn">Step Through</button>
+            <button onclick="toggleAnimation()">Animate</button>
+        </div>
+        
+        <!-- Algorithm Selection -->
+        <div style="margin-top: 10px;">
+            <label>Algorithm: 
+                <select id="algorithm" onchange="selectAlgorithm(this.value)">
+                    <option value="astar" selected>A* (A-Star)</option>
+                    <option value="dijkstra">Dijkstra's</option>
+                    <option value="bfs">Breadth-First Search</option>
+                    <option value="dfs">Depth-First Search</option>
+                    <option value="greedy">Greedy Best-First</option>
+                    <option value="jps">Jump Point Search</option>
+                </select>
+            </label>
+            <label>Heuristic: 
+                <select id="heuristic" onchange="selectHeuristic(this.value)">
+                    <option value="manhattan">Manhattan</option>
+                    <option value="euclidean">Euclidean</option>
+                    <option value="diagonal">Diagonal</option>
+                    <option value="zero">Zero (Dijkstra)</option>
+                </select>
+            </label>
+        </div>
+        
+        <!-- Settings -->
+        <div style="margin-top: 10px;">
+            <label><input type="checkbox" id="diagonalMovement" checked> Allow Diagonal</label>
+            <label><input type="checkbox" id="showCosts" checked> Show Costs</label>
+            <label><input type="checkbox" id="showHeuristics"> Show Heuristics</label>
+            <label><input type="checkbox" id="showVisited" checked> Show Visited</label>
+            <label><input type="checkbox" id="smoothPath"> Smooth Path</label>
+        </div>
+        
+        <!-- Speed Control -->
+        <div style="margin-top: 10px;">
+            <label>Animation Speed: <input type="range" id="animSpeed" min="1" max="100" value="50" onchange="setAnimSpeed(this.value)"> <span id="speedDisplay">50ms</span></label>
+            <label>Grid Size: <input type="range" id="gridSize" min="10" max="40" value="20" onchange="setGridSize(this.value)"> <span id="gridSizeDisplay">20x20</span></label>
+        </div>
+        
+        <!-- Statistics -->
+        <div style="margin-top: 10px; background-color: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;">
+            <p style="margin: 5px; color: white;">
+                Algorithm: <span id="currentAlgorithm">A*</span> | 
+                Path Length: <span id="pathLength">-</span> | 
+                Path Cost: <span id="pathCost">-</span> | 
+                Nodes Explored: <span id="nodesExplored">0</span>
+            </p>
+            <p style="margin: 5px; color: white;">
+                Time: <span id="searchTime">0</span>ms | 
+                Open List: <span id="openListSize">0</span> | 
+                Closed List: <span id="closedListSize">0</span> | 
+                Efficiency: <span id="efficiency">-</span>
+            </p>
+        </div>
+    </div>
+
+    <style>
+        .tool-btn {
+            padding: 8px;
+            border: 2px solid transparent;
+            background-color: #555;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        .tool-btn:hover {
+            background-color: #666;
+        }
+        .tool-btn.active {
+            border-color: #4CAF50;
+            background-color: #4CAF50;
+        }
+    </style>
+
+    <script>
+        console.log('Pathfinding Demo starting...');
+
+        // Cell types
+        const CellType = {
+            EMPTY: 0,
+            WALL: 1,
+            START: 2,
+            GOAL: 3,
+            FOREST: 4,  // Higher cost
+            WATER: 5,   // Very high cost
+            SAND: 6,    // Medium cost
+            PATH: 7,
+            OPEN: 8,
+            CLOSED: 9,
+            CURRENT: 10
+        };
+
+        // Cell costs
+        const CellCost = {
+            [CellType.EMPTY]: 1,
+            [CellType.WALL]: Infinity,
+            [CellType.FOREST]: 3,
+            [CellType.WATER]: 10,
+            [CellType.SAND]: 2
+        };
+
+        // Cell colors
+        const CellColor = {
+            [CellType.EMPTY]: '#3A4A5C',
+            [CellType.WALL]: '#1A1A1A',
+            [CellType.START]: '#4CAF50',
+            [CellType.GOAL]: '#F44336',
+            [CellType.FOREST]: '#228B22',
+            [CellType.WATER]: '#4169E1',
+            [CellType.SAND]: '#F4A460',
+            [CellType.PATH]: '#FFD700',
+            [CellType.OPEN]: '#90EE90',
+            [CellType.CLOSED]: '#FFB6C1',
+            [CellType.CURRENT]: '#FF00FF'
+        };
+
+        // Node class for pathfinding
+        class Node {
+            constructor(x, y, parent = null) {
+                this.x = x;
+                this.y = y;
+                this.parent = parent;
+                this.g = 0;  // Cost from start
+                this.h = 0;  // Heuristic cost to goal
+                this.f = 0;  // Total cost (g + h)
+            }
+            
+            equals(other) {
+                return this.x === other.x && this.y === other.y;
+            }
+        }
+
+        // Priority queue for A*
+        class PriorityQueue {
+            constructor() {
+                this.elements = [];
+            }
+            
+            enqueue(element, priority) {
+                this.elements.push({ element, priority });
+                this.elements.sort((a, b) => a.priority - b.priority);
+            }
+            
+            dequeue() {
+                return this.elements.shift()?.element;
+            }
+            
+            isEmpty() {
+                return this.elements.length === 0;
+            }
+            
+            size() {
+                return this.elements.length;
+            }
+            
+            contains(element) {
+                return this.elements.some(item => 
+                    item.element.x === element.x && item.element.y === element.y);
+            }
+        }
+
+        // Pathfinding grid
+        class PathfindingGrid {
+            constructor(width, height, cellSize) {
+                this.width = width;
+                this.height = height;
+                this.cellSize = cellSize;
+                this.grid = [];
+                this.start = null;
+                this.goal = null;
+                this.path = [];
+                this.openList = [];
+                this.closedList = [];
+                
+                // Statistics
+                this.nodesExplored = 0;
+                this.searchTime = 0;
+                
+                // Animation
+                this.animating = false;
+                this.animationSpeed = 50;
+                this.animationStep = 0;
+                
+                // Settings
+                this.algorithm = 'astar';
+                this.heuristic = 'manhattan';
+                this.allowDiagonal = true;
+                
+                this.initGrid();
+            }
+            
+            initGrid() {
+                this.grid = [];
+                for (let y = 0; y < this.height; y++) {
+                    this.grid[y] = [];
+                    for (let x = 0; x < this.width; x++) {
+                        this.grid[y][x] = CellType.EMPTY;
+                    }
+                }
+            }
+            
+            setCell(x, y, type) {
+                if (x >= 0 && x < this.width && y >= 0 && y < this.height) {
+                    // Clear previous start/goal if setting new ones
+                    if (type === CellType.START && this.start) {
+                        this.grid[this.start.y][this.start.x] = CellType.EMPTY;
+                    }
+                    if (type === CellType.GOAL && this.goal) {
+                        this.grid[this.goal.y][this.goal.x] = CellType.EMPTY;
+                    }
+                    
+                    this.grid[y][x] = type;
+                    
+                    if (type === CellType.START) {
+                        this.start = { x, y };
+                    } else if (type === CellType.GOAL) {
+                        this.goal = { x, y };
+                    }
+                }
+            }
+            
+            getCell(x, y) {
+                if (x >= 0 && x < this.width && y >= 0 && y < this.height) {
+                    return this.grid[y][x];
+                }
+                return CellType.WALL;
+            }
+            
+            getCellCost(x, y) {
+                const type = this.getCell(x, y);
+                return CellCost[type] || 1;
+            }
+            
+            getNeighbors(x, y) {
+                const neighbors = [];
+                
+                // Cardinal directions
+                const cardinals = [
+                    { x: x, y: y - 1 },      // Up
+                    { x: x + 1, y: y },      // Right
+                    { x: x, y: y + 1 },      // Down
+                    { x: x - 1, y: y }       // Left
+                ];
+                
+                for (const n of cardinals) {
+                    if (this.getCellCost(n.x, n.y) !== Infinity) {
+                        neighbors.push(n);
+                    }
+                }
+                
+                // Diagonal directions
+                if (this.allowDiagonal) {
+                    const diagonals = [
+                        { x: x - 1, y: y - 1 },  // Top-left
+                        { x: x + 1, y: y - 1 },  // Top-right
+                        { x: x + 1, y: y + 1 },  // Bottom-right
+                        { x: x - 1, y: y + 1 }   // Bottom-left
+                    ];
+                    
+                    for (let i = 0; i < diagonals.length; i++) {
+                        const d = diagonals[i];
+                        // Check if diagonal is accessible
+                        const card1 = cardinals[i];
+                        const card2 = cardinals[(i + 3) % 4];
+                        
+                        if (this.getCellCost(d.x, d.y) !== Infinity &&
+                            (this.getCellCost(card1.x, card1.y) !== Infinity ||
+                             this.getCellCost(card2.x, card2.y) !== Infinity)) {
+                            neighbors.push(d);
+                        }
+                    }
+                }
+                
+                return neighbors;
+            }
+            
+            calculateHeuristic(x1, y1, x2, y2) {
+                switch (this.heuristic) {
+                    case 'manhattan':
+                        return Math.abs(x2 - x1) + Math.abs(y2 - y1);
+                    
+                    case 'euclidean':
+                        return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+                    
+                    case 'diagonal':
+                        const dx = Math.abs(x2 - x1);
+                        const dy = Math.abs(y2 - y1);
+                        return Math.max(dx, dy) + (Math.sqrt(2) - 1) * Math.min(dx, dy);
+                    
+                    case 'zero':
+                        return 0;  // Dijkstra's algorithm
+                    
+                    default:
+                        return Math.abs(x2 - x1) + Math.abs(y2 - y1);
+                }
+            }
+            
+            findPath() {
+                if (!this.start || !this.goal) {
+                    console.log('No start or goal set');
+                    return false;
+                }
+                
+                const startTime = performance.now();
+                this.path = [];
+                this.openList = [];
+                this.closedList = [];
+                this.nodesExplored = 0;
+                
+                let result = false;
+                
+                switch (this.algorithm) {
+                    case 'astar':
+                        result = this.aStar();
+                        break;
+                    case 'dijkstra':
+                        result = this.dijkstra();
+                        break;
+                    case 'bfs':
+                        result = this.breadthFirstSearch();
+                        break;
+                    case 'dfs':
+                        result = this.depthFirstSearch();
+                        break;
+                    case 'greedy':
+                        result = this.greedyBestFirst();
+                        break;
+                    case 'jps':
+                        result = this.jumpPointSearch();
+                        break;
+                    default:
+                        result = this.aStar();
+                }
+                
+                this.searchTime = performance.now() - startTime;
+                return result;
+            }
+            
+            aStar() {
+                const openSet = new PriorityQueue();
+                const closedSet = new Set();
+                const startNode = new Node(this.start.x, this.start.y);
+                
+                openSet.enqueue(startNode, 0);
+                
+                const gScore = {};
+                const key = (x, y) => `${x},${y}`;
+                gScore[key(startNode.x, startNode.y)] = 0;
+                
+                while (!openSet.isEmpty()) {
+                    const current = openSet.dequeue();
+                    this.nodesExplored++;
+                    
+                    // Goal reached
+                    if (current.x === this.goal.x && current.y === this.goal.y) {
+                        this.reconstructPath(current);
+                        return true;
+                    }
+                    
+                    closedSet.add(key(current.x, current.y));
+                    this.closedList.push({ x: current.x, y: current.y });
+                    
+                    // Check neighbors
+                    const neighbors = this.getNeighbors(current.x, current.y);
+                    
+                    for (const neighbor of neighbors) {
+                        const neighborKey = key(neighbor.x, neighbor.y);
+                        
+                        if (closedSet.has(neighborKey)) {
+                            continue;
+                        }
+                        
+                        // Calculate tentative g score
+                        const dx = Math.abs(neighbor.x - current.x);
+                        const dy = Math.abs(neighbor.y - current.y);
+                        const moveCost = (dx === 1 && dy === 1) ? Math.sqrt(2) : 1;
+                        const cellCost = this.getCellCost(neighbor.x, neighbor.y);
+                        const tentativeG = (gScore[key(current.x, current.y)] || 0) + moveCost * cellCost;
+                        
+                        if (!(neighborKey in gScore) || tentativeG < gScore[neighborKey]) {
+                            const neighborNode = new Node(neighbor.x, neighbor.y, current);
+                            neighborNode.g = tentativeG;
+                            neighborNode.h = this.calculateHeuristic(
+                                neighbor.x, neighbor.y,
+                                this.goal.x, this.goal.y
+                            );
+                            neighborNode.f = neighborNode.g + neighborNode.h;
+                            
+                            gScore[neighborKey] = tentativeG;
+                            
+                            if (!openSet.contains(neighborNode)) {
+                                openSet.enqueue(neighborNode, neighborNode.f);
+                                this.openList.push({ x: neighbor.x, y: neighbor.y });
+                            }
+                        }
+                    }
+                }
+                
+                return false;  // No path found
+            }
+            
+            dijkstra() {
+                // Same as A* but with zero heuristic
+                const oldHeuristic = this.heuristic;
+                this.heuristic = 'zero';
+                const result = this.aStar();
+                this.heuristic = oldHeuristic;
+                return result;
+            }
+            
+            breadthFirstSearch() {
+                const queue = [];
+                const visited = new Set();
+                const startNode = new Node(this.start.x, this.start.y);
+                
+                queue.push(startNode);
+                visited.add(`${startNode.x},${startNode.y}`);
+                
+                while (queue.length > 0) {
+                    const current = queue.shift();
+                    this.nodesExplored++;
+                    this.closedList.push({ x: current.x, y: current.y });
+                    
+                    if (current.x === this.goal.x && current.y === this.goal.y) {
+                        this.reconstructPath(current);
+                        return true;
+                    }
+                    
+                    const neighbors = this.getNeighbors(current.x, current.y);
+                    
+                    for (const neighbor of neighbors) {
+                        const key = `${neighbor.x},${neighbor.y}`;
+                        if (!visited.has(key)) {
+                            visited.add(key);
+                            const neighborNode = new Node(neighbor.x, neighbor.y, current);
+                            queue.push(neighborNode);
+                            this.openList.push({ x: neighbor.x, y: neighbor.y });
+                        }
+                    }
+                }
+                
+                return false;
+            }
+            
+            depthFirstSearch() {
+                const stack = [];
+                const visited = new Set();
+                const startNode = new Node(this.start.x, this.start.y);
+                
+                stack.push(startNode);
+                
+                while (stack.length > 0) {
+                    const current = stack.pop();
+                    const key = `${current.x},${current.y}`;
+                    
+                    if (visited.has(key)) {
+                        continue;
+                    }
+                    
+                    visited.add(key);
+                    this.nodesExplored++;
+                    this.closedList.push({ x: current.x, y: current.y });
+                    
+                    if (current.x === this.goal.x && current.y === this.goal.y) {
+                        this.reconstructPath(current);
+                        return true;
+                    }
+                    
+                    const neighbors = this.getNeighbors(current.x, current.y);
+                    
+                    for (const neighbor of neighbors) {
+                        const neighborKey = `${neighbor.x},${neighbor.y}`;
+                        if (!visited.has(neighborKey)) {
+                            const neighborNode = new Node(neighbor.x, neighbor.y, current);
+                            stack.push(neighborNode);
+                            this.openList.push({ x: neighbor.x, y: neighbor.y });
+                        }
+                    }
+                }
+                
+                return false;
+            }
+            
+            greedyBestFirst() {
+                const openSet = new PriorityQueue();
+                const closedSet = new Set();
+                const startNode = new Node(this.start.x, this.start.y);
+                
+                openSet.enqueue(startNode, 0);
+                
+                while (!openSet.isEmpty()) {
+                    const current = openSet.dequeue();
+                    this.nodesExplored++;
+                    
+                    if (current.x === this.goal.x && current.y === this.goal.y) {
+                        this.reconstructPath(current);
+                        return true;
+                    }
+                    
+                    closedSet.add(`${current.x},${current.y}`);
+                    this.closedList.push({ x: current.x, y: current.y });
+                    
+                    const neighbors = this.getNeighbors(current.x, current.y);
+                    
+                    for (const neighbor of neighbors) {
+                        const key = `${neighbor.x},${neighbor.y}`;
+                        
+                        if (!closedSet.has(key)) {
+                            const neighborNode = new Node(neighbor.x, neighbor.y, current);
+                            neighborNode.h = this.calculateHeuristic(
+                                neighbor.x, neighbor.y,
+                                this.goal.x, this.goal.y
+                            );
+                            
+                            if (!openSet.contains(neighborNode)) {
+                                openSet.enqueue(neighborNode, neighborNode.h);
+                                this.openList.push({ x: neighbor.x, y: neighbor.y });
+                            }
+                        }
+                    }
+                }
+                
+                return false;
+            }
+            
+            jumpPointSearch() {
+                // Simplified JPS - would need full implementation for production
+                return this.aStar();
+            }
+            
+            reconstructPath(node) {
+                this.path = [];
+                let current = node;
+                
+                while (current) {
+                    this.path.unshift({ x: current.x, y: current.y });
+                    current = current.parent;
+                }
+                
+                // Smooth path if enabled
+                if (document.getElementById('smoothPath').checked) {
+                    this.smoothPath();
+                }
+            }
+            
+            smoothPath() {
+                if (this.path.length < 3) return;
+                
+                const smoothed = [this.path[0]];
+                let current = 0;
+                
+                while (current < this.path.length - 1) {
+                    let farthest = current + 1;
+                    
+                    // Find farthest visible point
+                    for (let i = current + 2; i < this.path.length; i++) {
+                        if (this.lineOfSight(this.path[current], this.path[i])) {
+                            farthest = i;
+                        } else {
+                            break;
+                        }
+                    }
+                    
+                    smoothed.push(this.path[farthest]);
+                    current = farthest;
+                }
+                
+                this.path = smoothed;
+            }
+            
+            lineOfSight(p1, p2) {
+                // Bresenham's line algorithm
+                let x0 = p1.x, y0 = p1.y;
+                const x1 = p2.x, y1 = p2.y;
+                
+                const dx = Math.abs(x1 - x0);
+                const dy = Math.abs(y1 - y0);
+                const sx = x0 < x1 ? 1 : -1;
+                const sy = y0 < y1 ? 1 : -1;
+                let err = dx - dy;
+                
+                while (true) {
+                    if (this.getCellCost(x0, y0) === Infinity) {
+                        return false;
+                    }
+                    
+                    if (x0 === x1 && y0 === y1) {
+                        break;
+                    }
+                    
+                    const e2 = 2 * err;
+                    if (e2 > -dy) {
+                        err -= dy;
+                        x0 += sx;
+                    }
+                    if (e2 < dx) {
+                        err += dx;
+                        y0 += sy;
+                    }
+                }
+                
+                return true;
+            }
+            
+            draw(ctx) {
+                // Draw grid
+                for (let y = 0; y < this.height; y++) {
+                    for (let x = 0; x < this.width; x++) {
+                        const cellType = this.grid[y][x];
+                        let color = CellColor[cellType];
+                        
+                        // Show visited cells
+                        if (document.getElementById('showVisited').checked) {
+                            if (this.openList.some(p => p.x === x && p.y === y)) {
+                                color = CellColor[CellType.OPEN];
+                            } else if (this.closedList.some(p => p.x === x && p.y === y)) {
+                                color = CellColor[CellType.CLOSED];
+                            }
+                        }
+                        
+                        // Draw cell
+                        ctx.fillStyle = color;
+                        ctx.fillRect(
+                            x * this.cellSize + 1,
+                            y * this.cellSize + 1,
+                            this.cellSize - 2,
+                            this.cellSize - 2
+                        );
+                        
+                        // Draw costs
+                        if (document.getElementById('showCosts').checked && 
+                            cellType !== CellType.EMPTY && cellType !== CellType.WALL) {
+                            const cost = CellCost[cellType];
+                            if (cost && cost !== 1) {
+                                ctx.fillStyle = '#ffffff';
+                                ctx.font = '10px Arial';
+                                ctx.fillText(
+                                    cost.toString(),
+                                    x * this.cellSize + 5,
+                                    y * this.cellSize + 15
+                                );
+                            }
+                        }
+                    }
+                }
+                
+                // Draw path
+                if (this.path.length > 0) {
+                    // Draw path line
+                    ctx.strokeStyle = '#FFD700';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    
+                    for (let i = 0; i < this.path.length; i++) {
+                        const p = this.path[i];
+                        const cx = p.x * this.cellSize + this.cellSize / 2;
+                        const cy = p.y * this.cellSize + this.cellSize / 2;
+                        
+                        if (i === 0) {
+                            ctx.moveTo(cx, cy);
+                        } else {
+                            ctx.lineTo(cx, cy);
+                        }
+                    }
+                    ctx.stroke();
+                    
+                    // Draw path nodes
+                    for (const p of this.path) {
+                        ctx.fillStyle = '#FFD700';
+                        ctx.beginPath();
+                        ctx.arc(
+                            p.x * this.cellSize + this.cellSize / 2,
+                            p.y * this.cellSize + this.cellSize / 2,
+                            4, 0, Math.PI * 2
+                        );
+                        ctx.fill();
+                    }
+                }
+                
+                // Draw grid lines
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+                ctx.lineWidth = 1;
+                
+                for (let x = 0; x <= this.width; x++) {
+                    ctx.beginPath();
+                    ctx.moveTo(x * this.cellSize, 0);
+                    ctx.lineTo(x * this.cellSize, this.height * this.cellSize);
+                    ctx.stroke();
+                }
+                
+                for (let y = 0; y <= this.height; y++) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y * this.cellSize);
+                    ctx.lineTo(this.width * this.cellSize, y * this.cellSize);
+                    ctx.stroke();
+                }
+            }
+            
+            generateMaze() {
+                this.initGrid();
+                
+                // Simple maze generation using recursive backtracking
+                const maze = [];
+                for (let y = 0; y < this.height; y++) {
+                    maze[y] = [];
+                    for (let x = 0; x < this.width; x++) {
+                        maze[y][x] = CellType.WALL;
+                    }
+                }
+                
+                const stack = [];
+                const start = { x: 1, y: 1 };
+                maze[start.y][start.x] = CellType.EMPTY;
+                stack.push(start);
+                
+                while (stack.length > 0) {
+                    const current = stack[stack.length - 1];
+                    const neighbors = [];
+                    
+                    // Get unvisited neighbors
+                    const dirs = [
+                        { x: 0, y: -2 }, { x: 2, y: 0 },
+                        { x: 0, y: 2 }, { x: -2, y: 0 }
+                    ];
+                    
+                    for (const dir of dirs) {
+                        const nx = current.x + dir.x;
+                        const ny = current.y + dir.y;
+                        
+                        if (nx > 0 && nx < this.width - 1 &&
+                            ny > 0 && ny < this.height - 1 &&
+                            maze[ny][nx] === CellType.WALL) {
+                            neighbors.push({ x: nx, y: ny, dx: dir.x / 2, dy: dir.y / 2 });
+                        }
+                    }
+                    
+                    if (neighbors.length > 0) {
+                        const next = neighbors[Math.floor(Math.random() * neighbors.length)];
+                        maze[next.y][next.x] = CellType.EMPTY;
+                        maze[current.y + next.dy][current.x + next.dx] = CellType.EMPTY;
+                        stack.push({ x: next.x, y: next.y });
+                    } else {
+                        stack.pop();
+                    }
+                }
+                
+                this.grid = maze;
+                
+                // Set start and goal
+                this.setCell(1, 1, CellType.START);
+                this.setCell(this.width - 2, this.height - 2, CellType.GOAL);
+            }
+            
+            generateRandom() {
+                this.initGrid();
+                
+                // Random obstacles
+                for (let i = 0; i < this.width * this.height * 0.2; i++) {
+                    const x = Math.floor(Math.random() * this.width);
+                    const y = Math.floor(Math.random() * this.height);
+                    
+                    const types = [CellType.WALL, CellType.FOREST, CellType.WATER, CellType.SAND];
+                    const type = types[Math.floor(Math.random() * types.length)];
+                    
+                    this.setCell(x, y, type);
+                }
+                
+                // Ensure start and goal are clear
+                this.setCell(2, 2, CellType.START);
+                this.setCell(this.width - 3, this.height - 3, CellType.GOAL);
+            }
+        }
+
+        // Demo manager
+        class PathfindingDemo {
+            constructor(canvas, ctx) {
+                this.canvas = canvas;
+                this.ctx = ctx;
+                
+                this.gridSize = 20;
+                this.cellSize = Math.min(
+                    canvas.width / this.gridSize,
+                    canvas.height / this.gridSize
+                );
+                
+                this.grid = new PathfindingGrid(
+                    this.gridSize,
+                    this.gridSize,
+                    this.cellSize
+                );
+                
+                this.currentTool = CellType.WALL;
+                this.isDrawing = false;
+                
+                this.setupEventListeners();
+                
+                // Set initial start and goal
+                this.grid.setCell(2, 2, CellType.START);
+                this.grid.setCell(17, 17, CellType.GOAL);
+            }
+            
+            setupEventListeners() {
+                this.canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
+                this.canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
+                this.canvas.addEventListener('mouseup', (e) => this.onMouseUp(e));
+                this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+            }
+            
+            onMouseDown(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = Math.floor((e.clientX - rect.left) / this.cellSize);
+                const y = Math.floor((e.clientY - rect.top) / this.cellSize);
+                
+                this.isDrawing = true;
+                
+                if (e.button === 2) {
+                    // Right click - set goal
+                    this.grid.setCell(x, y, CellType.GOAL);
+                } else {
+                    // Left click - use current tool
+                    this.grid.setCell(x, y, this.currentTool);
+                }
+                
+                this.grid.path = [];  // Clear path when modifying grid
+            }
+            
+            onMouseMove(e) {
+                if (!this.isDrawing) return;
+                
+                const rect = this.canvas.getBoundingClientRect();
+                const x = Math.floor((e.clientX - rect.left) / this.cellSize);
+                const y = Math.floor((e.clientY - rect.top) / this.cellSize);
+                
+                if (this.currentTool !== CellType.START && this.currentTool !== CellType.GOAL) {
+                    this.grid.setCell(x, y, this.currentTool);
+                }
+            }
+            
+            onMouseUp(e) {
+                this.isDrawing = false;
+            }
+            
+            update(dt) {
+                // Animation or updates would go here
+            }
+            
+            draw() {
+                // Clear canvas
+                this.ctx.fillStyle = '#2C3E50';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw grid
+                this.grid.draw(this.ctx);
+                
+                // Update statistics
+                this.updateStats();
+            }
+            
+            updateStats() {
+                document.getElementById('currentAlgorithm').textContent = 
+                    document.getElementById('algorithm').options[document.getElementById('algorithm').selectedIndex].text;
+                document.getElementById('pathLength').textContent = 
+                    this.grid.path.length > 0 ? this.grid.path.length - 1 : '-';
+                
+                // Calculate path cost
+                let pathCost = 0;
+                for (let i = 0; i < this.grid.path.length - 1; i++) {
+                    const current = this.grid.path[i];
+                    const next = this.grid.path[i + 1];
+                    const dx = Math.abs(next.x - current.x);
+                    const dy = Math.abs(next.y - current.y);
+                    const moveCost = (dx === 1 && dy === 1) ? Math.sqrt(2) : 1;
+                    const cellCost = this.grid.getCellCost(next.x, next.y);
+                    pathCost += moveCost * cellCost;
+                }
+                document.getElementById('pathCost').textContent = 
+                    pathCost > 0 ? pathCost.toFixed(2) : '-';
+                
+                document.getElementById('nodesExplored').textContent = this.grid.nodesExplored;
+                document.getElementById('searchTime').textContent = this.grid.searchTime.toFixed(2);
+                document.getElementById('openListSize').textContent = this.grid.openList.length;
+                document.getElementById('closedListSize').textContent = this.grid.closedList.length;
+                
+                // Calculate efficiency
+                const efficiency = this.grid.path.length > 0 ? 
+                    ((this.grid.path.length - 1) / this.grid.nodesExplored * 100).toFixed(1) + '%' : '-';
+                document.getElementById('efficiency').textContent = efficiency;
+            }
+        }
+
+        // Initialize demo
+        const pathfindingCanvas = document.getElementById('pathfindingCanvas');
+        const ctx = pathfindingCanvas.getContext('2d');
+        const demo = new PathfindingDemo(pathfindingCanvas, ctx);
+
+        // Control functions
+        window.setTool = function(tool) {
+            const toolMap = {
+                'start': CellType.START,
+                'goal': CellType.GOAL,
+                'wall': CellType.WALL,
+                'forest': CellType.FOREST,
+                'water': CellType.WATER,
+                'sand': CellType.SAND,
+                'erase': CellType.EMPTY
+            };
+            
+            demo.currentTool = toolMap[tool];
+            
+            // Update UI
+            document.querySelectorAll('.tool-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(tool + 'Tool').classList.add('active');
+        };
+
+        window.findPath = function() {
+            demo.grid.findPath();
+        };
+
+        window.clearPath = function() {
+            demo.grid.path = [];
+            demo.grid.openList = [];
+            demo.grid.closedList = [];
+        };
+
+        window.clearGrid = function() {
+            demo.grid.initGrid();
+            demo.grid.setCell(2, 2, CellType.START);
+            demo.grid.setCell(17, 17, CellType.GOAL);
+        };
+
+        window.generateMaze = function() {
+            demo.grid.generateMaze();
+        };
+
+        window.generateRandom = function() {
+            demo.grid.generateRandom();
+        };
+
+        window.selectAlgorithm = function(algorithm) {
+            demo.grid.algorithm = algorithm;
+        };
+
+        window.selectHeuristic = function(heuristic) {
+            demo.grid.heuristic = heuristic;
+        };
+
+        window.setAnimSpeed = function(speed) {
+            demo.grid.animationSpeed = parseInt(speed);
+            document.getElementById('speedDisplay').textContent = speed + 'ms';
+        };
+
+        window.setGridSize = function(size) {
+            const newSize = parseInt(size);
+            demo.gridSize = newSize;
+            demo.cellSize = Math.min(
+                demo.canvas.width / newSize,
+                demo.canvas.height / newSize
+            );
+            demo.grid = new PathfindingGrid(newSize, newSize, demo.cellSize);
+            demo.grid.setCell(2, 2, CellType.START);
+            demo.grid.setCell(newSize - 3, newSize - 3, CellType.GOAL);
+            document.getElementById('gridSizeDisplay').textContent = size + 'x' + size;
+        };
+
+        window.stepThrough = function() {
+            // Step-through animation (simplified)
+            console.log('Step through pathfinding');
+        };
+
+        window.toggleAnimation = function() {
+            demo.grid.animating = !demo.grid.animating;
+        };
+
+        // Update diagonal movement setting
+        document.getElementById('diagonalMovement').addEventListener('change', function() {
+            demo.grid.allowDiagonal = this.checked;
+        });
+
+        // Animation loop
+        let lastTime = performance.now();
+        function animate(currentTime) {
+            const dt = (currentTime - lastTime) / 1000;
+            lastTime = currentTime;
+            
+            demo.update(dt);
+            demo.draw();
+            
+            requestAnimationFrame(animate);
+        }
+
+        animate(performance.now());
+
+        // Set initial tool
+        setTool('wall');
+
+        console.log('Pathfinding Demo initialized!');
+    </script>
+
+    <h2>A* Algorithm Implementation</h2>
+    
+    <pre class="language-python"><code>import heapq
+import math
+from typing import List, Tuple, Optional, Dict, Set
+from dataclasses import dataclass, field
+
+@dataclass
+class Node:
+    """Node for pathfinding"""
+    x: int
+    y: int
+    g: float = 0  # Cost from start
+    h: float = 0  # Heuristic cost to goal
+    f: float = 0  # Total cost (g + h)
+    parent: Optional['Node'] = None
+    
+    def __lt__(self, other):
+        return self.f < other.f
+    
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y
+    
+    def __hash__(self):
+        return hash((self.x, self.y))
+
+class AStar:
+    """A* pathfinding algorithm"""
+    def __init__(self, grid: List[List[int]], diagonal: bool = True):
+        self.grid = grid
+        self.height = len(grid)
+        self.width = len(grid[0]) if grid else 0
+        self.diagonal = diagonal
+        
+        # Cost for different terrain types
+        self.terrain_cost = {
+            0: 1,      # Empty
+            1: float('inf'),  # Wall
+            2: 3,      # Forest (higher cost)
+            3: 10,     # Water (very high cost)
+            4: 2       # Sand (medium cost)
+        }
+    
+    def heuristic(self, node: Node, goal: Node, method: str = 'manhattan') -> float:
+        """Calculate heuristic distance"""
+        dx = abs(node.x - goal.x)
+        dy = abs(node.y - goal.y)
+        
+        if method == 'manhattan':
+            return dx + dy
+        elif method == 'euclidean':
+            return math.sqrt(dx**2 + dy**2)
+        elif method == 'diagonal':
+            return max(dx, dy) + (math.sqrt(2) - 1) * min(dx, dy)
+        else:
+            return 0
+    
+    def get_neighbors(self, node: Node) -> List[Node]:
+        """Get valid neighboring nodes"""
+        neighbors = []
+        
+        # Cardinal directions
+        directions = [(0, -1), (1, 0), (0, 1), (-1, 0)]
+        
+        # Add diagonal directions if enabled
+        if self.diagonal:
+            directions.extend([(-1, -1), (1, -1), (1, 1), (-1, 1)])
+        
+        for dx, dy in directions:
+            x, y = node.x + dx, node.y + dy
+            
+            # Check bounds
+            if 0 <= x < self.width and 0 <= y < self.height:
+                # Check if not a wall
+                if self.get_cost(x, y) != float('inf'):
+                    # For diagonal movement, check if path is clear
+                    if abs(dx) + abs(dy) == 2:  # Diagonal
+                        if (self.get_cost(node.x + dx, node.y) == float('inf') and
+                            self.get_cost(node.x, node.y + dy) == float('inf')):
+                            continue  # Both adjacent cells are walls
+                    
+                    neighbors.append(Node(x, y))
+        
+        return neighbors
+    
+    def get_cost(self, x: int, y: int) -> float:
+        """Get movement cost for a cell"""
+        if 0 <= x < self.width and 0 <= y < self.height:
+            terrain = self.grid[y][x]
+            return self.terrain_cost.get(terrain, 1)
+        return float('inf')
+    
+    def find_path(self, start: Tuple[int, int], goal: Tuple[int, int]) -> Optional[List[Tuple[int, int]]]:
+        """Find path from start to goal using A*"""
+        start_node = Node(start[0], start[1])
+        goal_node = Node(goal[0], goal[1])
+        
+        # Priority queue for open set
+        open_set = [start_node]
+        heapq.heapify(open_set)
+        
+        # Track visited nodes
+        closed_set: Set[Node] = set()
+        
+        # Track best g scores
+        g_scores: Dict[Tuple[int, int], float] = {(start_node.x, start_node.y): 0}
+        
+        # Statistics
+        nodes_explored = 0
+        
+        while open_set:
+            current = heapq.heappop(open_set)
+            nodes_explored += 1
+            
+            # Goal reached
+            if current == goal_node:
+                path = self.reconstruct_path(current)
+                print(f"Path found! Length: {len(path)}, Nodes explored: {nodes_explored}")
+                return path
+            
+            closed_set.add(current)
+            
+            # Explore neighbors
+            for neighbor in self.get_neighbors(current):
+                if neighbor in closed_set:
+                    continue
+                
+                # Calculate tentative g score
+                move_cost = 1.414 if abs(neighbor.x - current.x) + abs(neighbor.y - current.y) == 2 else 1
+                terrain_cost = self.get_cost(neighbor.x, neighbor.y)
+                tentative_g = g_scores[(current.x, current.y)] + move_cost * terrain_cost
+                
+                # Check if this path is better
+                if (neighbor.x, neighbor.y) not in g_scores or tentative_g < g_scores[(neighbor.x, neighbor.y)]:
+                    # Update node
+                    neighbor.g = tentative_g
+                    neighbor.h = self.heuristic(neighbor, goal_node)
+                    neighbor.f = neighbor.g + neighbor.h
+                    neighbor.parent = current
+                    
+                    g_scores[(neighbor.x, neighbor.y)] = tentative_g
+                    
+                    # Add to open set if not already there
+                    if neighbor not in open_set:
+                        heapq.heappush(open_set, neighbor)
+        
+        print(f"No path found. Nodes explored: {nodes_explored}")
+        return None
+    
+    def reconstruct_path(self, node: Node) -> List[Tuple[int, int]]:
+        """Reconstruct path from goal to start"""
+        path = []
+        current = node
+        
+        while current:
+            path.append((current.x, current.y))
+            current = current.parent
+        
+        return list(reversed(path))
+    
+    def smooth_path(self, path: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
+        """Smooth path by removing unnecessary waypoints"""
+        if len(path) < 3:
+            return path
+        
+        smoothed = [path[0]]
+        current = 0
+        
+        while current < len(path) - 1:
+            farthest = current + 1
+            
+            # Find farthest visible point
+            for i in range(current + 2, len(path)):
+                if self.line_of_sight(path[current], path[i]):
+                    farthest = i
+                else:
+                    break
+            
+            smoothed.append(path[farthest])
+            current = farthest
+        
+        return smoothed
+    
+    def line_of_sight(self, p1: Tuple[int, int], p2: Tuple[int, int]) -> bool:
+        """Check if there's a clear line of sight between two points"""
+        x0, y0 = p1
+        x1, y1 = p2
+        
+        dx = abs(x1 - x0)
+        dy = abs(y1 - y0)
+        sx = 1 if x0 < x1 else -1
+        sy = 1 if y0 < y1 else -1
+        err = dx - dy
+        
+        while True:
+            # Check if current position is walkable
+            if self.get_cost(x0, y0) == float('inf'):
+                return False
+            
+            if x0 == x1 and y0 == y1:
+                break
+            
+            e2 = 2 * err
+            if e2 > -dy:
+                err -= dy
+                x0 += sx
+            if e2 < dx:
+                err += dx
+                y0 += sy
+        
+        return True</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Pathfinding Tips</h3>
+        <ul>
+            <li><strong>Heuristic Choice:</strong> Manhattan for grids, Euclidean for open spaces</li>
+            <li><strong>Optimization:</strong> Use hierarchical pathfinding for large maps</li>
+            <li><strong>Caching:</strong> Store frequently used paths</li>
+            <li><strong>Dynamic Updates:</strong> Recompute only affected portions</li>
+            <li><strong>Path Smoothing:</strong> Remove unnecessary waypoints</li>
+            <li><strong>Memory Pool:</strong> Reuse node objects</li>
+            <li><strong>Early Exit:</strong> Stop when "good enough" path found</li>
+            <li><strong>Multithreading:</strong> Calculate paths asynchronously</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>🎯 A* combines best of Dijkstra and Greedy</li>
+            <li>📏 Heuristics guide search direction</li>
+            <li>💰 G-score tracks actual path cost</li>
+            <li>🎨 Different terrains have different costs</li>
+            <li>📐 Diagonal movement needs special handling</li>
+            <li>✂️ Path smoothing improves movement</li>
+            <li>🚀 Optimization crucial for performance</li>
+            <li>🗺️ Multiple algorithms for different needs</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you've mastered pathfinding, next we'll explore state machines for creating intelligent NPC behaviors!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="platformer_parallax.html" class="prev-lesson" aria-label="Previous section: 2D Platformer - Parallax">Previous Section: 2D Platformer</a>
+        <a href="ai_state_machines.html" class="next-lesson" aria-label="Next lesson: State Machines for NPCs">Next Lesson: State Machines</a>
+    </nav>
+    
+    </main>
+    <script src="/js/course-enhancements.js" defer></script>
+</body>
+</html>

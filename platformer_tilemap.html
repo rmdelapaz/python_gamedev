@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master tile-based map systems for 2D platformer games. Learn tilemap creation, collision mapping, and efficient rendering techniques.">
+    <title>Tile-based Maps - 2D Platformer Development</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Tile-based Maps</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Intermediate Module - Section 2: 2D Platformer Development - Lesson 1</span>
+    </nav>
+
+    <h2>Building Efficient Tile-based Worlds</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Tile-based maps are the foundation of 2D platformer games! Learn how to create, render, and manage tilemap systems, implement collision detection, and build expansive game worlds efficiently! 🗺️🎮🏗️</p>
+    </div>
+
+    <h2>Understanding Tile-based Systems</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🧱 The LEGO Block Analogy</h3>
+        <p>Think of tile-based maps like building with LEGO blocks:</p>
+        <ul>
+            <li><strong>Tiles:</strong> Individual LEGO pieces</li>
+            <li><strong>Tilemap:</strong> The complete LEGO construction</li>
+            <li><strong>Tilesets:</strong> Your collection of different pieces</li>
+            <li><strong>Grid:</strong> The baseplate everything sits on</li>
+            <li><strong>Layers:</strong> Building multiple levels</li>
+            <li><strong>Collision Map:</strong> Which blocks are solid</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Tile System"] --> B["Tilemap Data"]
+        A --> C["Tileset Graphics"]
+        A --> D["Rendering"]
+        
+        B --> E["2D Array"]
+        B --> F["Tile Properties"]
+        B --> G["Collision Data"]
+        
+        C --> H["Sprite Sheet"]
+        C --> I["Tile Types"]
+        C --> J["Animation Frames"]
+        
+        D --> K["Viewport Culling"]
+        D --> L["Batch Rendering"]
+        D --> M["Layer Ordering"]
+        
+        N["Map Features"] --> O["Multiple Layers"]
+        N --> P["Auto-tiling"]
+        N --> Q["Chunk Loading"]
+    </div>
+
+    <h2>Interactive Tilemap Editor Demo</h2>
+    
+    <div class="canvas-wrapper" style="text-align: center;">
+        <canvas id="tilemapCanvas" width="600" height="400" style="border: 1px solid #333; background-color: #87CEEB; display: inline-block;"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Click to place tiles! Use the tools to build your platformer level!</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 10px; max-width: 600px; margin: 10px auto;">
+            <button onclick="selectTile(0)" style="background-color: #87CEEB;">🌫️ Sky</button>
+            <button onclick="selectTile(1)" style="background-color: #8B4513;">🧱 Ground</button>
+            <button onclick="selectTile(2)" style="background-color: #228B22;">🌱 Grass</button>
+            <button onclick="selectTile(3)" style="background-color: #696969;">🪨 Stone</button>
+            <button onclick="selectTile(4)" style="background-color: #4169E1;">💎 Gem</button>
+            <button onclick="selectTile(5)" style="background-color: #FFD700;">🪙 Coin</button>
+            <button onclick="selectTile(6)" style="background-color: #FF6347;">🚩 Flag</button>
+            <button onclick="selectTile(7)" style="background-color: #8A2BE2;">🌸 Decor</button>
+        </div>
+        <div style="margin-top: 10px;">
+            <button onclick="toggleGrid()">Toggle Grid</button>
+            <button onclick="toggleCollision()">Show Collision</button>
+            <button onclick="toggleAutoTile()">Auto-Tile</button>
+            <button onclick="clearMap()">Clear Map</button>
+            <button onclick="fillTool()">Fill Tool</button>
+            <button onclick="saveMap()">Save Map</button>
+            <button onclick="loadMap()">Load Map</button>
+            <button onclick="generateRandom()">Random Gen</button>
+        </div>
+        <div style="margin-top: 10px;">
+            <label>Brush Size: <input type="range" id="brushSize" min="1" max="5" value="1" onchange="setBrushSize(this.value)"> <span id="brushSizeDisplay">1</span></label>
+            <label>Layer: 
+                <select id="currentLayer" onchange="setLayer(this.value)">
+                    <option value="0">Background</option>
+                    <option value="1" selected>Main</option>
+                    <option value="2">Foreground</option>
+                </select>
+            </label>
+        </div>
+        <div style="margin-top: 10px; background-color: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;">
+            <p style="margin: 5px; color: white;">
+                Map Size: <span id="mapSize">30x20</span> | 
+                Tiles Placed: <span id="tilesPlaced">0</span> | 
+                Current Tile: <span id="currentTile">Ground</span> | 
+                Mouse: (<span id="mouseX">0</span>, <span id="mouseY">0</span>)
+            </p>
+        </div>
+    </div>
+
+    <script>
+        console.log('Tile-based Maps Demo starting...');
+
+        // Tile types
+        const TileType = {
+            EMPTY: 0,
+            GROUND: 1,
+            GRASS: 2,
+            STONE: 3,
+            GEM: 4,
+            COIN: 5,
+            FLAG: 6,
+            DECORATION: 7
+        };
+
+        // Tile properties
+        const TileProperties = {
+            [TileType.EMPTY]: { name: 'Sky', solid: false, color: '#87CEEB' },
+            [TileType.GROUND]: { name: 'Ground', solid: true, color: '#8B4513' },
+            [TileType.GRASS]: { name: 'Grass', solid: true, color: '#228B22' },
+            [TileType.STONE]: { name: 'Stone', solid: true, color: '#696969' },
+            [TileType.GEM]: { name: 'Gem', solid: false, color: '#4169E1' },
+            [TileType.COIN]: { name: 'Coin', solid: false, color: '#FFD700' },
+            [TileType.FLAG]: { name: 'Flag', solid: false, color: '#FF6347' },
+            [TileType.DECORATION]: { name: 'Decoration', solid: false, color: '#8A2BE2' }
+        };
+
+        // Tilemap class
+        class Tilemap {
+            constructor(width, height, tileSize) {
+                this.width = width;
+                this.height = height;
+                this.tileSize = tileSize;
+                
+                // Multiple layers
+                this.layers = [
+                    this.createEmptyLayer(), // Background
+                    this.createEmptyLayer(), // Main
+                    this.createEmptyLayer()  // Foreground
+                ];
+                
+                this.currentLayer = 1;
+                this.collisionMap = this.createEmptyLayer();
+                
+                // Editor state
+                this.selectedTile = TileType.GROUND;
+                this.brushSize = 1;
+                this.showGrid = true;
+                this.showCollision = false;
+                this.autoTile = false;
+                this.fillMode = false;
+                
+                // Statistics
+                this.tilesPlaced = 0;
+                
+                // Animation
+                this.animationTime = 0;
+                this.coinAnimation = 0;
+            }
+            
+            createEmptyLayer() {
+                const layer = [];
+                for (let y = 0; y < this.height; y++) {
+                    layer[y] = [];
+                    for (let x = 0; x < this.width; x++) {
+                        layer[y][x] = TileType.EMPTY;
+                    }
+                }
+                return layer;
+            }
+            
+            getTile(x, y, layer = this.currentLayer) {
+                if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
+                    return TileType.EMPTY;
+                }
+                return this.layers[layer][y][x];
+            }
+            
+            setTile(x, y, tileType, layer = this.currentLayer) {
+                if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
+                    return;
+                }
+                
+                const oldTile = this.layers[layer][y][x];
+                this.layers[layer][y][x] = tileType;
+                
+                // Update collision map
+                const props = TileProperties[tileType];
+                this.collisionMap[y][x] = props.solid ? 1 : 0;
+                
+                // Update statistics
+                if (oldTile === TileType.EMPTY && tileType !== TileType.EMPTY) {
+                    this.tilesPlaced++;
+                } else if (oldTile !== TileType.EMPTY && tileType === TileType.EMPTY) {
+                    this.tilesPlaced--;
+                }
+                
+                // Auto-tile if enabled
+                if (this.autoTile && props.solid) {
+                    this.updateAutoTiling(x, y);
+                }
+            }
+            
+            setTileBrush(centerX, centerY, tileType) {
+                const radius = Math.floor(this.brushSize / 2);
+                
+                for (let y = -radius; y <= radius; y++) {
+                    for (let x = -radius; x <= radius; x++) {
+                        if (this.brushSize === 1 || 
+                            Math.sqrt(x*x + y*y) <= radius) {
+                            this.setTile(centerX + x, centerY + y, tileType);
+                        }
+                    }
+                }
+            }
+            
+            fill(startX, startY, tileType) {
+                const targetTile = this.getTile(startX, startY);
+                if (targetTile === tileType) return;
+                
+                const stack = [[startX, startY]];
+                const visited = new Set();
+                
+                while (stack.length > 0) {
+                    const [x, y] = stack.pop();
+                    const key = `${x},${y}`;
+                    
+                    if (visited.has(key)) continue;
+                    visited.add(key);
+                    
+                    if (this.getTile(x, y) !== targetTile) continue;
+                    
+                    this.setTile(x, y, tileType);
+                    
+                    // Add neighbors
+                    stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+                }
+            }
+            
+            updateAutoTiling(x, y) {
+                // Simple auto-tiling based on neighbors
+                // In a real implementation, this would select appropriate tile variants
+                const neighbors = {
+                    top: this.getTile(x, y - 1),
+                    bottom: this.getTile(x, y + 1),
+                    left: this.getTile(x - 1, y),
+                    right: this.getTile(x + 1, y)
+                };
+                
+                // This would normally select corner/edge tiles based on neighbors
+            }
+            
+            clear() {
+                this.layers = [
+                    this.createEmptyLayer(),
+                    this.createEmptyLayer(),
+                    this.createEmptyLayer()
+                ];
+                this.collisionMap = this.createEmptyLayer();
+                this.tilesPlaced = 0;
+            }
+            
+            generateRandom() {
+                this.clear();
+                
+                // Generate ground
+                const groundHeight = Math.floor(this.height * 0.7);
+                for (let x = 0; x < this.width; x++) {
+                    const height = groundHeight + Math.floor(Math.sin(x * 0.3) * 2);
+                    
+                    for (let y = height; y < this.height; y++) {
+                        if (y === height) {
+                            this.setTile(x, y, TileType.GRASS, 1);
+                        } else {
+                            this.setTile(x, y, TileType.GROUND, 1);
+                        }
+                    }
+                    
+                    // Random decorations
+                    if (Math.random() < 0.1 && height > 0) {
+                        const decoType = Math.random() < 0.5 ? TileType.DECORATION : TileType.COIN;
+                        this.setTile(x, height - 1, decoType, 2);
+                    }
+                }
+                
+                // Add platforms
+                for (let i = 0; i < 5; i++) {
+                    const px = Math.floor(Math.random() * (this.width - 5)) + 2;
+                    const py = Math.floor(Math.random() * (groundHeight - 5)) + 2;
+                    const pwidth = Math.floor(Math.random() * 4) + 3;
+                    
+                    for (let x = px; x < px + pwidth; x++) {
+                        this.setTile(x, py, TileType.STONE, 1);
+                    }
+                }
+                
+                // Add collectibles
+                for (let i = 0; i < 10; i++) {
+                    const cx = Math.floor(Math.random() * this.width);
+                    const cy = Math.floor(Math.random() * groundHeight);
+                    
+                    if (this.getTile(cx, cy, 1) === TileType.EMPTY) {
+                        this.setTile(cx, cy, TileType.COIN, 1);
+                    }
+                }
+                
+                // Add flag at end
+                this.setTile(this.width - 2, groundHeight - 1, TileType.FLAG, 1);
+            }
+            
+            update(dt) {
+                this.animationTime += dt;
+                this.coinAnimation = Math.sin(this.animationTime * 5) * 0.1;
+            }
+            
+            draw(ctx, camera = {x: 0, y: 0}) {
+                // Calculate visible tile range
+                const startX = Math.floor(camera.x / this.tileSize);
+                const startY = Math.floor(camera.y / this.tileSize);
+                const endX = Math.min(startX + Math.ceil(600 / this.tileSize) + 1, this.width);
+                const endY = Math.min(startY + Math.ceil(400 / this.tileSize) + 1, this.height);
+                
+                // Draw layers
+                for (let layer = 0; layer < this.layers.length; layer++) {
+                    for (let y = startY; y < endY; y++) {
+                        for (let x = startX; x < endX; x++) {
+                            const tile = this.getTile(x, y, layer);
+                            
+                            if (tile !== TileType.EMPTY) {
+                                const props = TileProperties[tile];
+                                const screenX = x * this.tileSize - camera.x;
+                                const screenY = y * this.tileSize - camera.y;
+                                
+                                // Draw tile
+                                ctx.fillStyle = props.color;
+                                
+                                // Animate coins
+                                let offset = 0;
+                                if (tile === TileType.COIN) {
+                                    offset = this.coinAnimation * this.tileSize;
+                                }
+                                
+                                ctx.fillRect(
+                                    screenX, 
+                                    screenY + offset, 
+                                    this.tileSize, 
+                                    this.tileSize
+                                );
+                                
+                                // Draw tile-specific graphics
+                                this.drawTileGraphics(ctx, tile, screenX, screenY);
+                            }
+                        }
+                    }
+                }
+                
+                // Draw collision overlay
+                if (this.showCollision) {
+                    ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+                    for (let y = startY; y < endY; y++) {
+                        for (let x = startX; x < endX; x++) {
+                            if (this.collisionMap[y][x]) {
+                                ctx.fillRect(
+                                    x * this.tileSize - camera.x,
+                                    y * this.tileSize - camera.y,
+                                    this.tileSize,
+                                    this.tileSize
+                                );
+                            }
+                        }
+                    }
+                }
+                
+                // Draw grid
+                if (this.showGrid) {
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+                    ctx.lineWidth = 1;
+                    
+                    for (let x = startX; x <= endX; x++) {
+                        ctx.beginPath();
+                        ctx.moveTo(x * this.tileSize - camera.x, 0);
+                        ctx.lineTo(x * this.tileSize - camera.x, 400);
+                        ctx.stroke();
+                    }
+                    
+                    for (let y = startY; y <= endY; y++) {
+                        ctx.beginPath();
+                        ctx.moveTo(0, y * this.tileSize - camera.y);
+                        ctx.lineTo(600, y * this.tileSize - camera.y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            
+            drawTileGraphics(ctx, tile, x, y) {
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                const centerX = x + this.tileSize / 2;
+                const centerY = y + this.tileSize / 2;
+                
+                switch(tile) {
+                    case TileType.GRASS:
+                        // Draw grass blades
+                        ctx.strokeStyle = '#00aa00';
+                        ctx.lineWidth = 2;
+                        for (let i = 0; i < 3; i++) {
+                            ctx.beginPath();
+                            ctx.moveTo(x + 5 + i * 6, y + this.tileSize);
+                            ctx.lineTo(x + 5 + i * 6, y + this.tileSize - 5);
+                            ctx.stroke();
+                        }
+                        break;
+                        
+                    case TileType.COIN:
+                        ctx.fillText('🪙', centerX, centerY);
+                        break;
+                        
+                    case TileType.GEM:
+                        ctx.fillText('💎', centerX, centerY);
+                        break;
+                        
+                    case TileType.FLAG:
+                        ctx.fillText('🚩', centerX, centerY);
+                        break;
+                        
+                    case TileType.DECORATION:
+                        ctx.fillText('🌸', centerX, centerY);
+                        break;
+                }
+            }
+            
+            saveToJSON() {
+                return {
+                    width: this.width,
+                    height: this.height,
+                    tileSize: this.tileSize,
+                    layers: this.layers,
+                    tilesPlaced: this.tilesPlaced
+                };
+            }
+            
+            loadFromJSON(data) {
+                this.width = data.width;
+                this.height = data.height;
+                this.tileSize = data.tileSize;
+                this.layers = data.layers;
+                this.tilesPlaced = data.tilesPlaced || 0;
+                
+                // Rebuild collision map
+                for (let y = 0; y < this.height; y++) {
+                    for (let x = 0; x < this.width; x++) {
+                        const tile = this.getTile(x, y, 1);
+                        const props = TileProperties[tile];
+                        this.collisionMap[y][x] = props.solid ? 1 : 0;
+                    }
+                }
+            }
+        }
+
+        // Editor class
+        class TilemapEditor {
+            constructor(canvas, ctx) {
+                this.canvas = canvas;
+                this.ctx = ctx;
+                
+                this.tilemap = new Tilemap(30, 20, 20);
+                this.camera = { x: 0, y: 0 };
+                
+                this.mouseX = 0;
+                this.mouseY = 0;
+                this.tileX = 0;
+                this.tileY = 0;
+                this.isDrawing = false;
+                
+                // Mouse events
+                canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
+                canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
+                canvas.addEventListener('mouseup', (e) => this.onMouseUp(e));
+                canvas.addEventListener('mouseleave', (e) => this.onMouseUp(e));
+                
+                // Generate initial map
+                this.tilemap.generateRandom();
+            }
+            
+            onMouseDown(e) {
+                this.isDrawing = true;
+                this.placeTile();
+            }
+            
+            onMouseMove(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                this.mouseX = e.clientX - rect.left;
+                this.mouseY = e.clientY - rect.top;
+                
+                this.tileX = Math.floor((this.mouseX + this.camera.x) / this.tilemap.tileSize);
+                this.tileY = Math.floor((this.mouseY + this.camera.y) / this.tilemap.tileSize);
+                
+                if (this.isDrawing) {
+                    this.placeTile();
+                }
+                
+                this.updateUI();
+            }
+            
+            onMouseUp(e) {
+                this.isDrawing = false;
+            }
+            
+            placeTile() {
+                if (this.tilemap.fillMode) {
+                    this.tilemap.fill(this.tileX, this.tileY, this.tilemap.selectedTile);
+                    this.tilemap.fillMode = false;
+                } else {
+                    this.tilemap.setTileBrush(this.tileX, this.tileY, this.tilemap.selectedTile);
+                }
+            }
+            
+            update(dt) {
+                this.tilemap.update(dt);
+            }
+            
+            draw() {
+                // Clear canvas
+                this.ctx.fillStyle = '#87CEEB';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw tilemap
+                this.tilemap.draw(this.ctx, this.camera);
+                
+                // Draw cursor preview
+                if (this.tileX >= 0 && this.tileX < this.tilemap.width &&
+                    this.tileY >= 0 && this.tileY < this.tilemap.height) {
+                    
+                    const props = TileProperties[this.tilemap.selectedTile];
+                    this.ctx.fillStyle = props.color + '66';
+                    
+                    const radius = Math.floor(this.tilemap.brushSize / 2);
+                    for (let y = -radius; y <= radius; y++) {
+                        for (let x = -radius; x <= radius; x++) {
+                            if (this.tilemap.brushSize === 1 || 
+                                Math.sqrt(x*x + y*y) <= radius) {
+                                const drawX = (this.tileX + x) * this.tilemap.tileSize - this.camera.x;
+                                const drawY = (this.tileY + y) * this.tilemap.tileSize - this.camera.y;
+                                
+                                if (drawX >= 0 && drawX < 600 && drawY >= 0 && drawY < 400) {
+                                    this.ctx.fillRect(drawX, drawY, this.tilemap.tileSize, this.tilemap.tileSize);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            updateUI() {
+                document.getElementById('tilesPlaced').textContent = this.tilemap.tilesPlaced;
+                document.getElementById('currentTile').textContent = TileProperties[this.tilemap.selectedTile].name;
+                document.getElementById('mouseX').textContent = this.tileX;
+                document.getElementById('mouseY').textContent = this.tileY;
+            }
+        }
+
+        // Initialize editor
+        const tilemapCanvas = document.getElementById('tilemapCanvas');
+        const ctx = tilemapCanvas.getContext('2d');
+        const editor = new TilemapEditor(tilemapCanvas, ctx);
+
+        // Control functions
+        window.selectTile = function(tileType) {
+            editor.tilemap.selectedTile = tileType;
+            editor.updateUI();
+        };
+
+        window.toggleGrid = function() {
+            editor.tilemap.showGrid = !editor.tilemap.showGrid;
+        };
+
+        window.toggleCollision = function() {
+            editor.tilemap.showCollision = !editor.tilemap.showCollision;
+        };
+
+        window.toggleAutoTile = function() {
+            editor.tilemap.autoTile = !editor.tilemap.autoTile;
+        };
+
+        window.clearMap = function() {
+            if (confirm('Clear the entire map?')) {
+                editor.tilemap.clear();
+            }
+        };
+
+        window.fillTool = function() {
+            editor.tilemap.fillMode = true;
+        };
+
+        window.saveMap = function() {
+            const data = editor.tilemap.saveToJSON();
+            const json = JSON.stringify(data);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'tilemap.json';
+            a.click();
+        };
+
+        window.loadMap = function() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const data = JSON.parse(event.target.result);
+                        editor.tilemap.loadFromJSON(data);
+                        editor.updateUI();
+                    } catch (error) {
+                        alert('Failed to load map file');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        };
+
+        window.generateRandom = function() {
+            editor.tilemap.generateRandom();
+            editor.updateUI();
+        };
+
+        window.setBrushSize = function(size) {
+            editor.tilemap.brushSize = parseInt(size);
+            document.getElementById('brushSizeDisplay').textContent = size;
+        };
+
+        window.setLayer = function(layer) {
+            editor.tilemap.currentLayer = parseInt(layer);
+        };
+
+        // Animation loop
+        let lastTime = performance.now();
+        function animate(currentTime) {
+            const dt = (currentTime - lastTime) / 1000;
+            lastTime = currentTime;
+            
+            editor.update(dt);
+            editor.draw();
+            
+            requestAnimationFrame(animate);
+        }
+
+        animate(performance.now());
+
+        console.log('Tilemap Editor initialized!');
+    </script>
+
+    <h2>Tilemap Implementation</h2>
+    
+    <pre class="language-python"><code>import pygame
+import json
+from typing import Dict, List, Tuple, Optional
+
+class Tile:
+    """Individual tile in the tilemap"""
+    def __init__(self, tile_id: int, solid: bool = False):
+        self.id = tile_id
+        self.solid = solid
+        self.animated = False
+        self.animation_frames = []
+        self.current_frame = 0
+        self.animation_speed = 0.1
+        self.animation_time = 0
+
+class Tileset:
+    """Manages tile graphics and properties"""
+    def __init__(self, image_path: str, tile_size: int):
+        self.image = pygame.image.load(image_path)
+        self.tile_size = tile_size
+        self.tiles = {}
+        
+        # Calculate tiles in tileset
+        self.tiles_wide = self.image.get_width() // tile_size
+        self.tiles_high = self.image.get_height() // tile_size
+        
+        # Create tile surfaces
+        self.create_tile_surfaces()
+    
+    def create_tile_surfaces(self):
+        """Extract individual tile surfaces"""
+        for y in range(self.tiles_high):
+            for x in range(self.tiles_wide):
+                tile_id = y * self.tiles_wide + x
+                rect = pygame.Rect(
+                    x * self.tile_size,
+                    y * self.tile_size,
+                    self.tile_size,
+                    self.tile_size
+                )
+                self.tiles[tile_id] = self.image.subsurface(rect)
+    
+    def get_tile(self, tile_id: int) -> pygame.Surface:
+        """Get tile surface by ID"""
+        return self.tiles.get(tile_id)
+
+class Tilemap:
+    """2D tile-based map"""
+    def __init__(self, width: int, height: int, tile_size: int):
+        self.width = width
+        self.height = height
+        self.tile_size = tile_size
+        
+        # Map layers
+        self.layers = {
+            'background': [[0 for _ in range(width)] for _ in range(height)],
+            'main': [[0 for _ in range(width)] for _ in range(height)],
+            'foreground': [[0 for _ in range(width)] for _ in range(height)]
+        }
+        
+        # Collision map
+        self.collision_map = [[False for _ in range(width)] for _ in range(height)]
+        
+        # Tile properties
+        self.tile_properties = {}
+        
+        # Tileset
+        self.tileset = None
+    
+    def set_tileset(self, tileset: Tileset):
+        """Set the tileset for rendering"""
+        self.tileset = tileset
+    
+    def set_tile(self, x: int, y: int, tile_id: int, layer: str = 'main'):
+        """Set a tile at position"""
+        if 0 <= x < self.width and 0 <= y < self.height:
+            self.layers[layer][y][x] = tile_id
+            
+            # Update collision map
+            if layer == 'main':
+                tile_props = self.tile_properties.get(tile_id, {})
+                self.collision_map[y][x] = tile_props.get('solid', False)
+    
+    def get_tile(self, x: int, y: int, layer: str = 'main') -> int:
+        """Get tile at position"""
+        if 0 <= x < self.width and 0 <= y < self.height:
+            return self.layers[layer][y][x]
+        return 0
+    
+    def is_solid(self, x: int, y: int) -> bool:
+        """Check if tile is solid"""
+        if 0 <= x < self.width and 0 <= y < self.height:
+            return self.collision_map[y][x]
+        return True  # Out of bounds is solid
+    
+    def world_to_tile(self, world_x: float, world_y: float) -> Tuple[int, int]:
+        """Convert world coordinates to tile coordinates"""
+        tile_x = int(world_x // self.tile_size)
+        tile_y = int(world_y // self.tile_size)
+        return tile_x, tile_y
+    
+    def tile_to_world(self, tile_x: int, tile_y: int) -> Tuple[float, float]:
+        """Convert tile coordinates to world coordinates"""
+        world_x = tile_x * self.tile_size
+        world_y = tile_y * self.tile_size
+        return world_x, world_y
+    
+    def get_collision_rect(self, tile_x: int, tile_y: int) -> pygame.Rect:
+        """Get collision rectangle for a tile"""
+        world_x, world_y = self.tile_to_world(tile_x, tile_y)
+        return pygame.Rect(world_x, world_y, self.tile_size, self.tile_size)
+    
+    def get_surrounding_tiles(self, world_x: float, world_y: float, 
+                            radius: int = 1) -> List[Tuple[int, int]]:
+        """Get tiles surrounding a world position"""
+        center_x, center_y = self.world_to_tile(world_x, world_y)
+        tiles = []
+        
+        for dy in range(-radius, radius + 1):
+            for dx in range(-radius, radius + 1):
+                tile_x = center_x + dx
+                tile_y = center_y + dy
+                
+                if 0 <= tile_x < self.width and 0 <= tile_y < self.height:
+                    tiles.append((tile_x, tile_y))
+        
+        return tiles
+    
+    def render(self, screen: pygame.Surface, camera_x: int = 0, camera_y: int = 0):
+        """Render tilemap with camera offset"""
+        if not self.tileset:
+            return
+        
+        # Calculate visible tile range
+        start_x = max(0, camera_x // self.tile_size)
+        start_y = max(0, camera_y // self.tile_size)
+        end_x = min(self.width, (camera_x + screen.get_width()) // self.tile_size + 2)
+        end_y = min(self.height, (camera_y + screen.get_height()) // self.tile_size + 2)
+        
+        # Render each layer
+        for layer_name in ['background', 'main', 'foreground']:
+            layer = self.layers[layer_name]
+            
+            for y in range(start_y, end_y):
+                for x in range(start_x, end_x):
+                    tile_id = layer[y][x]
+                    
+                    if tile_id != 0:  # 0 is empty
+                        tile_surface = self.tileset.get_tile(tile_id)
+                        if tile_surface:
+                            screen_x = x * self.tile_size - camera_x
+                            screen_y = y * self.tile_size - camera_y
+                            screen.blit(tile_surface, (screen_x, screen_y))
+    
+    def save_to_file(self, filename: str):
+        """Save tilemap to JSON file"""
+        data = {
+            'width': self.width,
+            'height': self.height,
+            'tile_size': self.tile_size,
+            'layers': self.layers,
+            'tile_properties': self.tile_properties
+        }
+        
+        with open(filename, 'w') as f:
+            json.dump(data, f, indent=2)
+    
+    def load_from_file(self, filename: str):
+        """Load tilemap from JSON file"""
+        with open(filename, 'r') as f:
+            data = json.load(f)
+        
+        self.width = data['width']
+        self.height = data['height']
+        self.tile_size = data['tile_size']
+        self.layers = data['layers']
+        self.tile_properties = data.get('tile_properties', {})
+        
+        # Rebuild collision map
+        self.rebuild_collision_map()</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Tilemap Tips</h3>
+        <ul>
+            <li><strong>Viewport Culling:</strong> Only render visible tiles</li>
+            <li><strong>Tile Atlases:</strong> Pack all tiles in one texture</li>
+            <li><strong>Layer System:</strong> Separate visual and collision layers</li>
+            <li><strong>Chunk Loading:</strong> Load large maps in sections</li>
+            <li><strong>Auto-tiling:</strong> Automatically select appropriate tile variants</li>
+            <li><strong>Tile Properties:</strong> Store metadata with tiles</li>
+            <li><strong>Compression:</strong> Use run-length encoding for storage</li>
+            <li><strong>Object Layers:</strong> Separate tiles from game objects</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>🗺️ Tile-based maps efficiently represent 2D worlds</li>
+            <li>🎨 Tilesets provide reusable graphics</li>
+            <li>📐 Grid systems simplify collision detection</li>
+            <li>📑 Multiple layers add depth and detail</li>
+            <li>⚡ Viewport culling optimizes rendering</li>
+            <li>💾 JSON format enables easy map sharing</li>
+            <li>🔧 Auto-tiling speeds up level creation</li>
+            <li>🎮 Tile properties enable gameplay features</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you understand tile-based maps, next we'll implement camera and viewport systems to navigate through your game worlds!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="architecture_save_load.html" class="prev-lesson" aria-label="Previous section: Save/Load Game State">Previous Section: Game Architecture</a>
+        <a href="platformer_camera.html" class="next-lesson" aria-label="Next lesson: Camera/Viewport">Next Lesson: Camera/Viewport</a>
+    </nav>
+    
+    </main>
+    <script src="/js/course-enhancements.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master character controllers for 2D platformers. Learn responsive movement, coyote time, jump buffering, and advanced platformer mechanics.">
+    <title>Character Controllers - 2D Platformer Development</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Character Controllers</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Intermediate Module - Section 2: 2D Platformer Development - Lesson 3</span>
+    </nav>
+
+    <h2>Creating Responsive Character Movement</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Character controllers define how your game feels to play! Learn responsive movement, coyote time, jump buffering, variable jump height, wall jumps, dashing, and all the techniques that make platformers feel amazing! 🎮🏃‍♂️✨</p>
+    </div>
+
+    <h2>Understanding Character Controllers</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🏃‍♂️ The Athlete Analogy</h3>
+        <p>Think of character controllers like an athlete's movements:</p>
+        <ul>
+            <li><strong>Acceleration:</strong> Building up speed from a standstill</li>
+            <li><strong>Friction:</strong> Sliding to a stop</li>
+            <li><strong>Jump Arc:</strong> The natural curve of a jump</li>
+            <li><strong>Air Control:</strong> Adjusting position mid-air</li>
+            <li><strong>Landing:</strong> Absorbing impact</li>
+            <li><strong>Momentum:</strong> Maintaining speed through movements</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Character Controller"] --> B["Movement"]
+        A --> C["Jumping"]
+        A --> D["Advanced Tech"]
+        
+        B --> E["Acceleration"]
+        B --> F["Deceleration"]
+        B --> G["Max Speed"]
+        
+        C --> H["Variable Height"]
+        C --> I["Double Jump"]
+        C --> J["Wall Jump"]
+        
+        D --> K["Coyote Time"]
+        D --> L["Jump Buffer"]
+        D --> M["Dash/Air Dash"]
+        
+        N["Physics"] --> O["Gravity"]
+        N --> P["Collision"]
+        N --> Q["State Machine"]
+    </div>
+
+    <h2>Interactive Character Controller Demo</h2>
+    
+    <div class="canvas-wrapper" style="text-align: center;">
+        <canvas id="controllerCanvas" width="600" height="400" style="border: 1px solid #333; background-color: #1E3A5F; display: inline-block;"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Use Arrow Keys/WASD to move, Space to jump, Shift to dash. Test different mechanics!</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; max-width: 600px; margin: 10px auto;">
+            <button onclick="toggleMechanic('coyoteTime')" id="coyoteTimeBtn">Coyote Time</button>
+            <button onclick="toggleMechanic('jumpBuffer')" id="jumpBufferBtn">Jump Buffer</button>
+            <button onclick="toggleMechanic('doubleJump')" id="doubleJumpBtn">Double Jump</button>
+            <button onclick="toggleMechanic('wallJump')" id="wallJumpBtn">Wall Jump</button>
+            <button onclick="toggleMechanic('dash')" id="dashBtn">Dash</button>
+            <button onclick="toggleMechanic('variableJump')" id="variableJumpBtn">Variable Jump</button>
+        </div>
+        <div style="margin-top: 10px;">
+            <button onclick="resetCharacter()">Reset Position</button>
+            <button onclick="toggleDebug()">Toggle Debug</button>
+            <button onclick="toggleGhosts()">Toggle Ghosts</button>
+            <button onclick="spawnPlatform()">Add Platform</button>
+            <button onclick="clearPlatforms()">Clear Platforms</button>
+            <button onclick="loadPreset('mario')">Mario Feel</button>
+            <button onclick="loadPreset('sonic')">Sonic Feel</button>
+            <button onclick="loadPreset('megaman')">Mega Man Feel</button>
+        </div>
+        <div style="margin-top: 10px;">
+            <label>Run Speed: <input type="range" id="runSpeed" min="100" max="500" value="250" onchange="updateParam('runSpeed', this.value)"> <span id="runSpeedDisplay">250</span></label>
+            <label>Jump Power: <input type="range" id="jumpPower" min="200" max="800" value="450" onchange="updateParam('jumpPower', this.value)"> <span id="jumpPowerDisplay">450</span></label>
+        </div>
+        <div style="margin-top: 10px;">
+            <label>Gravity: <input type="range" id="gravity" min="500" max="2000" value="1000" onchange="updateParam('gravity', this.value)"> <span id="gravityDisplay">1000</span></label>
+            <label>Air Control: <input type="range" id="airControl" min="0" max="100" value="50" onchange="updateParam('airControl', this.value)"> <span id="airControlDisplay">50%</span></label>
+        </div>
+        <div style="margin-top: 10px;">
+            <label>Acceleration: <input type="range" id="acceleration" min="500" max="3000" value="1500" onchange="updateParam('acceleration', this.value)"> <span id="accelerationDisplay">1500</span></label>
+            <label>Friction: <input type="range" id="friction" min="500" max="3000" value="1500" onchange="updateParam('friction', this.value)"> <span id="frictionDisplay">1500</span></label>
+        </div>
+        <div style="margin-top: 10px; background-color: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;">
+            <p style="margin: 5px; color: white;">
+                State: <span id="playerState">IDLE</span> | 
+                Velocity: (<span id="velocityX">0</span>, <span id="velocityY">0</span>) | 
+                Grounded: <span id="grounded">true</span>
+            </p>
+            <p style="margin: 5px; color: white;">
+                Jumps: <span id="jumpsRemaining">1</span> | 
+                Can Dash: <span id="canDash">true</span> | 
+                Coyote: <span id="coyoteActive">0</span>ms | 
+                Buffer: <span id="bufferActive">0</span>ms
+            </p>
+        </div>
+    </div>
+
+    <script>
+        console.log('Character Controller Demo starting...');
+
+        // Input system
+        const input = {
+            keys: {},
+            keyPressed: {},
+            keyReleased: {}
+        };
+
+        document.addEventListener('keydown', (e) => {
+            if (!input.keys[e.key.toLowerCase()]) {
+                input.keyPressed[e.key.toLowerCase()] = true;
+            }
+            input.keys[e.key.toLowerCase()] = true;
+        });
+
+        document.addEventListener('keyup', (e) => {
+            input.keys[e.key.toLowerCase()] = false;
+            input.keyReleased[e.key.toLowerCase()] = true;
+        });
+
+        // Player states
+        const PlayerState = {
+            IDLE: 'IDLE',
+            RUNNING: 'RUNNING',
+            JUMPING: 'JUMPING',
+            FALLING: 'FALLING',
+            WALL_SLIDING: 'WALL_SLIDING',
+            DASHING: 'DASHING',
+            LANDING: 'LANDING'
+        };
+
+        // Character class with advanced mechanics
+        class Character {
+            constructor(x, y) {
+                // Position and size
+                this.x = x;
+                this.y = y;
+                this.width = 24;
+                this.height = 32;
+                
+                // Velocity and physics
+                this.vx = 0;
+                this.vy = 0;
+                this.facing = 1;
+                
+                // Movement parameters
+                this.runSpeed = 250;
+                this.acceleration = 1500;
+                this.friction = 1500;
+                this.airFriction = 100;
+                this.jumpPower = 450;
+                this.gravity = 1000;
+                this.maxFallSpeed = 600;
+                this.airControl = 0.5;
+                
+                // State
+                this.state = PlayerState.IDLE;
+                this.grounded = false;
+                this.touchingWall = false;
+                this.wallDirection = 0;
+                
+                // Jump mechanics
+                this.jumpsRemaining = 1;
+                this.maxJumps = 1;
+                this.jumpHoldTime = 0;
+                this.maxJumpHoldTime = 0.2;
+                this.jumpCutMultiplier = 0.5;
+                
+                // Coyote time
+                this.coyoteTime = 0;
+                this.maxCoyoteTime = 0.1;
+                this.wasGrounded = false;
+                
+                // Jump buffering
+                this.jumpBufferTime = 0;
+                this.maxJumpBufferTime = 0.1;
+                
+                // Wall jump
+                this.wallJumpPower = 350;
+                this.wallJumpHorizontal = 200;
+                this.wallSlideSpeed = 50;
+                
+                // Dash
+                this.dashSpeed = 600;
+                this.dashDuration = 0.15;
+                this.dashTime = 0;
+                this.canDash = true;
+                this.dashCooldown = 0.5;
+                this.dashCooldownTimer = 0;
+                
+                // Features toggle
+                this.features = {
+                    coyoteTime: true,
+                    jumpBuffer: true,
+                    variableJump: true,
+                    doubleJump: false,
+                    wallJump: true,
+                    dash: true
+                };
+                
+                // Visual
+                this.color = '#4CAF50';
+                this.trail = [];
+                this.maxTrailLength = 10;
+                
+                // Animation
+                this.squashX = 1;
+                this.squashY = 1;
+                this.rotation = 0;
+            }
+            
+            update(dt, platforms) {
+                // Store previous grounded state
+                this.wasGrounded = this.grounded;
+                
+                // Update timers
+                this.updateTimers(dt);
+                
+                // Handle input
+                this.handleInput(dt);
+                
+                // Apply physics
+                this.applyPhysics(dt);
+                
+                // Check collisions
+                this.checkCollisions(platforms);
+                
+                // Update state
+                this.updateState();
+                
+                // Update visual effects
+                this.updateVisuals(dt);
+                
+                // Clear input flags
+                this.clearInputFlags();
+            }
+            
+            updateTimers(dt) {
+                // Coyote time
+                if (this.features.coyoteTime) {
+                    if (this.wasGrounded && !this.grounded) {
+                        this.coyoteTime = this.maxCoyoteTime;
+                    } else if (this.grounded) {
+                        this.coyoteTime = 0;
+                    } else {
+                        this.coyoteTime -= dt;
+                        this.coyoteTime = Math.max(0, this.coyoteTime);
+                    }
+                }
+                
+                // Jump buffer
+                if (this.features.jumpBuffer) {
+                    if (this.jumpBufferTime > 0) {
+                        this.jumpBufferTime -= dt;
+                        if (this.jumpBufferTime <= 0) {
+                            this.jumpBufferTime = 0;
+                        }
+                    }
+                }
+                
+                // Dash cooldown
+                if (this.dashCooldownTimer > 0) {
+                    this.dashCooldownTimer -= dt;
+                    if (this.dashCooldownTimer <= 0) {
+                        this.canDash = true;
+                        this.dashCooldownTimer = 0;
+                    }
+                }
+                
+                // Dash duration
+                if (this.dashTime > 0) {
+                    this.dashTime -= dt;
+                    if (this.dashTime <= 0) {
+                        this.state = PlayerState.FALLING;
+                    }
+                }
+            }
+            
+            handleInput(dt) {
+                // Horizontal movement
+                let moveX = 0;
+                if (input.keys['arrowleft'] || input.keys['a']) {
+                    moveX = -1;
+                    this.facing = -1;
+                } else if (input.keys['arrowright'] || input.keys['d']) {
+                    moveX = 1;
+                    this.facing = 1;
+                }
+                
+                // Apply movement based on state
+                if (this.state !== PlayerState.DASHING) {
+                    if (this.grounded) {
+                        // Ground movement
+                        if (moveX !== 0) {
+                            this.vx += moveX * this.acceleration * dt;
+                            this.vx = Math.max(-this.runSpeed, Math.min(this.runSpeed, this.vx));
+                        } else {
+                            // Apply friction
+                            if (Math.abs(this.vx) > 10) {
+                                this.vx -= Math.sign(this.vx) * this.friction * dt;
+                            } else {
+                                this.vx = 0;
+                            }
+                        }
+                    } else {
+                        // Air control
+                        if (moveX !== 0) {
+                            this.vx += moveX * this.acceleration * this.airControl * dt;
+                            this.vx = Math.max(-this.runSpeed, Math.min(this.runSpeed, this.vx));
+                        }
+                    }
+                }
+                
+                // Jump input
+                const jumpPressed = input.keyPressed[' '] || input.keyPressed['arrowup'] || input.keyPressed['w'];
+                const jumpHeld = input.keys[' '] || input.keys['arrowup'] || input.keys['w'];
+                const jumpReleased = input.keyReleased[' '] || input.keyReleased['arrowup'] || input.keyReleased['w'];
+                
+                if (jumpPressed) {
+                    this.tryJump();
+                }
+                
+                // Variable jump height
+                if (this.features.variableJump && jumpReleased && this.vy < 0) {
+                    this.vy *= this.jumpCutMultiplier;
+                }
+                
+                // Wall sliding
+                if (this.features.wallJump && !this.grounded && this.touchingWall && this.vy > 0) {
+                    if ((this.wallDirection < 0 && moveX < 0) || (this.wallDirection > 0 && moveX > 0)) {
+                        this.vy = Math.min(this.vy, this.wallSlideSpeed);
+                        this.state = PlayerState.WALL_SLIDING;
+                    }
+                }
+                
+                // Dash input
+                if (this.features.dash && (input.keyPressed['shift'] || input.keyPressed['x'])) {
+                    this.tryDash();
+                }
+            }
+            
+            tryJump() {
+                let canJump = false;
+                
+                // Check if we can jump
+                if (this.grounded || (this.features.coyoteTime && this.coyoteTime > 0)) {
+                    canJump = true;
+                    this.jumpsRemaining = this.maxJumps;
+                } else if (this.features.doubleJump && this.jumpsRemaining > 0) {
+                    canJump = true;
+                } else if (this.features.wallJump && this.touchingWall) {
+                    this.wallJump();
+                    return;
+                } else if (this.features.jumpBuffer) {
+                    // Buffer the jump
+                    this.jumpBufferTime = this.maxJumpBufferTime;
+                }
+                
+                if (canJump) {
+                    this.jump();
+                }
+            }
+            
+            jump() {
+                this.vy = -this.jumpPower;
+                this.jumpsRemaining--;
+                this.grounded = false;
+                this.coyoteTime = 0;
+                this.jumpBufferTime = 0;
+                this.state = PlayerState.JUMPING;
+                
+                // Jump squash
+                this.squashX = 0.8;
+                this.squashY = 1.2;
+            }
+            
+            wallJump() {
+                this.vy = -this.wallJumpPower;
+                this.vx = -this.wallDirection * this.wallJumpHorizontal;
+                this.facing = -this.wallDirection;
+                this.jumpsRemaining = this.maxJumps - 1;
+                this.state = PlayerState.JUMPING;
+                
+                // Visual effect
+                this.squashX = 1.2;
+                this.squashY = 0.8;
+            }
+            
+            tryDash() {
+                if (!this.canDash) return;
+                
+                this.state = PlayerState.DASHING;
+                this.dashTime = this.dashDuration;
+                this.canDash = false;
+                this.dashCooldownTimer = this.dashCooldown;
+                
+                // Dash direction
+                let dashX = this.facing;
+                let dashY = 0;
+                
+                if (input.keys['arrowup'] || input.keys['w']) dashY = -1;
+                if (input.keys['arrowdown'] || input.keys['s']) dashY = 1;
+                
+                // Normalize diagonal dash
+                const magnitude = Math.sqrt(dashX * dashX + dashY * dashY);
+                if (magnitude > 0) {
+                    dashX /= magnitude;
+                    dashY /= magnitude;
+                }
+                
+                this.vx = dashX * this.dashSpeed;
+                this.vy = dashY * this.dashSpeed;
+                
+                // Reset jumps after dash
+                this.jumpsRemaining = this.maxJumps;
+            }
+            
+            applyPhysics(dt) {
+                if (this.state !== PlayerState.DASHING) {
+                    // Apply gravity
+                    this.vy += this.gravity * dt;
+                    this.vy = Math.min(this.vy, this.maxFallSpeed);
+                }
+                
+                // Update position
+                this.x += this.vx * dt;
+                this.y += this.vy * dt;
+                
+                // Add to trail
+                if (Math.abs(this.vx) > 50 || Math.abs(this.vy) > 50) {
+                    this.trail.push({
+                        x: this.x + this.width / 2,
+                        y: this.y + this.height / 2,
+                        alpha: 1
+                    });
+                    
+                    if (this.trail.length > this.maxTrailLength) {
+                        this.trail.shift();
+                    }
+                }
+                
+                // Update trail alpha
+                for (let i = 0; i < this.trail.length; i++) {
+                    this.trail[i].alpha = (i + 1) / this.trail.length;
+                }
+            }
+            
+            checkCollisions(platforms) {
+                this.grounded = false;
+                this.touchingWall = false;
+                this.wallDirection = 0;
+                
+                // World boundaries
+                if (this.x < 0) {
+                    this.x = 0;
+                    this.vx = 0;
+                    this.touchingWall = true;
+                    this.wallDirection = -1;
+                }
+                if (this.x + this.width > 600) {
+                    this.x = 600 - this.width;
+                    this.vx = 0;
+                    this.touchingWall = true;
+                    this.wallDirection = 1;
+                }
+                
+                // Ground
+                if (this.y + this.height > 380) {
+                    this.y = 380 - this.height;
+                    this.vy = 0;
+                    this.grounded = true;
+                    this.land();
+                }
+                
+                // Platform collisions
+                for (const platform of platforms) {
+                    if (this.checkPlatformCollision(platform)) {
+                        this.resolvePlatformCollision(platform);
+                    }
+                }
+                
+                // Check jump buffer
+                if (this.features.jumpBuffer && this.grounded && this.jumpBufferTime > 0) {
+                    this.jump();
+                }
+            }
+            
+            checkPlatformCollision(platform) {
+                return this.x < platform.x + platform.width &&
+                       this.x + this.width > platform.x &&
+                       this.y < platform.y + platform.height &&
+                       this.y + this.height > platform.y;
+            }
+            
+            resolvePlatformCollision(platform) {
+                // Calculate overlap
+                const overlapLeft = (this.x + this.width) - platform.x;
+                const overlapRight = (platform.x + platform.width) - this.x;
+                const overlapTop = (this.y + this.height) - platform.y;
+                const overlapBottom = (platform.y + platform.height) - this.y;
+                
+                // Find smallest overlap
+                const minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom);
+                
+                if (minOverlap === overlapTop && this.vy > 0) {
+                    // Landing on top
+                    this.y = platform.y - this.height;
+                    this.vy = 0;
+                    this.grounded = true;
+                    this.land();
+                } else if (minOverlap === overlapBottom && this.vy < 0) {
+                    // Hit from below
+                    this.y = platform.y + platform.height;
+                    this.vy = 0;
+                } else if (minOverlap === overlapLeft) {
+                    // Hit from left
+                    this.x = platform.x - this.width;
+                    this.vx = 0;
+                    this.touchingWall = true;
+                    this.wallDirection = 1;
+                } else {
+                    // Hit from right
+                    this.x = platform.x + platform.width;
+                    this.vx = 0;
+                    this.touchingWall = true;
+                    this.wallDirection = -1;
+                }
+            }
+            
+            land() {
+                if (!this.wasGrounded) {
+                    // Landing squash
+                    this.squashX = 1.3;
+                    this.squashY = 0.7;
+                    this.state = PlayerState.LANDING;
+                }
+                
+                // Reset jumps and dash
+                this.jumpsRemaining = this.maxJumps;
+                if (this.features.dash) {
+                    this.canDash = true;
+                }
+            }
+            
+            updateState() {
+                if (this.state === PlayerState.DASHING) {
+                    // Dashing state is handled by timer
+                    return;
+                }
+                
+                if (this.grounded) {
+                    if (Math.abs(this.vx) > 10) {
+                        this.state = PlayerState.RUNNING;
+                    } else {
+                        this.state = PlayerState.IDLE;
+                    }
+                } else {
+                    if (this.state !== PlayerState.WALL_SLIDING) {
+                        if (this.vy < 0) {
+                            this.state = PlayerState.JUMPING;
+                        } else {
+                            this.state = PlayerState.FALLING;
+                        }
+                    }
+                }
+            }
+            
+            updateVisuals(dt) {
+                // Update squash and stretch
+                this.squashX += (1 - this.squashX) * 10 * dt;
+                this.squashY += (1 - this.squashY) * 10 * dt;
+                
+                // Rotation based on velocity
+                if (!this.grounded) {
+                    this.rotation += this.vx * 0.002;
+                } else {
+                    this.rotation *= 0.9;
+                }
+            }
+            
+            clearInputFlags() {
+                input.keyPressed = {};
+                input.keyReleased = {};
+            }
+            
+            draw(ctx) {
+                // Draw trail
+                for (let i = 0; i < this.trail.length; i++) {
+                    const point = this.trail[i];
+                    ctx.fillStyle = `rgba(76, 175, 80, ${point.alpha * 0.3})`;
+                    ctx.fillRect(point.x - 2, point.y - 2, 4, 4);
+                }
+                
+                // Draw character
+                ctx.save();
+                ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
+                ctx.rotate(this.rotation);
+                ctx.scale(this.squashX, this.squashY);
+                
+                // Body
+                ctx.fillStyle = this.state === PlayerState.DASHING ? '#FFD700' : this.color;
+                ctx.fillRect(-this.width / 2, -this.height / 2, this.width, this.height);
+                
+                // Eyes
+                ctx.fillStyle = '#ffffff';
+                const eyeOffset = this.facing * 4;
+                ctx.fillRect(eyeOffset - 2, -8, 4, 4);
+                ctx.fillRect(eyeOffset + 4, -8, 4, 4);
+                
+                ctx.restore();
+                
+                // Debug info
+                if (showDebug) {
+                    this.drawDebug(ctx);
+                }
+            }
+            
+            drawDebug(ctx) {
+                // Collision box
+                ctx.strokeStyle = '#ff0000';
+                ctx.strokeRect(this.x, this.y, this.width, this.height);
+                
+                // Velocity vector
+                ctx.strokeStyle = '#00ff00';
+                ctx.beginPath();
+                ctx.moveTo(this.x + this.width / 2, this.y + this.height / 2);
+                ctx.lineTo(
+                    this.x + this.width / 2 + this.vx * 0.1,
+                    this.y + this.height / 2 + this.vy * 0.1
+                );
+                ctx.stroke();
+                
+                // State text
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '10px Arial';
+                ctx.fillText(this.state, this.x, this.y - 5);
+            }
+        }
+
+        // Platform class
+        class Platform {
+            constructor(x, y, width, height) {
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = height;
+                this.color = '#8B7355';
+            }
+            
+            draw(ctx) {
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                
+                // Add some detail
+                ctx.strokeStyle = '#6B5435';
+                ctx.strokeRect(this.x, this.y, this.width, this.height);
+            }
+        }
+
+        // Demo manager
+        class CharacterControllerDemo {
+            constructor(canvas, ctx) {
+                this.canvas = canvas;
+                this.ctx = ctx;
+                
+                this.character = new Character(100, 200);
+                this.platforms = [
+                    new Platform(150, 300, 100, 20),
+                    new Platform(300, 250, 80, 20),
+                    new Platform(450, 280, 120, 20),
+                    new Platform(50, 200, 20, 100),
+                    new Platform(530, 150, 20, 150)
+                ];
+                
+                this.ghosts = [];
+                this.showGhosts = false;
+                this.ghostTimer = 0;
+                this.ghostInterval = 0.5;
+            }
+            
+            update(dt) {
+                this.character.update(dt, this.platforms);
+                
+                // Update ghosts
+                if (this.showGhosts) {
+                    this.ghostTimer += dt;
+                    if (this.ghostTimer >= this.ghostInterval) {
+                        this.ghostTimer = 0;
+                        this.addGhost();
+                    }
+                    
+                    // Update ghost alpha
+                    for (let i = this.ghosts.length - 1; i >= 0; i--) {
+                        this.ghosts[i].alpha -= dt;
+                        if (this.ghosts[i].alpha <= 0) {
+                            this.ghosts.splice(i, 1);
+                        }
+                    }
+                }
+                
+                this.updateUI();
+            }
+            
+            addGhost() {
+                this.ghosts.push({
+                    x: this.character.x,
+                    y: this.character.y,
+                    width: this.character.width,
+                    height: this.character.height,
+                    alpha: 0.5
+                });
+            }
+            
+            draw() {
+                // Clear canvas
+                this.ctx.fillStyle = '#1E3A5F';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw background elements
+                this.drawBackground();
+                
+                // Draw ghosts
+                if (this.showGhosts) {
+                    for (const ghost of this.ghosts) {
+                        this.ctx.fillStyle = `rgba(255, 255, 255, ${ghost.alpha * 0.2})`;
+                        this.ctx.fillRect(ghost.x, ghost.y, ghost.width, ghost.height);
+                    }
+                }
+                
+                // Draw platforms
+                for (const platform of this.platforms) {
+                    platform.draw(this.ctx);
+                }
+                
+                // Draw ground
+                this.ctx.fillStyle = '#654321';
+                this.ctx.fillRect(0, 380, 600, 20);
+                
+                // Draw character
+                this.character.draw(this.ctx);
+                
+                // Draw UI elements
+                this.drawUI();
+            }
+            
+            drawBackground() {
+                // Grid
+                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+                this.ctx.lineWidth = 1;
+                
+                for (let x = 0; x <= 600; x += 50) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, 0);
+                    this.ctx.lineTo(x, 400);
+                    this.ctx.stroke();
+                }
+                
+                for (let y = 0; y <= 400; y += 50) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, y);
+                    this.ctx.lineTo(600, y);
+                    this.ctx.stroke();
+                }
+            }
+            
+            drawUI() {
+                const char = this.character;
+                
+                // Coyote time indicator
+                if (char.features.coyoteTime && char.coyoteTime > 0) {
+                    const width = (char.coyoteTime / char.maxCoyoteTime) * 40;
+                    this.ctx.fillStyle = '#ffff00';
+                    this.ctx.fillRect(
+                        char.x + char.width / 2 - 20,
+                        char.y - 10,
+                        width,
+                        3
+                    );
+                }
+                
+                // Jump buffer indicator
+                if (char.features.jumpBuffer && char.jumpBufferTime > 0) {
+                    const width = (char.jumpBufferTime / char.maxJumpBufferTime) * 40;
+                    this.ctx.fillStyle = '#00ffff';
+                    this.ctx.fillRect(
+                        char.x + char.width / 2 - 20,
+                        char.y + char.height + 5,
+                        width,
+                        3
+                    );
+                }
+                
+                // Dash cooldown indicator
+                if (char.features.dash && char.dashCooldownTimer > 0) {
+                    const width = (1 - char.dashCooldownTimer / char.dashCooldown) * 40;
+                    this.ctx.fillStyle = '#ff00ff';
+                    this.ctx.fillRect(
+                        char.x + char.width / 2 - 20,
+                        char.y + char.height + 10,
+                        width,
+                        3
+                    );
+                }
+            }
+            
+            updateUI() {
+                const char = this.character;
+                
+                document.getElementById('playerState').textContent = char.state;
+                document.getElementById('velocityX').textContent = Math.round(char.vx);
+                document.getElementById('velocityY').textContent = Math.round(char.vy);
+                document.getElementById('grounded').textContent = char.grounded;
+                document.getElementById('jumpsRemaining').textContent = char.jumpsRemaining;
+                document.getElementById('canDash').textContent = char.canDash;
+                document.getElementById('coyoteActive').textContent = Math.round(char.coyoteTime * 1000);
+                document.getElementById('bufferActive').textContent = Math.round(char.jumpBufferTime * 1000);
+                
+                // Update button states
+                for (const [feature, enabled] of Object.entries(char.features)) {
+                    const btn = document.getElementById(feature + 'Btn');
+                    if (btn) {
+                        btn.style.backgroundColor = enabled ? '#4CAF50' : '#666666';
+                    }
+                }
+            }
+        }
+
+        // Global variables
+        let showDebug = false;
+        const controllerCanvas = document.getElementById('controllerCanvas');
+        const ctx = controllerCanvas.getContext('2d');
+        const demo = new CharacterControllerDemo(controllerCanvas, ctx);
+
+        // Control functions
+        window.toggleMechanic = function(mechanic) {
+            demo.character.features[mechanic] = !demo.character.features[mechanic];
+            
+            // Handle special cases
+            if (mechanic === 'doubleJump') {
+                demo.character.maxJumps = demo.character.features.doubleJump ? 2 : 1;
+            }
+        };
+
+        window.resetCharacter = function() {
+            demo.character.x = 100;
+            demo.character.y = 200;
+            demo.character.vx = 0;
+            demo.character.vy = 0;
+            demo.character.trail = [];
+        };
+
+        window.toggleDebug = function() {
+            showDebug = !showDebug;
+        };
+
+        window.toggleGhosts = function() {
+            demo.showGhosts = !demo.showGhosts;
+            demo.ghosts = [];
+        };
+
+        window.spawnPlatform = function() {
+            const x = Math.random() * 500 + 50;
+            const y = Math.random() * 200 + 100;
+            const width = Math.random() * 80 + 40;
+            demo.platforms.push(new Platform(x, y, width, 20));
+        };
+
+        window.clearPlatforms = function() {
+            demo.platforms = demo.platforms.slice(0, 5); // Keep original platforms
+        };
+
+        window.updateParam = function(param, value) {
+            const val = parseFloat(value);
+            demo.character[param] = val;
+            document.getElementById(param + 'Display').textContent = 
+                param === 'airControl' ? Math.round(val) + '%' : val;
+            
+            if (param === 'airControl') {
+                demo.character.airControl = val / 100;
+            }
+        };
+
+        window.loadPreset = function(preset) {
+            const char = demo.character;
+            
+            switch(preset) {
+                case 'mario':
+                    char.runSpeed = 200;
+                    char.jumpPower = 500;
+                    char.gravity = 1500;
+                    char.acceleration = 1000;
+                    char.friction = 800;
+                    char.airControl = 0.7;
+                    break;
+                    
+                case 'sonic':
+                    char.runSpeed = 400;
+                    char.jumpPower = 400;
+                    char.gravity = 1000;
+                    char.acceleration = 2000;
+                    char.friction = 500;
+                    char.airControl = 0.3;
+                    break;
+                    
+                case 'megaman':
+                    char.runSpeed = 150;
+                    char.jumpPower = 450;
+                    char.gravity = 1200;
+                    char.acceleration = 3000;
+                    char.friction = 3000;
+                    char.airControl = 0.5;
+                    break;
+            }
+            
+            // Update UI sliders
+            document.getElementById('runSpeed').value = char.runSpeed;
+            document.getElementById('jumpPower').value = char.jumpPower;
+            document.getElementById('gravity').value = char.gravity;
+            document.getElementById('acceleration').value = char.acceleration;
+            document.getElementById('friction').value = char.friction;
+            document.getElementById('airControl').value = char.airControl * 100;
+            
+            // Update displays
+            document.getElementById('runSpeedDisplay').textContent = char.runSpeed;
+            document.getElementById('jumpPowerDisplay').textContent = char.jumpPower;
+            document.getElementById('gravityDisplay').textContent = char.gravity;
+            document.getElementById('accelerationDisplay').textContent = char.acceleration;
+            document.getElementById('frictionDisplay').textContent = char.friction;
+            document.getElementById('airControlDisplay').textContent = Math.round(char.airControl * 100) + '%';
+        };
+
+        // Animation loop
+        let lastTime = performance.now();
+        function animate(currentTime) {
+            const dt = Math.min((currentTime - lastTime) / 1000, 0.1);
+            lastTime = currentTime;
+            
+            demo.update(dt);
+            demo.draw();
+            
+            requestAnimationFrame(animate);
+        }
+
+        animate(performance.now());
+
+        console.log('Character Controller Demo initialized!');
+    </script>
+
+    <h2>Character Controller Implementation</h2>
+    
+    <pre class="language-python"><code>import pygame
+import math
+from enum import Enum
+from typing import List, Optional
+
+class PlayerState(Enum):
+    """Player state machine states"""
+    IDLE = "idle"
+    RUNNING = "running"
+    JUMPING = "jumping"
+    FALLING = "falling"
+    WALL_SLIDING = "wall_sliding"
+    DASHING = "dashing"
+    LANDING = "landing"
+
+class CharacterController:
+    """Advanced 2D platformer character controller"""
+    def __init__(self, x: float, y: float):
+        # Position and dimensions
+        self.rect = pygame.Rect(x, y, 24, 32)
+        
+        # Velocity
+        self.velocity = pygame.Vector2(0, 0)
+        self.facing = 1  # 1 for right, -1 for left
+        
+        # Movement parameters
+        self.run_speed = 250
+        self.acceleration = 1500
+        self.friction = 1500
+        self.air_friction = 100
+        self.air_control = 0.5
+        
+        # Jump parameters
+        self.jump_power = 450
+        self.gravity = 1000
+        self.max_fall_speed = 600
+        self.jump_cut_multiplier = 0.5
+        
+        # State
+        self.state = PlayerState.IDLE
+        self.grounded = False
+        self.touching_wall = False
+        self.wall_direction = 0
+        
+        # Advanced mechanics
+        self.setup_advanced_mechanics()
+        
+    def setup_advanced_mechanics(self):
+        """Initialize advanced movement mechanics"""
+        # Coyote time (grace period for jumping after leaving platform)
+        self.coyote_time = 0
+        self.max_coyote_time = 0.1  # 100ms
+        self.was_grounded = False
+        
+        # Jump buffering (register jump input before landing)
+        self.jump_buffer_time = 0
+        self.max_jump_buffer_time = 0.1  # 100ms
+        
+        # Variable jump height
+        self.jump_hold_time = 0
+        self.max_jump_hold_time = 0.2
+        self.is_jumping = False
+        
+        # Double/multi jump
+        self.jumps_remaining = 1
+        self.max_jumps = 1  # Set to 2 for double jump
+        
+        # Wall jump
+        self.wall_jump_power = 350
+        self.wall_jump_horizontal = 200
+        self.wall_slide_speed = 50
+        self.can_wall_jump = True
+        
+        # Dash
+        self.dash_speed = 600
+        self.dash_duration = 0.15
+        self.dash_time = 0
+        self.can_dash = True
+        self.dash_cooldown = 0.5
+        self.dash_cooldown_timer = 0
+        
+    def update(self, dt: float, input_state: dict, platforms: List):
+        """Update character controller"""
+        # Store previous state
+        self.was_grounded = self.grounded
+        
+        # Update timers
+        self.update_timers(dt)
+        
+        # Handle input
+        self.handle_input(dt, input_state)
+        
+        # Apply physics
+        self.apply_physics(dt)
+        
+        # Check collisions
+        self.check_collisions(platforms)
+        
+        # Update state machine
+        self.update_state()
+        
+    def update_timers(self, dt: float):
+        """Update various timers"""
+        # Coyote time
+        if self.was_grounded and not self.grounded:
+            self.coyote_time = self.max_coyote_time
+        elif self.grounded:
+            self.coyote_time = 0
+        else:
+            self.coyote_time = max(0, self.coyote_time - dt)
+        
+        # Jump buffer
+        if self.jump_buffer_time > 0:
+            self.jump_buffer_time = max(0, self.jump_buffer_time - dt)
+        
+        # Dash cooldown
+        if self.dash_cooldown_timer > 0:
+            self.dash_cooldown_timer -= dt
+            if self.dash_cooldown_timer <= 0:
+                self.can_dash = True
+        
+        # Dash duration
+        if self.dash_time > 0:
+            self.dash_time -= dt
+            if self.dash_time <= 0:
+                self.state = PlayerState.FALLING
+    
+    def handle_input(self, dt: float, input_state: dict):
+        """Process player input"""
+        # Horizontal movement
+        move_x = 0
+        if input_state.get('left'):
+            move_x = -1
+            self.facing = -1
+        elif input_state.get('right'):
+            move_x = 1
+            self.facing = 1
+        
+        # Apply movement based on state
+        if self.state != PlayerState.DASHING:
+            self.apply_horizontal_movement(move_x, dt)
+        
+        # Jump input
+        if input_state.get('jump_pressed'):
+            self.try_jump()
+        elif input_state.get('jump_released') and self.velocity.y < 0:
+            # Variable jump height - cut jump short
+            if self.is_jumping:
+                self.velocity.y *= self.jump_cut_multiplier
+                self.is_jumping = False
+        
+        # Dash input
+        if input_state.get('dash_pressed') and self.can_dash:
+            self.start_dash(input_state)
+    
+    def apply_horizontal_movement(self, move_x: float, dt: float):
+        """Apply horizontal movement with acceleration"""
+        if self.grounded:
+            # Ground movement
+            if move_x != 0:
+                self.velocity.x += move_x * self.acceleration * dt
+                self.velocity.x = max(-self.run_speed, 
+                                     min(self.run_speed, self.velocity.x))
+            else:
+                # Apply friction
+                if abs(self.velocity.x) > 10:
+                    friction_force = self.friction * dt
+                    if self.velocity.x > 0:
+                        self.velocity.x = max(0, self.velocity.x - friction_force)
+                    else:
+                        self.velocity.x = min(0, self.velocity.x + friction_force)
+                else:
+                    self.velocity.x = 0
+        else:
+            # Air control
+            if move_x != 0:
+                self.velocity.x += move_x * self.acceleration * self.air_control * dt
+                self.velocity.x = max(-self.run_speed, 
+                                     min(self.run_speed, self.velocity.x))
+    
+    def try_jump(self):
+        """Attempt to jump with various conditions"""
+        can_jump = False
+        
+        # Ground jump or coyote time
+        if self.grounded or self.coyote_time > 0:
+            can_jump = True
+            self.jumps_remaining = self.max_jumps
+        # Multi-jump
+        elif self.jumps_remaining > 0:
+            can_jump = True
+        # Wall jump
+        elif self.touching_wall and self.can_wall_jump:
+            self.perform_wall_jump()
+            return
+        else:
+            # Buffer the jump
+            self.jump_buffer_time = self.max_jump_buffer_time
+        
+        if can_jump:
+            self.perform_jump()
+    
+    def perform_jump(self):
+        """Execute a jump"""
+        self.velocity.y = -self.jump_power
+        self.jumps_remaining -= 1
+        self.grounded = False
+        self.coyote_time = 0
+        self.jump_buffer_time = 0
+        self.is_jumping = True
+        self.state = PlayerState.JUMPING
+    
+    def perform_wall_jump(self):
+        """Execute a wall jump"""
+        self.velocity.y = -self.wall_jump_power
+        self.velocity.x = -self.wall_direction * self.wall_jump_horizontal
+        self.facing = -self.wall_direction
+        self.jumps_remaining = self.max_jumps - 1
+        self.state = PlayerState.JUMPING
+    
+    def start_dash(self, input_state: dict):
+        """Start a dash move"""
+        self.state = PlayerState.DASHING
+        self.dash_time = self.dash_duration
+        self.can_dash = False
+        self.dash_cooldown_timer = self.dash_cooldown
+        
+        # Determine dash direction
+        dash_x = self.facing
+        dash_y = 0
+        
+        if input_state.get('up'):
+            dash_y = -1
+        elif input_state.get('down'):
+            dash_y = 1
+        
+        # Normalize diagonal dash
+        magnitude = math.sqrt(dash_x**2 + dash_y**2)
+        if magnitude > 0:
+            dash_x /= magnitude
+            dash_y /= magnitude
+        
+        self.velocity.x = dash_x * self.dash_speed
+        self.velocity.y = dash_y * self.dash_speed
+        
+        # Reset jumps after dash
+        self.jumps_remaining = self.max_jumps</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Character Controller Tips</h3>
+        <ul>
+            <li><strong>Responsive Controls:</strong> Instant feedback to player input</li>
+            <li><strong>Coyote Time:</strong> Allow jumps briefly after leaving platforms</li>
+            <li><strong>Jump Buffering:</strong> Register jump input before landing</li>
+            <li><strong>Variable Jump:</strong> Different heights based on button hold</li>
+            <li><strong>Acceleration Curves:</strong> Smooth speed transitions</li>
+            <li><strong>Air Control:</strong> Limited but present mid-air movement</li>
+            <li><strong>State Machine:</strong> Clean state management</li>
+            <li><strong>Feel Parameters:</strong> Easily tweakable values</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>🎮 Character controllers define game feel</li>
+            <li>⏱️ Coyote time forgives timing mistakes</li>
+            <li>💾 Jump buffering makes controls responsive</li>
+            <li>📈 Variable jump adds control depth</li>
+            <li>🏃 Acceleration creates weight and momentum</li>
+            <li>🪂 Air control allows mid-jump adjustments</li>
+            <li>🧱 Wall mechanics add movement options</li>
+            <li>💨 Dash abilities increase mobility</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>With responsive character controls mastered, next we'll build level design tools to create engaging platformer levels!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="platformer_camera.html" class="prev-lesson" aria-label="Previous lesson: Camera/Viewport">Previous Lesson: Camera/Viewport</a>
+        <a href="platformer_level_design.html" class="next-lesson" aria-label="Next lesson: Level Design Tools">Next Lesson: Level Design Tools</a>
+    </nav>
+    
+    </main>
+    <script src="/js/course-enhancements.js" defer></script>
+</body>
+</html>

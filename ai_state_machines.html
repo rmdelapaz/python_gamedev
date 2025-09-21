@@ -1,0 +1,1560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master state machines for NPC AI. Learn finite state machines, transitions, hierarchical states, and creating believable NPC behaviors.">
+    <title>State Machines for NPCs - AI for Games</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>State Machines for NPCs</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Intermediate Module - Section 3: AI for Games - Lesson 2</span>
+    </nav>
+
+    <h2>Creating Intelligent NPC Behaviors</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>State machines are the backbone of NPC AI! Learn to create NPCs with distinct behaviors, smooth transitions, complex decision-making, and personalities that bring your game world to life! 🤖🎭🧠</p>
+    </div>
+
+    <h2>Understanding State Machines</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎭 The Actor's Script Analogy</h3>
+        <p>Think of state machines like an actor following a script:</p>
+        <ul>
+            <li><strong>States:</strong> Different scenes or moods (happy, angry, searching)</li>
+            <li><strong>Transitions:</strong> Stage directions (when player enters, switch to alert)</li>
+            <li><strong>Actions:</strong> What to do in each scene (patrol, chase, attack)</li>
+            <li><strong>Conditions:</strong> Cues for changing scenes (see player, lose health)</li>
+            <li><strong>Memory:</strong> Remembering previous scenes</li>
+            <li><strong>Director:</strong> The state machine controller</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Finite State Machine"] --> B["States"]
+        A --> C["Transitions"]
+        A --> D["Advanced FSM"]
+        
+        B --> E["Idle"]
+        B --> F["Patrol"]
+        B --> G["Alert/Chase"]
+        B --> H["Attack"]
+        
+        C --> I["Conditions"]
+        C --> J["Events"]
+        C --> K["Timers"]
+        
+        D --> L["Hierarchical"]
+        D --> M["Concurrent"]
+        D --> N["Pushdown Automata"]
+    </div>
+
+    <h2>Interactive NPC State Machine Demo</h2>
+    
+    <div class="canvas-wrapper" style="text-align: center;">
+        <canvas id="stateCanvas" width="600" height="400" style="border: 1px solid #333; background-color: #2C3E50; display: inline-block;"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Control the player (green) with Arrow Keys/WASD. Watch how NPCs react to your presence!</p>
+        
+        <!-- NPC Types -->
+        <div style="margin: 10px auto; padding: 10px; background-color: rgba(0,0,0,0.3); border-radius: 5px; max-width: 600px;">
+            <p style="color: white; margin: 5px;">Spawn NPCs:</p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 5px;">
+                <button onclick="spawnNPC('guard')" class="npc-btn">👮 Guard</button>
+                <button onclick="spawnNPC('patrol')" class="npc-btn">🚶 Patrol</button>
+                <button onclick="spawnNPC('aggressive')" class="npc-btn">👹 Aggressive</button>
+                <button onclick="spawnNPC('coward')" class="npc-btn">😰 Coward</button>
+                <button onclick="spawnNPC('merchant')" class="npc-btn">🧑‍💼 Merchant</button>
+                <button onclick="spawnNPC('companion')" class="npc-btn">🤝 Companion</button>
+            </div>
+        </div>
+        
+        <!-- Controls -->
+        <div style="margin-top: 10px;">
+            <button onclick="clearNPCs()">Clear NPCs</button>
+            <button onclick="resetDemo()">Reset Demo</button>
+            <button onclick="toggleDebug()">Toggle Debug</button>
+            <button onclick="toggleStateVisualization()">State Diagram</button>
+            <button onclick="pauseSimulation()" id="pauseBtn">⏸️ Pause</button>
+            <button onclick="addObstacle()">Add Wall</button>
+            <button onclick="addItem()">Add Item</button>
+            <button onclick="makeNoise()">Make Noise</button>
+        </div>
+        
+        <!-- Settings -->
+        <div style="margin-top: 10px;">
+            <label><input type="checkbox" id="showVision" checked> Show Vision Cones</label>
+            <label><input type="checkbox" id="showPaths" checked> Show Paths</label>
+            <label><input type="checkbox" id="showStates" checked> Show States</label>
+            <label><input type="checkbox" id="showHealth" checked> Show Health</label>
+            <label><input type="checkbox" id="showAlerts"> Alert Indicators</label>
+        </div>
+        
+        <!-- NPC Settings -->
+        <div style="margin-top: 10px;">
+            <label>Vision Range: <input type="range" id="visionRange" min="50" max="200" value="100" onchange="setVisionRange(this.value)"> <span id="visionRangeDisplay">100</span></label>
+            <label>Reaction Time: <input type="range" id="reactionTime" min="0" max="2000" value="500" onchange="setReactionTime(this.value)"> <span id="reactionTimeDisplay">500ms</span></label>
+        </div>
+        
+        <!-- Statistics -->
+        <div style="margin-top: 10px; background-color: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;">
+            <p style="margin: 5px; color: white;">
+                NPCs: <span id="npcCount">0</span> | 
+                Player Health: <span id="playerHealth">100</span> | 
+                Items Collected: <span id="itemsCollected">0</span> | 
+                Alerts: <span id="alertCount">0</span>
+            </p>
+            <div id="npcStates" style="color: white; margin-top: 5px; font-size: 12px;"></div>
+        </div>
+        
+        <!-- State Diagram -->
+        <div id="stateDiagram" style="display: none; margin-top: 10px; padding: 10px; background-color: rgba(0,0,0,0.7); border-radius: 5px;">
+            <canvas id="diagramCanvas" width="600" height="300" style="border: 1px solid #555;"></canvas>
+        </div>
+    </div>
+
+    <style>
+        .npc-btn {
+            padding: 8px;
+            border: 2px solid transparent;
+            background-color: #555;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        .npc-btn:hover {
+            background-color: #666;
+        }
+    </style>
+
+    <script>
+        console.log('NPC State Machine Demo starting...');
+
+        // NPC States
+        const NPCState = {
+            IDLE: 'IDLE',
+            PATROL: 'PATROL',
+            ALERT: 'ALERT',
+            CHASE: 'CHASE',
+            ATTACK: 'ATTACK',
+            FLEE: 'FLEE',
+            RETURN: 'RETURN',
+            INTERACT: 'INTERACT',
+            DEAD: 'DEAD',
+            SEARCH: 'SEARCH',
+            INVESTIGATE: 'INVESTIGATE',
+            FOLLOW: 'FOLLOW',
+            WANDER: 'WANDER'
+        };
+
+        // State colors for visualization
+        const StateColors = {
+            [NPCState.IDLE]: '#4CAF50',
+            [NPCState.PATROL]: '#2196F3',
+            [NPCState.ALERT]: '#FFC107',
+            [NPCState.CHASE]: '#FF9800',
+            [NPCState.ATTACK]: '#F44336',
+            [NPCState.FLEE]: '#9C27B0',
+            [NPCState.RETURN]: '#00BCD4',
+            [NPCState.INTERACT]: '#CDDC39',
+            [NPCState.DEAD]: '#424242',
+            [NPCState.SEARCH]: '#FFEB3B',
+            [NPCState.INVESTIGATE]: '#FF5722',
+            [NPCState.FOLLOW]: '#8BC34A',
+            [NPCState.WANDER]: '#607D8B'
+        };
+
+        // Base State class
+        class State {
+            constructor(name, npc) {
+                this.name = name;
+                this.npc = npc;
+                this.entryTime = 0;
+            }
+            
+            enter() {
+                this.entryTime = Date.now();
+            }
+            
+            execute(dt) {
+                // Override in subclasses
+            }
+            
+            exit() {
+                // Override in subclasses
+            }
+            
+            canTransitionTo(newState) {
+                return true;
+            }
+        }
+
+        // Idle State
+        class IdleState extends State {
+            constructor(npc) {
+                super(NPCState.IDLE, npc);
+                this.idleTimer = 0;
+                this.lookDirection = 0;
+            }
+            
+            enter() {
+                super.enter();
+                this.idleTimer = 0;
+                this.lookDirection = Math.random() * Math.PI * 2;
+            }
+            
+            execute(dt) {
+                this.idleTimer += dt;
+                
+                // Occasionally look around
+                if (this.idleTimer > 2) {
+                    this.lookDirection += (Math.random() - 0.5) * Math.PI;
+                    this.idleTimer = 0;
+                }
+                
+                // Check for player
+                if (this.npc.canSeePlayer()) {
+                    this.npc.changeState(NPCState.ALERT);
+                    return;
+                }
+                
+                // Random chance to start patrolling
+                if (Math.random() < 0.001 && this.npc.type === 'guard') {
+                    this.npc.changeState(NPCState.PATROL);
+                }
+            }
+        }
+
+        // Patrol State
+        class PatrolState extends State {
+            constructor(npc) {
+                super(NPCState.PATROL, npc);
+                this.waypoints = [];
+                this.currentWaypoint = 0;
+            }
+            
+            enter() {
+                super.enter();
+                this.generateWaypoints();
+            }
+            
+            generateWaypoints() {
+                this.waypoints = [];
+                for (let i = 0; i < 4; i++) {
+                    this.waypoints.push({
+                        x: Math.random() * 500 + 50,
+                        y: Math.random() * 300 + 50
+                    });
+                }
+            }
+            
+            execute(dt) {
+                if (this.waypoints.length === 0) return;
+                
+                const target = this.waypoints[this.currentWaypoint];
+                const dx = target.x - this.npc.x;
+                const dy = target.y - this.npc.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 20) {
+                    // Reached waypoint
+                    this.currentWaypoint = (this.currentWaypoint + 1) % this.waypoints.length;
+                } else {
+                    // Move towards waypoint
+                    const speed = 50;
+                    this.npc.vx = (dx / distance) * speed;
+                    this.npc.vy = (dy / distance) * speed;
+                    
+                    this.npc.x += this.npc.vx * dt;
+                    this.npc.y += this.npc.vy * dt;
+                }
+                
+                // Check for player
+                if (this.npc.canSeePlayer()) {
+                    this.npc.changeState(NPCState.ALERT);
+                }
+            }
+            
+            exit() {
+                this.npc.vx = 0;
+                this.npc.vy = 0;
+            }
+        }
+
+        // Alert State
+        class AlertState extends State {
+            constructor(npc) {
+                super(NPCState.ALERT, npc);
+                this.alertTimer = 0;
+                this.alertDuration = 1;
+            }
+            
+            enter() {
+                super.enter();
+                this.alertTimer = 0;
+                this.npc.lastKnownPlayerPos = {
+                    x: this.npc.world.player.x,
+                    y: this.npc.world.player.y
+                };
+                
+                // Alert nearby NPCs
+                this.npc.alertNearbyNPCs();
+            }
+            
+            execute(dt) {
+                this.alertTimer += dt;
+                
+                // Face player
+                const dx = this.npc.world.player.x - this.npc.x;
+                const dy = this.npc.world.player.y - this.npc.y;
+                this.npc.facing = Math.atan2(dy, dx);
+                
+                if (this.alertTimer >= this.alertDuration) {
+                    if (this.npc.canSeePlayer()) {
+                        // Can still see player - chase or attack based on type
+                        if (this.npc.type === 'aggressive') {
+                            this.npc.changeState(NPCState.CHASE);
+                        } else if (this.npc.type === 'coward') {
+                            this.npc.changeState(NPCState.FLEE);
+                        } else {
+                            this.npc.changeState(NPCState.CHASE);
+                        }
+                    } else {
+                        // Lost sight - investigate
+                        this.npc.changeState(NPCState.INVESTIGATE);
+                    }
+                }
+            }
+        }
+
+        // Chase State
+        class ChaseState extends State {
+            constructor(npc) {
+                super(NPCState.CHASE, npc);
+                this.chaseSpeed = 100;
+            }
+            
+            enter() {
+                super.enter();
+            }
+            
+            execute(dt) {
+                const player = this.npc.world.player;
+                const dx = player.x - this.npc.x;
+                const dy = player.y - this.npc.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 30) {
+                    // Close enough to attack
+                    this.npc.changeState(NPCState.ATTACK);
+                } else if (distance > 200) {
+                    // Too far - give up chase
+                    this.npc.changeState(NPCState.INVESTIGATE);
+                } else {
+                    // Chase player
+                    this.npc.vx = (dx / distance) * this.chaseSpeed;
+                    this.npc.vy = (dy / distance) * this.chaseSpeed;
+                    
+                    this.npc.x += this.npc.vx * dt;
+                    this.npc.y += this.npc.vy * dt;
+                    
+                    this.npc.facing = Math.atan2(dy, dx);
+                }
+                
+                if (!this.npc.canSeePlayer()) {
+                    this.npc.lastKnownPlayerPos = {
+                        x: player.x,
+                        y: player.y
+                    };
+                    this.npc.changeState(NPCState.SEARCH);
+                }
+            }
+            
+            exit() {
+                this.npc.vx = 0;
+                this.npc.vy = 0;
+            }
+        }
+
+        // Attack State
+        class AttackState extends State {
+            constructor(npc) {
+                super(NPCState.ATTACK, npc);
+                this.attackCooldown = 0;
+                this.attackRate = 1;
+            }
+            
+            enter() {
+                super.enter();
+                this.attackCooldown = 0;
+            }
+            
+            execute(dt) {
+                const player = this.npc.world.player;
+                const dx = player.x - this.npc.x;
+                const dy = player.y - this.npc.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                this.npc.facing = Math.atan2(dy, dx);
+                
+                if (distance > 40) {
+                    // Too far to attack - chase again
+                    this.npc.changeState(NPCState.CHASE);
+                } else {
+                    // Attack
+                    this.attackCooldown -= dt;
+                    if (this.attackCooldown <= 0) {
+                        this.performAttack();
+                        this.attackCooldown = this.attackRate;
+                    }
+                }
+            }
+            
+            performAttack() {
+                // Deal damage to player
+                if (this.npc.world.player.health > 0) {
+                    this.npc.world.player.health -= 10;
+                    this.npc.world.hitEffects.push({
+                        x: this.npc.world.player.x,
+                        y: this.npc.world.player.y,
+                        time: 0.5
+                    });
+                }
+            }
+        }
+
+        // Flee State
+        class FleeState extends State {
+            constructor(npc) {
+                super(NPCState.FLEE, npc);
+                this.fleeSpeed = 120;
+            }
+            
+            execute(dt) {
+                const player = this.npc.world.player;
+                const dx = this.npc.x - player.x;
+                const dy = this.npc.y - player.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance > 150) {
+                    // Safe distance - return to idle
+                    this.npc.changeState(NPCState.IDLE);
+                } else {
+                    // Flee from player
+                    this.npc.vx = (dx / distance) * this.fleeSpeed;
+                    this.npc.vy = (dy / distance) * this.fleeSpeed;
+                    
+                    this.npc.x += this.npc.vx * dt;
+                    this.npc.y += this.npc.vy * dt;
+                }
+            }
+        }
+
+        // Investigate State
+        class InvestigateState extends State {
+            constructor(npc) {
+                super(NPCState.INVESTIGATE, npc);
+                this.investigateTimer = 0;
+                this.investigateDuration = 3;
+            }
+            
+            enter() {
+                super.enter();
+                this.investigateTimer = 0;
+            }
+            
+            execute(dt) {
+                this.investigateTimer += dt;
+                
+                // Move to last known position
+                if (this.npc.lastKnownPlayerPos) {
+                    const dx = this.npc.lastKnownPlayerPos.x - this.npc.x;
+                    const dy = this.npc.lastKnownPlayerPos.y - this.npc.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance > 10) {
+                        const speed = 60;
+                        this.npc.vx = (dx / distance) * speed;
+                        this.npc.vy = (dy / distance) * speed;
+                        
+                        this.npc.x += this.npc.vx * dt;
+                        this.npc.y += this.npc.vy * dt;
+                    }
+                }
+                
+                // Look around
+                this.npc.facing += dt * 2;
+                
+                if (this.npc.canSeePlayer()) {
+                    this.npc.changeState(NPCState.ALERT);
+                } else if (this.investigateTimer >= this.investigateDuration) {
+                    this.npc.changeState(NPCState.RETURN);
+                }
+            }
+        }
+
+        // Search State
+        class SearchState extends State {
+            constructor(npc) {
+                super(NPCState.SEARCH, npc);
+                this.searchTimer = 0;
+                this.searchDuration = 5;
+                this.searchRadius = 100;
+            }
+            
+            execute(dt) {
+                this.searchTimer += dt;
+                
+                // Spiral search pattern
+                const angle = this.searchTimer * 2;
+                const radius = Math.min(this.searchRadius, this.searchTimer * 20);
+                
+                if (this.npc.lastKnownPlayerPos) {
+                    const targetX = this.npc.lastKnownPlayerPos.x + Math.cos(angle) * radius;
+                    const targetY = this.npc.lastKnownPlayerPos.y + Math.sin(angle) * radius;
+                    
+                    const dx = targetX - this.npc.x;
+                    const dy = targetY - this.npc.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance > 5) {
+                        const speed = 70;
+                        this.npc.vx = (dx / distance) * speed;
+                        this.npc.vy = (dy / distance) * speed;
+                        
+                        this.npc.x += this.npc.vx * dt;
+                        this.npc.y += this.npc.vy * dt;
+                    }
+                }
+                
+                if (this.npc.canSeePlayer()) {
+                    this.npc.changeState(NPCState.ALERT);
+                } else if (this.searchTimer >= this.searchDuration) {
+                    this.npc.changeState(NPCState.RETURN);
+                }
+            }
+        }
+
+        // Return State
+        class ReturnState extends State {
+            constructor(npc) {
+                super(NPCState.RETURN, npc);
+            }
+            
+            execute(dt) {
+                const dx = this.npc.homePosition.x - this.npc.x;
+                const dy = this.npc.homePosition.y - this.npc.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 10) {
+                    this.npc.changeState(NPCState.IDLE);
+                } else {
+                    const speed = 60;
+                    this.npc.vx = (dx / distance) * speed;
+                    this.npc.vy = (dy / distance) * speed;
+                    
+                    this.npc.x += this.npc.vx * dt;
+                    this.npc.y += this.npc.vy * dt;
+                }
+                
+                if (this.npc.canSeePlayer()) {
+                    this.npc.changeState(NPCState.ALERT);
+                }
+            }
+        }
+
+        // NPC class
+        class NPC {
+            constructor(x, y, type, world) {
+                this.x = x;
+                this.y = y;
+                this.vx = 0;
+                this.vy = 0;
+                this.type = type;
+                this.world = world;
+                
+                this.homePosition = { x, y };
+                this.facing = 0;
+                this.health = 100;
+                this.visionRange = 100;
+                this.visionAngle = Math.PI / 3;
+                this.reactionTime = 500;
+                this.lastKnownPlayerPos = null;
+                
+                // State machine
+                this.states = {};
+                this.currentState = null;
+                this.previousState = null;
+                this.stateHistory = [];
+                
+                this.initializeStates();
+                this.changeState(NPCState.IDLE);
+                
+                // Visual
+                this.color = this.getColorForType();
+                this.size = 15;
+            }
+            
+            initializeStates() {
+                this.states[NPCState.IDLE] = new IdleState(this);
+                this.states[NPCState.PATROL] = new PatrolState(this);
+                this.states[NPCState.ALERT] = new AlertState(this);
+                this.states[NPCState.CHASE] = new ChaseState(this);
+                this.states[NPCState.ATTACK] = new AttackState(this);
+                this.states[NPCState.FLEE] = new FleeState(this);
+                this.states[NPCState.INVESTIGATE] = new InvestigateState(this);
+                this.states[NPCState.SEARCH] = new SearchState(this);
+                this.states[NPCState.RETURN] = new ReturnState(this);
+            }
+            
+            getColorForType() {
+                const colors = {
+                    'guard': '#4169E1',
+                    'patrol': '#32CD32',
+                    'aggressive': '#DC143C',
+                    'coward': '#FFD700',
+                    'merchant': '#9370DB',
+                    'companion': '#00CED1'
+                };
+                return colors[this.type] || '#808080';
+            }
+            
+            changeState(newStateName) {
+                if (this.currentState && this.currentState.name === newStateName) {
+                    return;
+                }
+                
+                const newState = this.states[newStateName];
+                if (!newState) {
+                    console.warn(`State ${newStateName} not found`);
+                    return;
+                }
+                
+                // Exit current state
+                if (this.currentState) {
+                    this.currentState.exit();
+                    this.previousState = this.currentState.name;
+                    this.stateHistory.push({
+                        state: this.currentState.name,
+                        duration: Date.now() - this.currentState.entryTime
+                    });
+                    
+                    // Keep history limited
+                    if (this.stateHistory.length > 10) {
+                        this.stateHistory.shift();
+                    }
+                }
+                
+                // Enter new state
+                this.currentState = newState;
+                this.currentState.enter();
+            }
+            
+            update(dt) {
+                if (this.health <= 0) {
+                    this.changeState(NPCState.DEAD);
+                    return;
+                }
+                
+                if (this.currentState) {
+                    this.currentState.execute(dt);
+                }
+                
+                // Keep NPC in bounds
+                this.x = Math.max(20, Math.min(580, this.x));
+                this.y = Math.max(20, Math.min(380, this.y));
+            }
+            
+            canSeePlayer() {
+                const player = this.world.player;
+                const dx = player.x - this.x;
+                const dy = player.y - this.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                // Check distance
+                if (distance > this.visionRange) {
+                    return false;
+                }
+                
+                // Check angle
+                const angleToPlayer = Math.atan2(dy, dx);
+                const angleDiff = Math.abs(this.normalizeAngle(angleToPlayer - this.facing));
+                
+                if (angleDiff > this.visionAngle / 2) {
+                    return false;
+                }
+                
+                // Check line of sight (simplified - no obstacles for now)
+                return true;
+            }
+            
+            normalizeAngle(angle) {
+                while (angle > Math.PI) angle -= Math.PI * 2;
+                while (angle < -Math.PI) angle += Math.PI * 2;
+                return angle;
+            }
+            
+            alertNearbyNPCs() {
+                const alertRadius = 150;
+                for (const npc of this.world.npcs) {
+                    if (npc === this) continue;
+                    
+                    const dx = npc.x - this.x;
+                    const dy = npc.y - this.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < alertRadius && npc.currentState.name === NPCState.IDLE) {
+                        npc.lastKnownPlayerPos = this.lastKnownPlayerPos;
+                        npc.changeState(NPCState.INVESTIGATE);
+                    }
+                }
+            }
+            
+            draw(ctx) {
+                // Draw vision cone
+                if (document.getElementById('showVision').checked) {
+                    ctx.save();
+                    ctx.fillStyle = `rgba(255, 255, 0, 0.1)`;
+                    ctx.beginPath();
+                    ctx.moveTo(this.x, this.y);
+                    ctx.arc(this.x, this.y, this.visionRange, 
+                           this.facing - this.visionAngle/2, 
+                           this.facing + this.visionAngle/2);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.restore();
+                }
+                
+                // Draw NPC
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.facing);
+                
+                // Body
+                ctx.fillStyle = this.color;
+                ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size);
+                
+                // Direction indicator
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.moveTo(this.size/2, 0);
+                ctx.lineTo(this.size/2 + 5, -3);
+                ctx.lineTo(this.size/2 + 5, 3);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.restore();
+                
+                // Draw state
+                if (document.getElementById('showStates').checked) {
+                    ctx.fillStyle = StateColors[this.currentState.name];
+                    ctx.font = '10px Arial';
+                    ctx.fillText(this.currentState.name, this.x - 20, this.y - 20);
+                }
+                
+                // Draw health
+                if (document.getElementById('showHealth').checked) {
+                    const barWidth = 30;
+                    const barHeight = 4;
+                    ctx.fillStyle = '#ff0000';
+                    ctx.fillRect(this.x - barWidth/2, this.y + this.size/2 + 5, barWidth, barHeight);
+                    ctx.fillStyle = '#00ff00';
+                    ctx.fillRect(this.x - barWidth/2, this.y + this.size/2 + 5, 
+                                barWidth * (this.health / 100), barHeight);
+                }
+            }
+        }
+
+        // Game world
+        class World {
+            constructor(canvas, ctx) {
+                this.canvas = canvas;
+                this.ctx = ctx;
+                
+                this.player = {
+                    x: 300,
+                    y: 200,
+                    vx: 0,
+                    vy: 0,
+                    health: 100,
+                    size: 12
+                };
+                
+                this.npcs = [];
+                this.obstacles = [];
+                this.items = [];
+                this.hitEffects = [];
+                this.paused = false;
+                
+                this.keys = {};
+                this.setupInput();
+                
+                // Spawn initial NPCs
+                this.spawnNPC('guard', 100, 100);
+                this.spawnNPC('patrol', 500, 100);
+                this.spawnNPC('coward', 100, 300);
+            }
+            
+            setupInput() {
+                document.addEventListener('keydown', (e) => {
+                    this.keys[e.key.toLowerCase()] = true;
+                });
+                
+                document.addEventListener('keyup', (e) => {
+                    this.keys[e.key.toLowerCase()] = false;
+                });
+            }
+            
+            spawnNPC(type, x = null, y = null) {
+                x = x || Math.random() * 500 + 50;
+                y = y || Math.random() * 300 + 50;
+                
+                const npc = new NPC(x, y, type, this);
+                this.npcs.push(npc);
+                
+                // Set initial state based on type
+                if (type === 'patrol' || type === 'guard') {
+                    npc.changeState(NPCState.PATROL);
+                }
+            }
+            
+            update(dt) {
+                if (this.paused) return;
+                
+                // Update player
+                const speed = 150;
+                this.player.vx = 0;
+                this.player.vy = 0;
+                
+                if (this.keys['arrowleft'] || this.keys['a']) {
+                    this.player.vx = -speed;
+                }
+                if (this.keys['arrowright'] || this.keys['d']) {
+                    this.player.vx = speed;
+                }
+                if (this.keys['arrowup'] || this.keys['w']) {
+                    this.player.vy = -speed;
+                }
+                if (this.keys['arrowdown'] || this.keys['s']) {
+                    this.player.vy = speed;
+                }
+                
+                this.player.x += this.player.vx * dt;
+                this.player.y += this.player.vy * dt;
+                
+                // Keep player in bounds
+                this.player.x = Math.max(20, Math.min(580, this.player.x));
+                this.player.y = Math.max(20, Math.min(380, this.player.y));
+                
+                // Update NPCs
+                for (const npc of this.npcs) {
+                    npc.update(dt);
+                }
+                
+                // Update effects
+                for (let i = this.hitEffects.length - 1; i >= 0; i--) {
+                    this.hitEffects[i].time -= dt;
+                    if (this.hitEffects[i].time <= 0) {
+                        this.hitEffects.splice(i, 1);
+                    }
+                }
+                
+                this.updateUI();
+            }
+            
+            draw() {
+                // Clear canvas
+                this.ctx.fillStyle = '#2C3E50';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw grid
+                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+                this.ctx.lineWidth = 1;
+                for (let x = 0; x <= 600; x += 50) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, 0);
+                    this.ctx.lineTo(x, 400);
+                    this.ctx.stroke();
+                }
+                for (let y = 0; y <= 400; y += 50) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, y);
+                    this.ctx.lineTo(600, y);
+                    this.ctx.stroke();
+                }
+                
+                // Draw obstacles
+                this.ctx.fillStyle = '#1a1a1a';
+                for (const obstacle of this.obstacles) {
+                    this.ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+                }
+                
+                // Draw items
+                this.ctx.fillStyle = '#FFD700';
+                for (const item of this.items) {
+                    this.ctx.beginPath();
+                    this.ctx.arc(item.x, item.y, 8, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+                
+                // Draw NPCs
+                for (const npc of this.npcs) {
+                    npc.draw(this.ctx);
+                }
+                
+                // Draw player
+                this.ctx.fillStyle = '#4CAF50';
+                this.ctx.fillRect(
+                    this.player.x - this.player.size/2,
+                    this.player.y - this.player.size/2,
+                    this.player.size,
+                    this.player.size
+                );
+                
+                // Draw player health
+                const barWidth = 40;
+                const barHeight = 4;
+                this.ctx.fillStyle = '#ff0000';
+                this.ctx.fillRect(
+                    this.player.x - barWidth/2,
+                    this.player.y - this.player.size/2 - 10,
+                    barWidth, barHeight
+                );
+                this.ctx.fillStyle = '#00ff00';
+                this.ctx.fillRect(
+                    this.player.x - barWidth/2,
+                    this.player.y - this.player.size/2 - 10,
+                    barWidth * (this.player.health / 100),
+                    barHeight
+                );
+                
+                // Draw hit effects
+                for (const effect of this.hitEffects) {
+                    this.ctx.fillStyle = `rgba(255, 0, 0, ${effect.time * 2})`;
+                    this.ctx.beginPath();
+                    this.ctx.arc(effect.x, effect.y, 20 * (1 - effect.time), 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+            }
+            
+            updateUI() {
+                document.getElementById('npcCount').textContent = this.npcs.length;
+                document.getElementById('playerHealth').textContent = this.player.health;
+                
+                // Count alerts
+                const alertCount = this.npcs.filter(npc => 
+                    npc.currentState.name === NPCState.ALERT ||
+                    npc.currentState.name === NPCState.CHASE ||
+                    npc.currentState.name === NPCState.ATTACK
+                ).length;
+                document.getElementById('alertCount').textContent = alertCount;
+                
+                // Show NPC states
+                const statesSummary = {};
+                for (const npc of this.npcs) {
+                    const state = npc.currentState.name;
+                    statesSummary[state] = (statesSummary[state] || 0) + 1;
+                }
+                
+                const statesText = Object.entries(statesSummary)
+                    .map(([state, count]) => `${state}: ${count}`)
+                    .join(' | ');
+                document.getElementById('npcStates').textContent = statesText;
+            }
+        }
+
+        // Initialize demo
+        const stateCanvas = document.getElementById('stateCanvas');
+        const ctx = stateCanvas.getContext('2d');
+        const world = new World(stateCanvas, ctx);
+
+        // Control functions
+        window.spawnNPC = function(type) {
+            world.spawnNPC(type);
+        };
+
+        window.clearNPCs = function() {
+            world.npcs = [];
+        };
+
+        window.resetDemo = function() {
+            world.npcs = [];
+            world.player.x = 300;
+            world.player.y = 200;
+            world.player.health = 100;
+            world.obstacles = [];
+            world.items = [];
+            
+            // Spawn initial NPCs
+            world.spawnNPC('guard', 100, 100);
+            world.spawnNPC('patrol', 500, 100);
+            world.spawnNPC('coward', 100, 300);
+        };
+
+        window.toggleDebug = function() {
+            const showStates = document.getElementById('showStates');
+            const showVision = document.getElementById('showVision');
+            const showHealth = document.getElementById('showHealth');
+            
+            const newState = !showStates.checked;
+            showStates.checked = newState;
+            showVision.checked = newState;
+            showHealth.checked = newState;
+        };
+
+        window.toggleStateVisualization = function() {
+            const diagram = document.getElementById('stateDiagram');
+            diagram.style.display = diagram.style.display === 'none' ? 'block' : 'none';
+            
+            if (diagram.style.display === 'block') {
+                drawStateDiagram();
+            }
+        };
+
+        window.pauseSimulation = function() {
+            world.paused = !world.paused;
+            const btn = document.getElementById('pauseBtn');
+            btn.textContent = world.paused ? '▶️ Resume' : '⏸️ Pause';
+        };
+
+        window.addObstacle = function() {
+            world.obstacles.push({
+                x: Math.random() * 500 + 50,
+                y: Math.random() * 300 + 50,
+                width: 40,
+                height: 40
+            });
+        };
+
+        window.addItem = function() {
+            world.items.push({
+                x: Math.random() * 500 + 50,
+                y: Math.random() * 300 + 50
+            });
+        };
+
+        window.makeNoise = function() {
+            // Alert all NPCs in range
+            for (const npc of world.npcs) {
+                const dx = npc.x - world.player.x;
+                const dy = npc.y - world.player.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 200 && npc.currentState.name === NPCState.IDLE) {
+                    npc.lastKnownPlayerPos = {
+                        x: world.player.x,
+                        y: world.player.y
+                    };
+                    npc.changeState(NPCState.INVESTIGATE);
+                }
+            }
+        };
+
+        window.setVisionRange = function(value) {
+            const range = parseInt(value);
+            for (const npc of world.npcs) {
+                npc.visionRange = range;
+            }
+            document.getElementById('visionRangeDisplay').textContent = range;
+        };
+
+        window.setReactionTime = function(value) {
+            const time = parseInt(value);
+            for (const npc of world.npcs) {
+                npc.reactionTime = time;
+            }
+            document.getElementById('reactionTimeDisplay').textContent = time + 'ms';
+        };
+
+        // Draw state diagram
+        function drawStateDiagram() {
+            const canvas = document.getElementById('diagramCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // State positions
+            const states = {
+                [NPCState.IDLE]: { x: 100, y: 150 },
+                [NPCState.PATROL]: { x: 200, y: 50 },
+                [NPCState.ALERT]: { x: 300, y: 150 },
+                [NPCState.CHASE]: { x: 400, y: 100 },
+                [NPCState.ATTACK]: { x: 500, y: 150 },
+                [NPCState.FLEE]: { x: 400, y: 200 },
+                [NPCState.INVESTIGATE]: { x: 200, y: 250 },
+                [NPCState.SEARCH]: { x: 300, y: 250 },
+                [NPCState.RETURN]: { x: 100, y: 250 }
+            };
+            
+            // Draw transitions
+            ctx.strokeStyle = '#555';
+            ctx.lineWidth = 1;
+            
+            const transitions = [
+                [NPCState.IDLE, NPCState.PATROL],
+                [NPCState.IDLE, NPCState.ALERT],
+                [NPCState.PATROL, NPCState.ALERT],
+                [NPCState.ALERT, NPCState.CHASE],
+                [NPCState.ALERT, NPCState.FLEE],
+                [NPCState.ALERT, NPCState.INVESTIGATE],
+                [NPCState.CHASE, NPCState.ATTACK],
+                [NPCState.CHASE, NPCState.SEARCH],
+                [NPCState.SEARCH, NPCState.INVESTIGATE],
+                [NPCState.INVESTIGATE, NPCState.RETURN],
+                [NPCState.RETURN, NPCState.IDLE]
+            ];
+            
+            for (const [from, to] of transitions) {
+                const fromState = states[from];
+                const toState = states[to];
+                
+                ctx.beginPath();
+                ctx.moveTo(fromState.x, fromState.y);
+                ctx.lineTo(toState.x, toState.y);
+                ctx.stroke();
+                
+                // Arrow
+                const angle = Math.atan2(toState.y - fromState.y, toState.x - fromState.x);
+                const arrowX = toState.x - Math.cos(angle) * 30;
+                const arrowY = toState.y - Math.sin(angle) * 30;
+                
+                ctx.save();
+                ctx.translate(arrowX, arrowY);
+                ctx.rotate(angle);
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(-5, -3);
+                ctx.lineTo(-5, 3);
+                ctx.closePath();
+                ctx.fillStyle = '#555';
+                ctx.fill();
+                ctx.restore();
+            }
+            
+            // Draw states
+            for (const [stateName, pos] of Object.entries(states)) {
+                // Check if any NPC is in this state
+                const npcsInState = world.npcs.filter(npc => npc.currentState.name === stateName);
+                const isActive = npcsInState.length > 0;
+                
+                ctx.fillStyle = isActive ? StateColors[stateName] : '#333';
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, 25, 0, Math.PI * 2);
+                ctx.fill();
+                
+                if (isActive) {
+                    ctx.strokeStyle = StateColors[stateName];
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+                
+                ctx.fillStyle = '#fff';
+                ctx.font = '10px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(stateName, pos.x, pos.y);
+                
+                if (isActive) {
+                    ctx.fillText(`(${npcsInState.length})`, pos.x, pos.y + 12);
+                }
+            }
+        }
+
+        // Animation loop
+        let lastTime = performance.now();
+        function animate(currentTime) {
+            const dt = Math.min((currentTime - lastTime) / 1000, 0.1);
+            lastTime = currentTime;
+            
+            world.update(dt);
+            world.draw();
+            
+            // Update state diagram if visible
+            if (document.getElementById('stateDiagram').style.display === 'block') {
+                drawStateDiagram();
+            }
+            
+            requestAnimationFrame(animate);
+        }
+
+        animate(performance.now());
+
+        console.log('NPC State Machine Demo initialized!');
+    </script>
+
+    <h2>State Machine Implementation</h2>
+    
+    <pre class="language-python"><code>from enum import Enum
+from typing import Dict, Optional, Any
+import random
+import math
+
+class NPCState(Enum):
+    """NPC state enumeration"""
+    IDLE = "idle"
+    PATROL = "patrol"
+    ALERT = "alert"
+    CHASE = "chase"
+    ATTACK = "attack"
+    FLEE = "flee"
+    SEARCH = "search"
+    INVESTIGATE = "investigate"
+    RETURN = "return"
+    DEAD = "dead"
+
+class State:
+    """Base state class"""
+    def __init__(self, name: NPCState, npc: 'NPC'):
+        self.name = name
+        self.npc = npc
+        self.entry_time = 0
+    
+    def enter(self):
+        """Called when entering the state"""
+        self.entry_time = 0
+    
+    def execute(self, dt: float):
+        """Update state logic"""
+        self.entry_time += dt
+    
+    def exit(self):
+        """Called when exiting the state"""
+        pass
+    
+    def handle_message(self, message: Dict[str, Any]) -> bool:
+        """Handle incoming messages"""
+        return False
+
+class IdleState(State):
+    """NPC idle behavior"""
+    def __init__(self, npc: 'NPC'):
+        super().__init__(NPCState.IDLE, npc)
+        self.idle_timer = 0
+        self.look_direction = 0
+    
+    def enter(self):
+        super().enter()
+        self.idle_timer = 0
+        self.look_direction = random.uniform(0, math.pi * 2)
+        self.npc.velocity = (0, 0)
+    
+    def execute(self, dt: float):
+        super().execute(dt)
+        self.idle_timer += dt
+        
+        # Look around occasionally
+        if self.idle_timer > 2:
+            self.look_direction += random.uniform(-math.pi, math.pi)
+            self.idle_timer = 0
+            self.npc.facing = self.look_direction
+        
+        # Check for threats
+        if self.npc.can_see_player():
+            self.npc.change_state(NPCState.ALERT)
+        elif random.random() < 0.001:  # Random chance to patrol
+            self.npc.change_state(NPCState.PATROL)
+
+class PatrolState(State):
+    """NPC patrol behavior"""
+    def __init__(self, npc: 'NPC'):
+        super().__init__(NPCState.PATROL, npc)
+        self.waypoints = []
+        self.current_waypoint = 0
+    
+    def enter(self):
+        super().enter()
+        self.generate_waypoints()
+    
+    def generate_waypoints(self):
+        """Generate patrol route"""
+        self.waypoints = []
+        for _ in range(4):
+            self.waypoints.append({
+                'x': random.randint(50, 550),
+                'y': random.randint(50, 350)
+            })
+    
+    def execute(self, dt: float):
+        super().execute(dt)
+        
+        if not self.waypoints:
+            return
+        
+        target = self.waypoints[self.current_waypoint]
+        dx = target['x'] - self.npc.position[0]
+        dy = target['y'] - self.npc.position[1]
+        distance = math.sqrt(dx**2 + dy**2)
+        
+        if distance < 20:
+            # Reached waypoint
+            self.current_waypoint = (self.current_waypoint + 1) % len(self.waypoints)
+        else:
+            # Move towards waypoint
+            speed = self.npc.patrol_speed
+            self.npc.velocity = (dx/distance * speed, dy/distance * speed)
+        
+        # Check for threats
+        if self.npc.can_see_player():
+            self.npc.change_state(NPCState.ALERT)
+
+class AlertState(State):
+    """NPC alert/detection behavior"""
+    def __init__(self, npc: 'NPC'):
+        super().__init__(NPCState.ALERT, npc)
+        self.alert_duration = 1.0
+    
+    def enter(self):
+        super().enter()
+        self.npc.velocity = (0, 0)
+        self.npc.last_known_player_pos = self.npc.get_player_position()
+        
+        # Alert nearby NPCs
+        self.npc.alert_nearby_npcs()
+    
+    def execute(self, dt: float):
+        super().execute(dt)
+        
+        # Face player
+        player_pos = self.npc.get_player_position()
+        dx = player_pos[0] - self.npc.position[0]
+        dy = player_pos[1] - self.npc.position[1]
+        self.npc.facing = math.atan2(dy, dx)
+        
+        if self.entry_time >= self.alert_duration:
+            if self.npc.can_see_player():
+                # Decide action based on personality
+                if self.npc.personality == 'aggressive':
+                    self.npc.change_state(NPCState.CHASE)
+                elif self.npc.personality == 'coward':
+                    self.npc.change_state(NPCState.FLEE)
+                else:
+                    self.npc.change_state(NPCState.CHASE)
+            else:
+                self.npc.change_state(NPCState.INVESTIGATE)
+
+class ChaseState(State):
+    """NPC chase behavior"""
+    def __init__(self, npc: 'NPC'):
+        super().__init__(NPCState.CHASE, npc)
+    
+    def execute(self, dt: float):
+        super().execute(dt)
+        
+        player_pos = self.npc.get_player_position()
+        dx = player_pos[0] - self.npc.position[0]
+        dy = player_pos[1] - self.npc.position[1]
+        distance = math.sqrt(dx**2 + dy**2)
+        
+        if distance < 30:
+            # Close enough to attack
+            self.npc.change_state(NPCState.ATTACK)
+        elif distance > 200:
+            # Lost player
+            self.npc.change_state(NPCState.SEARCH)
+        else:
+            # Continue chase
+            speed = self.npc.chase_speed
+            self.npc.velocity = (dx/distance * speed, dy/distance * speed)
+            self.npc.facing = math.atan2(dy, dx)
+
+class StateMachine:
+    """Finite State Machine for NPC AI"""
+    def __init__(self, npc: 'NPC'):
+        self.npc = npc
+        self.states: Dict[NPCState, State] = {}
+        self.current_state: Optional[State] = None
+        self.previous_state: Optional[State] = None
+        self.global_state: Optional[State] = None
+        
+        # Statistics
+        self.state_history = []
+        self.transition_count = 0
+    
+    def add_state(self, state: State):
+        """Add a state to the machine"""
+        self.states[state.name] = state
+    
+    def change_state(self, new_state: NPCState):
+        """Transition to a new state"""
+        if new_state not in self.states:
+            print(f"State {new_state} not found")
+            return
+        
+        # Exit current state
+        if self.current_state:
+            self.current_state.exit()
+            self.previous_state = self.current_state
+            
+            # Record transition
+            self.state_history.append({
+                'from': self.current_state.name,
+                'to': new_state,
+                'time': self.current_state.entry_time
+            })
+        
+        # Enter new state
+        self.current_state = self.states[new_state]
+        self.current_state.enter()
+        self.transition_count += 1
+    
+    def update(self, dt: float):
+        """Update state machine"""
+        # Execute global state
+        if self.global_state:
+            self.global_state.execute(dt)
+        
+        # Execute current state
+        if self.current_state:
+            self.current_state.execute(dt)
+    
+    def handle_message(self, message: Dict[str, Any]) -> bool:
+        """Handle message in current state"""
+        if self.current_state:
+            return self.current_state.handle_message(message)
+        return False
+    
+    def revert_to_previous_state(self):
+        """Return to previous state"""
+        if self.previous_state:
+            self.change_state(self.previous_state.name)
+
+class NPC:
+    """NPC with state machine AI"""
+    def __init__(self, x: float, y: float, personality: str = 'neutral'):
+        self.position = [x, y]
+        self.velocity = (0, 0)
+        self.facing = 0
+        self.health = 100
+        self.personality = personality
+        
+        # Movement speeds
+        self.patrol_speed = 50
+        self.chase_speed = 100
+        self.flee_speed = 120
+        
+        # Perception
+        self.vision_range = 100
+        self.vision_angle = math.pi / 3
+        self.hearing_range = 150
+        
+        # Memory
+        self.last_known_player_pos = None
+        self.home_position = (x, y)
+        
+        # State machine
+        self.state_machine = StateMachine(self)
+        self.initialize_states()
+    
+    def initialize_states(self):
+        """Setup state machine"""
+        self.state_machine.add_state(IdleState(self))
+        self.state_machine.add_state(PatrolState(self))
+        self.state_machine.add_state(AlertState(self))
+        self.state_machine.add_state(ChaseState(self))
+        # Add more states...
+        
+        # Set initial state
+        self.state_machine.change_state(NPCState.IDLE)
+    
+    def update(self, dt: float):
+        """Update NPC"""
+        # Update state machine
+        self.state_machine.update(dt)
+        
+        # Update position
+        self.position[0] += self.velocity[0] * dt
+        self.position[1] += self.velocity[1] * dt
+    
+    def change_state(self, new_state: NPCState):
+        """Change NPC state"""
+        self.state_machine.change_state(new_state)
+    
+    def can_see_player(self) -> bool:
+        """Check if player is visible"""
+        # Implementation depends on game world
+        return False
+    
+    def get_player_position(self) -> tuple:
+        """Get player position from world"""
+        # Implementation depends on game world
+        return (0, 0)
+    
+    def alert_nearby_npcs(self):
+        """Alert other NPCs in range"""
+        # Implementation depends on game world
+        pass</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ State Machine Tips</h3>
+        <ul>
+            <li><strong>Keep States Simple:</strong> Each state should have one clear purpose</li>
+            <li><strong>Clean Transitions:</strong> Use clear conditions for state changes</li>
+            <li><strong>Entry/Exit Actions:</strong> Initialize and cleanup properly</li>
+            <li><strong>Global State:</strong> Handle common behaviors across all states</li>
+            <li><strong>State History:</strong> Track previous states for debugging</li>
+            <li><strong>Message System:</strong> Allow external events to trigger transitions</li>
+            <li><strong>Hierarchical FSM:</strong> Use sub-states for complex behaviors</li>
+            <li><strong>Concurrent States:</strong> Run multiple state machines for different systems</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>🤖 State machines create believable NPC behaviors</li>
+            <li>🎭 Each state represents a distinct behavior mode</li>
+            <li>🔄 Transitions define when behaviors change</li>
+            <li>🧠 Memory allows NPCs to remember past events</li>
+            <li>👁️ Perception systems trigger state changes</li>
+            <li>🗣️ NPCs can communicate and coordinate</li>
+            <li>📊 State history helps debug AI behavior</li>
+            <li>🎮 Personality types create variety</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you've mastered state machines, next we'll explore behavior trees for even more complex and modular AI behaviors!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="ai_pathfinding.html" class="prev-lesson" aria-label="Previous lesson: Pathfinding">Previous Lesson: Pathfinding</a>
+        <a href="ai_behavior_trees.html" class="next-lesson" aria-label="Next lesson: Behavior Trees">Next Lesson: Behavior Trees</a>
+    </nav>
+    
+    </main>
+    <script src="/js/course-enhancements.js" defer></script>
+</body>
+</html>

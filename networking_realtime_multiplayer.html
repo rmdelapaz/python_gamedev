@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master real-time multiplayer game development. Learn client prediction, server reconciliation, interpolation, and lag compensation techniques.">
+    <title>Real-time Multiplayer - Networking & Multiplayer</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Real-time Multiplayer</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Intermediate Module - Section 2: Networking & Multiplayer - Lesson 2</span>
+    </nav>
+
+    <h2>Building Smooth Real-time Multiplayer Games</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Real-time multiplayer requires advanced techniques to create smooth, responsive gameplay despite network latency! Learn client prediction, server reconciliation, interpolation, extrapolation, and lag compensation to build professional multiplayer experiences! 🎮🌐⚡</p>
+    </div>
+
+    <h2>Understanding Real-time Challenges</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🏃 The Race Synchronization Analogy</h3>
+        <p>Think of real-time multiplayer like runners in a race with delayed video feeds:</p>
+        <ul>
+            <li><strong>Client Prediction:</strong> Runners keep running without waiting for confirmation</li>
+            <li><strong>Server Authority:</strong> The official timekeeper has final say</li>
+            <li><strong>Reconciliation:</strong> Correcting position when official time arrives</li>
+            <li><strong>Interpolation:</strong> Smooth playback between video frames</li>
+            <li><strong>Lag Compensation:</strong> Adjusting for transmission delays</li>
+            <li><strong>Rollback:</strong> Rewinding when predictions were wrong</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Real-time Multiplayer"] --> B["Client-Side"]
+        A --> C["Server-Side"]
+        A --> D["Synchronization"]
+        
+        B --> E["Input Prediction"]
+        B --> F["Interpolation"]
+        B --> G["Extrapolation"]
+        
+        C --> H["Authoritative State"]
+        C --> I["Tick Rate"]
+        C --> J["Validation"]
+        
+        D --> K["State Reconciliation"]
+        D --> L["Lag Compensation"]
+        D --> M["Time Sync"]
+        
+        N["Techniques"] --> O["Client Prediction"]
+        N --> P["Server Reconciliation"]
+        N --> Q["Entity Interpolation"]
+        N --> R["Input Buffering"]
+    </div>
+
+    <h2>Interactive Real-time Multiplayer Demo</h2>
+    
+    <div class="canvas-wrapper" style="text-align: center;">
+        <canvas id="multiplayerCanvas" width="600" height="400" style="border: 1px solid #333; background-color: #1a1a1a; display: inline-block;"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Experience client prediction, server reconciliation, and lag compensation in action!</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; max-width: 600px; margin: 10px auto;">
+            <button onclick="togglePrediction()">Toggle Prediction</button>
+            <button onclick="toggleInterpolation()">Toggle Interpolation</button>
+            <button onclick="toggleReconciliation()">Toggle Reconciliation</button>
+            <button onclick="toggleLagCompensation()">Lag Compensation</button>
+            <button onclick="simulateLagSpike()">Lag Spike</button>
+            <button onclick="resetDemo()">Reset Demo</button>
+        </div>
+        <div style="margin-top: 10px;">
+            <label>Latency: <input type="range" id="latency" min="0" max="300" value="50" onchange="setLatency(this.value)"> <span id="latencyDisplay">50ms</span></label>
+            <label>Jitter: <input type="range" id="jitter" min="0" max="100" value="10" onchange="setJitter(this.value)"> <span id="jitterDisplay">10ms</span></label>
+            <label>Tick Rate: <input type="range" id="tickRate" min="10" max="128" value="60" onchange="setTickRate(this.value)"> <span id="tickRateDisplay">60Hz</span></label>
+        </div>
+        <div style="margin-top: 10px;">
+            <label><input type="checkbox" id="showPrediction" checked> Show Prediction</label>
+            <label><input type="checkbox" id="showServerState" checked> Show Server State</label>
+            <label><input type="checkbox" id="showInterpolation" checked> Show Interpolation</label>
+            <label><input type="checkbox" id="showTimeline"> Show Timeline</label>
+        </div>
+        <div style="margin-top: 10px; background-color: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;">
+            <p style="margin: 5px;">
+                Client FPS: <span id="clientFPS">60</span> | 
+                Server Tick: <span id="serverTick">0</span> | 
+                Prediction Error: <span id="predictionError">0px</span>
+            </p>
+            <p style="margin: 5px;">
+                Input Buffer: <span id="inputBuffer">0</span> | 
+                Snapshot Buffer: <span id="snapshotBuffer">0</span> | 
+                RTT: <span id="rtt">0ms</span>
+            </p>
+        </div>
+        <div style="margin-top: 10px;">
+            <p>Use WASD or Arrow Keys to move the player. Watch how different techniques affect movement!</p>
+        </div>
+    </div>
+
+    <script>
+        console.log('Real-time Multiplayer Demo starting...');
+
+        // Input handling
+        const keys = {};
+        document.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+        });
+        document.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
+        });
+
+        // Classes for real-time multiplayer
+        class InputCommand {
+            constructor(inputId, keys, timestamp) {
+                this.inputId = inputId;
+                this.keys = {...keys};
+                this.timestamp = timestamp;
+                this.processed = false;
+            }
+        }
+
+        class Snapshot {
+            constructor(tick, entities, timestamp) {
+                this.tick = tick;
+                this.entities = entities;
+                this.timestamp = timestamp;
+            }
+        }
+
+        class Entity {
+            constructor(id, x, y) {
+                this.id = id;
+                this.x = x;
+                this.y = y;
+                this.vx = 0;
+                this.vy = 0;
+                this.color = '#00ff00';
+                this.size = 20;
+            }
+            
+            applyInput(input, dt) {
+                const speed = 200;
+                this.vx = 0;
+                this.vy = 0;
+                
+                if (input.keys['w'] || input.keys['arrowup']) this.vy = -speed;
+                if (input.keys['s'] || input.keys['arrowdown']) this.vy = speed;
+                if (input.keys['a'] || input.keys['arrowleft']) this.vx = -speed;
+                if (input.keys['d'] || input.keys['arrowright']) this.vx = speed;
+                
+                this.x += this.vx * dt;
+                this.y += this.vy * dt;
+                
+                // Bounds checking
+                this.x = Math.max(this.size, Math.min(600 - this.size, this.x));
+                this.y = Math.max(this.size, Math.min(400 - this.size, this.y));
+            }
+            
+            update(dt) {
+                this.x += this.vx * dt;
+                this.y += this.vy * dt;
+                
+                // Bounds checking
+                this.x = Math.max(this.size, Math.min(600 - this.size, this.x));
+                this.y = Math.max(this.size, Math.min(400 - this.size, this.y));
+            }
+            
+            clone() {
+                const clone = new Entity(this.id, this.x, this.y);
+                clone.vx = this.vx;
+                clone.vy = this.vy;
+                clone.color = this.color;
+                clone.size = this.size;
+                return clone;
+            }
+        }
+
+        class Client {
+            constructor() {
+                this.player = new Entity('player', 300, 200);
+                this.predictedPlayer = this.player.clone();
+                this.serverPlayer = this.player.clone();
+                this.interpolatedPlayer = this.player.clone();
+                
+                this.inputSequence = 0;
+                this.pendingInputs = [];
+                this.lastProcessedInput = 0;
+                
+                this.snapshots = [];
+                this.interpolationTime = 0;
+                
+                this.enablePrediction = true;
+                this.enableInterpolation = true;
+                this.enableReconciliation = true;
+                this.enableLagCompensation = true;
+            }
+            
+            processInput(dt) {
+                // Create input command
+                const input = new InputCommand(
+                    this.inputSequence++,
+                    keys,
+                    performance.now()
+                );
+                
+                // Apply input prediction
+                if (this.enablePrediction) {
+                    this.predictedPlayer.applyInput(input, dt);
+                    this.player.x = this.predictedPlayer.x;
+                    this.player.y = this.predictedPlayer.y;
+                }
+                
+                // Store pending input
+                this.pendingInputs.push(input);
+                
+                // Send to server
+                multiplayerDemo.sendInputToServer(input);
+            }
+            
+            receiveServerUpdate(serverState) {
+                // Update server state
+                this.serverPlayer.x = serverState.x;
+                this.serverPlayer.y = serverState.y;
+                this.lastProcessedInput = serverState.lastProcessedInput;
+                
+                if (this.enableReconciliation) {
+                    // Reconciliation: correct prediction errors
+                    this.reconcile(serverState);
+                } else if (!this.enablePrediction) {
+                    // No prediction: just use server state
+                    this.player.x = serverState.x;
+                    this.player.y = serverState.y;
+                }
+                
+                // Store snapshot for interpolation
+                this.snapshots.push(new Snapshot(
+                    serverState.tick,
+                    [serverState],
+                    performance.now()
+                ));
+                
+                // Keep only recent snapshots
+                if (this.snapshots.length > 20) {
+                    this.snapshots.shift();
+                }
+            }
+            
+            reconcile(serverState) {
+                // Set position to server authoritative position
+                this.predictedPlayer.x = serverState.x;
+                this.predictedPlayer.y = serverState.y;
+                
+                // Remove processed inputs
+                this.pendingInputs = this.pendingInputs.filter(input => 
+                    input.inputId > this.lastProcessedInput
+                );
+                
+                // Re-apply unprocessed inputs
+                this.pendingInputs.forEach(input => {
+                    this.predictedPlayer.applyInput(input, 1/60);
+                });
+                
+                // Update player position
+                this.player.x = this.predictedPlayer.x;
+                this.player.y = this.predictedPlayer.y;
+            }
+            
+            interpolate(dt) {
+                if (!this.enableInterpolation || this.snapshots.length < 2) {
+                    return;
+                }
+                
+                // Interpolate between snapshots
+                const renderTime = performance.now() - 100; // 100ms in the past
+                
+                // Find snapshots to interpolate between
+                let before = null;
+                let after = null;
+                
+                for (let i = 0; i < this.snapshots.length - 1; i++) {
+                    if (this.snapshots[i].timestamp <= renderTime &&
+                        this.snapshots[i + 1].timestamp >= renderTime) {
+                        before = this.snapshots[i];
+                        after = this.snapshots[i + 1];
+                        break;
+                    }
+                }
+                
+                if (before && after) {
+                    const total = after.timestamp - before.timestamp;
+                    const portion = renderTime - before.timestamp;
+                    const ratio = portion / total;
+                    
+                    // Interpolate position
+                    this.interpolatedPlayer.x = before.entities[0].x + 
+                        (after.entities[0].x - before.entities[0].x) * ratio;
+                    this.interpolatedPlayer.y = before.entities[0].y + 
+                        (after.entities[0].y - before.entities[0].y) * ratio;
+                }
+            }
+            
+            getPredictionError() {
+                const dx = this.player.x - this.serverPlayer.x;
+                const dy = this.player.y - this.serverPlayer.y;
+                return Math.sqrt(dx * dx + dy * dy);
+            }
+        }
+
+        class Server {
+            constructor() {
+                this.player = new Entity('player', 300, 200);
+                this.tick = 0;
+                this.tickRate = 60;
+                this.lastProcessedInput = 0;
+                this.inputQueue = [];
+                
+                this.tickInterval = null;
+            }
+            
+            start() {
+                const tickTime = 1000 / this.tickRate;
+                this.tickInterval = setInterval(() => this.tick++, tickTime);
+            }
+            
+            stop() {
+                if (this.tickInterval) {
+                    clearInterval(this.tickInterval);
+                    this.tickInterval = null;
+                }
+            }
+            
+            receiveInput(input) {
+                // Add to queue with simulated network delay
+                const delay = multiplayerDemo.latency + (Math.random() * multiplayerDemo.jitter);
+                setTimeout(() => {
+                    this.inputQueue.push(input);
+                }, delay);
+            }
+            
+            processTick(dt) {
+                // Process all inputs in queue
+                while (this.inputQueue.length > 0) {
+                    const input = this.inputQueue.shift();
+                    this.player.applyInput(input, dt);
+                    this.lastProcessedInput = input.inputId;
+                }
+                
+                // Update physics
+                this.player.update(dt);
+                
+                // Send state to client
+                this.sendStateToClient();
+            }
+            
+            sendStateToClient() {
+                const state = {
+                    x: this.player.x,
+                    y: this.player.y,
+                    vx: this.player.vx,
+                    vy: this.player.vy,
+                    tick: this.tick,
+                    lastProcessedInput: this.lastProcessedInput,
+                    timestamp: performance.now()
+                };
+                
+                // Simulate network delay
+                const delay = multiplayerDemo.latency + (Math.random() * multiplayerDemo.jitter);
+                setTimeout(() => {
+                    multiplayerDemo.client.receiveServerUpdate(state);
+                }, delay);
+            }
+        }
+
+        class MultiplayerDemo {
+            constructor(canvas, ctx) {
+                this.canvas = canvas;
+                this.ctx = ctx;
+                
+                this.client = new Client();
+                this.server = new Server();
+                
+                this.latency = 50;
+                this.jitter = 10;
+                this.showPrediction = true;
+                this.showServerState = true;
+                this.showInterpolation = true;
+                this.showTimeline = false;
+                
+                this.stats = {
+                    clientFPS: 0,
+                    frameCount: 0,
+                    lastFPSUpdate: performance.now()
+                };
+                
+                this.timeline = [];
+                
+                this.server.start();
+            }
+            
+            sendInputToServer(input) {
+                this.server.receiveInput(input);
+            }
+            
+            update(dt) {
+                // Client update
+                this.client.processInput(dt);
+                this.client.interpolate(dt);
+                
+                // Server update
+                this.server.processTick(dt);
+                
+                // Update stats
+                this.updateStats();
+                
+                // Update timeline
+                if (this.showTimeline) {
+                    this.timeline.push({
+                        time: performance.now(),
+                        clientPos: { x: this.client.player.x, y: this.client.player.y },
+                        serverPos: { x: this.server.player.x, y: this.server.player.y }
+                    });
+                    
+                    // Keep only recent timeline
+                    const cutoff = performance.now() - 5000;
+                    this.timeline = this.timeline.filter(t => t.time > cutoff);
+                }
+            }
+            
+            draw() {
+                // Clear canvas
+                this.ctx.fillStyle = '#1a1a1a';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw grid
+                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+                this.ctx.lineWidth = 1;
+                for (let x = 0; x <= this.canvas.width; x += 50) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, 0);
+                    this.ctx.lineTo(x, this.canvas.height);
+                    this.ctx.stroke();
+                }
+                for (let y = 0; y <= this.canvas.height; y += 50) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, y);
+                    this.ctx.lineTo(this.canvas.width, y);
+                    this.ctx.stroke();
+                }
+                
+                // Draw server state
+                if (this.showServerState) {
+                    this.ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+                    this.ctx.fillRect(
+                        this.client.serverPlayer.x - this.client.serverPlayer.size,
+                        this.client.serverPlayer.y - this.client.serverPlayer.size,
+                        this.client.serverPlayer.size * 2,
+                        this.client.serverPlayer.size * 2
+                    );
+                    
+                    this.ctx.strokeStyle = '#ff0000';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.strokeRect(
+                        this.client.serverPlayer.x - this.client.serverPlayer.size,
+                        this.client.serverPlayer.y - this.client.serverPlayer.size,
+                        this.client.serverPlayer.size * 2,
+                        this.client.serverPlayer.size * 2
+                    );
+                    
+                    // Label
+                    this.ctx.fillStyle = '#ff0000';
+                    this.ctx.font = '10px Arial';
+                    this.ctx.fillText('Server', this.client.serverPlayer.x - 20, this.client.serverPlayer.y - 25);
+                }
+                
+                // Draw interpolated state
+                if (this.showInterpolation && this.client.enableInterpolation) {
+                    this.ctx.fillStyle = 'rgba(0, 255, 255, 0.3)';
+                    this.ctx.fillRect(
+                        this.client.interpolatedPlayer.x - this.client.interpolatedPlayer.size,
+                        this.client.interpolatedPlayer.y - this.client.interpolatedPlayer.size,
+                        this.client.interpolatedPlayer.size * 2,
+                        this.client.interpolatedPlayer.size * 2
+                    );
+                    
+                    this.ctx.strokeStyle = '#00ffff';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.strokeRect(
+                        this.client.interpolatedPlayer.x - this.client.interpolatedPlayer.size,
+                        this.client.interpolatedPlayer.y - this.client.interpolatedPlayer.size,
+                        this.client.interpolatedPlayer.size * 2,
+                        this.client.interpolatedPlayer.size * 2
+                    );
+                    
+                    // Label
+                    this.ctx.fillStyle = '#00ffff';
+                    this.ctx.font = '10px Arial';
+                    this.ctx.fillText('Interpolated', this.client.interpolatedPlayer.x - 30, this.client.interpolatedPlayer.y + 35);
+                }
+                
+                // Draw predicted/client state
+                if (this.showPrediction) {
+                    this.ctx.fillStyle = 'rgba(0, 255, 0, 0.8)';
+                    this.ctx.fillRect(
+                        this.client.player.x - this.client.player.size,
+                        this.client.player.y - this.client.player.size,
+                        this.client.player.size * 2,
+                        this.client.player.size * 2
+                    );
+                    
+                    this.ctx.strokeStyle = '#00ff00';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.strokeRect(
+                        this.client.player.x - this.client.player.size,
+                        this.client.player.y - this.client.player.size,
+                        this.client.player.size * 2,
+                        this.client.player.size * 2
+                    );
+                    
+                    // Label
+                    this.ctx.fillStyle = '#00ff00';
+                    this.ctx.font = '10px Arial';
+                    this.ctx.fillText(this.client.enablePrediction ? 'Predicted' : 'Client', 
+                        this.client.player.x - 25, this.client.player.y - 25);
+                }
+                
+                // Draw prediction error line
+                if (this.client.enablePrediction && this.showServerState) {
+                    this.ctx.strokeStyle = 'rgba(255, 255, 0, 0.5)';
+                    this.ctx.lineWidth = 1;
+                    this.ctx.setLineDash([5, 5]);
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(this.client.player.x, this.client.player.y);
+                    this.ctx.lineTo(this.client.serverPlayer.x, this.client.serverPlayer.y);
+                    this.ctx.stroke();
+                    this.ctx.setLineDash([]);
+                }
+                
+                // Draw timeline
+                if (this.showTimeline && this.timeline.length > 1) {
+                    this.drawTimeline();
+                }
+                
+                // Draw legend
+                this.drawLegend();
+            }
+            
+            drawTimeline() {
+                const startY = 350;
+                const height = 40;
+                const now = performance.now();
+                
+                // Background
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                this.ctx.fillRect(10, startY, 580, height);
+                
+                // Draw timeline data
+                this.ctx.strokeStyle = '#00ff00';
+                this.ctx.beginPath();
+                this.timeline.forEach((point, i) => {
+                    const x = 10 + ((point.time - (now - 5000)) / 5000) * 580;
+                    const y = startY + 20 - (point.clientPos.y - 200) / 10;
+                    if (i === 0) this.ctx.moveTo(x, y);
+                    else this.ctx.lineTo(x, y);
+                });
+                this.ctx.stroke();
+                
+                this.ctx.strokeStyle = '#ff0000';
+                this.ctx.beginPath();
+                this.timeline.forEach((point, i) => {
+                    const x = 10 + ((point.time - (now - 5000)) / 5000) * 580;
+                    const y = startY + 20 - (point.serverPos.y - 200) / 10;
+                    if (i === 0) this.ctx.moveTo(x, y);
+                    else this.ctx.lineTo(x, y);
+                });
+                this.ctx.stroke();
+            }
+            
+            drawLegend() {
+                const x = 10;
+                let y = 15;
+                
+                this.ctx.font = '12px Arial';
+                
+                if (this.showPrediction) {
+                    this.ctx.fillStyle = '#00ff00';
+                    this.ctx.fillRect(x, y, 10, 10);
+                    this.ctx.fillStyle = '#ffffff';
+                    this.ctx.fillText('Client/Predicted', x + 15, y + 8);
+                    y += 15;
+                }
+                
+                if (this.showServerState) {
+                    this.ctx.fillStyle = '#ff0000';
+                    this.ctx.fillRect(x, y, 10, 10);
+                    this.ctx.fillStyle = '#ffffff';
+                    this.ctx.fillText('Server Authority', x + 15, y + 8);
+                    y += 15;
+                }
+                
+                if (this.showInterpolation) {
+                    this.ctx.fillStyle = '#00ffff';
+                    this.ctx.fillRect(x, y, 10, 10);
+                    this.ctx.fillStyle = '#ffffff';
+                    this.ctx.fillText('Interpolated', x + 15, y + 8);
+                    y += 15;
+                }
+                
+                // Settings status
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.font = '10px Arial';
+                y = 15;
+                let x2 = 450;
+                
+                this.ctx.fillText(`Prediction: ${this.client.enablePrediction ? 'ON' : 'OFF'}`, x2, y);
+                y += 12;
+                this.ctx.fillText(`Interpolation: ${this.client.enableInterpolation ? 'ON' : 'OFF'}`, x2, y);
+                y += 12;
+                this.ctx.fillText(`Reconciliation: ${this.client.enableReconciliation ? 'ON' : 'OFF'}`, x2, y);
+                y += 12;
+                this.ctx.fillText(`Lag Comp: ${this.client.enableLagCompensation ? 'ON' : 'OFF'}`, x2, y);
+            }
+            
+            updateStats() {
+                // FPS calculation
+                this.stats.frameCount++;
+                const now = performance.now();
+                if (now - this.stats.lastFPSUpdate >= 1000) {
+                    this.stats.clientFPS = this.stats.frameCount;
+                    this.stats.frameCount = 0;
+                    this.stats.lastFPSUpdate = now;
+                    
+                    document.getElementById('clientFPS').textContent = this.stats.clientFPS;
+                }
+                
+                // Other stats
+                document.getElementById('serverTick').textContent = this.server.tick;
+                document.getElementById('predictionError').textContent = 
+                    this.client.getPredictionError().toFixed(1) + 'px';
+                document.getElementById('inputBuffer').textContent = this.client.pendingInputs.length;
+                document.getElementById('snapshotBuffer').textContent = this.client.snapshots.length;
+                document.getElementById('rtt').textContent = (this.latency * 2) + 'ms';
+            }
+        }
+
+        // Initialize demo
+        const multiplayerCanvas = document.getElementById('multiplayerCanvas');
+        const ctx = multiplayerCanvas.getContext('2d');
+        const multiplayerDemo = new MultiplayerDemo(multiplayerCanvas, ctx);
+
+        // Control functions
+        window.togglePrediction = function() {
+            multiplayerDemo.client.enablePrediction = !multiplayerDemo.client.enablePrediction;
+            console.log('Prediction:', multiplayerDemo.client.enablePrediction);
+        };
+
+        window.toggleInterpolation = function() {
+            multiplayerDemo.client.enableInterpolation = !multiplayerDemo.client.enableInterpolation;
+            console.log('Interpolation:', multiplayerDemo.client.enableInterpolation);
+        };
+
+        window.toggleReconciliation = function() {
+            multiplayerDemo.client.enableReconciliation = !multiplayerDemo.client.enableReconciliation;
+            console.log('Reconciliation:', multiplayerDemo.client.enableReconciliation);
+        };
+
+        window.toggleLagCompensation = function() {
+            multiplayerDemo.client.enableLagCompensation = !multiplayerDemo.client.enableLagCompensation;
+            console.log('Lag Compensation:', multiplayerDemo.client.enableLagCompensation);
+        };
+
+        window.simulateLagSpike = function() {
+            const originalLatency = multiplayerDemo.latency;
+            multiplayerDemo.latency = 500;
+            console.log('Lag spike! Latency:', multiplayerDemo.latency + 'ms');
+            
+            setTimeout(() => {
+                multiplayerDemo.latency = originalLatency;
+                console.log('Lag spike ended. Latency:', multiplayerDemo.latency + 'ms');
+            }, 2000);
+        };
+
+        window.resetDemo = function() {
+            multiplayerDemo.client.player.x = 300;
+            multiplayerDemo.client.player.y = 200;
+            multiplayerDemo.client.predictedPlayer.x = 300;
+            multiplayerDemo.client.predictedPlayer.y = 200;
+            multiplayerDemo.server.player.x = 300;
+            multiplayerDemo.server.player.y = 200;
+            multiplayerDemo.client.pendingInputs = [];
+            multiplayerDemo.client.snapshots = [];
+            console.log('Demo reset');
+        };
+
+        window.setLatency = function(value) {
+            multiplayerDemo.latency = parseInt(value);
+            document.getElementById('latencyDisplay').textContent = value + 'ms';
+        };
+
+        window.setJitter = function(value) {
+            multiplayerDemo.jitter = parseInt(value);
+            document.getElementById('jitterDisplay').textContent = value + 'ms';
+        };
+
+        window.setTickRate = function(value) {
+            multiplayerDemo.server.stop();
+            multiplayerDemo.server.tickRate = parseInt(value);
+            multiplayerDemo.server.start();
+            document.getElementById('tickRateDisplay').textContent = value + 'Hz';
+        };
+
+        // Checkbox handlers
+        document.getElementById('showPrediction').addEventListener('change', (e) => {
+            multiplayerDemo.showPrediction = e.target.checked;
+        });
+
+        document.getElementById('showServerState').addEventListener('change', (e) => {
+            multiplayerDemo.showServerState = e.target.checked;
+        });
+
+        document.getElementById('showInterpolation').addEventListener('change', (e) => {
+            multiplayerDemo.showInterpolation = e.target.checked;
+        });
+
+        document.getElementById('showTimeline').addEventListener('change', (e) => {
+            multiplayerDemo.showTimeline = e.target.checked;
+        });
+
+        // Animation loop
+        let lastTime = performance.now();
+        function animate(currentTime) {
+            const dt = (currentTime - lastTime) / 1000;
+            lastTime = currentTime;
+            
+            multiplayerDemo.update(dt);
+            multiplayerDemo.draw();
+            
+            requestAnimationFrame(animate);
+        }
+
+        // Start animation
+        animate(performance.now());
+
+        console.log('Real-time Multiplayer Demo initialized successfully!');
+    </script>
+
+    <h2>Client Prediction Implementation</h2>
+    
+    <pre class="language-python"><code>import time
+from dataclasses import dataclass
+from typing import List, Dict, Optional
+
+@dataclass
+class InputCommand:
+    """Player input command"""
+    sequence: int
+    timestamp: float
+    keys: Dict[str, bool]
+    processed: bool = False
+
+class ClientPrediction:
+    """Client-side prediction system"""
+    def __init__(self):
+        self.player_pos = {'x': 0, 'y': 0}
+        self.predicted_pos = {'x': 0, 'y': 0}
+        self.server_pos = {'x': 0, 'y': 0}
+        
+        self.input_sequence = 0
+        self.pending_inputs: List[InputCommand] = []
+        self.last_processed_input = -1
+        
+        self.prediction_enabled = True
+        self.reconciliation_enabled = True
+        
+    def process_input(self, keys: Dict[str, bool], dt: float):
+        """Process local input with prediction"""
+        # Create input command
+        input_cmd = InputCommand(
+            sequence=self.input_sequence,
+            timestamp=time.time(),
+            keys=keys.copy()
+        )
+        self.input_sequence += 1
+        
+        # Apply input prediction locally
+        if self.prediction_enabled:
+            self.apply_input(self.predicted_pos, input_cmd, dt)
+            # Update displayed position
+            self.player_pos = self.predicted_pos.copy()
+        
+        # Save input for later reconciliation
+        self.pending_inputs.append(input_cmd)
+        
+        # Send input to server
+        return input_cmd
+    
+    def apply_input(self, position: Dict, input_cmd: InputCommand, dt: float):
+        """Apply input to position"""
+        speed = 200  # pixels per second
+        
+        if input_cmd.keys.get('w'):
+            position['y'] -= speed * dt
+        if input_cmd.keys.get('s'):
+            position['y'] += speed * dt
+        if input_cmd.keys.get('a'):
+            position['x'] -= speed * dt
+        if input_cmd.keys.get('d'):
+            position['x'] += speed * dt
+    
+    def receive_server_update(self, server_state: Dict):
+        """Handle authoritative server update"""
+        # Update server position
+        self.server_pos = {
+            'x': server_state['x'],
+            'y': server_state['y']
+        }
+        self.last_processed_input = server_state.get('last_input', -1)
+        
+        if self.reconciliation_enabled:
+            self.reconcile()
+        elif not self.prediction_enabled:
+            # No prediction - use server position directly
+            self.player_pos = self.server_pos.copy()
+    
+    def reconcile(self):
+        """Reconcile predicted position with server"""
+        # Start from server authoritative position
+        self.predicted_pos = self.server_pos.copy()
+        
+        # Remove already processed inputs
+        self.pending_inputs = [
+            inp for inp in self.pending_inputs 
+            if inp.sequence > self.last_processed_input
+        ]
+        
+        # Re-apply unprocessed inputs
+        for input_cmd in self.pending_inputs:
+            self.apply_input(self.predicted_pos, input_cmd, 1/60)
+        
+        # Update displayed position
+        self.player_pos = self.predicted_pos.copy()
+    
+    def get_prediction_error(self) -> float:
+        """Calculate prediction error"""
+        dx = self.player_pos['x'] - self.server_pos['x']
+        dy = self.player_pos['y'] - self.server_pos['y']
+        return (dx**2 + dy**2) ** 0.5</code></pre>
+
+    <h2>Server Reconciliation & Lag Compensation</h2>
+    
+    <pre class="language-python"><code># Server with lag compensation
+class AuthoritativeServer:
+    """Authoritative game server with lag compensation"""
+    def __init__(self, tick_rate: int = 60):
+        self.tick_rate = tick_rate
+        self.tick = 0
+        self.players = {}
+        self.input_buffers = {}
+        self.state_history = []
+        self.max_history = 120  # 2 seconds at 60Hz
+        
+    def add_player(self, player_id: str):
+        """Add new player"""
+        self.players[player_id] = {
+            'x': 300, 'y': 200,
+            'vx': 0, 'vy': 0,
+            'last_input': -1
+        }
+        self.input_buffers[player_id] = []
+    
+    def receive_input(self, player_id: str, input_cmd: InputCommand):
+        """Receive and buffer player input"""
+        if player_id in self.input_buffers:
+            self.input_buffers[player_id].append(input_cmd)
+    
+    def process_tick(self, dt: float):
+        """Process server tick"""
+        self.tick += 1
+        
+        # Save current state for lag compensation
+        self.save_state_snapshot()
+        
+        # Process all buffered inputs
+        for player_id in self.players:
+            self.process_player_inputs(player_id, dt)
+        
+        # Update physics
+        self.update_physics(dt)
+        
+        # Send updates to clients
+        return self.get_world_state()
+    
+    def process_player_inputs(self, player_id: str, dt: float):
+        """Process buffered inputs for player"""
+        buffer = self.input_buffers.get(player_id, [])
+        player = self.players[player_id]
+        
+        # Process inputs in order
+        for input_cmd in buffer:
+            self.apply_player_input(player, input_cmd, dt)
+            player['last_input'] = input_cmd.sequence
+        
+        # Clear processed inputs
+        self.input_buffers[player_id] = []
+    
+    def apply_player_input(self, player: Dict, input_cmd: InputCommand, dt: float):
+        """Apply input with validation"""
+        speed = 200
+        
+        # Calculate new velocity
+        vx, vy = 0, 0
+        if input_cmd.keys.get('w'):
+            vy = -speed
+        if input_cmd.keys.get('s'):
+            vy = speed
+        if input_cmd.keys.get('a'):
+            vx = -speed
+        if input_cmd.keys.get('d'):
+            vx = speed
+        
+        # Validate movement (anti-cheat)
+        max_speed = 250
+        if abs(vx) <= max_speed and abs(vy) <= max_speed:
+            player['vx'] = vx
+            player['vy'] = vy
+    
+    def update_physics(self, dt: float):
+        """Update world physics"""
+        for player in self.players.values():
+            # Update position
+            player['x'] += player['vx'] * dt
+            player['y'] += player['vy'] * dt
+            
+            # Boundaries
+            player['x'] = max(20, min(580, player['x']))
+            player['y'] = max(20, min(380, player['y']))
+    
+    def save_state_snapshot(self):
+        """Save state for lag compensation"""
+        snapshot = {
+            'tick': self.tick,
+            'timestamp': time.time(),
+            'players': {
+                pid: player.copy() 
+                for pid, player in self.players.items()
+            }
+        }
+        
+        self.state_history.append(snapshot)
+        
+        # Limit history size
+        if len(self.state_history) > self.max_history:
+            self.state_history.pop(0)
+    
+    def get_past_state(self, timestamp: float) -> Optional[Dict]:
+        """Get game state at specific time (lag compensation)"""
+        # Find closest snapshot
+        for snapshot in reversed(self.state_history):
+            if snapshot['timestamp'] <= timestamp:
+                return snapshot
+        return None
+    
+    def check_hit_with_lag_compensation(
+        self, shooter_id: str, 
+        target_pos: Dict, 
+        shot_timestamp: float
+    ) -> bool:
+        """Check if shot hit with lag compensation"""
+        # Get game state when shooter fired
+        past_state = self.get_past_state(shot_timestamp)
+        if not past_state:
+            return False
+        
+        # Check collision in past state
+        for player_id, player in past_state['players'].items():
+            if player_id == shooter_id:
+                continue
+                
+            # Simple distance check
+            dx = player['x'] - target_pos['x']
+            dy = player['y'] - target_pos['y']
+            distance = (dx**2 + dy**2) ** 0.5
+            
+            if distance < 30:  # Hit radius
+                return True
+        
+        return False
+    
+    def get_world_state(self) -> Dict:
+        """Get current world state for clients"""
+        return {
+            'tick': self.tick,
+            'timestamp': time.time(),
+            'players': self.players.copy()
+        }</code></pre>
+
+    <h2>Entity Interpolation</h2>
+    
+    <pre class="language-python"><code># Client-side entity interpolation
+class EntityInterpolation:
+    """Smooth entity interpolation between snapshots"""
+    def __init__(self, buffer_time: float = 0.1):
+        self.snapshots = []
+        self.buffer_time = buffer_time  # 100ms interpolation delay
+        self.entities = {}
+        
+    def add_snapshot(self, snapshot: Dict):
+        """Add server snapshot"""
+        self.snapshots.append(snapshot)
+        
+        # Keep only recent snapshots (last 1 second)
+        cutoff_time = time.time() - 1.0
+        self.snapshots = [
+            s for s in self.snapshots 
+            if s['timestamp'] > cutoff_time
+        ]
+    
+    def interpolate(self, current_time: float):
+        """Interpolate entities at render time"""
+        # Render time is in the past for interpolation
+        render_time = current_time - self.buffer_time
+        
+        # Find snapshots to interpolate between
+        before, after = self.find_snapshots(render_time)
+        
+        if not before or not after:
+            return self.entities
+        
+        # Calculate interpolation factor
+        total = after['timestamp'] - before['timestamp']
+        if total == 0:
+            return before['players']
+        
+        portion = render_time - before['timestamp']
+        ratio = portion / total
+        ratio = max(0, min(1, ratio))  # Clamp to [0, 1]
+        
+        # Interpolate each entity
+        interpolated = {}
+        for entity_id in before['players']:
+            if entity_id not in after['players']:
+                continue
+            
+            before_state = before['players'][entity_id]
+            after_state = after['players'][entity_id]
+            
+            interpolated[entity_id] = {
+                'x': self.lerp(before_state['x'], after_state['x'], ratio),
+                'y': self.lerp(before_state['y'], after_state['y'], ratio),
+                'rotation': self.lerp_angle(
+                    before_state.get('rotation', 0),
+                    after_state.get('rotation', 0),
+                    ratio
+                )
+            }
+        
+        self.entities = interpolated
+        return interpolated
+    
+    def find_snapshots(self, render_time: float) -> tuple:
+        """Find snapshots to interpolate between"""
+        before = None
+        after = None
+        
+        for i in range(len(self.snapshots) - 1):
+            if (self.snapshots[i]['timestamp'] <= render_time and
+                self.snapshots[i + 1]['timestamp'] >= render_time):
+                before = self.snapshots[i]
+                after = self.snapshots[i + 1]
+                break
+        
+        return before, after
+    
+    def lerp(self, start: float, end: float, ratio: float) -> float:
+        """Linear interpolation"""
+        return start + (end - start) * ratio
+    
+    def lerp_angle(self, start: float, end: float, ratio: float) -> float:
+        """Angular interpolation"""
+        import math
+        
+        # Handle angle wrapping
+        diff = end - start
+        if diff > math.pi:
+            diff -= 2 * math.pi
+        elif diff < -math.pi:
+            diff += 2 * math.pi
+        
+        return start + diff * ratio
+
+# Extrapolation for high latency
+class EntityExtrapolation:
+    """Extrapolate entity positions when no recent data"""
+    def __init__(self):
+        self.entities = {}
+        self.last_update = {}
+        
+    def update_entity(self, entity_id: str, state: Dict):
+        """Update entity state"""
+        if entity_id not in self.entities:
+            self.entities[entity_id] = state.copy()
+        else:
+            # Calculate velocity from position change
+            old_state = self.entities[entity_id]
+            dt = time.time() - self.last_update.get(entity_id, time.time())
+            
+            if dt > 0:
+                state['vx'] = (state['x'] - old_state['x']) / dt
+                state['vy'] = (state['y'] - old_state['y']) / dt
+            
+            self.entities[entity_id] = state
+        
+        self.last_update[entity_id] = time.time()
+    
+    def extrapolate(self, entity_id: str, current_time: float) -> Dict:
+        """Extrapolate entity position"""
+        if entity_id not in self.entities:
+            return None
+        
+        state = self.entities[entity_id].copy()
+        dt = current_time - self.last_update.get(entity_id, current_time)
+        
+        # Extrapolate position using velocity
+        if 'vx' in state:
+            state['x'] += state['vx'] * dt
+        if 'vy' in state:
+            state['y'] += state['vy'] * dt
+        
+        return state</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Real-time Multiplayer Tips</h3>
+        <ul>
+            <li><strong>Client Prediction:</strong> Always predict local player actions</li>
+            <li><strong>Server Authority:</strong> Server has final say on game state</li>
+            <li><strong>Interpolation Buffer:</strong> 100-200ms for smooth visuals</li>
+            <li><strong>Snapshot Rate:</strong> Balance bandwidth vs smoothness</li>
+            <li><strong>Input Redundancy:</strong> Send recent inputs multiple times</li>
+            <li><strong>State Compression:</strong> Send only changed values</li>
+            <li><strong>Lag Compensation:</strong> Rewind time for hit detection</li>
+            <li><strong>Adaptive Quality:</strong> Adjust rates based on connection</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>🎯 Client prediction makes games feel responsive</li>
+            <li>🔄 Server reconciliation corrects prediction errors</li>
+            <li>📊 Interpolation creates smooth visual movement</li>
+            <li>⏰ Lag compensation ensures fair gameplay</li>
+            <li>📦 Input buffering handles network jitter</li>
+            <li>🎮 Extrapolation fills gaps in network data</li>
+            <li>⚖️ Balance between responsiveness and accuracy</li>
+            <li>🔧 Multiple techniques work together for best results</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you understand real-time multiplayer techniques, next we'll explore client-server synchronization - managing game state consistency across multiple clients!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="networking_basics.html" class="prev-lesson" aria-label="Previous lesson: Networking Basics">Previous Lesson: Networking Basics</a>
+        <a href="networking_synchronization.html" class="next-lesson" aria-label="Next lesson: Client-Server Synchronization">Next Lesson: Client-Server Synchronization</a>
+    </nav>
+    
+    </main>
+    <script src="/js/course-enhancements.js" defer></script>
+</body>
+</html>

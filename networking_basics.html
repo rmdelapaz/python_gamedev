@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Learn networking fundamentals for game development. Master client-server architecture, protocols, and basic multiplayer concepts.">
+    <title>Networking Basics - Networking & Multiplayer</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Networking Basics</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Intermediate Module - Section 2: Networking & Multiplayer - Lesson 1</span>
+    </nav>
+
+    <h2>Understanding Game Networking Fundamentals</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Game networking enables players to connect and play together! Learn the fundamentals of client-server architecture, network protocols, data synchronization, and the building blocks of multiplayer games! 🌐🎮</p>
+    </div>
+
+    <h2>Understanding Network Architecture</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>📮 The Postal System Analogy</h3>
+        <p>Think of networking like a postal system:</p>
+        <ul>
+            <li><strong>Packets:</strong> Letters being sent between addresses</li>
+            <li><strong>IP Address:</strong> Your home address</li>
+            <li><strong>Port:</strong> Apartment number in a building</li>
+            <li><strong>TCP:</strong> Certified mail (guaranteed delivery)</li>
+            <li><strong>UDP:</strong> Regular mail (faster but might get lost)</li>
+            <li><strong>Latency:</strong> Time for mail to arrive</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Network Architecture"] --> B["Client-Server"]
+        A --> C["Peer-to-Peer"]
+        A --> D["Dedicated Server"]
+        
+        B --> E["Authoritative Server"]
+        B --> F["Client Prediction"]
+        B --> G["Server Reconciliation"]
+        
+        C --> H["Direct Connection"]
+        C --> I["Mesh Network"]
+        
+        D --> J["Game Server"]
+        D --> K["Match Making"]
+        D --> L["Load Balancing"]
+        
+        M["Protocols"] --> N["TCP"]
+        M --> O["UDP"]
+        M --> P["WebSockets"]
+        
+        Q["Data Sync"] --> R["State Replication"]
+        Q --> S["Delta Compression"]
+        Q --> T["Interpolation"]
+    </div>
+
+    <h2>Interactive Network Simulator</h2>
+    
+    <div class="canvas-wrapper" style="text-align: center;">
+        <canvas id="networkCanvas" width="600" height="400" style="border: 1px solid #333; background-color: #1a1a1a; display: inline-block;"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Simulate network communication between clients and server!</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; max-width: 600px; margin: 10px auto;">
+            <button onclick="addClient()">Add Client</button>
+            <button onclick="removeClient()">Remove Client</button>
+            <button onclick="sendMessage('chat')">Send Chat</button>
+            <button onclick="sendMessage('position')">Update Position</button>
+            <button onclick="sendMessage('action')">Send Action</button>
+            <button onclick="simulatePacketLoss()">Packet Loss</button>
+        </div>
+        <div style="margin-top: 10px;">
+            <label>Protocol: 
+                <select id="protocol" onchange="setProtocol(this.value)">
+                    <option value="tcp">TCP (Reliable)</option>
+                    <option value="udp">UDP (Fast)</option>
+                    <option value="websocket">WebSocket</option>
+                </select>
+            </label>
+            <label>Architecture: 
+                <select id="architecture" onchange="setArchitecture(this.value)">
+                    <option value="client-server">Client-Server</option>
+                    <option value="peer-to-peer">Peer-to-Peer</option>
+                    <option value="dedicated">Dedicated Server</option>
+                </select>
+            </label>
+        </div>
+        <div style="margin-top: 10px;">
+            <label>Latency: <input type="range" id="latency" min="0" max="500" value="50" onchange="setLatency(this.value)"> <span id="latencyDisplay">50ms</span></label>
+            <label>Packet Loss: <input type="range" id="packetLoss" min="0" max="50" value="0" onchange="setPacketLoss(this.value)"> <span id="packetLossDisplay">0%</span></label>
+            <label>Bandwidth: <input type="range" id="bandwidth" min="1" max="100" value="100" onchange="setBandwidth(this.value)"> <span id="bandwidthDisplay">100 Mbps</span></label>
+        </div>
+        <div style="margin-top: 10px; background-color: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;">
+            <p style="margin: 5px;">Clients: <span id="clientCount">0</span> | Messages Sent: <span id="messagesSent">0</span> | Messages Received: <span id="messagesReceived">0</span></p>
+            <p style="margin: 5px;">Packets Lost: <span id="packetsLost">0</span> | Average Latency: <span id="avgLatency">0ms</span> | Bandwidth Used: <span id="bandwidthUsed">0 KB/s</span></p>
+        </div>
+        <div id="networkLog" style="margin-top: 10px; height: 100px; overflow-y: auto; border: 1px solid #333; padding: 5px; text-align: left; font-size: 12px; background-color: rgba(0,0,0,0.5); font-family: monospace;">
+            <!-- Network log entries will appear here -->
+        </div>
+    </div>
+
+    <script>
+        // Network Simulator
+        console.log('Network Simulator starting...');
+
+        // Classes for network visualization
+        class NetworkPacket {
+            constructor(source, destination, type, data) {
+                this.id = Math.random().toString(36).substr(2, 9);
+                this.source = source;
+                this.destination = destination;
+                this.type = type;
+                this.data = data;
+                this.x = source.x;
+                this.y = source.y;
+                this.targetX = destination.x;
+                this.targetY = destination.y;
+                this.progress = 0;
+                this.delivered = false;
+                this.lost = false;
+                this.color = this.getPacketColor(type);
+                this.size = 5;
+            }
+            
+            getPacketColor(type) {
+                const colors = {
+                    'chat': '#00ff00',
+                    'position': '#00ffff',
+                    'action': '#ff00ff',
+                    'connect': '#ffff00',
+                    'disconnect': '#ff0000',
+                    'ping': '#ffffff'
+                };
+                return colors[type] || '#ffffff';
+            }
+            
+            update(dt, latency, packetLoss) {
+                if (this.delivered || this.lost) return;
+                
+                // Check for packet loss
+                if (this.progress === 0 && Math.random() * 100 < packetLoss) {
+                    this.lost = true;
+                    networkManager.stats.packetsLost++;
+                    return;
+                }
+                
+                // Move packet
+                const speed = 1000 / latency; // Adjust speed based on latency
+                this.progress += dt * speed;
+                
+                if (this.progress >= 1) {
+                    this.progress = 1;
+                    this.delivered = true;
+                    this.destination.receivePacket(this);
+                    networkManager.stats.messagesReceived++;
+                }
+                
+                // Interpolate position
+                this.x = this.source.x + (this.targetX - this.source.x) * this.progress;
+                this.y = this.source.y + (this.targetY - this.source.y) * this.progress;
+            }
+            
+            draw(ctx) {
+                if (this.lost) {
+                    // Draw lost packet
+                    ctx.fillStyle = '#ff0000';
+                    ctx.globalAlpha = 0.5;
+                    ctx.fillText('X', this.x - 5, this.y + 5);
+                    ctx.globalAlpha = 1;
+                } else {
+                    // Draw packet
+                    ctx.fillStyle = this.color;
+                    ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+                    
+                    // Draw trail
+                    ctx.strokeStyle = this.color + '33';
+                    ctx.beginPath();
+                    ctx.moveTo(this.source.x, this.source.y);
+                    ctx.lineTo(this.x, this.y);
+                    ctx.stroke();
+                }
+            }
+        }
+
+        class NetworkNode {
+            constructor(x, y, type, name) {
+                this.x = x;
+                this.y = y;
+                this.type = type; // 'server', 'client', 'peer'
+                this.name = name;
+                this.connected = true;
+                this.radius = type === 'server' ? 30 : 20;
+                this.color = type === 'server' ? '#4CAF50' : '#2196F3';
+                this.receivedPackets = [];
+                this.pulsePhase = Math.random() * Math.PI * 2;
+            }
+            
+            sendPacket(destination, type, data) {
+                const packet = new NetworkPacket(this, destination, type, data);
+                networkManager.packets.push(packet);
+                networkManager.stats.messagesSent++;
+                
+                networkManager.log(`${this.name} -> ${destination.name}: ${type}`);
+            }
+            
+            receivePacket(packet) {
+                this.receivedPackets.push({
+                    packet: packet,
+                    time: Date.now(),
+                    alpha: 1
+                });
+                
+                // Keep only recent packets
+                const now = Date.now();
+                this.receivedPackets = this.receivedPackets.filter(p => 
+                    now - p.time < 2000
+                );
+            }
+            
+            update(dt) {
+                this.pulsePhase += dt * 2;
+                
+                // Update received packet visuals
+                this.receivedPackets.forEach(p => {
+                    p.alpha = Math.max(0, p.alpha - dt);
+                });
+            }
+            
+            draw(ctx) {
+                // Draw pulse if receiving
+                if (this.receivedPackets.length > 0) {
+                    const pulse = Math.sin(this.pulsePhase) * 10 + 5;
+                    ctx.fillStyle = this.color + '33';
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius + pulse, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                // Draw node
+                ctx.fillStyle = this.connected ? this.color : '#666666';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Draw label
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.name, this.x, this.y);
+                
+                // Draw type icon
+                ctx.font = '10px Arial';
+                ctx.fillText(this.type === 'server' ? '🖥️' : '💻', this.x, this.y - this.radius - 10);
+            }
+        }
+
+        class NetworkManager {
+            constructor(canvas, ctx) {
+                this.canvas = canvas;
+                this.ctx = ctx;
+                this.server = null;
+                this.clients = [];
+                this.packets = [];
+                this.protocol = 'tcp';
+                this.architecture = 'client-server';
+                this.latency = 50;
+                this.packetLoss = 0;
+                this.bandwidth = 100;
+                
+                this.stats = {
+                    messagesSent: 0,
+                    messagesReceived: 0,
+                    packetsLost: 0,
+                    latencies: [],
+                    bytesTransferred: 0
+                };
+                
+                this.logEntries = [];
+                
+                this.initializeNetwork();
+            }
+            
+            initializeNetwork() {
+                // Create server
+                this.server = new NetworkNode(300, 100, 'server', 'Server');
+            }
+            
+            addClient() {
+                if (this.clients.length >= 6) {
+                    this.log('Maximum clients reached');
+                    return;
+                }
+                
+                const angle = (this.clients.length / 6) * Math.PI * 2;
+                const radius = 150;
+                const x = 300 + Math.cos(angle) * radius;
+                const y = 250 + Math.sin(angle) * radius;
+                
+                const client = new NetworkNode(x, y, 'client', `Client ${this.clients.length + 1}`);
+                this.clients.push(client);
+                
+                // Send connect packet
+                if (this.architecture === 'client-server') {
+                    client.sendPacket(this.server, 'connect', {});
+                    setTimeout(() => {
+                        this.server.sendPacket(client, 'connect', { accepted: true });
+                    }, this.latency);
+                }
+                
+                this.updateStats();
+            }
+            
+            removeClient() {
+                if (this.clients.length > 0) {
+                    const client = this.clients.pop();
+                    
+                    // Send disconnect packet
+                    if (this.architecture === 'client-server') {
+                        client.sendPacket(this.server, 'disconnect', {});
+                    }
+                    
+                    this.updateStats();
+                }
+            }
+            
+            sendMessage(type) {
+                if (this.clients.length === 0) {
+                    this.log('No clients connected');
+                    return;
+                }
+                
+                const client = this.clients[Math.floor(Math.random() * this.clients.length)];
+                
+                if (this.architecture === 'client-server') {
+                    // Client to server
+                    client.sendPacket(this.server, type, { data: 'test' });
+                    
+                    // Server broadcasts to other clients
+                    setTimeout(() => {
+                        this.clients.forEach(c => {
+                            if (c !== client) {
+                                this.server.sendPacket(c, type, { from: client.name });
+                            }
+                        });
+                    }, this.latency);
+                } else if (this.architecture === 'peer-to-peer') {
+                    // Send to all peers
+                    this.clients.forEach(peer => {
+                        if (peer !== client) {
+                            client.sendPacket(peer, type, { data: 'test' });
+                        }
+                    });
+                }
+            }
+            
+            simulatePacketLoss() {
+                this.packetLoss = 30;
+                this.log('Simulating 30% packet loss for 2 seconds');
+                setTimeout(() => {
+                    this.packetLoss = 0;
+                    this.log('Packet loss simulation ended');
+                }, 2000);
+            }
+            
+            update(dt) {
+                // Update nodes
+                this.server.update(dt);
+                this.clients.forEach(client => client.update(dt));
+                
+                // Update packets
+                this.packets.forEach(packet => {
+                    packet.update(dt, this.latency, this.packetLoss);
+                });
+                
+                // Remove delivered/lost packets
+                this.packets = this.packets.filter(p => !p.delivered && !p.lost);
+                
+                this.updateStats();
+            }
+            
+            draw() {
+                // Clear canvas
+                this.ctx.fillStyle = '#1a1a1a';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw grid
+                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+                this.ctx.lineWidth = 1;
+                for (let x = 0; x <= this.canvas.width; x += 50) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, 0);
+                    this.ctx.lineTo(x, this.canvas.height);
+                    this.ctx.stroke();
+                }
+                for (let y = 0; y <= this.canvas.height; y += 50) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, y);
+                    this.ctx.lineTo(this.canvas.width, y);
+                    this.ctx.stroke();
+                }
+                
+                // Draw connections
+                if (this.architecture === 'client-server') {
+                    this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+                    this.ctx.lineWidth = 1;
+                    this.clients.forEach(client => {
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(this.server.x, this.server.y);
+                        this.ctx.lineTo(client.x, client.y);
+                        this.ctx.stroke();
+                    });
+                } else if (this.architecture === 'peer-to-peer') {
+                    this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+                    for (let i = 0; i < this.clients.length; i++) {
+                        for (let j = i + 1; j < this.clients.length; j++) {
+                            this.ctx.beginPath();
+                            this.ctx.moveTo(this.clients[i].x, this.clients[i].y);
+                            this.ctx.lineTo(this.clients[j].x, this.clients[j].y);
+                            this.ctx.stroke();
+                        }
+                    }
+                }
+                
+                // Draw packets
+                this.packets.forEach(packet => packet.draw(this.ctx));
+                
+                // Draw nodes
+                if (this.architecture !== 'peer-to-peer' || this.clients.length === 0) {
+                    this.server.draw(this.ctx);
+                }
+                this.clients.forEach(client => client.draw(this.ctx));
+                
+                // Draw protocol indicator
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.font = '14px Arial';
+                this.ctx.textAlign = 'left';
+                this.ctx.fillText(`Protocol: ${this.protocol.toUpperCase()}`, 10, 20);
+                this.ctx.fillText(`Architecture: ${this.architecture}`, 10, 40);
+            }
+            
+            log(message) {
+                const timestamp = new Date().toLocaleTimeString();
+                this.logEntries.unshift(`[${timestamp}] ${message}`);
+                if (this.logEntries.length > 10) {
+                    this.logEntries.pop();
+                }
+                
+                const logDiv = document.getElementById('networkLog');
+                if (logDiv) {
+                    logDiv.innerHTML = this.logEntries.join('<br>');
+                }
+            }
+            
+            updateStats() {
+                document.getElementById('clientCount').textContent = this.clients.length;
+                document.getElementById('messagesSent').textContent = this.stats.messagesSent;
+                document.getElementById('messagesReceived').textContent = this.stats.messagesReceived;
+                document.getElementById('packetsLost').textContent = this.stats.packetsLost;
+                
+                const avgLatency = this.stats.latencies.length > 0 
+                    ? (this.stats.latencies.reduce((a, b) => a + b, 0) / this.stats.latencies.length).toFixed(0)
+                    : this.latency;
+                document.getElementById('avgLatency').textContent = avgLatency + 'ms';
+                
+                const bandwidth = ((this.stats.bytesTransferred / 1024) / (Date.now() / 1000)).toFixed(2);
+                document.getElementById('bandwidthUsed').textContent = bandwidth + ' KB/s';
+            }
+        }
+
+        // Initialize network manager
+        const networkCanvas = document.getElementById('networkCanvas');
+        const ctx = networkCanvas.getContext('2d');
+        const networkManager = new NetworkManager(networkCanvas, ctx);
+
+        // Global functions
+        window.addClient = () => networkManager.addClient();
+        window.removeClient = () => networkManager.removeClient();
+        window.sendMessage = (type) => networkManager.sendMessage(type);
+        window.simulatePacketLoss = () => networkManager.simulatePacketLoss();
+
+        window.setProtocol = (protocol) => {
+            networkManager.protocol = protocol;
+            networkManager.log(`Protocol changed to ${protocol}`);
+        };
+
+        window.setArchitecture = (architecture) => {
+            networkManager.architecture = architecture;
+            networkManager.log(`Architecture changed to ${architecture}`);
+            
+            // Reset network
+            networkManager.clients = [];
+            networkManager.packets = [];
+            networkManager.updateStats();
+        };
+
+        window.setLatency = (value) => {
+            networkManager.latency = parseInt(value);
+            document.getElementById('latencyDisplay').textContent = value + 'ms';
+        };
+
+        window.setPacketLoss = (value) => {
+            networkManager.packetLoss = parseInt(value);
+            document.getElementById('packetLossDisplay').textContent = value + '%';
+        };
+
+        window.setBandwidth = (value) => {
+            networkManager.bandwidth = parseInt(value);
+            document.getElementById('bandwidthDisplay').textContent = value + ' Mbps';
+        };
+
+        // Animation loop
+        let lastTime = performance.now();
+        function animate(currentTime) {
+            const dt = (currentTime - lastTime) / 1000;
+            lastTime = currentTime;
+            
+            networkManager.update(dt);
+            networkManager.draw();
+            
+            requestAnimationFrame(animate);
+        }
+
+        // Start animation
+        animate(performance.now());
+
+        // Add initial clients
+        setTimeout(() => {
+            networkManager.addClient();
+            networkManager.addClient();
+        }, 100);
+
+        console.log('Network Simulator initialized successfully!');
+    </script>
+
+    <h2>Basic Networking Implementation</h2>
+    
+    <pre class="language-python"><code>import socket
+import threading
+import json
+import time
+from enum import Enum
+
+class MessageType(Enum):
+    """Types of network messages"""
+    CONNECT = "connect"
+    DISCONNECT = "disconnect"
+    POSITION = "position"
+    ACTION = "action"
+    CHAT = "chat"
+    PING = "ping"
+    PONG = "pong"
+
+# TCP Server
+class TCPGameServer:
+    """TCP-based game server"""
+    def __init__(self, host='localhost', port=5555):
+        self.host = host
+        self.port = port
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.clients = {}
+        self.running = False
+        
+    def start(self):
+        """Start the server"""
+        self.socket.bind((self.host, self.port))
+        self.socket.listen(5)
+        self.running = True
+        print(f"Server listening on {self.host}:{self.port}")
+        
+        # Accept clients in thread
+        accept_thread = threading.Thread(target=self.accept_clients)
+        accept_thread.daemon = True
+        accept_thread.start()
+    
+    def accept_clients(self):
+        """Accept new connections"""
+        while self.running:
+            try:
+                client_socket, address = self.socket.accept()
+                client_id = f"{address[0]}:{address[1]}"
+                self.clients[client_id] = client_socket
+                
+                # Handle client in thread
+                client_thread = threading.Thread(
+                    target=self.handle_client,
+                    args=(client_id,)
+                )
+                client_thread.daemon = True
+                client_thread.start()
+                
+                print(f"Client {client_id} connected")
+                
+            except Exception as e:
+                if self.running:
+                    print(f"Error: {e}")</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Networking Tips</h3>
+        <ul>
+            <li><strong>Protocol Choice:</strong> TCP for reliability, UDP for speed</li>
+            <li><strong>Message Serialization:</strong> Use efficient formats</li>
+            <li><strong>Bandwidth Optimization:</strong> Send only necessary data</li>
+            <li><strong>Latency Compensation:</strong> Client prediction and interpolation</li>
+            <li><strong>Security:</strong> Validate all incoming data</li>
+            <li><strong>Connection Management:</strong> Handle disconnects gracefully</li>
+            <li><strong>Rate Limiting:</strong> Prevent flooding</li>
+            <li><strong>Network Debugging:</strong> Log and monitor traffic</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>🌐 Networking enables multiplayer gaming experiences</li>
+            <li>📡 TCP provides reliable ordered delivery</li>
+            <li>⚡ UDP offers fast, lightweight communication</li>
+            <li>🏗️ Client-server architecture provides authority</li>
+            <li>🔄 P2P reduces server costs but increases complexity</li>
+            <li>📊 Network statistics help optimize performance</li>
+            <li>🔒 Security and validation are critical</li>
+            <li>⏱️ Latency compensation creates smooth gameplay</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you understand networking basics, next we'll explore real-time multiplayer - implementing client prediction, server reconciliation, and lag compensation!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="architecture_save_load.html" class="prev-lesson" aria-label="Previous lesson: Save/Load Game State">Previous Lesson: Save/Load Game State</a>
+        <a href="networking_realtime_multiplayer.html" class="next-lesson" aria-label="Next lesson: Real-time Multiplayer">Next Lesson: Real-time Multiplayer</a>
+    </nav>
+    
+    </main>
+    <script src="/js/course-enhancements.js" defer></script>
+</body>
+</html>

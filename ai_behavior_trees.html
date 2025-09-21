@@ -1,0 +1,1636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master behavior trees for game AI. Learn nodes, selectors, sequences, decorators, and creating modular AI behaviors.">
+    <title>Behavior Trees - AI for Games</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Behavior Trees</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Intermediate Module - Section 3: AI for Games - Lesson 3</span>
+    </nav>
+
+    <h2>Modular AI with Behavior Trees</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Behavior trees provide modular, reusable, and maintainable AI! Learn composite nodes, leaf nodes, decorators, and how to build complex AI behaviors that are easy to understand and debug! 🌳🤖🔧</p>
+    </div>
+
+    <h2>Understanding Behavior Trees</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🌳 The Decision Tree Analogy</h3>
+        <p>Think of behavior trees like a flowchart for making decisions:</p>
+        <ul>
+            <li><strong>Root:</strong> The starting point of all decisions</li>
+            <li><strong>Branches:</strong> Different paths based on conditions</li>
+            <li><strong>Leaves:</strong> Actual actions to perform</li>
+            <li><strong>Selector:</strong> Try options until one works (OR)</li>
+            <li><strong>Sequence:</strong> Do all steps in order (AND)</li>
+            <li><strong>Decorator:</strong> Modify behavior (repeat, invert)</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Behavior Tree"] --> B["Composite Nodes"]
+        A --> C["Leaf Nodes"]
+        A --> D["Decorators"]
+        
+        B --> E["Selector/Fallback"]
+        B --> F["Sequence"]
+        B --> G["Parallel"]
+        
+        C --> H["Action"]
+        C --> I["Condition"]
+        
+        D --> J["Inverter"]
+        D --> K["Repeater"]
+        D --> L["Cooldown"]
+    </div>
+
+    <h2>Interactive Behavior Tree Demo</h2>
+    
+    <div class="canvas-wrapper" style="text-align: center;">
+        <canvas id="behaviorCanvas" width="600" height="400" style="border: 1px solid #333; background-color: #2C3E50; display: inline-block;"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Watch the AI make decisions using behavior trees! Control the environment to see different behaviors!</p>
+        
+        <!-- Agent Controls -->
+        <div style="margin: 10px auto; padding: 10px; background-color: rgba(0,0,0,0.3); border-radius: 5px; max-width: 600px;">
+            <p style="color: white; margin: 5px;">Spawn Agents:</p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 5px;">
+                <button onclick="spawnAgent('worker')" class="agent-btn">👷 Worker</button>
+                <button onclick="spawnAgent('soldier')" class="agent-btn">⚔️ Soldier</button>
+                <button onclick="spawnAgent('scout')" class="agent-btn">🔍 Scout</button>
+                <button onclick="spawnAgent('healer')" class="agent-btn">💚 Healer</button>
+                <button onclick="spawnAgent('builder')" class="agent-btn">🔨 Builder</button>
+                <button onclick="spawnAgent('harvester')" class="agent-btn">🌾 Harvester</button>
+            </div>
+        </div>
+        
+        <!-- Environment Controls -->
+        <div style="margin-top: 10px;">
+            <button onclick="addResource()">➕ Add Resource</button>
+            <button onclick="addEnemy()">👹 Add Enemy</button>
+            <button onclick="addBuilding()">🏠 Add Building</button>
+            <button onclick="createDanger()">⚠️ Create Danger</button>
+            <button onclick="clearEnvironment()">🧹 Clear All</button>
+            <button onclick="pauseSimulation()" id="pauseBtn">⏸️ Pause</button>
+        </div>
+        
+        <!-- Visualization Controls -->
+        <div style="margin-top: 10px;">
+            <label><input type="checkbox" id="showTree" checked> Show Active Tree</label>
+            <label><input type="checkbox" id="showNodes" checked> Show Node States</label>
+            <label><input type="checkbox" id="showDecisions" checked> Show Decisions</label>
+            <label><input type="checkbox" id="showPaths"> Show Paths</label>
+            <label><input type="checkbox" id="debugMode"> Debug Mode</label>
+        </div>
+        
+        <!-- Selected Agent Info -->
+        <div style="margin-top: 10px;">
+            <label>Select Agent: 
+                <select id="selectedAgent" onchange="selectAgent(this.value)">
+                    <option value="">None</option>
+                </select>
+            </label>
+            <button onclick="toggleTreeView()">📊 Tree Visualization</button>
+        </div>
+        
+        <!-- Statistics -->
+        <div style="margin-top: 10px; background-color: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;">
+            <p style="margin: 5px; color: white;">
+                Agents: <span id="agentCount">0</span> | 
+                Resources: <span id="resourceCount">0</span> | 
+                Enemies: <span id="enemyCount">0</span> | 
+                Buildings: <span id="buildingCount">0</span>
+            </p>
+            <div id="agentStatus" style="color: white; margin-top: 5px; font-size: 12px;"></div>
+        </div>
+        
+        <!-- Behavior Tree Visualization -->
+        <div id="treeView" style="display: none; margin-top: 10px; padding: 10px; background-color: rgba(0,0,0,0.7); border-radius: 5px;">
+            <canvas id="treeCanvas" width="600" height="300" style="border: 1px solid #555;"></canvas>
+            <div id="nodeInfo" style="color: white; margin-top: 10px; font-size: 12px;"></div>
+        </div>
+    </div>
+
+    <style>
+        .agent-btn {
+            padding: 8px;
+            border: 2px solid transparent;
+            background-color: #555;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        .agent-btn:hover {
+            background-color: #666;
+        }
+    </style>
+
+    <script>
+        console.log('Behavior Tree Demo starting...');
+
+        // Node states
+        const NodeState = {
+            SUCCESS: 'SUCCESS',
+            FAILURE: 'FAILURE',
+            RUNNING: 'RUNNING'
+        };
+
+        // Node colors for visualization
+        const NodeColors = {
+            [NodeState.SUCCESS]: '#4CAF50',
+            [NodeState.FAILURE]: '#F44336',
+            [NodeState.RUNNING]: '#FFC107',
+            'IDLE': '#9E9E9E'
+        };
+
+        // Base Node class
+        class BehaviorNode {
+            constructor(name) {
+                this.name = name;
+                this.state = null;
+                this.children = [];
+                this.parent = null;
+                this.lastExecutionTime = 0;
+                this.executionCount = 0;
+            }
+            
+            tick(agent, dt) {
+                this.lastExecutionTime = Date.now();
+                this.executionCount++;
+                return NodeState.SUCCESS;
+            }
+            
+            reset() {
+                this.state = null;
+                for (const child of this.children) {
+                    child.reset();
+                }
+            }
+            
+            addChild(child) {
+                this.children.push(child);
+                child.parent = this;
+                return this;
+            }
+        }
+
+        // Composite Nodes
+        class Selector extends BehaviorNode {
+            constructor(name = 'Selector') {
+                super(name);
+                this.currentChild = 0;
+            }
+            
+            tick(agent, dt) {
+                super.tick(agent, dt);
+                
+                for (let i = this.currentChild; i < this.children.length; i++) {
+                    const child = this.children[i];
+                    const result = child.tick(agent, dt);
+                    
+                    if (result === NodeState.SUCCESS) {
+                        this.currentChild = 0;
+                        return NodeState.SUCCESS;
+                    } else if (result === NodeState.RUNNING) {
+                        this.currentChild = i;
+                        return NodeState.RUNNING;
+                    }
+                }
+                
+                this.currentChild = 0;
+                return NodeState.FAILURE;
+            }
+            
+            reset() {
+                super.reset();
+                this.currentChild = 0;
+            }
+        }
+
+        class Sequence extends BehaviorNode {
+            constructor(name = 'Sequence') {
+                super(name);
+                this.currentChild = 0;
+            }
+            
+            tick(agent, dt) {
+                super.tick(agent, dt);
+                
+                for (let i = this.currentChild; i < this.children.length; i++) {
+                    const child = this.children[i];
+                    const result = child.tick(agent, dt);
+                    
+                    if (result === NodeState.FAILURE) {
+                        this.currentChild = 0;
+                        return NodeState.FAILURE;
+                    } else if (result === NodeState.RUNNING) {
+                        this.currentChild = i;
+                        return NodeState.RUNNING;
+                    }
+                }
+                
+                this.currentChild = 0;
+                return NodeState.SUCCESS;
+            }
+            
+            reset() {
+                super.reset();
+                this.currentChild = 0;
+            }
+        }
+
+        class Parallel extends BehaviorNode {
+            constructor(successThreshold = -1, failureThreshold = -1, name = 'Parallel') {
+                super(name);
+                this.successThreshold = successThreshold;
+                this.failureThreshold = failureThreshold;
+            }
+            
+            tick(agent, dt) {
+                super.tick(agent, dt);
+                
+                let successCount = 0;
+                let failureCount = 0;
+                let runningCount = 0;
+                
+                for (const child of this.children) {
+                    const result = child.tick(agent, dt);
+                    
+                    if (result === NodeState.SUCCESS) {
+                        successCount++;
+                    } else if (result === NodeState.FAILURE) {
+                        failureCount++;
+                    } else {
+                        runningCount++;
+                    }
+                }
+                
+                if (this.successThreshold > 0 && successCount >= this.successThreshold) {
+                    return NodeState.SUCCESS;
+                }
+                if (this.failureThreshold > 0 && failureCount >= this.failureThreshold) {
+                    return NodeState.FAILURE;
+                }
+                
+                if (runningCount > 0) {
+                    return NodeState.RUNNING;
+                }
+                
+                return successCount > 0 ? NodeState.SUCCESS : NodeState.FAILURE;
+            }
+        }
+
+        // Decorator Nodes
+        class Decorator extends BehaviorNode {
+            constructor(child, name = 'Decorator') {
+                super(name);
+                if (child) {
+                    this.addChild(child);
+                }
+            }
+        }
+
+        class Inverter extends Decorator {
+            constructor(child) {
+                super(child, 'Inverter');
+            }
+            
+            tick(agent, dt) {
+                super.tick(agent, dt);
+                
+                if (this.children.length === 0) {
+                    return NodeState.FAILURE;
+                }
+                
+                const result = this.children[0].tick(agent, dt);
+                
+                if (result === NodeState.SUCCESS) {
+                    return NodeState.FAILURE;
+                } else if (result === NodeState.FAILURE) {
+                    return NodeState.SUCCESS;
+                }
+                
+                return NodeState.RUNNING;
+            }
+        }
+
+        class Repeater extends Decorator {
+            constructor(child, times = -1) {
+                super(child, `Repeat(${times})`);
+                this.times = times;
+                this.count = 0;
+            }
+            
+            tick(agent, dt) {
+                super.tick(agent, dt);
+                
+                if (this.children.length === 0) {
+                    return NodeState.FAILURE;
+                }
+                
+                while (this.times < 0 || this.count < this.times) {
+                    const result = this.children[0].tick(agent, dt);
+                    
+                    if (result === NodeState.SUCCESS) {
+                        this.count++;
+                        if (this.times > 0 && this.count >= this.times) {
+                            this.count = 0;
+                            return NodeState.SUCCESS;
+                        }
+                    } else if (result === NodeState.FAILURE) {
+                        this.count = 0;
+                        return NodeState.FAILURE;
+                    } else {
+                        return NodeState.RUNNING;
+                    }
+                }
+                
+                return NodeState.SUCCESS;
+            }
+            
+            reset() {
+                super.reset();
+                this.count = 0;
+            }
+        }
+
+        class Cooldown extends Decorator {
+            constructor(child, cooldownTime) {
+                super(child, `Cooldown(${cooldownTime}s)`);
+                this.cooldownTime = cooldownTime * 1000;
+                this.lastSuccess = 0;
+            }
+            
+            tick(agent, dt) {
+                const now = Date.now();
+                
+                if (now - this.lastSuccess < this.cooldownTime) {
+                    return NodeState.FAILURE;
+                }
+                
+                const result = this.children[0].tick(agent, dt);
+                
+                if (result === NodeState.SUCCESS) {
+                    this.lastSuccess = now;
+                }
+                
+                return result;
+            }
+        }
+
+        // Leaf Nodes - Conditions
+        class Condition extends BehaviorNode {
+            constructor(name, checkFunc) {
+                super(name);
+                this.checkFunc = checkFunc;
+            }
+            
+            tick(agent, dt) {
+                super.tick(agent, dt);
+                return this.checkFunc(agent) ? NodeState.SUCCESS : NodeState.FAILURE;
+            }
+        }
+
+        // Leaf Nodes - Actions
+        class Action extends BehaviorNode {
+            constructor(name, actionFunc) {
+                super(name);
+                this.actionFunc = actionFunc;
+            }
+            
+            tick(agent, dt) {
+                super.tick(agent, dt);
+                return this.actionFunc(agent, dt);
+            }
+        }
+
+        // Specific Conditions
+        const hasTarget = new Condition('HasTarget', (agent) => agent.target !== null);
+        const isHealthLow = new Condition('HealthLow', (agent) => agent.health < 30);
+        const enemyNearby = new Condition('EnemyNearby', (agent) => {
+            for (const enemy of agent.world.enemies) {
+                const dx = enemy.x - agent.x;
+                const dy = enemy.y - agent.y;
+                if (Math.sqrt(dx*dx + dy*dy) < 100) {
+                    return true;
+                }
+            }
+            return false;
+        });
+        const resourceNearby = new Condition('ResourceNearby', (agent) => {
+            for (const resource of agent.world.resources) {
+                const dx = resource.x - agent.x;
+                const dy = resource.y - agent.y;
+                if (Math.sqrt(dx*dx + dy*dy) < 150) {
+                    return true;
+                }
+            }
+            return false;
+        });
+        const hasResource = new Condition('HasResource', (agent) => agent.carrying !== null);
+        const atBase = new Condition('AtBase', (agent) => {
+            const dx = agent.x - agent.homeX;
+            const dy = agent.y - agent.homeY;
+            return Math.sqrt(dx*dx + dy*dy) < 30;
+        });
+
+        // Specific Actions
+        const findResource = new Action('FindResource', (agent, dt) => {
+            let nearest = null;
+            let nearestDist = Infinity;
+            
+            for (const resource of agent.world.resources) {
+                const dx = resource.x - agent.x;
+                const dy = resource.y - agent.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                
+                if (dist < nearestDist) {
+                    nearest = resource;
+                    nearestDist = dist;
+                }
+            }
+            
+            if (nearest) {
+                agent.target = nearest;
+                agent.targetType = 'resource';
+                return NodeState.SUCCESS;
+            }
+            
+            return NodeState.FAILURE;
+        });
+
+        const moveToTarget = new Action('MoveToTarget', (agent, dt) => {
+            if (!agent.target) {
+                return NodeState.FAILURE;
+            }
+            
+            const dx = agent.target.x - agent.x;
+            const dy = agent.target.y - agent.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            
+            if (dist < 10) {
+                return NodeState.SUCCESS;
+            }
+            
+            const speed = agent.speed;
+            agent.vx = (dx / dist) * speed;
+            agent.vy = (dy / dist) * speed;
+            
+            agent.x += agent.vx * dt;
+            agent.y += agent.vy * dt;
+            
+            return NodeState.RUNNING;
+        });
+
+        const collectResource = new Action('Collect', (agent, dt) => {
+            if (!agent.target || agent.targetType !== 'resource') {
+                return NodeState.FAILURE;
+            }
+            
+            const index = agent.world.resources.indexOf(agent.target);
+            if (index !== -1) {
+                agent.world.resources.splice(index, 1);
+                agent.carrying = { type: 'resource', value: 10 };
+                agent.target = null;
+                return NodeState.SUCCESS;
+            }
+            
+            return NodeState.FAILURE;
+        });
+
+        const returnToBase = new Action('ReturnToBase', (agent, dt) => {
+            agent.target = { x: agent.homeX, y: agent.homeY };
+            return NodeState.SUCCESS;
+        });
+
+        const depositResource = new Action('Deposit', (agent, dt) => {
+            if (agent.carrying) {
+                agent.world.score += agent.carrying.value;
+                agent.carrying = null;
+                return NodeState.SUCCESS;
+            }
+            return NodeState.FAILURE;
+        });
+
+        const flee = new Action('Flee', (agent, dt) => {
+            let nearestEnemy = null;
+            let nearestDist = Infinity;
+            
+            for (const enemy of agent.world.enemies) {
+                const dx = enemy.x - agent.x;
+                const dy = enemy.y - agent.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                
+                if (dist < nearestDist) {
+                    nearestEnemy = enemy;
+                    nearestDist = dist;
+                }
+            }
+            
+            if (nearestEnemy && nearestDist < 100) {
+                const dx = agent.x - nearestEnemy.x;
+                const dy = agent.y - nearestEnemy.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                
+                agent.vx = (dx / dist) * agent.speed * 1.5;
+                agent.vy = (dy / dist) * agent.speed * 1.5;
+                
+                agent.x += agent.vx * dt;
+                agent.y += agent.vy * dt;
+                
+                return NodeState.RUNNING;
+            }
+            
+            return NodeState.SUCCESS;
+        });
+
+        const attack = new Action('Attack', (agent, dt) => {
+            if (!agent.target || agent.targetType !== 'enemy') {
+                return NodeState.FAILURE;
+            }
+            
+            const dx = agent.target.x - agent.x;
+            const dy = agent.target.y - agent.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            
+            if (dist < 30) {
+                agent.target.health -= 20;
+                if (agent.target.health <= 0) {
+                    const index = agent.world.enemies.indexOf(agent.target);
+                    if (index !== -1) {
+                        agent.world.enemies.splice(index, 1);
+                    }
+                    agent.target = null;
+                }
+                return NodeState.SUCCESS;
+            }
+            
+            return NodeState.RUNNING;
+        });
+
+        const patrol = new Action('Patrol', (agent, dt) => {
+            if (!agent.patrolTarget || agent.patrolIndex === undefined) {
+                agent.patrolPoints = [
+                    { x: 100, y: 100 },
+                    { x: 500, y: 100 },
+                    { x: 500, y: 300 },
+                    { x: 100, y: 300 }
+                ];
+                agent.patrolIndex = 0;
+                agent.patrolTarget = agent.patrolPoints[0];
+            }
+            
+            const dx = agent.patrolTarget.x - agent.x;
+            const dy = agent.patrolTarget.y - agent.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            
+            if (dist < 20) {
+                agent.patrolIndex = (agent.patrolIndex + 1) % agent.patrolPoints.length;
+                agent.patrolTarget = agent.patrolPoints[agent.patrolIndex];
+                return NodeState.SUCCESS;
+            }
+            
+            agent.vx = (dx / dist) * agent.speed * 0.5;
+            agent.vy = (dy / dist) * agent.speed * 0.5;
+            
+            agent.x += agent.vx * dt;
+            agent.y += agent.vy * dt;
+            
+            return NodeState.RUNNING;
+        });
+
+        const idle = new Action('Idle', (agent, dt) => {
+            agent.vx = 0;
+            agent.vy = 0;
+            return NodeState.SUCCESS;
+        });
+
+        // Build behavior trees for different agent types
+        function buildWorkerTree() {
+            const root = new Selector('Worker Root');
+            
+            // Priority 1: Flee from danger
+            const fleeSequence = new Sequence('Flee Sequence');
+            fleeSequence.addChild(enemyNearby);
+            fleeSequence.addChild(flee);
+            
+            // Priority 2: Return resources
+            const returnSequence = new Sequence('Return Resources');
+            returnSequence.addChild(hasResource);
+            returnSequence.addChild(returnToBase);
+            returnSequence.addChild(moveToTarget);
+            returnSequence.addChild(depositResource);
+            
+            // Priority 3: Gather resources
+            const gatherSequence = new Sequence('Gather Resources');
+            gatherSequence.addChild(findResource);
+            gatherSequence.addChild(moveToTarget);
+            gatherSequence.addChild(collectResource);
+            
+            // Priority 4: Idle
+            root.addChild(fleeSequence);
+            root.addChild(returnSequence);
+            root.addChild(gatherSequence);
+            root.addChild(idle);
+            
+            return root;
+        }
+
+        function buildSoldierTree() {
+            const root = new Selector('Soldier Root');
+            
+            // Priority 1: Attack enemies
+            const combatSequence = new Sequence('Combat');
+            const findEnemy = new Action('FindEnemy', (agent, dt) => {
+                let nearest = null;
+                let nearestDist = Infinity;
+                
+                for (const enemy of agent.world.enemies) {
+                    const dx = enemy.x - agent.x;
+                    const dy = enemy.y - agent.y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    
+                    if (dist < nearestDist) {
+                        nearest = enemy;
+                        nearestDist = dist;
+                    }
+                }
+                
+                if (nearest) {
+                    agent.target = nearest;
+                    agent.targetType = 'enemy';
+                    return NodeState.SUCCESS;
+                }
+                
+                return NodeState.FAILURE;
+            });
+            
+            combatSequence.addChild(findEnemy);
+            combatSequence.addChild(moveToTarget);
+            combatSequence.addChild(attack);
+            
+            // Priority 2: Patrol
+            root.addChild(combatSequence);
+            root.addChild(patrol);
+            
+            return root;
+        }
+
+        function buildScoutTree() {
+            const root = new Selector('Scout Root');
+            
+            // Priority 1: Report danger
+            const reportSequence = new Sequence('Report Danger');
+            reportSequence.addChild(enemyNearby);
+            const alertOthers = new Action('Alert', (agent, dt) => {
+                // Alert nearby agents
+                for (const other of agent.world.agents) {
+                    if (other === agent) continue;
+                    const dx = other.x - agent.x;
+                    const dy = other.y - agent.y;
+                    if (Math.sqrt(dx*dx + dy*dy) < 200) {
+                        other.alerted = true;
+                    }
+                }
+                return NodeState.SUCCESS;
+            });
+            reportSequence.addChild(alertOthers);
+            reportSequence.addChild(flee);
+            
+            // Priority 2: Explore
+            const explore = new Action('Explore', (agent, dt) => {
+                if (!agent.exploreTarget) {
+                    agent.exploreTarget = {
+                        x: Math.random() * 550 + 25,
+                        y: Math.random() * 350 + 25
+                    };
+                }
+                
+                const dx = agent.exploreTarget.x - agent.x;
+                const dy = agent.exploreTarget.y - agent.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                
+                if (dist < 20) {
+                    agent.exploreTarget = null;
+                    return NodeState.SUCCESS;
+                }
+                
+                agent.vx = (dx / dist) * agent.speed * 0.8;
+                agent.vy = (dy / dist) * agent.speed * 0.8;
+                
+                agent.x += agent.vx * dt;
+                agent.y += agent.vy * dt;
+                
+                return NodeState.RUNNING;
+            });
+            
+            root.addChild(reportSequence);
+            root.addChild(explore);
+            
+            return root;
+        }
+
+        // Agent class
+        class Agent {
+            constructor(x, y, type, world) {
+                this.id = Date.now() + Math.random();
+                this.x = x;
+                this.y = y;
+                this.vx = 0;
+                this.vy = 0;
+                this.type = type;
+                this.world = world;
+                
+                this.homeX = x;
+                this.homeY = y;
+                this.health = 100;
+                this.speed = 80;
+                this.target = null;
+                this.targetType = null;
+                this.carrying = null;
+                this.alerted = false;
+                
+                // Build behavior tree based on type
+                this.behaviorTree = this.buildBehaviorTree();
+                
+                // Visual
+                this.color = this.getColorForType();
+                this.size = 12;
+                
+                // Debug
+                this.currentNode = null;
+                this.nodeHistory = [];
+            }
+            
+            buildBehaviorTree() {
+                switch(this.type) {
+                    case 'worker':
+                        return buildWorkerTree();
+                    case 'soldier':
+                        return buildSoldierTree();
+                    case 'scout':
+                        return buildScoutTree();
+                    default:
+                        return new Action('Default', () => NodeState.SUCCESS);
+                }
+            }
+            
+            getColorForType() {
+                const colors = {
+                    'worker': '#FFC107',
+                    'soldier': '#F44336',
+                    'scout': '#2196F3',
+                    'healer': '#4CAF50',
+                    'builder': '#9C27B0',
+                    'harvester': '#FF9800'
+                };
+                return colors[this.type] || '#9E9E9E';
+            }
+            
+            update(dt) {
+                // Execute behavior tree
+                const result = this.behaviorTree.tick(this, dt);
+                
+                // Record for debugging
+                if (this.behaviorTree !== this.currentNode) {
+                    this.currentNode = this.behaviorTree;
+                    this.nodeHistory.push({
+                        node: this.behaviorTree.name,
+                        result: result,
+                        time: Date.now()
+                    });
+                    
+                    if (this.nodeHistory.length > 20) {
+                        this.nodeHistory.shift();
+                    }
+                }
+                
+                // Keep in bounds
+                this.x = Math.max(10, Math.min(590, this.x));
+                this.y = Math.max(10, Math.min(390, this.y));
+                
+                // Reduce velocity over time
+                this.vx *= 0.95;
+                this.vy *= 0.95;
+            }
+            
+            draw(ctx) {
+                // Draw agent
+                ctx.save();
+                
+                // Body
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Type icon
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '10px Arial';
+                ctx.textAlign = 'center';
+                const icons = {
+                    'worker': '⚒',
+                    'soldier': '⚔',
+                    'scout': '👁',
+                    'healer': '✚',
+                    'builder': '🔨',
+                    'harvester': '🌾'
+                };
+                ctx.fillText(icons[this.type] || '?', this.x, this.y + 3);
+                
+                // Health bar
+                if (this.health < 100) {
+                    const barWidth = 20;
+                    const barHeight = 3;
+                    ctx.fillStyle = '#ff0000';
+                    ctx.fillRect(this.x - barWidth/2, this.y - this.size - 8, barWidth, barHeight);
+                    ctx.fillStyle = '#00ff00';
+                    ctx.fillRect(this.x - barWidth/2, this.y - this.size - 8, 
+                                barWidth * (this.health / 100), barHeight);
+                }
+                
+                // Carrying indicator
+                if (this.carrying) {
+                    ctx.fillStyle = '#FFD700';
+                    ctx.beginPath();
+                    ctx.arc(this.x + this.size, this.y - this.size, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                // Alert indicator
+                if (this.alerted) {
+                    ctx.fillStyle = '#FF0000';
+                    ctx.font = '12px Arial';
+                    ctx.fillText('!', this.x, this.y - this.size - 10);
+                }
+                
+                ctx.restore();
+                
+                // Show current action
+                if (document.getElementById('showDecisions').checked) {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '9px Arial';
+                    ctx.fillText(this.getCurrentAction(), this.x, this.y + this.size + 15);
+                }
+            }
+            
+            getCurrentAction() {
+                // Find the currently executing leaf node
+                let current = this.behaviorTree;
+                while (current.children.length > 0) {
+                    for (const child of current.children) {
+                        if (child.lastExecutionTime > Date.now() - 100) {
+                            current = child;
+                            break;
+                        }
+                    }
+                    if (current === this.behaviorTree) break;
+                }
+                return current.name;
+            }
+        }
+
+        // World class
+        class World {
+            constructor(canvas, ctx) {
+                this.canvas = canvas;
+                this.ctx = ctx;
+                
+                this.agents = [];
+                this.resources = [];
+                this.enemies = [];
+                this.buildings = [];
+                this.score = 0;
+                this.paused = false;
+                
+                // Spawn initial entities
+                this.spawnInitialEntities();
+            }
+            
+            spawnInitialEntities() {
+                // Spawn agents
+                this.spawnAgent('worker', 100, 200);
+                this.spawnAgent('soldier', 500, 200);
+                this.spawnAgent('scout', 300, 100);
+                
+                // Spawn resources
+                for (let i = 0; i < 5; i++) {
+                    this.addResource();
+                }
+                
+                // Spawn enemies
+                for (let i = 0; i < 2; i++) {
+                    this.addEnemy();
+                }
+            }
+            
+            spawnAgent(type, x = null, y = null) {
+                x = x || Math.random() * 550 + 25;
+                y = y || Math.random() * 350 + 25;
+                
+                const agent = new Agent(x, y, type, this);
+                this.agents.push(agent);
+                
+                // Update agent selector
+                this.updateAgentSelector();
+            }
+            
+            addResource() {
+                this.resources.push({
+                    x: Math.random() * 550 + 25,
+                    y: Math.random() * 350 + 25,
+                    value: 10
+                });
+            }
+            
+            addEnemy() {
+                this.enemies.push({
+                    x: Math.random() * 550 + 25,
+                    y: Math.random() * 350 + 25,
+                    health: 50,
+                    speed: 40
+                });
+            }
+            
+            addBuilding() {
+                this.buildings.push({
+                    x: Math.random() * 550 + 25,
+                    y: Math.random() * 350 + 25,
+                    type: 'base',
+                    width: 40,
+                    height: 40
+                });
+            }
+            
+            updateAgentSelector() {
+                const selector = document.getElementById('selectedAgent');
+                selector.innerHTML = '<option value="">None</option>';
+                
+                for (const agent of this.agents) {
+                    const option = document.createElement('option');
+                    option.value = agent.id;
+                    option.textContent = `${agent.type} #${this.agents.indexOf(agent) + 1}`;
+                    selector.appendChild(option);
+                }
+            }
+            
+            update(dt) {
+                if (this.paused) return;
+                
+                // Update agents
+                for (const agent of this.agents) {
+                    agent.update(dt);
+                }
+                
+                // Update enemies (simple movement)
+                for (const enemy of this.enemies) {
+                    // Move towards nearest agent
+                    let nearest = null;
+                    let nearestDist = Infinity;
+                    
+                    for (const agent of this.agents) {
+                        const dx = agent.x - enemy.x;
+                        const dy = agent.y - enemy.y;
+                        const dist = Math.sqrt(dx*dx + dy*dy);
+                        
+                        if (dist < nearestDist) {
+                            nearest = agent;
+                            nearestDist = dist;
+                        }
+                    }
+                    
+                    if (nearest && nearestDist < 200) {
+                        const dx = nearest.x - enemy.x;
+                        const dy = nearest.y - enemy.y;
+                        const dist = Math.sqrt(dx*dx + dy*dy);
+                        
+                        enemy.x += (dx / dist) * enemy.speed * dt;
+                        enemy.y += (dy / dist) * enemy.speed * dt;
+                    }
+                }
+                
+                this.updateUI();
+            }
+            
+            draw() {
+                // Clear canvas
+                this.ctx.fillStyle = '#2C3E50';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw grid
+                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+                this.ctx.lineWidth = 1;
+                for (let x = 0; x <= 600; x += 50) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, 0);
+                    this.ctx.lineTo(x, 400);
+                    this.ctx.stroke();
+                }
+                for (let y = 0; y <= 400; y += 50) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, y);
+                    this.ctx.lineTo(600, y);
+                    this.ctx.stroke();
+                }
+                
+                // Draw buildings
+                this.ctx.fillStyle = '#795548';
+                for (const building of this.buildings) {
+                    this.ctx.fillRect(
+                        building.x - building.width/2,
+                        building.y - building.height/2,
+                        building.width,
+                        building.height
+                    );
+                }
+                
+                // Draw resources
+                this.ctx.fillStyle = '#FFD700';
+                for (const resource of this.resources) {
+                    this.ctx.beginPath();
+                    this.ctx.arc(resource.x, resource.y, 8, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+                
+                // Draw enemies
+                this.ctx.fillStyle = '#E91E63';
+                for (const enemy of this.enemies) {
+                    this.ctx.beginPath();
+                    this.ctx.arc(enemy.x, enemy.y, 10, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    // Health
+                    if (enemy.health < 50) {
+                        const barWidth = 20;
+                        const barHeight = 3;
+                        this.ctx.fillStyle = '#ff0000';
+                        this.ctx.fillRect(enemy.x - barWidth/2, enemy.y - 15, barWidth, barHeight);
+                        this.ctx.fillStyle = '#00ff00';
+                        this.ctx.fillRect(enemy.x - barWidth/2, enemy.y - 15, 
+                                        barWidth * (enemy.health / 50), barHeight);
+                    }
+                }
+                
+                // Draw agents
+                for (const agent of this.agents) {
+                    agent.draw(this.ctx);
+                }
+                
+                // Draw score
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.font = '14px Arial';
+                this.ctx.fillText(`Score: ${this.score}`, 10, 20);
+            }
+            
+            updateUI() {
+                document.getElementById('agentCount').textContent = this.agents.length;
+                document.getElementById('resourceCount').textContent = this.resources.length;
+                document.getElementById('enemyCount').textContent = this.enemies.length;
+                document.getElementById('buildingCount').textContent = this.buildings.length;
+                
+                // Agent status
+                const statusText = this.agents.map(agent => 
+                    `${agent.type}: ${agent.getCurrentAction()}`
+                ).join(' | ');
+                document.getElementById('agentStatus').textContent = statusText;
+            }
+        }
+
+        // Tree visualization
+        function drawBehaviorTree(canvas, tree, selectedAgent) {
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            if (!selectedAgent) {
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '12px Arial';
+                ctx.fillText('Select an agent to see its behavior tree', 10, 150);
+                return;
+            }
+            
+            // Draw tree recursively
+            const nodePositions = {};
+            const levelHeight = 60;
+            const nodeWidth = 80;
+            
+            function calculatePositions(node, level = 0, leftBound = 0, rightBound = canvas.width) {
+                const x = (leftBound + rightBound) / 2;
+                const y = level * levelHeight + 30;
+                
+                nodePositions[node] = { x, y };
+                
+                if (node.children.length > 0) {
+                    const childWidth = (rightBound - leftBound) / node.children.length;
+                    
+                    node.children.forEach((child, index) => {
+                        const childLeft = leftBound + index * childWidth;
+                        const childRight = childLeft + childWidth;
+                        calculatePositions(child, level + 1, childLeft, childRight);
+                    });
+                }
+            }
+            
+            function drawNode(node) {
+                const pos = nodePositions[node];
+                if (!pos) return;
+                
+                // Draw connections to children
+                ctx.strokeStyle = '#555';
+                ctx.lineWidth = 1;
+                for (const child of node.children) {
+                    const childPos = nodePositions[child];
+                    if (childPos) {
+                        ctx.beginPath();
+                        ctx.moveTo(pos.x, pos.y);
+                        ctx.lineTo(childPos.x, childPos.y);
+                        ctx.stroke();
+                    }
+                }
+                
+                // Determine node color based on last execution
+                let color = NodeColors['IDLE'];
+                if (node.lastExecutionTime > Date.now() - 1000) {
+                    if (node.state) {
+                        color = NodeColors[node.state];
+                    } else {
+                        color = NodeColors[NodeState.RUNNING];
+                    }
+                }
+                
+                // Draw node
+                ctx.fillStyle = color;
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = node === selectedAgent.behaviorTree ? 3 : 1;
+                
+                const width = nodeWidth;
+                const height = 25;
+                ctx.fillRect(pos.x - width/2, pos.y - height/2, width, height);
+                ctx.strokeRect(pos.x - width/2, pos.y - height/2, width, height);
+                
+                // Draw text
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '10px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(node.name, pos.x, pos.y + 3);
+                
+                // Draw execution count
+                if (node.executionCount > 0) {
+                    ctx.fillStyle = '#aaaaaa';
+                    ctx.font = '8px Arial';
+                    ctx.fillText(`(${node.executionCount})`, pos.x, pos.y + 12);
+                }
+                
+                // Draw children
+                for (const child of node.children) {
+                    drawNode(child);
+                }
+            }
+            
+            calculatePositions(selectedAgent.behaviorTree);
+            drawNode(selectedAgent.behaviorTree);
+            
+            // Show node info
+            const info = document.getElementById('nodeInfo');
+            info.innerHTML = `
+                <strong>Current Action:</strong> ${selectedAgent.getCurrentAction()}<br>
+                <strong>Type:</strong> ${selectedAgent.type}<br>
+                <strong>Health:</strong> ${selectedAgent.health}<br>
+                <strong>Carrying:</strong> ${selectedAgent.carrying ? 'Resource' : 'Nothing'}<br>
+                <strong>Target:</strong> ${selectedAgent.targetType || 'None'}
+            `;
+        }
+
+        // Initialize demo
+        const behaviorCanvas = document.getElementById('behaviorCanvas');
+        const ctx = behaviorCanvas.getContext('2d');
+        const world = new World(behaviorCanvas, ctx);
+
+        let selectedAgent = null;
+
+        // Control functions
+        window.spawnAgent = function(type) {
+            world.spawnAgent(type);
+        };
+
+        window.addResource = function() {
+            world.addResource();
+        };
+
+        window.addEnemy = function() {
+            world.addEnemy();
+        };
+
+        window.addBuilding = function() {
+            world.addBuilding();
+        };
+
+        window.createDanger = function() {
+            // Add multiple enemies near agents
+            for (const agent of world.agents) {
+                world.enemies.push({
+                    x: agent.x + Math.random() * 100 - 50,
+                    y: agent.y + Math.random() * 100 - 50,
+                    health: 50,
+                    speed: 60
+                });
+            }
+        };
+
+        window.clearEnvironment = function() {
+            world.agents = [];
+            world.resources = [];
+            world.enemies = [];
+            world.buildings = [];
+            world.score = 0;
+            selectedAgent = null;
+            world.updateAgentSelector();
+        };
+
+        window.pauseSimulation = function() {
+            world.paused = !world.paused;
+            const btn = document.getElementById('pauseBtn');
+            btn.textContent = world.paused ? '▶️ Resume' : '⏸️ Pause';
+        };
+
+        window.selectAgent = function(agentId) {
+            selectedAgent = world.agents.find(a => a.id == agentId) || null;
+        };
+
+        window.toggleTreeView = function() {
+            const treeView = document.getElementById('treeView');
+            treeView.style.display = treeView.style.display === 'none' ? 'block' : 'none';
+            
+            if (treeView.style.display === 'block') {
+                const treeCanvas = document.getElementById('treeCanvas');
+                drawBehaviorTree(treeCanvas, null, selectedAgent);
+            }
+        };
+
+        // Animation loop
+        let lastTime = performance.now();
+        function animate(currentTime) {
+            const dt = Math.min((currentTime - lastTime) / 1000, 0.1);
+            lastTime = currentTime;
+            
+            world.update(dt);
+            world.draw();
+            
+            // Update tree visualization if visible
+            if (document.getElementById('treeView').style.display === 'block') {
+                const treeCanvas = document.getElementById('treeCanvas');
+                drawBehaviorTree(treeCanvas, null, selectedAgent);
+            }
+            
+            requestAnimationFrame(animate);
+        }
+
+        animate(performance.now());
+
+        console.log('Behavior Tree Demo initialized!');
+    </script>
+
+    <h2>Behavior Tree Implementation</h2>
+    
+    <pre class="language-python"><code>from enum import Enum
+from typing import List, Optional, Callable
+import random
+
+class NodeState(Enum):
+    """Node execution states"""
+    SUCCESS = "success"
+    FAILURE = "failure"
+    RUNNING = "running"
+
+class BehaviorNode:
+    """Base class for behavior tree nodes"""
+    def __init__(self, name: str = "Node"):
+        self.name = name
+        self.parent: Optional['BehaviorNode'] = None
+        self.children: List['BehaviorNode'] = []
+    
+    def add_child(self, child: 'BehaviorNode') -> 'BehaviorNode':
+        """Add child node"""
+        child.parent = self
+        self.children.append(child)
+        return self
+    
+    def tick(self, agent, blackboard: dict) -> NodeState:
+        """Execute node logic"""
+        return NodeState.SUCCESS
+    
+    def reset(self):
+        """Reset node state"""
+        for child in self.children:
+            child.reset()
+
+# Composite Nodes
+class Selector(BehaviorNode):
+    """Try children until one succeeds (OR)"""
+    def __init__(self, name: str = "Selector"):
+        super().__init__(name)
+        self.current_child = 0
+    
+    def tick(self, agent, blackboard: dict) -> NodeState:
+        for i in range(self.current_child, len(self.children)):
+            child = self.children[i]
+            result = child.tick(agent, blackboard)
+            
+            if result == NodeState.SUCCESS:
+                self.current_child = 0
+                return NodeState.SUCCESS
+            elif result == NodeState.RUNNING:
+                self.current_child = i
+                return NodeState.RUNNING
+        
+        self.current_child = 0
+        return NodeState.FAILURE
+    
+    def reset(self):
+        super().reset()
+        self.current_child = 0
+
+class Sequence(BehaviorNode):
+    """Execute children in order (AND)"""
+    def __init__(self, name: str = "Sequence"):
+        super().__init__(name)
+        self.current_child = 0
+    
+    def tick(self, agent, blackboard: dict) -> NodeState:
+        for i in range(self.current_child, len(self.children)):
+            child = self.children[i]
+            result = child.tick(agent, blackboard)
+            
+            if result == NodeState.FAILURE:
+                self.current_child = 0
+                return NodeState.FAILURE
+            elif result == NodeState.RUNNING:
+                self.current_child = i
+                return NodeState.RUNNING
+        
+        self.current_child = 0
+        return NodeState.SUCCESS
+    
+    def reset(self):
+        super().reset()
+        self.current_child = 0
+
+class Parallel(BehaviorNode):
+    """Execute children simultaneously"""
+    def __init__(self, success_threshold: int = -1, 
+                 failure_threshold: int = -1, 
+                 name: str = "Parallel"):
+        super().__init__(name)
+        self.success_threshold = success_threshold
+        self.failure_threshold = failure_threshold
+    
+    def tick(self, agent, blackboard: dict) -> NodeState:
+        success_count = 0
+        failure_count = 0
+        running_count = 0
+        
+        for child in self.children:
+            result = child.tick(agent, blackboard)
+            
+            if result == NodeState.SUCCESS:
+                success_count += 1
+            elif result == NodeState.FAILURE:
+                failure_count += 1
+            else:
+                running_count += 1
+        
+        # Check thresholds
+        if self.success_threshold > 0 and success_count >= self.success_threshold:
+            return NodeState.SUCCESS
+        if self.failure_threshold > 0 and failure_count >= self.failure_threshold:
+            return NodeState.FAILURE
+        
+        if running_count > 0:
+            return NodeState.RUNNING
+        
+        return NodeState.SUCCESS if success_count > 0 else NodeState.FAILURE
+
+class RandomSelector(BehaviorNode):
+    """Select random child to execute"""
+    def __init__(self, name: str = "RandomSelector"):
+        super().__init__(name)
+    
+    def tick(self, agent, blackboard: dict) -> NodeState:
+        if not self.children:
+            return NodeState.FAILURE
+        
+        child = random.choice(self.children)
+        return child.tick(agent, blackboard)
+
+# Decorator Nodes
+class Decorator(BehaviorNode):
+    """Base decorator node"""
+    def __init__(self, child: Optional[BehaviorNode] = None, 
+                 name: str = "Decorator"):
+        super().__init__(name)
+        if child:
+            self.add_child(child)
+
+class Inverter(Decorator):
+    """Invert child result"""
+    def __init__(self, child: Optional[BehaviorNode] = None):
+        super().__init__(child, "Inverter")
+    
+    def tick(self, agent, blackboard: dict) -> NodeState:
+        if not self.children:
+            return NodeState.FAILURE
+        
+        result = self.children[0].tick(agent, blackboard)
+        
+        if result == NodeState.SUCCESS:
+            return NodeState.FAILURE
+        elif result == NodeState.FAILURE:
+            return NodeState.SUCCESS
+        else:
+            return NodeState.RUNNING
+
+class Repeater(Decorator):
+    """Repeat child execution"""
+    def __init__(self, child: Optional[BehaviorNode] = None, 
+                 times: int = -1):
+        super().__init__(child, f"Repeater({times})")
+        self.times = times
+        self.count = 0
+    
+    def tick(self, agent, blackboard: dict) -> NodeState:
+        if not self.children:
+            return NodeState.FAILURE
+        
+        while self.times < 0 or self.count < self.times:
+            result = self.children[0].tick(agent, blackboard)
+            
+            if result == NodeState.SUCCESS:
+                self.count += 1
+                if self.times > 0 and self.count >= self.times:
+                    self.count = 0
+                    return NodeState.SUCCESS
+            elif result == NodeState.FAILURE:
+                self.count = 0
+                return NodeState.FAILURE
+            else:
+                return NodeState.RUNNING
+        
+        return NodeState.SUCCESS
+
+class Cooldown(Decorator):
+    """Add cooldown to child execution"""
+    def __init__(self, child: Optional[BehaviorNode] = None, 
+                 cooldown_time: float = 1.0):
+        super().__init__(child, f"Cooldown({cooldown_time}s)")
+        self.cooldown_time = cooldown_time
+        self.last_execution = 0
+    
+    def tick(self, agent, blackboard: dict) -> NodeState:
+        import time
+        current_time = time.time()
+        
+        if current_time - self.last_execution < self.cooldown_time:
+            return NodeState.FAILURE
+        
+        if not self.children:
+            return NodeState.FAILURE
+        
+        result = self.children[0].tick(agent, blackboard)
+        
+        if result == NodeState.SUCCESS:
+            self.last_execution = current_time
+        
+        return result
+
+# Leaf Nodes
+class Condition(BehaviorNode):
+    """Check condition"""
+    def __init__(self, condition_func: Callable, name: str = "Condition"):
+        super().__init__(name)
+        self.condition_func = condition_func
+    
+    def tick(self, agent, blackboard: dict) -> NodeState:
+        if self.condition_func(agent, blackboard):
+            return NodeState.SUCCESS
+        return NodeState.FAILURE
+
+class Action(BehaviorNode):
+    """Execute action"""
+    def __init__(self, action_func: Callable, name: str = "Action"):
+        super().__init__(name)
+        self.action_func = action_func
+    
+    def tick(self, agent, blackboard: dict) -> NodeState:
+        return self.action_func(agent, blackboard)
+
+# Blackboard for sharing data
+class Blackboard:
+    """Shared memory for behavior tree"""
+    def __init__(self):
+        self.data = {}
+    
+    def get(self, key: str, default=None):
+        return self.data.get(key, default)
+    
+    def set(self, key: str, value):
+        self.data[key] = value
+    
+    def has(self, key: str) -> bool:
+        return key in self.data
+    
+    def remove(self, key: str):
+        if key in self.data:
+            del self.data[key]
+
+# Behavior Tree Manager
+class BehaviorTree:
+    """Manage behavior tree execution"""
+    def __init__(self, root: BehaviorNode):
+        self.root = root
+        self.blackboard = Blackboard()
+    
+    def tick(self, agent) -> NodeState:
+        """Execute behavior tree"""
+        return self.root.tick(agent, self.blackboard)
+    
+    def reset(self):
+        """Reset tree state"""
+        self.root.reset()</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Behavior Tree Tips</h3>
+        <ul>
+            <li><strong>Modular Design:</strong> Create reusable subtrees</li>
+            <li><strong>Blackboard Pattern:</strong> Share data between nodes</li>
+            <li><strong>Priority Order:</strong> Most important behaviors first in selectors</li>
+            <li><strong>Fail Fast:</strong> Check conditions early in sequences</li>
+            <li><strong>Decorators:</strong> Add complexity without changing base behaviors</li>
+            <li><strong>Visual Debugging:</strong> Show active nodes during development</li>
+            <li><strong>Performance:</strong> Limit tree depth and complexity</li>
+            <li><strong>Testing:</strong> Unit test individual nodes</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>🌳 Behavior trees provide modular AI architecture</li>
+            <li>🔄 Composite nodes control execution flow</li>
+            <li>🍃 Leaf nodes perform actions and checks</li>
+            <li>🎨 Decorators modify behavior without changes</li>
+            <li>📋 Blackboards enable data sharing</li>
+            <li>🔧 Easy to debug and maintain</li>
+            <li>♻️ Highly reusable components</li>
+            <li>📊 Visual representation aids understanding</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you've mastered behavior trees, next we'll explore flocking and swarm behaviors for creating realistic group AI!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="ai_state_machines.html" class="prev-lesson" aria-label="Previous lesson: State Machines">Previous Lesson: State Machines</a>
+        <a href="ai_flocking.html" class="next-lesson" aria-label="Next lesson: Flocking/Swarm Behavior">Next Lesson: Flocking Behavior</a>
+    </nav>
+    
+    </main>
+    <script src="/js/course-enhancements.js" defer></script>
+</body>
+</html>

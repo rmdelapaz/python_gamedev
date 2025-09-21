@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master camera and viewport systems for 2D platformers. Learn smooth camera follow, deadzone, boundaries, and cinematic effects.">
+    <title>Camera/Viewport - 2D Platformer Development</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Camera/Viewport</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Intermediate Module - Section 2: 2D Platformer Development - Lesson 2</span>
+    </nav>
+
+    <h2>Creating Dynamic Camera Systems</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Camera systems control what players see and how they experience your game world! Learn smooth following, deadzones, camera boundaries, screen shake, zoom effects, and cinematic transitions for professional 2D platformers! 📹🎮🎬</p>
+    </div>
+
+    <h2>Understanding Camera Systems</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎥 The Film Camera Analogy</h3>
+        <p>Think of game cameras like a film camera operator:</p>
+        <ul>
+            <li><strong>Viewport:</strong> The camera's viewfinder</li>
+            <li><strong>World Space:</strong> The entire movie set</li>
+            <li><strong>Screen Space:</strong> What appears on film</li>
+            <li><strong>Following:</strong> Tracking the main actor</li>
+            <li><strong>Deadzone:</strong> Allowing natural movement</li>
+            <li><strong>Constraints:</strong> Staying within the set boundaries</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Camera System"] --> B["Position Control"]
+        A --> C["Movement Styles"]
+        A --> D["Effects"]
+        
+        B --> E["Follow Target"]
+        B --> F["Deadzone"]
+        B --> G["Boundaries"]
+        
+        C --> H["Smooth Follow"]
+        C --> I["Platform Snapping"]
+        C --> J["Look Ahead"]
+        
+        D --> K["Screen Shake"]
+        D --> L["Zoom"]
+        D --> M["Transitions"]
+        
+        N["Viewport"] --> O["World to Screen"]
+        N --> P["Culling"]
+        N --> Q["Multiple Views"]
+    </div>
+
+    <h2>Interactive Camera System Demo</h2>
+    
+    <div class="canvas-wrapper" style="text-align: center;">
+        <canvas id="cameraCanvas" width="600" height="400" style="border: 1px solid #333; background-color: #2C3E50; display: inline-block;"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Use Arrow Keys or WASD to move the character. Try different camera modes!</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; max-width: 600px; margin: 10px auto;">
+            <button onclick="setCameraMode('locked')">🔒 Locked</button>
+            <button onclick="setCameraMode('smooth')">🌊 Smooth Follow</button>
+            <button onclick="setCameraMode('deadzone')">📦 Deadzone</button>
+            <button onclick="setCameraMode('platform')">🎮 Platform Snap</button>
+            <button onclick="setCameraMode('lookahead')">👀 Look Ahead</button>
+            <button onclick="setCameraMode('cinematic')">🎬 Cinematic</button>
+        </div>
+        <div style="margin-top: 10px;">
+            <button onclick="toggleDebugView()">Debug View</button>
+            <button onclick="triggerShake()">Screen Shake</button>
+            <button onclick="toggleZoom()">Toggle Zoom</button>
+            <button onclick="toggleBounds()">Toggle Bounds</button>
+            <button onclick="resetCamera()">Reset Camera</button>
+            <button onclick="addPlatform()">Add Platform</button>
+        </div>
+        <div style="margin-top: 10px;">
+            <label>Smooth Speed: <input type="range" id="smoothSpeed" min="1" max="20" value="5" onchange="setSmoothSpeed(this.value)"> <span id="smoothSpeedDisplay">5</span></label>
+            <label>Deadzone Size: <input type="range" id="deadzoneSize" min="0" max="200" value="50" onchange="setDeadzoneSize(this.value)"> <span id="deadzoneSizeDisplay">50</span></label>
+        </div>
+        <div style="margin-top: 10px;">
+            <label>Zoom Level: <input type="range" id="zoomLevel" min="0.5" max="3" step="0.1" value="1" onchange="setZoomLevel(this.value)"> <span id="zoomLevelDisplay">1.0x</span></label>
+            <label>Look Ahead: <input type="range" id="lookAhead" min="0" max="200" value="100" onchange="setLookAhead(this.value)"> <span id="lookAheadDisplay">100</span></label>
+        </div>
+        <div style="margin-top: 10px; background-color: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;">
+            <p style="margin: 5px; color: white;">
+                Mode: <span id="cameraMode">Smooth Follow</span> | 
+                Camera: (<span id="cameraX">0</span>, <span id="cameraY">0</span>) | 
+                Player: (<span id="playerX">0</span>, <span id="playerY">0</span>)
+            </p>
+            <p style="margin: 5px; color: white;">
+                Velocity: (<span id="velocityX">0</span>, <span id="velocityY">0</span>) | 
+                FPS: <span id="fps">60</span> | 
+                Objects in View: <span id="objectsInView">0</span>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        console.log('Camera/Viewport Demo starting...');
+
+        // Input handling
+        const keys = {};
+        document.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+        });
+        document.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
+        });
+
+        // Player class
+        class Player {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.vx = 0;
+                this.vy = 0;
+                this.width = 30;
+                this.height = 40;
+                this.speed = 300;
+                this.jumpPower = 500;
+                this.gravity = 1000;
+                this.grounded = false;
+                this.facing = 1; // 1 for right, -1 for left
+                this.color = '#4CAF50';
+            }
+            
+            update(dt, platforms) {
+                // Horizontal movement
+                if (keys['arrowleft'] || keys['a']) {
+                    this.vx = -this.speed;
+                    this.facing = -1;
+                } else if (keys['arrowright'] || keys['d']) {
+                    this.vx = this.speed;
+                    this.facing = 1;
+                } else {
+                    this.vx *= 0.8; // Friction
+                }
+                
+                // Jumping
+                if ((keys['arrowup'] || keys['w'] || keys[' ']) && this.grounded) {
+                    this.vy = -this.jumpPower;
+                    this.grounded = false;
+                }
+                
+                // Apply gravity
+                if (!this.grounded) {
+                    this.vy += this.gravity * dt;
+                    this.vy = Math.min(this.vy, 600); // Terminal velocity
+                }
+                
+                // Update position
+                this.x += this.vx * dt;
+                this.y += this.vy * dt;
+                
+                // Platform collision
+                this.grounded = false;
+                for (const platform of platforms) {
+                    if (this.checkCollision(platform)) {
+                        // Simple collision resolution
+                        if (this.vy > 0 && this.y < platform.y) {
+                            this.y = platform.y - this.height;
+                            this.vy = 0;
+                            this.grounded = true;
+                        }
+                    }
+                }
+                
+                // World boundaries
+                this.x = Math.max(0, Math.min(this.x, 2000 - this.width));
+                
+                // Ground collision
+                if (this.y > 360 - this.height) {
+                    this.y = 360 - this.height;
+                    this.vy = 0;
+                    this.grounded = true;
+                }
+            }
+            
+            checkCollision(platform) {
+                return this.x < platform.x + platform.width &&
+                       this.x + this.width > platform.x &&
+                       this.y < platform.y + platform.height &&
+                       this.y + this.height > platform.y;
+            }
+            
+            draw(ctx, camera) {
+                const screenX = this.x - camera.x;
+                const screenY = this.y - camera.y;
+                
+                // Draw player
+                ctx.fillStyle = this.color;
+                ctx.fillRect(screenX, screenY, this.width, this.height);
+                
+                // Draw face direction indicator
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(
+                    screenX + this.width / 2 + this.facing * 8,
+                    screenY + 15,
+                    3, 0, Math.PI * 2
+                );
+                ctx.fill();
+            }
+        }
+
+        // Platform class
+        class Platform {
+            constructor(x, y, width, height) {
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = height;
+                this.color = '#8B4513';
+            }
+            
+            draw(ctx, camera) {
+                const screenX = this.x - camera.x;
+                const screenY = this.y - camera.y;
+                
+                // Only draw if visible
+                if (screenX + this.width > 0 && screenX < 600 &&
+                    screenY + this.height > 0 && screenY < 400) {
+                    ctx.fillStyle = this.color;
+                    ctx.fillRect(screenX, screenY, this.width, this.height);
+                    
+                    // Add some texture
+                    ctx.strokeStyle = '#654321';
+                    ctx.strokeRect(screenX, screenY, this.width, this.height);
+                }
+            }
+        }
+
+        // Camera class
+        class Camera {
+            constructor(width, height) {
+                this.x = 0;
+                this.y = 0;
+                this.width = width;
+                this.height = height;
+                this.target = null;
+                this.mode = 'smooth';
+                
+                // Camera settings
+                this.smoothSpeed = 5;
+                this.deadzoneWidth = 100;
+                this.deadzoneHeight = 100;
+                this.lookAheadDistance = 100;
+                this.zoom = 1;
+                
+                // Boundaries
+                this.minX = 0;
+                this.maxX = 2000;
+                this.minY = -200;
+                this.maxY = 400;
+                this.useBounds = true;
+                
+                // Effects
+                this.shakeIntensity = 0;
+                this.shakeDecay = 10;
+                this.offsetX = 0;
+                this.offsetY = 0;
+                
+                // Platform snapping
+                this.snapToGround = false;
+                this.groundOffset = 100;
+                
+                // Debug
+                this.showDebug = false;
+            }
+            
+            setTarget(target) {
+                this.target = target;
+            }
+            
+            update(dt) {
+                if (!this.target) return;
+                
+                let targetX = this.target.x + this.target.width / 2 - this.width / 2;
+                let targetY = this.target.y + this.target.height / 2 - this.height / 2;
+                
+                // Apply camera mode
+                switch (this.mode) {
+                    case 'locked':
+                        this.updateLocked(targetX, targetY);
+                        break;
+                    case 'smooth':
+                        this.updateSmooth(targetX, targetY, dt);
+                        break;
+                    case 'deadzone':
+                        this.updateDeadzone(targetX, targetY);
+                        break;
+                    case 'platform':
+                        this.updatePlatform(targetX, targetY, dt);
+                        break;
+                    case 'lookahead':
+                        this.updateLookAhead(targetX, targetY, dt);
+                        break;
+                    case 'cinematic':
+                        this.updateCinematic(targetX, targetY, dt);
+                        break;
+                }
+                
+                // Apply boundaries
+                if (this.useBounds) {
+                    this.x = Math.max(this.minX, Math.min(this.x, this.maxX - this.width));
+                    this.y = Math.max(this.minY, Math.min(this.y, this.maxY - this.height));
+                }
+                
+                // Apply shake
+                if (this.shakeIntensity > 0) {
+                    this.offsetX = (Math.random() - 0.5) * this.shakeIntensity;
+                    this.offsetY = (Math.random() - 0.5) * this.shakeIntensity;
+                    this.shakeIntensity -= this.shakeDecay * dt;
+                    this.shakeIntensity = Math.max(0, this.shakeIntensity);
+                } else {
+                    this.offsetX = 0;
+                    this.offsetY = 0;
+                }
+            }
+            
+            updateLocked(targetX, targetY) {
+                this.x = targetX;
+                this.y = targetY;
+            }
+            
+            updateSmooth(targetX, targetY, dt) {
+                const dx = targetX - this.x;
+                const dy = targetY - this.y;
+                
+                this.x += dx * this.smoothSpeed * dt;
+                this.y += dy * this.smoothSpeed * dt;
+            }
+            
+            updateDeadzone(targetX, targetY) {
+                const cameraCenter = {
+                    x: this.x + this.width / 2,
+                    y: this.y + this.height / 2
+                };
+                
+                const targetCenter = {
+                    x: this.target.x + this.target.width / 2,
+                    y: this.target.y + this.target.height / 2
+                };
+                
+                // Horizontal deadzone
+                if (targetCenter.x - cameraCenter.x > this.deadzoneWidth / 2) {
+                    this.x += targetCenter.x - cameraCenter.x - this.deadzoneWidth / 2;
+                } else if (targetCenter.x - cameraCenter.x < -this.deadzoneWidth / 2) {
+                    this.x += targetCenter.x - cameraCenter.x + this.deadzoneWidth / 2;
+                }
+                
+                // Vertical deadzone
+                if (targetCenter.y - cameraCenter.y > this.deadzoneHeight / 2) {
+                    this.y += targetCenter.y - cameraCenter.y - this.deadzoneHeight / 2;
+                } else if (targetCenter.y - cameraCenter.y < -this.deadzoneHeight / 2) {
+                    this.y += targetCenter.y - cameraCenter.y + this.deadzoneHeight / 2;
+                }
+            }
+            
+            updatePlatform(targetX, targetY, dt) {
+                // Smooth horizontal, snap vertical when grounded
+                const dx = targetX - this.x;
+                this.x += dx * this.smoothSpeed * dt;
+                
+                if (this.target.grounded) {
+                    // Snap to ground level
+                    const groundY = this.target.y + this.target.height - this.groundOffset;
+                    this.y = groundY - this.height + this.groundOffset;
+                } else {
+                    // Smooth vertical when in air
+                    const dy = targetY - this.y;
+                    this.y += dy * this.smoothSpeed * 0.5 * dt;
+                }
+            }
+            
+            updateLookAhead(targetX, targetY, dt) {
+                // Add look ahead based on velocity
+                const lookX = targetX + this.target.vx * 0.3;
+                const lookY = targetY + Math.min(0, this.target.vy * 0.1);
+                
+                const dx = lookX - this.x;
+                const dy = lookY - this.y;
+                
+                this.x += dx * this.smoothSpeed * dt;
+                this.y += dy * this.smoothSpeed * dt;
+            }
+            
+            updateCinematic(targetX, targetY, dt) {
+                // Cinematic camera with leading and lag
+                const leadX = this.target.facing * this.lookAheadDistance;
+                const targetWithLead = targetX + leadX;
+                
+                // Exponential smoothing
+                const smoothFactor = 1 - Math.exp(-this.smoothSpeed * dt);
+                this.x += (targetWithLead - this.x) * smoothFactor;
+                this.y += (targetY - this.y) * smoothFactor * 0.5;
+            }
+            
+            shake(intensity = 20) {
+                this.shakeIntensity = intensity;
+            }
+            
+            getScreenX() {
+                return this.x + this.offsetX;
+            }
+            
+            getScreenY() {
+                return this.y + this.offsetY;
+            }
+            
+            worldToScreen(worldX, worldY) {
+                return {
+                    x: (worldX - this.getScreenX()) * this.zoom,
+                    y: (worldY - this.getScreenY()) * this.zoom
+                };
+            }
+            
+            screenToWorld(screenX, screenY) {
+                return {
+                    x: screenX / this.zoom + this.getScreenX(),
+                    y: screenY / this.zoom + this.getScreenY()
+                };
+            }
+            
+            isInView(x, y, width, height) {
+                return x + width > this.x && x < this.x + this.width &&
+                       y + height > this.y && y < this.y + this.height;
+            }
+        }
+
+        // Game class
+        class CameraDemo {
+            constructor(canvas, ctx) {
+                this.canvas = canvas;
+                this.ctx = ctx;
+                
+                // Create world
+                this.worldWidth = 2000;
+                this.worldHeight = 600;
+                
+                // Create player
+                this.player = new Player(100, 200);
+                
+                // Create camera
+                this.camera = new Camera(canvas.width, canvas.height);
+                this.camera.setTarget(this.player);
+                
+                // Create platforms
+                this.platforms = [
+                    new Platform(0, 360, 2000, 40), // Ground
+                    new Platform(200, 300, 100, 20),
+                    new Platform(400, 250, 150, 20),
+                    new Platform(650, 280, 100, 20),
+                    new Platform(850, 200, 200, 20),
+                    new Platform(1200, 250, 100, 20),
+                    new Platform(1400, 150, 150, 20),
+                    new Platform(1700, 200, 100, 20)
+                ];
+                
+                // Background objects
+                this.backgroundObjects = this.createBackgroundObjects();
+                
+                // Stats
+                this.fps = 60;
+                this.frameCount = 0;
+                this.lastFpsUpdate = performance.now();
+            }
+            
+            createBackgroundObjects() {
+                const objects = [];
+                for (let i = 0; i < 50; i++) {
+                    objects.push({
+                        x: Math.random() * this.worldWidth,
+                        y: Math.random() * 300,
+                        size: Math.random() * 30 + 10,
+                        color: `rgba(255, 255, 255, ${Math.random() * 0.3 + 0.1})`
+                    });
+                }
+                return objects;
+            }
+            
+            update(dt) {
+                this.player.update(dt, this.platforms);
+                this.camera.update(dt);
+                
+                // Update FPS
+                this.frameCount++;
+                const now = performance.now();
+                if (now - this.lastFpsUpdate >= 1000) {
+                    this.fps = this.frameCount;
+                    this.frameCount = 0;
+                    this.lastFpsUpdate = now;
+                }
+                
+                this.updateUI();
+            }
+            
+            draw() {
+                // Clear canvas
+                this.ctx.fillStyle = '#2C3E50';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Apply camera transform
+                this.ctx.save();
+                
+                if (this.camera.zoom !== 1) {
+                    this.ctx.scale(this.camera.zoom, this.camera.zoom);
+                }
+                
+                // Draw background objects (parallax layer)
+                for (const obj of this.backgroundObjects) {
+                    const parallaxX = obj.x - this.camera.getScreenX() * 0.5;
+                    const parallaxY = obj.y - this.camera.getScreenY() * 0.3;
+                    
+                    if (parallaxX + obj.size > 0 && parallaxX < this.canvas.width) {
+                        this.ctx.fillStyle = obj.color;
+                        this.ctx.fillRect(parallaxX, parallaxY, obj.size, obj.size);
+                    }
+                }
+                
+                // Draw platforms
+                let objectsInView = 0;
+                for (const platform of this.platforms) {
+                    if (this.camera.isInView(platform.x, platform.y, platform.width, platform.height)) {
+                        platform.draw(this.ctx, this.camera);
+                        objectsInView++;
+                    }
+                }
+                
+                // Draw player
+                this.player.draw(this.ctx, this.camera);
+                objectsInView++;
+                
+                this.ctx.restore();
+                
+                // Draw debug info
+                if (this.camera.showDebug) {
+                    this.drawDebug();
+                }
+                
+                // Update objects in view counter
+                document.getElementById('objectsInView').textContent = objectsInView;
+            }
+            
+            drawDebug() {
+                const ctx = this.ctx;
+                
+                // Draw camera bounds
+                ctx.strokeStyle = '#ff0000';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw deadzone
+                if (this.camera.mode === 'deadzone') {
+                    const centerX = this.canvas.width / 2;
+                    const centerY = this.canvas.height / 2;
+                    
+                    ctx.strokeStyle = '#ffff00';
+                    ctx.setLineDash([5, 5]);
+                    ctx.strokeRect(
+                        centerX - this.camera.deadzoneWidth / 2,
+                        centerY - this.camera.deadzoneHeight / 2,
+                        this.camera.deadzoneWidth,
+                        this.camera.deadzoneHeight
+                    );
+                    ctx.setLineDash([]);
+                }
+                
+                // Draw center crosshair
+                ctx.strokeStyle = '#00ff00';
+                ctx.beginPath();
+                ctx.moveTo(this.canvas.width / 2 - 10, this.canvas.height / 2);
+                ctx.lineTo(this.canvas.width / 2 + 10, this.canvas.height / 2);
+                ctx.moveTo(this.canvas.width / 2, this.canvas.height / 2 - 10);
+                ctx.lineTo(this.canvas.width / 2, this.canvas.height / 2 + 10);
+                ctx.stroke();
+                
+                // Draw camera info
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '12px Arial';
+                ctx.fillText(`Camera Mode: ${this.camera.mode}`, 10, 20);
+                ctx.fillText(`Zoom: ${this.camera.zoom.toFixed(1)}x`, 10, 35);
+                ctx.fillText(`Bounds: ${this.camera.useBounds ? 'On' : 'Off'}`, 10, 50);
+                
+                // Draw world boundaries
+                if (this.camera.useBounds) {
+                    ctx.strokeStyle = '#ff00ff';
+                    ctx.setLineDash([10, 5]);
+                    
+                    // Left boundary
+                    if (this.camera.x <= this.camera.minX) {
+                        ctx.beginPath();
+                        ctx.moveTo(0, 0);
+                        ctx.lineTo(0, this.canvas.height);
+                        ctx.stroke();
+                    }
+                    
+                    // Right boundary
+                    if (this.camera.x >= this.camera.maxX - this.canvas.width) {
+                        ctx.beginPath();
+                        ctx.moveTo(this.canvas.width, 0);
+                        ctx.lineTo(this.canvas.width, this.canvas.height);
+                        ctx.stroke();
+                    }
+                    
+                    ctx.setLineDash([]);
+                }
+            }
+            
+            updateUI() {
+                document.getElementById('cameraMode').textContent = 
+                    this.camera.mode.charAt(0).toUpperCase() + this.camera.mode.slice(1);
+                document.getElementById('cameraX').textContent = Math.round(this.camera.x);
+                document.getElementById('cameraY').textContent = Math.round(this.camera.y);
+                document.getElementById('playerX').textContent = Math.round(this.player.x);
+                document.getElementById('playerY').textContent = Math.round(this.player.y);
+                document.getElementById('velocityX').textContent = Math.round(this.player.vx);
+                document.getElementById('velocityY').textContent = Math.round(this.player.vy);
+                document.getElementById('fps').textContent = this.fps;
+            }
+        }
+
+        // Initialize demo
+        const cameraCanvas = document.getElementById('cameraCanvas');
+        const ctx = cameraCanvas.getContext('2d');
+        const demo = new CameraDemo(cameraCanvas, ctx);
+
+        // Control functions
+        window.setCameraMode = function(mode) {
+            demo.camera.mode = mode;
+            console.log('Camera mode:', mode);
+        };
+
+        window.toggleDebugView = function() {
+            demo.camera.showDebug = !demo.camera.showDebug;
+        };
+
+        window.triggerShake = function() {
+            demo.camera.shake(30);
+        };
+
+        window.toggleZoom = function() {
+            demo.camera.zoom = demo.camera.zoom === 1 ? 1.5 : 1;
+        };
+
+        window.toggleBounds = function() {
+            demo.camera.useBounds = !demo.camera.useBounds;
+        };
+
+        window.resetCamera = function() {
+            demo.camera.x = demo.player.x + demo.player.width / 2 - demo.canvas.width / 2;
+            demo.camera.y = demo.player.y + demo.player.height / 2 - demo.canvas.height / 2;
+        };
+
+        window.addPlatform = function() {
+            const x = Math.random() * 1800 + 100;
+            const y = Math.random() * 200 + 100;
+            const width = Math.random() * 100 + 50;
+            demo.platforms.push(new Platform(x, y, width, 20));
+        };
+
+        window.setSmoothSpeed = function(value) {
+            demo.camera.smoothSpeed = parseFloat(value);
+            document.getElementById('smoothSpeedDisplay').textContent = value;
+        };
+
+        window.setDeadzoneSize = function(value) {
+            const size = parseInt(value);
+            demo.camera.deadzoneWidth = size;
+            demo.camera.deadzoneHeight = size;
+            document.getElementById('deadzoneSizeDisplay').textContent = value;
+        };
+
+        window.setZoomLevel = function(value) {
+            demo.camera.zoom = parseFloat(value);
+            document.getElementById('zoomLevelDisplay').textContent = value + 'x';
+        };
+
+        window.setLookAhead = function(value) {
+            demo.camera.lookAheadDistance = parseInt(value);
+            document.getElementById('lookAheadDisplay').textContent = value;
+        };
+
+        // Animation loop
+        let lastTime = performance.now();
+        function animate(currentTime) {
+            const dt = Math.min((currentTime - lastTime) / 1000, 0.1);
+            lastTime = currentTime;
+            
+            demo.update(dt);
+            demo.draw();
+            
+            requestAnimationFrame(animate);
+        }
+
+        animate(performance.now());
+
+        console.log('Camera Demo initialized!');
+    </script>
+
+    <h2>Camera System Implementation</h2>
+    
+    <pre class="language-python"><code>import pygame
+import math
+from enum import Enum
+from typing import Optional, Tuple
+
+class CameraMode(Enum):
+    """Camera following modes"""
+    LOCKED = "locked"
+    SMOOTH = "smooth"
+    DEADZONE = "deadzone"
+    PLATFORM = "platform"
+    LOOKAHEAD = "lookahead"
+    CINEMATIC = "cinematic"
+
+class Camera:
+    """2D camera system for platformers"""
+    def __init__(self, width: int, height: int):
+        self.width = width
+        self.height = height
+        self.x = 0
+        self.y = 0
+        
+        # Target to follow
+        self.target = None
+        self.mode = CameraMode.SMOOTH
+        
+        # Camera settings
+        self.smooth_speed = 5.0
+        self.deadzone_width = 100
+        self.deadzone_height = 80
+        self.lookahead_distance = 150
+        self.zoom = 1.0
+        
+        # Boundaries
+        self.min_x = 0
+        self.max_x = float('inf')
+        self.min_y = -float('inf')
+        self.max_y = float('inf')
+        self.use_bounds = True
+        
+        # Effects
+        self.shake_intensity = 0
+        self.shake_decay = 10
+        self.offset_x = 0
+        self.offset_y = 0
+        self.rotation = 0
+        
+        # Platform snapping
+        self.ground_offset = 100
+        self.vertical_smooth_factor = 0.5
+        
+        # Cinematic settings
+        self.lead_factor = 0.3
+        self.lag_factor = 0.1
+    
+    def set_target(self, target):
+        """Set the target to follow"""
+        self.target = target
+    
+    def set_bounds(self, min_x: float, max_x: float, 
+                   min_y: float, max_y: float):
+        """Set camera boundaries"""
+        self.min_x = min_x
+        self.max_x = max_x
+        self.min_y = min_y
+        self.max_y = max_y
+    
+    def update(self, dt: float):
+        """Update camera position"""
+        if not self.target:
+            return
+        
+        # Get target center position
+        target_x = self.target.rect.centerx - self.width // 2
+        target_y = self.target.rect.centery - self.height // 2
+        
+        # Apply camera mode
+        if self.mode == CameraMode.LOCKED:
+            self.update_locked(target_x, target_y)
+        elif self.mode == CameraMode.SMOOTH:
+            self.update_smooth(target_x, target_y, dt)
+        elif self.mode == CameraMode.DEADZONE:
+            self.update_deadzone(target_x, target_y)
+        elif self.mode == CameraMode.PLATFORM:
+            self.update_platform(target_x, target_y, dt)
+        elif self.mode == CameraMode.LOOKAHEAD:
+            self.update_lookahead(target_x, target_y, dt)
+        elif self.mode == CameraMode.CINEMATIC:
+            self.update_cinematic(target_x, target_y, dt)
+        
+        # Apply constraints
+        self.apply_constraints()
+        
+        # Update effects
+        self.update_effects(dt)
+    
+    def update_locked(self, target_x: float, target_y: float):
+        """Locked camera - follows target exactly"""
+        self.x = target_x
+        self.y = target_y
+    
+    def update_smooth(self, target_x: float, target_y: float, dt: float):
+        """Smooth follow with interpolation"""
+        dx = target_x - self.x
+        dy = target_y - self.y
+        
+        self.x += dx * self.smooth_speed * dt
+        self.y += dy * self.smooth_speed * dt
+    
+    def update_deadzone(self, target_x: float, target_y: float):
+        """Deadzone camera - only moves when target leaves zone"""
+        camera_center_x = self.x + self.width // 2
+        camera_center_y = self.y + self.height // 2
+        
+        target_center_x = self.target.rect.centerx
+        target_center_y = self.target.rect.centery
+        
+        # Horizontal deadzone
+        if target_center_x - camera_center_x > self.deadzone_width // 2:
+            self.x += target_center_x - camera_center_x - self.deadzone_width // 2
+        elif target_center_x - camera_center_x < -self.deadzone_width // 2:
+            self.x += target_center_x - camera_center_x + self.deadzone_width // 2
+        
+        # Vertical deadzone
+        if target_center_y - camera_center_y > self.deadzone_height // 2:
+            self.y += target_center_y - camera_center_y - self.deadzone_height // 2
+        elif target_center_y - camera_center_y < -self.deadzone_height // 2:
+            self.y += target_center_y - camera_center_y + self.deadzone_height // 2
+    
+    def update_platform(self, target_x: float, target_y: float, dt: float):
+        """Platform-specific camera movement"""
+        # Smooth horizontal following
+        dx = target_x - self.x
+        self.x += dx * self.smooth_speed * dt
+        
+        # Vertical behavior based on grounded state
+        if hasattr(self.target, 'grounded') and self.target.grounded:
+            # Snap to ground level when grounded
+            ground_y = self.target.rect.bottom - self.ground_offset
+            target_y = ground_y - self.height + self.ground_offset
+            dy = target_y - self.y
+            self.y += dy * self.smooth_speed * dt
+        else:
+            # Slower vertical following when in air
+            dy = target_y - self.y
+            self.y += dy * self.smooth_speed * self.vertical_smooth_factor * dt
+    
+    def update_lookahead(self, target_x: float, target_y: float, dt: float):
+        """Look ahead based on velocity"""
+        # Calculate lookahead based on velocity
+        if hasattr(self.target, 'velocity'):
+            lookahead_x = target_x + self.target.velocity.x * self.lead_factor
+            lookahead_y = target_y + min(0, self.target.velocity.y * self.lag_factor)
+        else:
+            lookahead_x = target_x
+            lookahead_y = target_y
+        
+        # Smooth follow to lookahead position
+        dx = lookahead_x - self.x
+        dy = lookahead_y - self.y
+        
+        self.x += dx * self.smooth_speed * dt
+        self.y += dy * self.smooth_speed * dt
+    
+    def update_cinematic(self, target_x: float, target_y: float, dt: float):
+        """Cinematic camera with advanced smoothing"""
+        # Add directional bias
+        if hasattr(self.target, 'facing'):
+            bias_x = self.target.facing * self.lookahead_distance
+        else:
+            bias_x = 0
+        
+        target_x += bias_x
+        
+        # Exponential smoothing
+        smooth_factor = 1 - math.exp(-self.smooth_speed * dt)
+        
+        self.x += (target_x - self.x) * smooth_factor
+        self.y += (target_y - self.y) * smooth_factor * 0.5
+    
+    def apply_constraints(self):
+        """Apply boundary constraints"""
+        if self.use_bounds:
+            # Constrain X
+            max_x = self.max_x - self.width / self.zoom
+            self.x = max(self.min_x, min(self.x, max_x))
+            
+            # Constrain Y
+            max_y = self.max_y - self.height / self.zoom
+            self.y = max(self.min_y, min(self.y, max_y))
+    
+    def update_effects(self, dt: float):
+        """Update camera effects"""
+        # Screen shake
+        if self.shake_intensity > 0:
+            self.offset_x = (pygame.time.get_ticks() % 100 - 50) * \
+                           self.shake_intensity / 50
+            self.offset_y = (pygame.time.get_ticks() % 150 - 75) * \
+                           self.shake_intensity / 75
+            
+            self.shake_intensity -= self.shake_decay * dt
+            self.shake_intensity = max(0, self.shake_intensity)
+        else:
+            self.offset_x = 0
+            self.offset_y = 0
+    
+    def shake(self, intensity: float = 10):
+        """Trigger camera shake"""
+        self.shake_intensity = intensity
+    
+    def zoom_in(self, factor: float = 1.1):
+        """Zoom in"""
+        self.zoom = min(3.0, self.zoom * factor)
+    
+    def zoom_out(self, factor: float = 0.9):
+        """Zoom out"""
+        self.zoom = max(0.5, self.zoom * factor)
+    
+    def world_to_screen(self, world_x: float, world_y: float) -> Tuple[float, float]:
+        """Convert world coordinates to screen coordinates"""
+        screen_x = (world_x - self.x - self.offset_x) * self.zoom
+        screen_y = (world_y - self.y - self.offset_y) * self.zoom
+        return screen_x, screen_y
+    
+    def screen_to_world(self, screen_x: float, screen_y: float) -> Tuple[float, float]:
+        """Convert screen coordinates to world coordinates"""
+        world_x = screen_x / self.zoom + self.x + self.offset_x
+        world_y = screen_y / self.zoom + self.y + self.offset_y
+        return world_x, world_y
+    
+    def is_visible(self, rect: pygame.Rect) -> bool:
+        """Check if rectangle is visible in camera view"""
+        camera_rect = pygame.Rect(self.x, self.y, 
+                                  self.width / self.zoom, 
+                                  self.height / self.zoom)
+        return camera_rect.colliderect(rect)
+    
+    def apply(self, surface: pygame.Surface) -> pygame.Surface:
+        """Apply camera transformations to surface"""
+        if self.zoom != 1.0:
+            # Scale surface
+            new_size = (int(surface.get_width() * self.zoom),
+                       int(surface.get_height() * self.zoom))
+            surface = pygame.transform.scale(surface, new_size)
+        
+        if self.rotation != 0:
+            # Rotate surface
+            surface = pygame.transform.rotate(surface, self.rotation)
+        
+        return surface</code></pre>
+
+    <h2>Advanced Camera Features</h2>
+    
+    <pre class="language-python"><code># Split screen camera system
+class SplitScreenCamera:
+    """Split screen camera for multiplayer"""
+    def __init__(self, screen_width: int, screen_height: int, 
+                 num_players: int = 2):
+        self.screen_width = screen_width
+        self.screen_height = screen_height
+        self.num_players = num_players
+        self.cameras = []
+        self.viewports = []
+        
+        self.setup_viewports()
+    
+    def setup_viewports(self):
+        """Setup viewport rectangles for each player"""
+        if self.num_players == 2:
+            # Horizontal split
+            self.viewports = [
+                pygame.Rect(0, 0, self.screen_width // 2, self.screen_height),
+                pygame.Rect(self.screen_width // 2, 0, 
+                           self.screen_width // 2, self.screen_height)
+            ]
+        elif self.num_players == 4:
+            # Quad split
+            half_width = self.screen_width // 2
+            half_height = self.screen_height // 2
+            self.viewports = [
+                pygame.Rect(0, 0, half_width, half_height),
+                pygame.Rect(half_width, 0, half_width, half_height),
+                pygame.Rect(0, half_height, half_width, half_height),
+                pygame.Rect(half_width, half_height, half_width, half_height)
+            ]
+        
+        # Create cameras for each viewport
+        for viewport in self.viewports:
+            camera = Camera(viewport.width, viewport.height)
+            self.cameras.append(camera)
+    
+    def update(self, dt: float):
+        """Update all cameras"""
+        for camera in self.cameras:
+            camera.update(dt)
+    
+    def render(self, screen: pygame.Surface, world_render_func):
+        """Render world for each camera"""
+        for camera, viewport in zip(self.cameras, self.viewports):
+            # Create surface for this viewport
+            viewport_surface = pygame.Surface((viewport.width, viewport.height))
+            
+            # Render world to viewport surface
+            world_render_func(viewport_surface, camera)
+            
+            # Blit to main screen
+            screen.blit(viewport_surface, viewport.topleft)
+            
+            # Draw viewport border
+            pygame.draw.rect(screen, (255, 255, 255), viewport, 2)
+
+# Camera transitions
+class CameraTransition:
+    """Smooth camera transitions"""
+    def __init__(self, camera: Camera):
+        self.camera = camera
+        self.transitioning = False
+        self.start_pos = (0, 0)
+        self.end_pos = (0, 0)
+        self.duration = 1.0
+        self.elapsed = 0.0
+        self.easing_func = self.ease_in_out_quad
+    
+    def start_transition(self, target_x: float, target_y: float, 
+                        duration: float = 1.0):
+        """Start camera transition"""
+        self.transitioning = True
+        self.start_pos = (self.camera.x, self.camera.y)
+        self.end_pos = (target_x, target_y)
+        self.duration = duration
+        self.elapsed = 0.0
+    
+    def update(self, dt: float):
+        """Update transition"""
+        if not self.transitioning:
+            return
+        
+        self.elapsed += dt
+        progress = min(self.elapsed / self.duration, 1.0)
+        
+        # Apply easing
+        eased_progress = self.easing_func(progress)
+        
+        # Interpolate position
+        self.camera.x = self.start_pos[0] + \
+                       (self.end_pos[0] - self.start_pos[0]) * eased_progress
+        self.camera.y = self.start_pos[1] + \
+                       (self.end_pos[1] - self.start_pos[1]) * eased_progress
+        
+        if progress >= 1.0:
+            self.transitioning = False
+    
+    def ease_in_out_quad(self, t: float) -> float:
+        """Quadratic ease in/out"""
+        if t < 0.5:
+            return 2 * t * t
+        return 1 - pow(-2 * t + 2, 2) / 2
+    
+    def ease_in_out_cubic(self, t: float) -> float:
+        """Cubic ease in/out"""
+        if t < 0.5:
+            return 4 * t * t * t
+        return 1 - pow(-2 * t + 2, 3) / 2
+
+# Camera zones
+class CameraZone:
+    """Define camera behavior zones"""
+    def __init__(self, rect: pygame.Rect, mode: CameraMode = CameraMode.SMOOTH,
+                 zoom: float = 1.0):
+        self.rect = rect
+        self.mode = mode
+        self.zoom = zoom
+        self.properties = {}
+    
+    def contains(self, x: float, y: float) -> bool:
+        """Check if point is in zone"""
+        return self.rect.collidepoint(x, y)
+    
+    def apply_to_camera(self, camera: Camera, smooth: bool = True):
+        """Apply zone settings to camera"""
+        if smooth:
+            # Smooth transition
+            camera.mode = self.mode
+            # Animate zoom change
+            if camera.zoom != self.zoom:
+                # Would implement smooth zoom
+                pass
+        else:
+            camera.mode = self.mode
+            camera.zoom = self.zoom</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Camera Tips</h3>
+        <ul>
+            <li><strong>Smooth Movement:</strong> Use interpolation for fluid camera motion</li>
+            <li><strong>Deadzones:</strong> Allow player movement without camera jitter</li>
+            <li><strong>Look Ahead:</strong> Show where the player is going</li>
+            <li><strong>Boundaries:</strong> Keep camera within level bounds</li>
+            <li><strong>Platform Snapping:</strong> Reduce vertical motion when grounded</li>
+            <li><strong>Screen Shake:</strong> Use sparingly for impact</li>
+            <li><strong>Zoom Control:</strong> Adjust view for different areas</li>
+            <li><strong>Transitions:</strong> Smooth camera moves between areas</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>📹 Camera systems control the player's view</li>
+            <li>🎯 Different modes suit different game styles</li>
+            <li>📦 Deadzones reduce camera motion sickness</li>
+            <li>🌊 Smooth following creates professional feel</li>
+            <li>👀 Look-ahead shows upcoming challenges</li>
+            <li>🎬 Cinematic cameras enhance storytelling</li>
+            <li>🔧 Effects like shake add game feel</li>
+            <li>📐 Viewport management optimizes rendering</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you've mastered camera systems, next we'll create responsive character controllers for smooth platformer movement!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="platformer_tilemap.html" class="prev-lesson" aria-label="Previous lesson: Tile-based Maps">Previous Lesson: Tile-based Maps</a>
+        <a href="platformer_character_controller.html" class="next-lesson" aria-label="Next lesson: Character Controllers">Next Lesson: Character Controllers</a>
+    </nav>
+    
+    </main>
+    <script src="/js/course-enhancements.js" defer></script>
+</body>
+</html>

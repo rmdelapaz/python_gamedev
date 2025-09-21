@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master event systems in game architecture. Learn to create decoupled communication between game systems using events, observers, and message buses.">
+    <title>Event Systems - Game Architecture</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Event Systems</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Intermediate Module - Section 1: Game Architecture - Lesson 4</span>
+    </nav>
+
+    <h2>Creating Decoupled Communication Between Systems</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Event systems enable game components to communicate without direct dependencies! They create loose coupling between systems, making your code more maintainable, testable, and flexible. Let's master this powerful pattern! 📡🎮</p>
+    </div>
+
+    <h2>Understanding Event Systems</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>📻 The Radio Broadcast Analogy</h3>
+        <p>Think of event systems like radio broadcasting:</p>
+        <ul>
+            <li><strong>Events:</strong> Radio signals being broadcast</li>
+            <li><strong>Publishers:</strong> Radio stations sending signals</li>
+            <li><strong>Subscribers:</strong> Radio receivers tuned to specific frequencies</li>
+            <li><strong>Event Bus:</strong> The airwaves carrying all signals</li>
+            <li><strong>Decoupling:</strong> Stations don't need to know who's listening</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Event System"] --> B["Event Bus"]
+        B --> C["Event Queue"]
+        B --> D["Listeners Map"]
+        B --> E["Event Dispatcher"]
+        
+        F["Publisher 1"] --> |"Emit Event"| B
+        G["Publisher 2"] --> |"Emit Event"| B
+        
+        B --> |"Notify"| H["Subscriber 1"]
+        B --> |"Notify"| I["Subscriber 2"]
+        B --> |"Notify"| J["Subscriber 3"]
+        
+        K["Event Types"] --> L["Game Events"]
+        K --> M["Input Events"]
+        K --> N["System Events"]
+        K --> O["UI Events"]
+    </div>
+
+    <h2>Interactive Event System Visualizer</h2>
+    
+    <div class="canvas-wrapper" style="text-align: center;">
+        <canvas id="eventCanvas" width="600" height="400" style="border: 1px solid #333; background-color: #1a1a1a; display: inline-block;"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Watch events flow through the system in real-time!</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; max-width: 600px; margin: 10px auto;">
+            <button onclick="emitEvent('player_jump')">Player Jump</button>
+            <button onclick="emitEvent('enemy_spawn')">Spawn Enemy</button>
+            <button onclick="emitEvent('item_collected')">Collect Item</button>
+            <button onclick="emitEvent('level_complete')">Level Complete</button>
+            <button onclick="emitEvent('damage_dealt')">Deal Damage</button>
+            <button onclick="emitEvent('achievement_unlocked')">Achievement</button>
+        </div>
+        <div style="margin-top: 10px;">
+            <h4>System Subscriptions:</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 5px; max-width: 600px; margin: 10px auto; text-align: left;">
+                <label><input type="checkbox" id="audio-system" checked onchange="toggleSubscription('AudioSystem')"> Audio System</label>
+                <label><input type="checkbox" id="ui-system" checked onchange="toggleSubscription('UISystem')"> UI System</label>
+                <label><input type="checkbox" id="achievement-system" checked onchange="toggleSubscription('AchievementSystem')"> Achievements</label>
+                <label><input type="checkbox" id="particle-system" checked onchange="toggleSubscription('ParticleSystem')"> Particles</label>
+                <label><input type="checkbox" id="analytics-system" checked onchange="toggleSubscription('AnalyticsSystem')"> Analytics</label>
+                <label><input type="checkbox" id="save-system" checked onchange="toggleSubscription('SaveSystem')"> Save System</label>
+            </div>
+        </div>
+        <div style="margin-top: 10px;">
+            <label>Event Queue Mode: 
+                <select id="queueMode" onchange="setQueueMode(this.value)">
+                    <option value="immediate">Immediate</option>
+                    <option value="queued">Queued</option>
+                    <option value="priority">Priority Queue</option>
+                </select>
+            </label>
+            <label>Speed: <input type="range" id="eventSpeed" min="0.5" max="3" step="0.5" value="1" onchange="setEventSpeed(this.value)"></label>
+        </div>
+        <p>Events Emitted: <span id="eventCount">0</span> | Queue Size: <span id="queueSize">0</span></p>
+        <div id="eventLog" style="margin-top: 10px; height: 100px; overflow-y: auto; border: 1px solid #333; padding: 5px; text-align: left; font-size: 12px; background-color: rgba(0,0,0,0.5);">
+            <!-- Event log entries will appear here -->
+        </div>
+    </div>
+
+    <script src="architecture_event_systems.js"></script>
+
+    <h2>Basic Event System Implementation</h2>
+    
+    <pre class="language-python"><code>from typing import Dict, List, Callable, Any
+from dataclasses import dataclass
+from enum import Enum, auto
+import time
+from queue import Queue, PriorityQueue
+
+class EventType(Enum):
+    """Enumeration of game event types"""
+    # Game Events
+    GAME_START = auto()
+    GAME_PAUSE = auto()
+    GAME_RESUME = auto()
+    GAME_OVER = auto()
+    
+    # Player Events
+    PLAYER_SPAWN = auto()
+    PLAYER_DEATH = auto()
+    PLAYER_JUMP = auto()
+    PLAYER_SHOOT = auto()
+    
+    # Combat Events
+    DAMAGE_DEALT = auto()
+    DAMAGE_TAKEN = auto()
+    ENEMY_KILLED = auto()
+    
+    # Item Events
+    ITEM_COLLECTED = auto()
+    ITEM_USED = auto()
+    ITEM_DROPPED = auto()
+    
+    # Level Events
+    LEVEL_START = auto()
+    LEVEL_COMPLETE = auto()
+    CHECKPOINT_REACHED = auto()
+    
+    # UI Events
+    BUTTON_CLICKED = auto()
+    MENU_OPENED = auto()
+    MENU_CLOSED = auto()
+
+@dataclass
+class Event:
+    """Base class for all events"""
+    event_type: EventType
+    data: Dict[str, Any] = None
+    timestamp: float = None
+    priority: int = 5  # Default priority (1 = highest, 10 = lowest)
+    
+    def __post_init__(self):
+        if self.timestamp is None:
+            self.timestamp = time.time()
+        if self.data is None:
+            self.data = {}
+
+class EventBus:
+    """Central event distribution system"""
+    def __init__(self):
+        self.listeners: Dict[EventType, List[Callable]] = {}
+        self.event_queue: Queue = Queue()
+        self.processing = False
+        
+    def subscribe(self, event_type: EventType, callback: Callable):
+        """Subscribe to an event type"""
+        if event_type not in self.listeners:
+            self.listeners[event_type] = []
+        
+        if callback not in self.listeners[event_type]:
+            self.listeners[event_type].append(callback)
+            print(f"Subscribed {callback.__name__} to {event_type.name}")
+    
+    def unsubscribe(self, event_type: EventType, callback: Callable):
+        """Unsubscribe from an event type"""
+        if event_type in self.listeners:
+            if callback in self.listeners[event_type]:
+                self.listeners[event_type].remove(callback)
+                print(f"Unsubscribed {callback.__name__} from {event_type.name}")
+    
+    def emit(self, event: Event):
+        """Emit an event to all subscribers"""
+        # Add to queue for processing
+        self.event_queue.put(event)
+        
+        # Process immediately if not already processing
+        if not self.processing:
+            self.process_events()
+    
+    def emit_immediate(self, event: Event):
+        """Emit an event immediately, bypassing the queue"""
+        self._dispatch_event(event)
+    
+    def process_events(self):
+        """Process all queued events"""
+        self.processing = True
+        
+        while not self.event_queue.empty():
+            event = self.event_queue.get()
+            self._dispatch_event(event)
+        
+        self.processing = False
+    
+    def _dispatch_event(self, event: Event):
+        """Dispatch event to all listeners"""
+        if event.event_type in self.listeners:
+            for callback in self.listeners[event.event_type]:
+                try:
+                    callback(event)
+                except Exception as e:
+                    print(f"Error in event handler {callback.__name__}: {e}")
+    
+    def clear(self):
+        """Clear all listeners and queued events"""
+        self.listeners.clear()
+        while not self.event_queue.empty():
+            self.event_queue.get()
+
+# Global event bus instance
+event_bus = EventBus()</code></pre>
+
+    <h2>Advanced Event Patterns</h2>
+    
+    <pre class="language-python"><code># Priority Queue Event System
+class PriorityEventBus(EventBus):
+    """Event bus with priority queue processing"""
+    def __init__(self):
+        super().__init__()
+        self.event_queue = PriorityQueue()
+        
+    def emit(self, event: Event):
+        """Emit event with priority"""
+        # Priority queue uses (priority, item) tuples
+        self.event_queue.put((event.priority, event.timestamp, event))
+        
+        if not self.processing:
+            self.process_events()
+    
+    def process_events(self):
+        """Process events in priority order"""
+        self.processing = True
+        
+        while not self.event_queue.empty():
+            _, _, event = self.event_queue.get()
+            self._dispatch_event(event)
+        
+        self.processing = False
+
+# Event Manager with filtering
+class EventManager:
+    """Advanced event management with filtering and wildcards"""
+    def __init__(self):
+        self.event_bus = EventBus()
+        self.event_filters: Dict[str, Callable] = {}
+        self.event_history: List[Event] = []
+        self.max_history = 100
+        
+    def subscribe_with_filter(self, event_type: EventType, 
+                            callback: Callable, 
+                            filter_func: Callable = None):
+        """Subscribe with optional filtering"""
+        if filter_func:
+            # Create filtered callback
+            def filtered_callback(event):
+                if filter_func(event):
+                    callback(event)
+            
+            self.event_bus.subscribe(event_type, filtered_callback)
+        else:
+            self.event_bus.subscribe(event_type, callback)
+    
+    def emit_and_record(self, event: Event):
+        """Emit event and keep history"""
+        # Add to history
+        self.event_history.append(event)
+        if len(self.event_history) > self.max_history:
+            self.event_history.pop(0)
+        
+        # Emit event
+        self.event_bus.emit(event)
+    
+    def get_recent_events(self, event_type: EventType = None, 
+                          count: int = 10) -> List[Event]:
+        """Get recent events from history"""
+        if event_type:
+            filtered = [e for e in self.event_history 
+                       if e.event_type == event_type]
+            return filtered[-count:]
+        return self.event_history[-count:]
+
+# Event Channel System
+class EventChannel:
+    """Named channel for specific event types"""
+    def __init__(self, name: str):
+        self.name = name
+        self.subscribers: List[Callable] = []
+        self.enabled = True
+        
+    def subscribe(self, callback: Callable):
+        """Subscribe to this channel"""
+        if callback not in self.subscribers:
+            self.subscribers.append(callback)
+    
+    def unsubscribe(self, callback: Callable):
+        """Unsubscribe from this channel"""
+        if callback in self.subscribers:
+            self.subscribers.remove(callback)
+    
+    def broadcast(self, data: Any):
+        """Broadcast to all subscribers"""
+        if not self.enabled:
+            return
+        
+        event = Event(
+            event_type=EventType.CUSTOM,
+            data={'channel': self.name, 'payload': data}
+        )
+        
+        for callback in self.subscribers:
+            try:
+                callback(event)
+            except Exception as e:
+                print(f"Error in channel {self.name}: {e}")
+    
+    def toggle(self, enabled: bool):
+        """Enable/disable channel"""
+        self.enabled = enabled
+
+class ChannelManager:
+    """Manages multiple event channels"""
+    def __init__(self):
+        self.channels: Dict[str, EventChannel] = {}
+    
+    def create_channel(self, name: str) -> EventChannel:
+        """Create a new channel"""
+        if name not in self.channels:
+            self.channels[name] = EventChannel(name)
+        return self.channels[name]
+    
+    def get_channel(self, name: str) -> EventChannel:
+        """Get existing channel"""
+        return self.channels.get(name)
+    
+    def remove_channel(self, name: str):
+        """Remove a channel"""
+        if name in self.channels:
+            del self.channels[name]</code></pre>
+
+    <h2>Game Systems Using Events</h2>
+    
+    <pre class="language-python"><code># Achievement System using events
+class AchievementSystem:
+    """Tracks achievements through events"""
+    def __init__(self, event_bus: EventBus):
+        self.event_bus = event_bus
+        self.achievements = {}
+        self.unlocked = set()
+        self.progress = {}
+        
+        # Subscribe to relevant events
+        self.event_bus.subscribe(EventType.ENEMY_KILLED, self.on_enemy_killed)
+        self.event_bus.subscribe(EventType.ITEM_COLLECTED, self.on_item_collected)
+        self.event_bus.subscribe(EventType.LEVEL_COMPLETE, self.on_level_complete)
+        
+        self.setup_achievements()
+    
+    def setup_achievements(self):
+        """Define achievements"""
+        self.achievements = {
+            'first_kill': {
+                'name': 'First Blood',
+                'description': 'Defeat your first enemy',
+                'requirement': 1,
+                'type': 'enemy_kills'
+            },
+            'collector': {
+                'name': 'Collector',
+                'description': 'Collect 100 items',
+                'requirement': 100,
+                'type': 'items_collected'
+            },
+            'speedrun': {
+                'name': 'Speed Runner',
+                'description': 'Complete level in under 60 seconds',
+                'requirement': 60,
+                'type': 'level_time'
+            }
+        }
+    
+    def on_enemy_killed(self, event: Event):
+        """Handle enemy killed events"""
+        # Update kill counter
+        if 'enemy_kills' not in self.progress:
+            self.progress['enemy_kills'] = 0
+        self.progress['enemy_kills'] += 1
+        
+        # Check achievements
+        self.check_achievement('first_kill')
+    
+    def on_item_collected(self, event: Event):
+        """Handle item collection events"""
+        if 'items_collected' not in self.progress:
+            self.progress['items_collected'] = 0
+        self.progress['items_collected'] += 1
+        
+        self.check_achievement('collector')
+    
+    def on_level_complete(self, event: Event):
+        """Handle level completion events"""
+        if 'completion_time' in event.data:
+            if event.data['completion_time'] < 60:
+                self.unlock_achievement('speedrun')
+    
+    def check_achievement(self, achievement_id: str):
+        """Check if achievement should be unlocked"""
+        if achievement_id in self.unlocked:
+            return
+        
+        achievement = self.achievements.get(achievement_id)
+        if not achievement:
+            return
+        
+        progress_type = achievement['type']
+        requirement = achievement['requirement']
+        
+        if progress_type in self.progress:
+            if self.progress[progress_type] >= requirement:
+                self.unlock_achievement(achievement_id)
+    
+    def unlock_achievement(self, achievement_id: str):
+        """Unlock an achievement"""
+        if achievement_id not in self.unlocked:
+            self.unlocked.add(achievement_id)
+            achievement = self.achievements[achievement_id]
+            
+            # Emit achievement unlocked event
+            self.event_bus.emit(Event(
+                event_type=EventType.ACHIEVEMENT_UNLOCKED,
+                data={
+                    'achievement_id': achievement_id,
+                    'name': achievement['name'],
+                    'description': achievement['description']
+                }
+            ))
+            
+            print(f"Achievement Unlocked: {achievement['name']}")
+
+# Audio System using events
+class AudioSystem:
+    """Plays sounds based on game events"""
+    def __init__(self, event_bus: EventBus):
+        self.event_bus = event_bus
+        self.sounds = {}
+        self.music_volume = 0.7
+        self.sfx_volume = 0.8
+        
+        # Subscribe to audio events
+        self.event_bus.subscribe(EventType.PLAYER_JUMP, self.on_player_jump)
+        self.event_bus.subscribe(EventType.PLAYER_SHOOT, self.on_player_shoot)
+        self.event_bus.subscribe(EventType.ENEMY_KILLED, self.on_enemy_killed)
+        self.event_bus.subscribe(EventType.ITEM_COLLECTED, self.on_item_collected)
+        self.event_bus.subscribe(EventType.LEVEL_COMPLETE, self.on_level_complete)
+    
+    def on_player_jump(self, event: Event):
+        """Play jump sound"""
+        self.play_sound('jump', self.sfx_volume)
+    
+    def on_player_shoot(self, event: Event):
+        """Play shoot sound"""
+        self.play_sound('shoot', self.sfx_volume)
+    
+    def on_enemy_killed(self, event: Event):
+        """Play enemy death sound"""
+        enemy_type = event.data.get('enemy_type', 'default')
+        self.play_sound(f'enemy_death_{enemy_type}', self.sfx_volume)
+    
+    def on_item_collected(self, event: Event):
+        """Play item collection sound"""
+        item_type = event.data.get('item_type', 'default')
+        self.play_sound(f'pickup_{item_type}', self.sfx_volume)
+    
+    def on_level_complete(self, event: Event):
+        """Play level complete music"""
+        self.play_sound('victory', self.music_volume)
+    
+    def play_sound(self, sound_name: str, volume: float):
+        """Play a sound effect"""
+        print(f"Playing sound: {sound_name} at volume {volume}")
+        # In real implementation, would play actual sound
+
+# Save System using events
+class SaveSystem:
+    """Auto-saves game based on events"""
+    def __init__(self, event_bus: EventBus):
+        self.event_bus = event_bus
+        self.save_data = {}
+        self.auto_save_enabled = True
+        self.last_save_time = time.time()
+        self.save_interval = 60  # Auto-save every 60 seconds
+        
+        # Subscribe to save-triggering events
+        self.event_bus.subscribe(EventType.CHECKPOINT_REACHED, self.on_checkpoint)
+        self.event_bus.subscribe(EventType.LEVEL_COMPLETE, self.on_level_complete)
+        self.event_bus.subscribe(EventType.ITEM_COLLECTED, self.on_item_collected)
+    
+    def on_checkpoint(self, event: Event):
+        """Save at checkpoint"""
+        checkpoint_id = event.data.get('checkpoint_id')
+        self.save_data['last_checkpoint'] = checkpoint_id
+        self.save_game()
+    
+    def on_level_complete(self, event: Event):
+        """Save after level completion"""
+        level_id = event.data.get('level_id')
+        self.save_data['completed_levels'] = self.save_data.get('completed_levels', [])
+        self.save_data['completed_levels'].append(level_id)
+        self.save_game()
+    
+    def on_item_collected(self, event: Event):
+        """Update inventory in save data"""
+        item_id = event.data.get('item_id')
+        if 'inventory' not in self.save_data:
+            self.save_data['inventory'] = []
+        self.save_data['inventory'].append(item_id)
+        
+        # Auto-save if interval passed
+        if self.auto_save_enabled:
+            current_time = time.time()
+            if current_time - self.last_save_time > self.save_interval:
+                self.save_game()
+    
+    def save_game(self):
+        """Save game state"""
+        self.save_data['timestamp'] = time.time()
+        print(f"Game saved: {self.save_data}")
+        self.last_save_time = time.time()
+        
+        # Emit save complete event
+        self.event_bus.emit(Event(
+            event_type=EventType.GAME_SAVED,
+            data={'save_data': self.save_data}
+        ))</code></pre>
+
+    <h2>Complete Event-Driven Game Example</h2>
+    
+    <pre class="language-python"><code>import pygame
+from typing import Dict, Any
+
+class EventDrivenGame:
+    """Complete game using event-driven architecture"""
+    def __init__(self):
+        pygame.init()
+        self.screen = pygame.display.set_mode((800, 600))
+        pygame.display.set_caption("Event-Driven Game")
+        self.clock = pygame.time.Clock()
+        self.running = True
+        
+        # Initialize event system
+        self.event_bus = PriorityEventBus()
+        
+        # Initialize game systems
+        self.achievement_system = AchievementSystem(self.event_bus)
+        self.audio_system = AudioSystem(self.event_bus)
+        self.save_system = SaveSystem(self.event_bus)
+        self.ui_system = UISystem(self.event_bus, self.screen)
+        self.particle_system = ParticleSystem(self.event_bus)
+        
+        # Game state
+        self.player = None
+        self.enemies = []
+        self.items = []
+        self.score = 0
+        self.level = 1
+        
+        self.setup_game()
+    
+    def setup_game(self):
+        """Initialize game objects"""
+        # Create player
+        self.player = Player(400, 300, self.event_bus)
+        
+        # Subscribe to game events
+        self.event_bus.subscribe(EventType.PLAYER_DEATH, self.on_player_death)
+        self.event_bus.subscribe(EventType.ENEMY_KILLED, self.on_enemy_killed)
+        self.event_bus.subscribe(EventType.ITEM_COLLECTED, self.on_item_collected)
+    
+    def on_player_death(self, event: Event):
+        """Handle player death"""
+        print("Player died!")
+        self.event_bus.emit(Event(
+            event_type=EventType.GAME_OVER,
+            data={'final_score': self.score},
+            priority=1  # High priority
+        ))
+    
+    def on_enemy_killed(self, event: Event):
+        """Handle enemy death"""
+        self.score += event.data.get('points', 10)
+        enemy_id = event.data.get('enemy_id')
+        
+        # Remove enemy from list
+        self.enemies = [e for e in self.enemies if e.id != enemy_id]
+        
+        # Check if level complete
+        if not self.enemies:
+            self.event_bus.emit(Event(
+                event_type=EventType.LEVEL_COMPLETE,
+                data={
+                    'level_id': self.level,
+                    'completion_time': pygame.time.get_ticks() / 1000
+                }
+            ))
+    
+    def on_item_collected(self, event: Event):
+        """Handle item collection"""
+        item_id = event.data.get('item_id')
+        item_type = event.data.get('item_type')
+        
+        # Apply item effect
+        if item_type == 'health':
+            self.player.heal(20)
+        elif item_type == 'powerup':
+            self.player.power_up()
+        
+        # Remove item
+        self.items = [i for i in self.items if i.id != item_id]
+    
+    def handle_input(self):
+        """Handle input events"""
+        keys = pygame.key.get_pressed()
+        
+        if keys[pygame.K_SPACE]:
+            self.event_bus.emit(Event(
+                event_type=EventType.PLAYER_JUMP,
+                data={'player_pos': (self.player.x, self.player.y)}
+            ))
+        
+        if keys[pygame.K_RETURN]:
+            self.event_bus.emit(Event(
+                event_type=EventType.PLAYER_SHOOT,
+                data={'player_pos': (self.player.x, self.player.y)}
+            ))
+    
+    def update(self, dt):
+        """Update game logic"""
+        # Process queued events
+        self.event_bus.process_events()
+        
+        # Update game objects
+        self.player.update(dt)
+        for enemy in self.enemies:
+            enemy.update(dt)
+        
+        # Check collisions
+        self.check_collisions()
+    
+    def check_collisions(self):
+        """Check and emit collision events"""
+        # Player-Enemy collisions
+        for enemy in self.enemies:
+            if self.player.collides_with(enemy):
+                self.event_bus.emit(Event(
+                    event_type=EventType.DAMAGE_TAKEN,
+                    data={
+                        'damage': enemy.damage,
+                        'source': 'enemy',
+                        'enemy_id': enemy.id
+                    }
+                ))
+        
+        # Player-Item collisions
+        for item in self.items:
+            if self.player.collides_with(item):
+                self.event_bus.emit(Event(
+                    event_type=EventType.ITEM_COLLECTED,
+                    data={
+                        'item_id': item.id,
+                        'item_type': item.item_type
+                    }
+                ))
+    
+    def run(self):
+        """Main game loop"""
+        dt = 0
+        
+        # Emit game start event
+        self.event_bus.emit(Event(
+            event_type=EventType.GAME_START,
+            priority=1
+        ))
+        
+        while self.running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
+                
+                # Convert pygame events to game events
+                if event.type == pygame.KEYDOWN:
+                    self.event_bus.emit(Event(
+                        event_type=EventType.KEY_PRESSED,
+                        data={'key': event.key}
+                    ))
+            
+            self.handle_input()
+            self.update(dt)
+            
+            # Clear screen
+            self.screen.fill((20, 20, 30))
+            
+            # Draw everything
+            self.player.draw(self.screen)
+            for enemy in self.enemies:
+                enemy.draw(self.screen)
+            for item in self.items:
+                item.draw(self.screen)
+            
+            # Systems draw themselves through events
+            self.ui_system.draw()
+            self.particle_system.draw()
+            
+            pygame.display.flip()
+            dt = self.clock.tick(60) / 1000.0
+
+class Player:
+    """Player class that emits events"""
+    def __init__(self, x, y, event_bus):
+        self.x = x
+        self.y = y
+        self.event_bus = event_bus
+        self.health = 100
+        self.max_health = 100
+        
+    def take_damage(self, amount):
+        """Take damage and emit events"""
+        old_health = self.health
+        self.health = max(0, self.health - amount)
+        
+        self.event_bus.emit(Event(
+            event_type=EventType.DAMAGE_TAKEN,
+            data={
+                'old_health': old_health,
+                'new_health': self.health,
+                'damage': amount
+            }
+        ))
+        
+        if self.health <= 0:
+            self.event_bus.emit(Event(
+                event_type=EventType.PLAYER_DEATH,
+                priority=2  # High priority
+            ))
+    
+    def heal(self, amount):
+        """Heal and emit event"""
+        old_health = self.health
+        self.health = min(self.max_health, self.health + amount)
+        
+        self.event_bus.emit(Event(
+            event_type=EventType.PLAYER_HEALED,
+            data={
+                'old_health': old_health,
+                'new_health': self.health,
+                'amount': amount
+            }
+        ))
+
+if __name__ == "__main__":
+    game = EventDrivenGame()
+    game.run()</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Event System Tips</h3>
+        <ul>
+            <li><strong>Event Naming:</strong> Use clear, descriptive event names</li>
+            <li><strong>Data Contracts:</strong> Document expected event data structures</li>
+            <li><strong>Avoid Cycles:</strong> Prevent events from triggering circular dependencies</li>
+            <li><strong>Priority Levels:</strong> Use priorities for critical events</li>
+            <li><strong>Error Handling:</strong> Always catch exceptions in event handlers</li>
+            <li><strong>Memory Management:</strong> Clean up listeners when objects are destroyed</li>
+            <li><strong>Event Batching:</strong> Process multiple events together for efficiency</li>
+            <li><strong>Debug Logging:</strong> Log event flow for debugging</li>
+        </ul>
+    </div>
+
+    <h2>Common Patterns</h2>
+    
+    <div style="background-color: #f0fff4; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎮 Event System Patterns</h3>
+        <ul>
+            <li><strong>Command Pattern:</strong> Events as commands with undo/redo</li>
+            <li><strong>Event Sourcing:</strong> Store all events as game history</li>
+            <li><strong>Event Aggregation:</strong> Combine related events</li>
+            <li><strong>Wildcard Subscriptions:</strong> Subscribe to event patterns</li>
+            <li><strong>Event Replay:</strong> Replay events for debugging or replay systems</li>
+            <li><strong>Deferred Events:</strong> Schedule events for future processing</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>📡 Events enable decoupled communication between systems</li>
+            <li>🔄 Publishers don't need to know about subscribers</li>
+            <li>📨 Events can be immediate or queued for processing</li>
+            <li>⚡ Priority systems handle critical events first</li>
+            <li>📝 Event history enables replay and debugging</li>
+            <li>🎯 Filters allow selective event handling</li>
+            <li>🔧 Channels organize related events</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you understand event systems, next we'll explore save/load systems - how to persist and restore game state!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="architecture_component_systems.html" class="prev-lesson" aria-label="Previous lesson: Component Systems">Previous Lesson: Component Systems</a>
+        <a href="architecture_save_load.html" class="next-lesson" aria-label="Next lesson: Save/Load Game State">Next Lesson: Save/Load Game State</a>
+    </nav>
+    
+    </main>
+    <script src="/js/course-enhancements.js" defer></script>
+</body>
+</html>

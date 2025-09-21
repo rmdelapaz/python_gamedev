@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master lag compensation techniques for multiplayer games. Learn hit registration, rewind time, favor-the-shooter, and fairness systems.">
+    <title>Lag Compensation - Networking & Multiplayer</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Lag Compensation</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Intermediate Module - Section 2: Networking & Multiplayer - Lesson 4</span>
+    </nav>
+
+    <h2>Creating Fair Gameplay Despite Network Delays</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Lag compensation ensures fair and responsive gameplay regardless of player latency! Learn hit registration, time rewinding, favor-the-shooter mechanics, and how to balance fairness with responsiveness in competitive multiplayer games! ⏰🎯🎮</p>
+    </div>
+
+    <h2>Understanding Lag Compensation</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>📸 The Time Machine Analogy</h3>
+        <p>Think of lag compensation like having security cameras with playback:</p>
+        <ul>
+            <li><strong>Time Rewinding:</strong> Going back to see what really happened</li>
+            <li><strong>Hit Registration:</strong> Checking if the shot was valid at that time</li>
+            <li><strong>Favor-the-Shooter:</strong> Trust what the shooter saw</li>
+            <li><strong>Anti-Lag:</strong> Compensating for network delays</li>
+            <li><strong>Fairness Limits:</strong> Maximum rewind time to prevent abuse</li>
+            <li><strong>Trade-offs:</strong> Balancing shooter vs target experience</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Lag Compensation"] --> B["Time Rewinding"]
+        A --> C["Hit Validation"]
+        A --> D["Fairness Systems"]
+        
+        B --> E["State History"]
+        B --> F["Interpolation"]
+        B --> G["Rollback"]
+        
+        C --> H["Client-side Detection"]
+        C --> I["Server Validation"]
+        C --> J["Conflict Resolution"]
+        
+        D --> K["Maximum Rewind"]
+        D --> L["Ping Limits"]
+        D --> M["Anti-Cheat"]
+        
+        N["Techniques"] --> O["Favor-the-Shooter"]
+        N --> P["Favor-the-Victim"]
+        N --> Q["Hybrid Systems"]
+        N --> R["Predictive Models"]
+    </div>
+
+    <h2>Interactive Lag Compensation Demo</h2>
+    
+    <div class="canvas-wrapper" style="text-align: center;">
+        <canvas id="lagCanvas" width="600" height="400" style="border: 1px solid #333; background-color: #1a1a1a; display: inline-block;"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Experience lag compensation in action! Click to shoot at moving targets!</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; max-width: 600px; margin: 10px auto;">
+            <button onclick="toggleLagCompensation()">Toggle Lag Comp</button>
+            <button onclick="toggleFavorShooter()">Toggle Favor Mode</button>
+            <button onclick="toggleHistoryVisualization()">Show History</button>
+            <button onclick="toggleHitboxes()">Show Hitboxes</button>
+            <button onclick="addBot()">Add Bot</button>
+            <button onclick="resetStats()">Reset Stats</button>
+        </div>
+        <div style="margin-top: 10px;">
+            <label>Your Latency: <input type="range" id="playerLatency" min="0" max="300" value="100" onchange="setPlayerLatency(this.value)"> <span id="playerLatencyDisplay">100ms</span></label>
+            <label>Max Rewind: <input type="range" id="maxRewind" min="0" max="500" value="200" onchange="setMaxRewind(this.value)"> <span id="maxRewindDisplay">200ms</span></label>
+            <label>Bot Speed: <input type="range" id="botSpeed" min="50" max="300" value="150" onchange="setBotSpeed(this.value)"> <span id="botSpeedDisplay">150</span></label>
+        </div>
+        <div style="margin-top: 10px;">
+            <label><input type="checkbox" id="showTrails" checked> Show Trails</label>
+            <label><input type="checkbox" id="showRewind" checked> Show Rewind</label>
+            <label><input type="checkbox" id="showValidation" checked> Show Validation</label>
+            <label><input type="checkbox" id="showNetworkDelay" checked> Show Network Delay</label>
+        </div>
+        <div style="margin-top: 10px; background-color: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;">
+            <p style="margin: 5px;">
+                Shots Fired: <span id="shotsFired">0</span> | 
+                Hits (Client): <span id="clientHits">0</span> | 
+                Hits (Server): <span id="serverHits">0</span> | 
+                Accuracy: <span id="accuracy">0%</span>
+            </p>
+            <p style="margin: 5px;">
+                Rewinds: <span id="rewindCount">0</span> | 
+                Avg Rewind: <span id="avgRewind">0ms</span> | 
+                Rejected: <span id="rejectedShots">0</span>
+            </p>
+        </div>
+        <div style="margin-top: 10px;">
+            <p>Click on the canvas to shoot! Green = Client hit detection, Red = Server validation</p>
+        </div>
+    </div>
+
+    <script>
+        console.log('Lag Compensation Demo starting...');
+
+        // Classes for lag compensation
+        class Bot {
+            constructor(id) {
+                this.id = id;
+                this.x = Math.random() * 500 + 50;
+                this.y = Math.random() * 300 + 50;
+                this.vx = (Math.random() - 0.5) * 150;
+                this.vy = (Math.random() - 0.5) * 150;
+                this.radius = 20;
+                this.color = `hsl(${Math.random() * 360}, 70%, 50%)`;
+                this.trail = [];
+                this.maxTrailLength = 30;
+                this.hitFlash = 0;
+            }
+            
+            update(dt) {
+                // Update position
+                this.x += this.vx * dt;
+                this.y += this.vy * dt;
+                
+                // Bounce off walls
+                if (this.x < this.radius || this.x > 600 - this.radius) {
+                    this.vx *= -1;
+                    this.x = Math.max(this.radius, Math.min(600 - this.radius, this.x));
+                }
+                if (this.y < this.radius || this.y > 400 - this.radius) {
+                    this.vy *= -1;
+                    this.y = Math.max(this.radius, Math.min(400 - this.radius, this.y));
+                }
+                
+                // Add to trail
+                this.trail.push({ x: this.x, y: this.y, time: performance.now() });
+                if (this.trail.length > this.maxTrailLength) {
+                    this.trail.shift();
+                }
+                
+                // Update hit flash
+                if (this.hitFlash > 0) {
+                    this.hitFlash -= dt;
+                }
+            }
+            
+            getStateAtTime(targetTime) {
+                // Find position at specific time using trail
+                if (this.trail.length < 2) {
+                    return { x: this.x, y: this.y };
+                }
+                
+                // Find surrounding trail points
+                let before = this.trail[0];
+                let after = this.trail[this.trail.length - 1];
+                
+                for (let i = 0; i < this.trail.length - 1; i++) {
+                    if (this.trail[i].time <= targetTime && this.trail[i + 1].time >= targetTime) {
+                        before = this.trail[i];
+                        after = this.trail[i + 1];
+                        break;
+                    }
+                }
+                
+                // Interpolate between points
+                if (after.time - before.time === 0) {
+                    return { x: before.x, y: before.y };
+                }
+                
+                const t = (targetTime - before.time) / (after.time - before.time);
+                return {
+                    x: before.x + (after.x - before.x) * t,
+                    y: before.y + (after.y - before.y) * t
+                };
+            }
+            
+            draw(ctx) {
+                // Draw trail
+                if (lagCompDemo.showTrails && this.trail.length > 1) {
+                    ctx.strokeStyle = this.color + '33';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(this.trail[0].x, this.trail[0].y);
+                    for (let i = 1; i < this.trail.length; i++) {
+                        ctx.lineTo(this.trail[i].x, this.trail[i].y);
+                    }
+                    ctx.stroke();
+                }
+                
+                // Draw bot
+                ctx.fillStyle = this.hitFlash > 0 ? '#ffffff' : this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Draw hitbox if enabled
+                if (lagCompDemo.showHitboxes) {
+                    ctx.strokeStyle = '#00ff00';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(
+                        this.x - this.radius,
+                        this.y - this.radius,
+                        this.radius * 2,
+                        this.radius * 2
+                    );
+                }
+            }
+        }
+
+        class Shot {
+            constructor(x, y, targetX, targetY, timestamp) {
+                this.startX = x;
+                this.startY = y;
+                this.targetX = targetX;
+                this.targetY = targetY;
+                this.timestamp = timestamp;
+                this.clientHit = false;
+                this.serverValidated = false;
+                this.serverResult = null;
+                this.rewindTime = 0;
+                this.lifetime = 1.0;
+                this.age = 0;
+            }
+            
+            update(dt) {
+                this.age += dt;
+            }
+            
+            draw(ctx) {
+                const alpha = Math.max(0, 1 - this.age / this.lifetime);
+                
+                // Draw shot line
+                ctx.strokeStyle = this.serverResult === true ? 
+                    `rgba(0, 255, 0, ${alpha})` : 
+                    this.serverResult === false ?
+                    `rgba(255, 0, 0, ${alpha})` :
+                    `rgba(255, 255, 0, ${alpha})`;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(this.startX, this.startY);
+                ctx.lineTo(this.targetX, this.targetY);
+                ctx.stroke();
+                
+                // Draw impact point
+                ctx.fillStyle = ctx.strokeStyle;
+                ctx.beginPath();
+                ctx.arc(this.targetX, this.targetY, 5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw validation status
+                if (lagCompDemo.showValidation && this.serverValidated) {
+                    ctx.font = '12px Arial';
+                    ctx.fillStyle = this.serverResult ? '#00ff00' : '#ff0000';
+                    ctx.fillText(
+                        this.serverResult ? '✓' : '✗',
+                        this.targetX + 10,
+                        this.targetY - 10
+                    );
+                    
+                    if (this.rewindTime > 0) {
+                        ctx.font = '10px Arial';
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillText(
+                            `${this.rewindTime.toFixed(0)}ms`,
+                            this.targetX + 10,
+                            this.targetY + 10
+                        );
+                    }
+                }
+            }
+        }
+
+        class StateHistory {
+            constructor(maxHistory = 1000) {
+                this.maxHistory = maxHistory;
+                this.history = [];
+            }
+            
+            recordState(bots) {
+                const snapshot = {
+                    timestamp: performance.now(),
+                    serverTime: Date.now(),
+                    states: {}
+                };
+                
+                for (const bot of bots) {
+                    snapshot.states[bot.id] = {
+                        x: bot.x,
+                        y: bot.y,
+                        vx: bot.vx,
+                        vy: bot.vy
+                    };
+                }
+                
+                this.history.push(snapshot);
+                
+                // Limit history size
+                if (this.history.length > this.maxHistory) {
+                    this.history.shift();
+                }
+            }
+            
+            getStateAtTime(timestamp) {
+                if (this.history.length === 0) return null;
+                
+                // Find closest snapshots
+                let before = null;
+                let after = null;
+                
+                for (let i = 0; i < this.history.length - 1; i++) {
+                    if (this.history[i].timestamp <= timestamp && 
+                        this.history[i + 1].timestamp >= timestamp) {
+                        before = this.history[i];
+                        after = this.history[i + 1];
+                        break;
+                    }
+                }
+                
+                if (!before) {
+                    // Timestamp is before our history
+                    return this.history[0];
+                }
+                
+                if (!after) {
+                    // Timestamp is after our history
+                    return this.history[this.history.length - 1];
+                }
+                
+                // Interpolate between snapshots
+                const t = (timestamp - before.timestamp) / 
+                         (after.timestamp - before.timestamp);
+                
+                const interpolated = {
+                    timestamp: timestamp,
+                    states: {}
+                };
+                
+                for (const botId in before.states) {
+                    const beforeState = before.states[botId];
+                    const afterState = after.states[botId];
+                    
+                    interpolated.states[botId] = {
+                        x: beforeState.x + (afterState.x - beforeState.x) * t,
+                        y: beforeState.y + (afterState.y - beforeState.y) * t,
+                        vx: beforeState.vx + (afterState.vx - beforeState.vx) * t,
+                        vy: beforeState.vy + (afterState.vy - beforeState.vy) * t
+                    };
+                }
+                
+                return interpolated;
+            }
+        }
+
+        class LagCompensationDemo {
+            constructor(canvas, ctx) {
+                this.canvas = canvas;
+                this.ctx = ctx;
+                
+                this.bots = [];
+                this.shots = [];
+                this.stateHistory = new StateHistory();
+                
+                this.playerLatency = 100; // ms
+                this.maxRewindTime = 200; // ms
+                this.botSpeed = 150;
+                
+                this.lagCompensationEnabled = true;
+                this.favorShooter = true;
+                this.showHistory = false;
+                this.showHitboxes = false;
+                this.showTrails = true;
+                this.showRewind = true;
+                this.showValidation = true;
+                this.showNetworkDelay = true;
+                
+                this.stats = {
+                    shotsFired: 0,
+                    clientHits: 0,
+                    serverHits: 0,
+                    rewindCount: 0,
+                    totalRewindTime: 0,
+                    rejectedShots: 0
+                };
+                
+                // Add initial bots
+                for (let i = 0; i < 3; i++) {
+                    this.addBot();
+                }
+                
+                // Mouse handling
+                this.mouseX = 300;
+                this.mouseY = 200;
+                
+                canvas.addEventListener('mousemove', (e) => {
+                    const rect = canvas.getBoundingClientRect();
+                    this.mouseX = e.clientX - rect.left;
+                    this.mouseY = e.clientY - rect.top;
+                });
+                
+                canvas.addEventListener('click', (e) => {
+                    const rect = canvas.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    this.shoot(x, y);
+                });
+            }
+            
+            addBot() {
+                const bot = new Bot(`bot_${Date.now()}_${Math.random()}`);
+                bot.vx = (Math.random() - 0.5) * this.botSpeed;
+                bot.vy = (Math.random() - 0.5) * this.botSpeed;
+                this.bots.push(bot);
+            }
+            
+            shoot(targetX, targetY) {
+                const shot = new Shot(300, 400, targetX, targetY, performance.now());
+                this.shots.push(shot);
+                this.stats.shotsFired++;
+                
+                // Client-side hit detection (what the player sees)
+                const clientHit = this.checkHit(targetX, targetY, performance.now());
+                shot.clientHit = clientHit;
+                
+                if (clientHit) {
+                    this.stats.clientHits++;
+                    clientHit.hitFlash = 0.2;
+                }
+                
+                // Simulate server validation with network delay
+                setTimeout(() => {
+                    this.validateShot(shot);
+                }, this.playerLatency);
+            }
+            
+            checkHit(x, y, timestamp) {
+                // Check if shot hits any bot at given timestamp
+                for (const bot of this.bots) {
+                    let checkPos;
+                    
+                    if (this.lagCompensationEnabled && timestamp) {
+                        // Use historical position
+                        checkPos = bot.getStateAtTime(timestamp);
+                    } else {
+                        // Use current position
+                        checkPos = { x: bot.x, y: bot.y };
+                    }
+                    
+                    const dx = x - checkPos.x;
+                    const dy = y - checkPos.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance <= bot.radius) {
+                        return bot;
+                    }
+                }
+                return null;
+            }
+            
+            validateShot(shot) {
+                // Server-side validation
+                shot.serverValidated = true;
+                
+                if (!this.lagCompensationEnabled) {
+                    // No lag compensation - check current positions
+                    const hit = this.checkHit(shot.targetX, shot.targetY, performance.now());
+                    shot.serverResult = hit !== null;
+                    if (hit) {
+                        this.stats.serverHits++;
+                        hit.hitFlash = 0.3;
+                    }
+                    return;
+                }
+                
+                // Calculate rewind time
+                const currentTime = performance.now();
+                const shotTime = shot.timestamp;
+                const rewindTime = this.playerLatency;
+                shot.rewindTime = rewindTime;
+                
+                // Check if rewind is within limits
+                if (rewindTime > this.maxRewindTime) {
+                    shot.serverResult = false;
+                    this.stats.rejectedShots++;
+                    return;
+                }
+                
+                // Rewind and check hit
+                this.stats.rewindCount++;
+                this.stats.totalRewindTime += rewindTime;
+                
+                const rewindTimestamp = shotTime;
+                const historicalState = this.stateHistory.getStateAtTime(rewindTimestamp);
+                
+                if (historicalState) {
+                    // Check hit using historical positions
+                    for (const bot of this.bots) {
+                        const historicalPos = historicalState.states[bot.id];
+                        if (historicalPos) {
+                            const dx = shot.targetX - historicalPos.x;
+                            const dy = shot.targetY - historicalPos.y;
+                            const distance = Math.sqrt(dx * dx + dy * dy);
+                            
+                            if (distance <= bot.radius) {
+                                shot.serverResult = true;
+                                this.stats.serverHits++;
+                                bot.hitFlash = 0.3;
+                                
+                                // Show rewind visualization
+                                if (this.showRewind) {
+                                    this.createRewindVisualization(
+                                        bot, 
+                                        historicalPos, 
+                                        rewindTime
+                                    );
+                                }
+                                return;
+                            }
+                        }
+                    }
+                }
+                
+                shot.serverResult = false;
+            }
+            
+            createRewindVisualization(bot, historicalPos, rewindTime) {
+                // Create visual indicator of rewind
+                const rewind = {
+                    bot: bot,
+                    historicalX: historicalPos.x,
+                    historicalY: historicalPos.y,
+                    currentX: bot.x,
+                    currentY: bot.y,
+                    rewindTime: rewindTime,
+                    lifetime: 1.0,
+                    age: 0
+                };
+                
+                if (!this.rewindVisualizations) {
+                    this.rewindVisualizations = [];
+                }
+                this.rewindVisualizations.push(rewind);
+            }
+            
+            update(dt) {
+                // Update bots
+                for (const bot of this.bots) {
+                    bot.update(dt);
+                }
+                
+                // Record state for history
+                this.stateHistory.recordState(this.bots);
+                
+                // Update shots
+                this.shots = this.shots.filter(shot => {
+                    shot.update(dt);
+                    return shot.age < shot.lifetime;
+                });
+                
+                // Update rewind visualizations
+                if (this.rewindVisualizations) {
+                    this.rewindVisualizations = this.rewindVisualizations.filter(r => {
+                        r.age += dt;
+                        return r.age < r.lifetime;
+                    });
+                }
+                
+                // Update stats display
+                this.updateStats();
+            }
+            
+            draw() {
+                // Clear canvas
+                this.ctx.fillStyle = '#1a1a1a';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw grid
+                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+                this.ctx.lineWidth = 1;
+                for (let x = 0; x <= this.canvas.width; x += 50) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, 0);
+                    this.ctx.lineTo(x, this.canvas.height);
+                    this.ctx.stroke();
+                }
+                for (let y = 0; y <= this.canvas.height; y += 50) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, y);
+                    this.ctx.lineTo(this.canvas.width, y);
+                    this.ctx.stroke();
+                }
+                
+                // Draw history visualization
+                if (this.showHistory && this.stateHistory.history.length > 0) {
+                    this.drawHistory();
+                }
+                
+                // Draw rewind visualizations
+                if (this.showRewind && this.rewindVisualizations) {
+                    for (const rewind of this.rewindVisualizations) {
+                        const alpha = 1 - rewind.age / rewind.lifetime;
+                        
+                        // Draw historical position
+                        this.ctx.strokeStyle = `rgba(255, 0, 0, ${alpha * 0.5})`;
+                        this.ctx.lineWidth = 2;
+                        this.ctx.setLineDash([5, 5]);
+                        this.ctx.beginPath();
+                        this.ctx.arc(
+                            rewind.historicalX, 
+                            rewind.historicalY, 
+                            rewind.bot.radius, 
+                            0, Math.PI * 2
+                        );
+                        this.ctx.stroke();
+                        this.ctx.setLineDash([]);
+                        
+                        // Draw connection line
+                        this.ctx.strokeStyle = `rgba(255, 255, 0, ${alpha * 0.3})`;
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(rewind.historicalX, rewind.historicalY);
+                        this.ctx.lineTo(rewind.currentX, rewind.currentY);
+                        this.ctx.stroke();
+                        
+                        // Draw rewind time
+                        this.ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                        this.ctx.font = '10px Arial';
+                        this.ctx.fillText(
+                            `Rewind: ${rewind.rewindTime.toFixed(0)}ms`,
+                            rewind.historicalX,
+                            rewind.historicalY - 25
+                        );
+                    }
+                }
+                
+                // Draw bots
+                for (const bot of this.bots) {
+                    bot.draw(this.ctx);
+                }
+                
+                // Draw shots
+                for (const shot of this.shots) {
+                    shot.draw(this.ctx);
+                }
+                
+                // Draw player/shooter position
+                this.ctx.fillStyle = '#00ff00';
+                this.ctx.fillRect(295, 395, 10, 10);
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.font = '10px Arial';
+                this.ctx.fillText('Player', 280, 390);
+                
+                // Draw crosshair
+                this.ctx.strokeStyle = '#ffffff';
+                this.ctx.lineWidth = 1;
+                this.ctx.beginPath();
+                this.ctx.moveTo(this.mouseX - 10, this.mouseY);
+                this.ctx.lineTo(this.mouseX + 10, this.mouseY);
+                this.ctx.moveTo(this.mouseX, this.mouseY - 10);
+                this.ctx.lineTo(this.mouseX, this.mouseY + 10);
+                this.ctx.stroke();
+                
+                // Draw network delay indicator
+                if (this.showNetworkDelay) {
+                    this.ctx.fillStyle = '#ffffff';
+                    this.ctx.font = '12px Arial';
+                    this.ctx.fillText(`Latency: ${this.playerLatency}ms`, 10, 20);
+                    this.ctx.fillText(`Max Rewind: ${this.maxRewindTime}ms`, 10, 35);
+                    
+                    const status = this.lagCompensationEnabled ? 
+                        (this.favorShooter ? 'Favor Shooter' : 'Favor Target') : 
+                        'No Compensation';
+                    this.ctx.fillText(`Mode: ${status}`, 10, 50);
+                }
+            }
+            
+            drawHistory() {
+                // Draw state history as timeline
+                const startX = 50;
+                const endX = 550;
+                const y = 380;
+                const width = endX - startX;
+                
+                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                this.ctx.moveTo(startX, y);
+                this.ctx.lineTo(endX, y);
+                this.ctx.stroke();
+                
+                // Draw history points
+                const now = performance.now();
+                const timeWindow = 1000; // Show last 1 second
+                
+                for (const snapshot of this.stateHistory.history) {
+                    const age = now - snapshot.timestamp;
+                    if (age < timeWindow) {
+                        const x = endX - (age / timeWindow) * width;
+                        
+                        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                        this.ctx.beginPath();
+                        this.ctx.arc(x, y, 2, 0, Math.PI * 2);
+                        this.ctx.fill();
+                    }
+                }
+                
+                // Draw rewind window
+                const rewindX = endX - (this.maxRewindTime / timeWindow) * width;
+                this.ctx.strokeStyle = 'rgba(0, 255, 0, 0.3)';
+                this.ctx.fillStyle = 'rgba(0, 255, 0, 0.1)';
+                this.ctx.fillRect(rewindX, y - 10, endX - rewindX, 20);
+                
+                // Labels
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.font = '10px Arial';
+                this.ctx.fillText('1s ago', startX - 10, y + 20);
+                this.ctx.fillText('Now', endX - 10, y + 20);
+            }
+            
+            updateStats() {
+                document.getElementById('shotsFired').textContent = this.stats.shotsFired;
+                document.getElementById('clientHits').textContent = this.stats.clientHits;
+                document.getElementById('serverHits').textContent = this.stats.serverHits;
+                
+                const accuracy = this.stats.shotsFired > 0 ? 
+                    (this.stats.serverHits / this.stats.shotsFired * 100).toFixed(1) : 0;
+                document.getElementById('accuracy').textContent = accuracy + '%';
+                
+                document.getElementById('rewindCount').textContent = this.stats.rewindCount;
+                
+                const avgRewind = this.stats.rewindCount > 0 ? 
+                    (this.stats.totalRewindTime / this.stats.rewindCount).toFixed(0) : 0;
+                document.getElementById('avgRewind').textContent = avgRewind + 'ms';
+                
+                document.getElementById('rejectedShots').textContent = this.stats.rejectedShots;
+            }
+        }
+
+        // Initialize
+        const lagCanvas = document.getElementById('lagCanvas');
+        const ctx = lagCanvas.getContext('2d');
+        const lagCompDemo = new LagCompensationDemo(lagCanvas, ctx);
+
+        // Control functions
+        window.toggleLagCompensation = function() {
+            lagCompDemo.lagCompensationEnabled = !lagCompDemo.lagCompensationEnabled;
+            console.log('Lag compensation:', lagCompDemo.lagCompensationEnabled);
+        };
+
+        window.toggleFavorShooter = function() {
+            lagCompDemo.favorShooter = !lagCompDemo.favorShooter;
+            console.log('Favor mode:', lagCompDemo.favorShooter ? 'Shooter' : 'Target');
+        };
+
+        window.toggleHistoryVisualization = function() {
+            lagCompDemo.showHistory = !lagCompDemo.showHistory;
+            console.log('History visualization:', lagCompDemo.showHistory);
+        };
+
+        window.toggleHitboxes = function() {
+            lagCompDemo.showHitboxes = !lagCompDemo.showHitboxes;
+            console.log('Hitboxes:', lagCompDemo.showHitboxes);
+        };
+
+        window.addBot = function() {
+            if (lagCompDemo.bots.length < 10) {
+                lagCompDemo.addBot();
+            }
+        };
+
+        window.resetStats = function() {
+            lagCompDemo.stats = {
+                shotsFired: 0,
+                clientHits: 0,
+                serverHits: 0,
+                rewindCount: 0,
+                totalRewindTime: 0,
+                rejectedShots: 0
+            };
+            lagCompDemo.updateStats();
+        };
+
+        window.setPlayerLatency = function(value) {
+            lagCompDemo.playerLatency = parseInt(value);
+            document.getElementById('playerLatencyDisplay').textContent = value + 'ms';
+        };
+
+        window.setMaxRewind = function(value) {
+            lagCompDemo.maxRewindTime = parseInt(value);
+            document.getElementById('maxRewindDisplay').textContent = value + 'ms';
+        };
+
+        window.setBotSpeed = function(value) {
+            lagCompDemo.botSpeed = parseInt(value);
+            for (const bot of lagCompDemo.bots) {
+                const speed = Math.sqrt(bot.vx * bot.vx + bot.vy * bot.vy);
+                if (speed > 0) {
+                    bot.vx = (bot.vx / speed) * lagCompDemo.botSpeed;
+                    bot.vy = (bot.vy / speed) * lagCompDemo.botSpeed;
+                }
+            }
+            document.getElementById('botSpeedDisplay').textContent = value;
+        };
+
+        // Checkbox handlers
+        document.getElementById('showTrails').addEventListener('change', (e) => {
+            lagCompDemo.showTrails = e.target.checked;
+        });
+
+        document.getElementById('showRewind').addEventListener('change', (e) => {
+            lagCompDemo.showRewind = e.target.checked;
+        });
+
+        document.getElementById('showValidation').addEventListener('change', (e) => {
+            lagCompDemo.showValidation = e.target.checked;
+        });
+
+        document.getElementById('showNetworkDelay').addEventListener('change', (e) => {
+            lagCompDemo.showNetworkDelay = e.target.checked;
+        });
+
+        // Animation loop
+        let lastTime = performance.now();
+        function animate(currentTime) {
+            const dt = (currentTime - lastTime) / 1000;
+            lastTime = currentTime;
+            
+            lagCompDemo.update(dt);
+            lagCompDemo.draw();
+            
+            requestAnimationFrame(animate);
+        }
+
+        animate(performance.now());
+
+        console.log('Lag Compensation Demo initialized!');
+    </script>
+
+    <h2>Lag Compensation Implementation</h2>
+    
+    <pre class="language-python"><code>import time
+import collections
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Tuple
+
+@dataclass
+class HitEvent:
+    """Represents a hit/shot event"""
+    shooter_id: str
+    target_id: str
+    shot_position: Tuple[float, float]
+    target_position: Tuple[float, float]
+    timestamp: float
+    client_timestamp: float
+    latency: float
+    validated: bool = False
+    hit_confirmed: bool = False
+
+class LagCompensationSystem:
+    """Server-side lag compensation system"""
+    def __init__(self, max_rewind_time: float = 0.2):
+        self.max_rewind_time = max_rewind_time  # 200ms max
+        self.state_history = collections.deque(maxlen=60)  # 1 second at 60Hz
+        self.players = {}
+        self.current_tick = 0
+        
+    def record_state(self, game_state: Dict):
+        """Record current game state for history"""
+        snapshot = {
+            'tick': self.current_tick,
+            'timestamp': time.time(),
+            'players': {}
+        }
+        
+        for player_id, player_data in game_state['players'].items():
+            snapshot['players'][player_id] = {
+                'position': player_data['position'].copy(),
+                'velocity': player_data['velocity'].copy(),
+                'hitbox': player_data['hitbox'].copy(),
+                'health': player_data['health']
+            }
+        
+        self.state_history.append(snapshot)
+        self.current_tick += 1
+    
+    def validate_hit(self, hit_event: HitEvent) -> bool:
+        """Validate hit with lag compensation"""
+        # Calculate when the shot was actually fired
+        shot_time = hit_event.client_timestamp
+        current_time = time.time()
+        
+        # Calculate rewind time
+        rewind_time = hit_event.latency
+        
+        # Check if rewind is within limits
+        if rewind_time > self.max_rewind_time:
+            print(f"Rewind time {rewind_time:.3f}s exceeds max {self.max_rewind_time}s")
+            return False
+        
+        # Find the game state at shot time
+        target_timestamp = current_time - rewind_time
+        historical_state = self.get_state_at_time(target_timestamp)
+        
+        if not historical_state:
+            print("No historical state available")
+            return False
+        
+        # Check if hit was valid in historical state
+        target_state = historical_state['players'].get(hit_event.target_id)
+        if not target_state:
+            return False
+        
+        # Perform hit detection with historical position
+        hit = self.check_hit(
+            hit_event.shot_position,
+            target_state['position'],
+            target_state['hitbox']
+        )
+        
+        hit_event.validated = True
+        hit_event.hit_confirmed = hit
+        
+        return hit
+    
+    def get_state_at_time(self, target_time: float) -> Optional[Dict]:
+        """Get interpolated game state at specific time"""
+        if not self.state_history:
+            return None
+        
+        # Find surrounding snapshots
+        before = None
+        after = None
+        
+        for i in range(len(self.state_history) - 1):
+            if (self.state_history[i]['timestamp'] <= target_time and
+                self.state_history[i + 1]['timestamp'] >= target_time):
+                before = self.state_history[i]
+                after = self.state_history[i + 1]
+                break
+        
+        if not before:
+            # Target time is before our history
+            return self.state_history[0] if self.state_history else None
+        
+        if not after:
+            # Target time is after our history
+            return self.state_history[-1]
+        
+        # Interpolate between snapshots
+        t = (target_time - before['timestamp']) / \
+            (after['timestamp'] - before['timestamp'])
+        
+        interpolated = {
+            'timestamp': target_time,
+            'players': {}
+        }
+        
+        for player_id in before['players']:
+            if player_id not in after['players']:
+                continue
+            
+            before_player = before['players'][player_id]
+            after_player = after['players'][player_id]
+            
+            interpolated['players'][player_id] = {
+                'position': self.lerp_position(
+                    before_player['position'],
+                    after_player['position'],
+                    t
+                ),
+                'velocity': before_player['velocity'],
+                'hitbox': before_player['hitbox'],
+                'health': before_player['health']
+            }
+        
+        return interpolated
+    
+    def lerp_position(self, pos1: List[float], pos2: List[float], t: float) -> List[float]:
+        """Linear interpolation between positions"""
+        return [
+            pos1[0] + (pos2[0] - pos1[0]) * t,
+            pos1[1] + (pos2[1] - pos1[1]) * t
+        ]
+    
+    def check_hit(self, shot_pos: Tuple[float, float], 
+                  target_pos: List[float], 
+                  hitbox: Dict) -> bool:
+        """Check if shot hits target hitbox"""
+        # Simple circle hitbox check
+        dx = shot_pos[0] - target_pos[0]
+        dy = shot_pos[1] - target_pos[1]
+        distance = (dx * dx + dy * dy) ** 0.5
+        
+        return distance <= hitbox.get('radius', 20)</code></pre>
+
+    <h2>Advanced Hit Registration</h2>
+    
+    <pre class="language-python"><code># Advanced hit registration with different compensation modes
+class HitRegistration:
+    """Advanced hit registration system"""
+    
+    def __init__(self):
+        self.favor_mode = 'shooter'  # 'shooter', 'victim', 'balanced'
+        self.hit_buffer = []
+        self.confirmation_window = 0.05  # 50ms to confirm hits
+        
+    def register_hit(self, shooter_data: Dict, target_data: Dict, 
+                     shot_info: Dict) -> Dict:
+        """Register and validate hit based on mode"""
+        result = {
+            'hit': False,
+            'damage': 0,
+            'headshot': False,
+            'validation_method': self.favor_mode,
+            'latency_compensated': False
+        }
+        
+        if self.favor_mode == 'shooter':
+            # Trust shooter's view (with validation)
+            result['hit'] = self.validate_shooter_hit(
+                shooter_data, target_data, shot_info
+            )
+            result['latency_compensated'] = True
+            
+        elif self.favor_mode == 'victim':
+            # Trust victim's position
+            result['hit'] = self.validate_victim_position(
+                target_data, shot_info
+            )
+            
+        elif self.favor_mode == 'balanced':
+            # Hybrid approach
+            shooter_hit = self.validate_shooter_hit(
+                shooter_data, target_data, shot_info
+            )
+            victim_hit = self.validate_victim_position(
+                target_data, shot_info
+            )
+            
+            # Both must agree or use special rules
+            if shooter_hit and victim_hit:
+                result['hit'] = True
+            elif shooter_hit and shooter_data['latency'] < 100:
+                # Low latency shooter gets benefit
+                result['hit'] = True
+                result['latency_compensated'] = True
+            else:
+                result['hit'] = False
+        
+        if result['hit']:
+            result['damage'] = self.calculate_damage(shot_info)
+            result['headshot'] = self.check_headshot(shot_info)
+        
+        return result
+    
+    def validate_shooter_hit(self, shooter: Dict, target: Dict, shot: Dict) -> bool:
+        """Validate hit from shooter's perspective"""
+        # Account for shooter's latency
+        max_rewind = 200  # ms
+        
+        if shooter['latency'] > max_rewind:
+            return False
+        
+        # Check if target was visible to shooter
+        if not self.was_visible(shooter, target, shot['timestamp']):
+            return False
+        
+        # Validate shot trajectory
+        if not self.validate_trajectory(shot):
+            return False
+        
+        return True
+    
+    def validate_victim_position(self, target: Dict, shot: Dict) -> bool:
+        """Validate hit from victim's perspective"""
+        # Use victim's reported position
+        dx = shot['impact_point'][0] - target['position'][0]
+        dy = shot['impact_point'][1] - target['position'][1]
+        distance = (dx * dx + dy * dy) ** 0.5
+        
+        return distance <= target['hitbox_radius']
+    
+    def was_visible(self, shooter: Dict, target: Dict, timestamp: float) -> bool:
+        """Check if target was visible to shooter"""
+        # Implement line of sight checking
+        # Check for walls, obstacles, smoke, etc.
+        return True  # Simplified
+    
+    def validate_trajectory(self, shot: Dict) -> bool:
+        """Validate shot trajectory for anti-cheat"""
+        # Check if trajectory is physically possible
+        # Check fire rate limits
+        # Check weapon range
+        return True  # Simplified
+    
+    def calculate_damage(self, shot: Dict) -> int:
+        """Calculate damage based on hit location and weapon"""
+        base_damage = shot.get('weapon_damage', 25)
+        distance_factor = max(0.5, 1.0 - shot['distance'] / 1000)
+        
+        return int(base_damage * distance_factor)
+    
+    def check_headshot(self, shot: Dict) -> bool:
+        """Check if hit was a headshot"""
+        return shot.get('hit_zone') == 'head'
+
+# Projectile lag compensation
+class ProjectileCompensation:
+    """Handle lag compensation for projectile weapons"""
+    
+    def __init__(self):
+        self.active_projectiles = {}
+        self.projectile_history = collections.deque(maxlen=120)
+        
+    def fire_projectile(self, shooter_id: str, origin: Tuple[float, float],
+                        direction: Tuple[float, float], speed: float,
+                        timestamp: float) -> str:
+        """Create new projectile with compensation"""
+        projectile_id = f"proj_{shooter_id}_{timestamp}"
+        
+        # Compensate for shooter's latency
+        compensated_origin = self.compensate_origin(
+            origin, direction, speed, timestamp
+        )
+        
+        projectile = {
+            'id': projectile_id,
+            'shooter_id': shooter_id,
+            'origin': compensated_origin,
+            'position': list(compensated_origin),
+            'direction': direction,
+            'speed': speed,
+            'timestamp': timestamp,
+            'distance_traveled': 0
+        }
+        
+        self.active_projectiles[projectile_id] = projectile
+        return projectile_id
+    
+    def compensate_origin(self, origin: Tuple[float, float],
+                          direction: Tuple[float, float],
+                          speed: float, timestamp: float) -> Tuple[float, float]:
+        """Compensate projectile origin for latency"""
+        # Move projectile forward based on latency
+        current_time = time.time()
+        time_diff = current_time - timestamp
+        
+        distance = speed * time_diff
+        
+        return (
+            origin[0] + direction[0] * distance,
+            origin[1] + direction[1] * distance
+        )
+    
+    def update_projectiles(self, dt: float):
+        """Update all active projectiles"""
+        for proj_id, proj in list(self.active_projectiles.items()):
+            # Update position
+            proj['position'][0] += proj['direction'][0] * proj['speed'] * dt
+            proj['position'][1] += proj['direction'][1] * proj['speed'] * dt
+            proj['distance_traveled'] += proj['speed'] * dt
+            
+            # Check max range
+            if proj['distance_traveled'] > 2000:  # Max range
+                del self.active_projectiles[proj_id]
+    
+    def check_projectile_hits(self, players: Dict) -> List[Dict]:
+        """Check for projectile hits with lag compensation"""
+        hits = []
+        
+        for proj_id, proj in list(self.active_projectiles.items()):
+            for player_id, player in players.items():
+                if player_id == proj['shooter_id']:
+                    continue
+                
+                # Check collision
+                if self.check_projectile_collision(proj, player):
+                    hit = {
+                        'projectile_id': proj_id,
+                        'shooter_id': proj['shooter_id'],
+                        'target_id': player_id,
+                        'position': proj['position'].copy(),
+                        'timestamp': time.time()
+                    }
+                    hits.append(hit)
+                    
+                    # Remove projectile
+                    del self.active_projectiles[proj_id]
+                    break
+        
+        return hits
+    
+    def check_projectile_collision(self, projectile: Dict, player: Dict) -> bool:
+        """Check if projectile hits player"""
+        dx = projectile['position'][0] - player['position'][0]
+        dy = projectile['position'][1] - player['position'][1]
+        distance = (dx * dx + dy * dy) ** 0.5
+        
+        return distance <= player['hitbox_radius']</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Lag Compensation Tips</h3>
+        <ul>
+            <li><strong>Rewind Limits:</strong> Cap maximum rewind time (150-250ms)</li>
+            <li><strong>Validation:</strong> Always validate on server side</li>
+            <li><strong>Favor Balance:</strong> Consider both shooter and target experience</li>
+            <li><strong>Visual Feedback:</strong> Show hit confirmation clearly</li>
+            <li><strong>Anti-Cheat:</strong> Validate trajectories and timing</li>
+            <li><strong>Interpolation:</strong> Smooth between historical states</li>
+            <li><strong>Projectiles:</strong> Compensate spawn position for latency</li>
+            <li><strong>Fairness:</strong> High ping shouldn't be an advantage</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>⏰ Lag compensation rewinds time for fair hit detection</li>
+            <li>🎯 Favor-the-shooter makes games feel responsive</li>
+            <li>📝 State history enables accurate rewinding</li>
+            <li>✅ Server validation prevents cheating</li>
+            <li>⚖️ Balance between shooter and target experience</li>
+            <li>🚫 Rewind limits prevent exploitation</li>
+            <li>🎮 Different modes suit different game types</li>
+            <li>🔧 Projectiles need special compensation</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you understand lag compensation, next we'll explore matchmaking and lobby systems - creating balanced matches and managing player sessions!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="networking_synchronization.html" class="prev-lesson" aria-label="Previous lesson: Client-Server Synchronization">Previous Lesson: Client-Server Synchronization</a>
+        <a href="networking_matchmaking.html" class="next-lesson" aria-label="Next lesson: Matchmaking & Lobbies">Next Lesson: Matchmaking & Lobbies</a>
+    </nav>
+    
+    </main>
+    <script src="/js/course-enhancements.js" defer></script>
+</body>
+</html>

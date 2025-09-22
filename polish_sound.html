@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master sound design for games. Learn audio implementation, dynamic music, sound effects, spatial audio, and creating immersive soundscapes.">
+    <title>Sound Design - Game Polish & Feel</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Sound Design</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Advanced Module - Section 2: Game Polish & Feel - Lesson 3</span>
+    </nav>
+
+    <h2>Creating Immersive Audio Experiences</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Transform silent games into immersive experiences! Master sound effects, dynamic music, spatial audio, adaptive soundscapes, and audio feedback that makes every action feel satisfying! 🎵🔊🎮</p>
+    </div>
+
+    <h2>Understanding Game Audio</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎵 The Orchestra Analogy</h3>
+        <p>Think of game audio like conducting an orchestra:</p>
+        <ul>
+            <li><strong>Music:</strong> The emotional backdrop (strings section)</li>
+            <li><strong>Sound Effects:</strong> Action punctuation (percussion)</li>
+            <li><strong>Ambient:</strong> Environmental atmosphere (woodwinds)</li>
+            <li><strong>UI Sounds:</strong> Feedback cues (bells and chimes)</li>
+            <li><strong>Voice:</strong> Narrative and character (soloists)</li>
+            <li><strong>Dynamic Mixing:</strong> Balancing all elements (conducting)</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Game Audio"] --> B["Music"]
+        A --> C["Sound Effects"]
+        A --> D["Ambient"]
+        A --> E["Voice"]
+        
+        B --> F["Dynamic Layers"]
+        B --> G["Adaptive Tempo"]
+        B --> H["Emotional States"]
+        
+        C --> I["Impact Sounds"]
+        C --> J["Movement"]
+        C --> K["Feedback"]
+        
+        D --> L["Environment"]
+        D --> M["Weather"]
+        D --> N["Crowd"]
+    </div>
+
+    <h2>Interactive Sound Design Studio</h2>
+    
+    <div class="canvas-wrapper" style="text-align: center;">
+        <canvas id="soundCanvas" width="800" height="600" style="border: 1px solid #333; display: inline-block;"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Click to trigger sounds! Experience layered music, spatial audio, and dynamic sound effects!</p>
+        
+        <!-- Sound Categories -->
+        <div style="margin: 10px auto; padding: 10px; background-color: rgba(0,0,0,0.3); border-radius: 5px; max-width: 800px;">
+            <p style="color: white; margin: 5px;">Audio Layers:</p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 5px;">
+                <button onclick="toggleLayer('music')" class="audio-btn active" id="music-btn">🎵 Music</button>
+                <button onclick="toggleLayer('sfx')" class="audio-btn active" id="sfx-btn">💥 SFX</button>
+                <button onclick="toggleLayer('ambient')" class="audio-btn active" id="ambient-btn">🌊 Ambient</button>
+                <button onclick="toggleLayer('ui')" class="audio-btn active" id="ui-btn">🔔 UI</button>
+                <button onclick="toggleLayer('voice')" class="audio-btn" id="voice-btn">🗣️ Voice</button>
+                <button onclick="toggleLayer('reverb')" class="audio-btn" id="reverb-btn">🏛️ Reverb</button>
+                <button onclick="toggleLayer('spatial')" class="audio-btn active" id="spatial-btn">🎯 Spatial</button>
+                <button onclick="toggleLayer('dynamic')" class="audio-btn active" id="dynamic-btn">🎚️ Dynamic</button>
+            </div>
+        </div>
+        
+        <!-- Music Controls -->
+        <div style="margin-top: 10px;">
+            <h4 style="color: white;">Dynamic Music:</h4>
+            <button onclick="setMusicState('explore')">🚶 Exploration</button>
+            <button onclick="setMusicState('combat')">⚔️ Combat</button>
+            <button onclick="setMusicState('stealth')">🥷 Stealth</button>
+            <button onclick="setMusicState('victory')">🏆 Victory</button>
+            <button onclick="setMusicState('danger')">⚠️ Danger</button>
+            <button onclick="setMusicState('peaceful')">🌅 Peaceful</button>
+        </div>
+        
+        <!-- Sound Parameters -->
+        <div style="margin-top: 10px;">
+            <label>Master Volume: <input type="range" id="masterVolume" min="0" max="100" value="70" onchange="updateVolume('master', this.value)"> <span id="masterVolumeDisplay">70</span>%</label>
+            <label>Music: <input type="range" id="musicVolume" min="0" max="100" value="60" onchange="updateVolume('music', this.value)"> <span id="musicVolumeDisplay">60</span>%</label>
+            <label>SFX: <input type="range" id="sfxVolume" min="0" max="100" value="80" onchange="updateVolume('sfx', this.value)"> <span id="sfxVolumeDisplay">80</span>%</label>
+        </div>
+        
+        <!-- Audio Effects -->
+        <div style="margin-top: 10px;">
+            <label>Low Pass: <input type="range" id="lowPass" min="200" max="20000" value="20000" onchange="updateFilter('lowPass', this.value)"> <span id="lowPassDisplay">20000</span>Hz</label>
+            <label>Reverb: <input type="range" id="reverbAmount" min="0" max="100" value="20" onchange="updateEffect('reverb', this.value)"> <span id="reverbDisplay">20</span>%</label>
+            <label>Pitch: <input type="range" id="pitch" min="-12" max="12" value="0" onchange="updateEffect('pitch', this.value)"> <span id="pitchDisplay">0</span></label>
+        </div>
+        
+        <!-- Sound Triggers -->
+        <div style="margin-top: 10px;">
+            <h4 style="color: white;">Sound Effects:</h4>
+            <button onclick="playSound('explosion')">💥 Explosion</button>
+            <button onclick="playSound('laser')">⚡ Laser</button>
+            <button onclick="playSound('jump')">🦘 Jump</button>
+            <button onclick="playSound('collect')">⭐ Collect</button>
+            <button onclick="playSound('hit')">👊 Hit</button>
+            <button onclick="playSound('powerup')">🎯 Power-up</button>
+            <button onclick="playSound('footstep')">👣 Footstep</button>
+            <button onclick="playSound('door')">🚪 Door</button>
+        </div>
+        
+        <!-- Environmental Sounds -->
+        <div style="margin-top: 10px;">
+            <h4 style="color: white;">Environments:</h4>
+            <button onclick="setEnvironment('forest')">🌲 Forest</button>
+            <button onclick="setEnvironment('cave')">🕳️ Cave</button>
+            <button onclick="setEnvironment('city')">🏙️ City</button>
+            <button onclick="setEnvironment('underwater')">🌊 Underwater</button>
+            <button onclick="setEnvironment('space')">🚀 Space</button>
+            <button onclick="setEnvironment('dungeon')">🏰 Dungeon</button>
+        </div>
+        
+        <!-- Visualization Options -->
+        <div style="margin-top: 10px;">
+            <label><input type="checkbox" id="showWaveform" checked> Waveform</label>
+            <label><input type="checkbox" id="showSpectrum" checked> Spectrum</label>
+            <label><input type="checkbox" id="showSpatial"> Spatial Map</label>
+            <label><input type="checkbox" id="showLayers" checked> Layer Levels</label>
+        </div>
+        
+        <!-- Audio Stats -->
+        <div style="margin-top: 10px; background-color: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;">
+            <p style="margin: 5px; color: white;">
+                Active Sounds: <span id="activeSounds">0</span> | 
+                Music Layer: <span id="musicLayer">explore</span> | 
+                Environment: <span id="environment">none</span> | 
+                CPU: <span id="audioCPU">0</span>%
+            </p>
+        </div>
+    </div>
+
+    <style>
+        .audio-btn {
+            padding: 8px;
+            border: 2px solid transparent;
+            background-color: #555;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s;
+            font-size: 12px;
+        }
+        .audio-btn:hover {
+            background-color: #666;
+            border-color: #888;
+        }
+        .audio-btn.active {
+            background-color: #4CAF50;
+            border-color: #66BB6A;
+        }
+    </style>
+
+    <script>
+        console.log('Sound Design Studio starting...');
+
+        const canvas = document.getElementById('soundCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Web Audio API setup
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioContext = new AudioContext();
+
+        // Sound Design System
+        class SoundDesignSystem {
+            constructor() {
+                this.ctx = audioContext;
+                this.masterGain = this.ctx.createGain();
+                this.masterGain.connect(this.ctx.destination);
+                
+                // Audio buses
+                this.buses = {
+                    music: this.ctx.createGain(),
+                    sfx: this.ctx.createGain(),
+                    ambient: this.ctx.createGain(),
+                    ui: this.ctx.createGain(),
+                    voice: this.ctx.createGain()
+                };
+                
+                // Connect buses to master
+                Object.values(this.buses).forEach(bus => {
+                    bus.connect(this.masterGain);
+                });
+                
+                // Effects
+                this.effects = {
+                    reverb: this.createReverb(),
+                    lowPass: this.ctx.createBiquadFilter(),
+                    compressor: this.ctx.createDynamicsCompressor()
+                };
+                
+                this.effects.lowPass.type = 'lowpass';
+                this.effects.lowPass.frequency.value = 20000;
+                
+                // Audio state
+                this.activeSounds = [];
+                this.musicState = 'explore';
+                this.environment = 'none';
+                
+                this.layers = {
+                    music: true,
+                    sfx: true,
+                    ambient: true,
+                    ui: true,
+                    voice: false,
+                    reverb: false,
+                    spatial: true,
+                    dynamic: true
+                };
+                
+                this.volumes = {
+                    master: 0.7,
+                    music: 0.6,
+                    sfx: 0.8,
+                    ambient: 0.4,
+                    ui: 0.7,
+                    voice: 0.9
+                };
+                
+                // Visual data
+                this.waveformData = new Uint8Array(256);
+                this.frequencyData = new Uint8Array(256);
+                this.analyser = this.ctx.createAnalyser();
+                this.analyser.fftSize = 512;
+                this.masterGain.connect(this.analyser);
+                
+                // Sound sources
+                this.soundSources = [];
+                this.spatialSounds = [];
+                
+                // Initialize
+                this.initializeSounds();
+                this.startVisualization();
+            }
+            
+            createReverb() {
+                const convolver = this.ctx.createConvolver();
+                const length = this.ctx.sampleRate * 2;
+                const impulse = this.ctx.createBuffer(2, length, this.ctx.sampleRate);
+                
+                for (let channel = 0; channel < 2; channel++) {
+                    const channelData = impulse.getChannelData(channel);
+                    for (let i = 0; i < length; i++) {
+                        channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 2);
+                    }
+                }
+                
+                convolver.buffer = impulse;
+                return convolver;
+            }
+            
+            initializeSounds() {
+                // Create synthetic sounds
+                this.sounds = {
+                    explosion: () => this.createExplosion(),
+                    laser: () => this.createLaser(),
+                    jump: () => this.createJump(),
+                    collect: () => this.createCollect(),
+                    hit: () => this.createHit(),
+                    powerup: () => this.createPowerup(),
+                    footstep: () => this.createFootstep(),
+                    door: () => this.createDoor()
+                };
+                
+                // Create music layers
+                this.musicLayers = {
+                    explore: this.createMusicLayer(120, 'major'),
+                    combat: this.createMusicLayer(140, 'minor'),
+                    stealth: this.createMusicLayer(90, 'minor'),
+                    victory: this.createMusicLayer(130, 'major'),
+                    danger: this.createMusicLayer(150, 'diminished'),
+                    peaceful: this.createMusicLayer(80, 'major')
+                };
+                
+                // Start default music
+                this.currentMusic = null;
+                this.setMusicState('explore');
+            }
+            
+            createExplosion() {
+                const duration = 0.5;
+                const oscillator = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                const filter = this.ctx.createBiquadFilter();
+                
+                oscillator.type = 'sawtooth';
+                oscillator.frequency.setValueAtTime(100, this.ctx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(20, this.ctx.currentTime + duration);
+                
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(1000, this.ctx.currentTime);
+                filter.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime + duration);
+                
+                gain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+                
+                oscillator.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.buses.sfx);
+                
+                oscillator.start();
+                oscillator.stop(this.ctx.currentTime + duration);
+                
+                // Add noise burst
+                const noise = this.createNoise(0.2);
+                noise.connect(gain);
+                
+                return { oscillator, gain, duration };
+            }
+            
+            createLaser() {
+                const duration = 0.3;
+                const oscillator = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(1000, this.ctx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(200, this.ctx.currentTime + duration);
+                
+                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+                
+                oscillator.connect(gain);
+                gain.connect(this.buses.sfx);
+                
+                oscillator.start();
+                oscillator.stop(this.ctx.currentTime + duration);
+                
+                return { oscillator, gain, duration };
+            }
+            
+            createJump() {
+                const duration = 0.2;
+                const oscillator = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                
+                oscillator.type = 'square';
+                oscillator.frequency.setValueAtTime(200, this.ctx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(600, this.ctx.currentTime + duration);
+                
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+                
+                oscillator.connect(gain);
+                gain.connect(this.buses.sfx);
+                
+                oscillator.start();
+                oscillator.stop(this.ctx.currentTime + duration);
+                
+                return { oscillator, gain, duration };
+            }
+            
+            createCollect() {
+                const duration = 0.4;
+                const oscillators = [];
+                const gain = this.ctx.createGain();
+                
+                const frequencies = [523.25, 659.25, 783.99]; // C, E, G
+                
+                frequencies.forEach((freq, i) => {
+                    const osc = this.ctx.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.value = freq;
+                    
+                    const oscGain = this.ctx.createGain();
+                    oscGain.gain.setValueAtTime(0, this.ctx.currentTime + i * 0.1);
+                    oscGain.gain.linearRampToValueAtTime(0.2, this.ctx.currentTime + i * 0.1 + 0.05);
+                    oscGain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+                    
+                    osc.connect(oscGain);
+                    oscGain.connect(gain);
+                    
+                    osc.start(this.ctx.currentTime + i * 0.1);
+                    osc.stop(this.ctx.currentTime + duration);
+                    
+                    oscillators.push(osc);
+                });
+                
+                gain.connect(this.buses.sfx);
+                
+                return { oscillators, gain, duration };
+            }
+            
+            createHit() {
+                const duration = 0.1;
+                const oscillator = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                const filter = this.ctx.createBiquadFilter();
+                
+                oscillator.type = 'square';
+                oscillator.frequency.value = 80;
+                
+                filter.type = 'lowpass';
+                filter.frequency.value = 200;
+                filter.Q.value = 5;
+                
+                gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+                
+                oscillator.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.buses.sfx);
+                
+                oscillator.start();
+                oscillator.stop(this.ctx.currentTime + duration);
+                
+                // Add punch
+                const punch = this.createNoise(0.05);
+                punch.connect(gain);
+                
+                return { oscillator, gain, duration };
+            }
+            
+            createPowerup() {
+                const duration = 0.8;
+                const oscillator = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                const lfo = this.ctx.createOscillator();
+                const lfoGain = this.ctx.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.value = 440;
+                
+                lfo.type = 'sine';
+                lfo.frequency.value = 10;
+                
+                lfoGain.gain.value = 100;
+                
+                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+                
+                lfo.connect(lfoGain);
+                lfoGain.connect(oscillator.frequency);
+                
+                oscillator.connect(gain);
+                gain.connect(this.buses.sfx);
+                
+                oscillator.start();
+                lfo.start();
+                oscillator.stop(this.ctx.currentTime + duration);
+                lfo.stop(this.ctx.currentTime + duration);
+                
+                return { oscillator, gain, duration };
+            }
+            
+            createFootstep() {
+                const duration = 0.05;
+                const noise = this.createNoise(duration);
+                const gain = this.ctx.createGain();
+                const filter = this.ctx.createBiquadFilter();
+                
+                filter.type = 'lowpass';
+                filter.frequency.value = 400;
+                
+                gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+                
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.buses.sfx);
+                
+                return { noise, gain, duration };
+            }
+            
+            createDoor() {
+                const duration = 0.3;
+                const oscillator = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                
+                oscillator.type = 'triangle';
+                oscillator.frequency.setValueAtTime(200, this.ctx.currentTime);
+                oscillator.frequency.linearRampToValueAtTime(150, this.ctx.currentTime + duration);
+                
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + duration);
+                
+                oscillator.connect(gain);
+                gain.connect(this.buses.sfx);
+                
+                oscillator.start();
+                oscillator.stop(this.ctx.currentTime + duration);
+                
+                // Add creak
+                const creak = this.ctx.createOscillator();
+                creak.type = 'sawtooth';
+                creak.frequency.value = 50;
+                creak.connect(gain);
+                creak.start();
+                creak.stop(this.ctx.currentTime + duration);
+                
+                return { oscillator, gain, duration };
+            }
+            
+            createNoise(duration) {
+                const bufferSize = this.ctx.sampleRate * duration;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const output = buffer.getChannelData(0);
+                
+                for (let i = 0; i < bufferSize; i++) {
+                    output[i] = Math.random() * 2 - 1;
+                }
+                
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+                noise.start();
+                
+                return noise;
+            }
+            
+            createMusicLayer(tempo, scale) {
+                // Simplified music generation
+                const notes = scale === 'major' ? 
+                    [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25] : // C major
+                    [261.63, 293.66, 311.13, 349.23, 392.00, 415.30, 466.16, 523.25]; // C minor
+                
+                return {
+                    tempo: tempo,
+                    notes: notes,
+                    pattern: [0, 2, 4, 2, 5, 4, 2, 0],
+                    playing: false
+                };
+            }
+            
+            setMusicState(state) {
+                this.musicState = state;
+                
+                // Stop current music
+                if (this.currentMusic) {
+                    this.currentMusic.playing = false;
+                }
+                
+                // Start new music layer
+                const layer = this.musicLayers[state];
+                if (layer && this.layers.music) {
+                    this.playMusicLayer(layer);
+                    this.currentMusic = layer;
+                }
+                
+                document.getElementById('musicLayer').textContent = state;
+            }
+            
+            playMusicLayer(layer) {
+                if (!layer.playing) {
+                    layer.playing = true;
+                    
+                    const beatDuration = 60 / layer.tempo;
+                    let noteIndex = 0;
+                    
+                    const playNote = () => {
+                        if (!layer.playing) return;
+                        
+                        const frequency = layer.notes[layer.pattern[noteIndex]];
+                        const oscillator = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+                        
+                        oscillator.type = 'triangle';
+                        oscillator.frequency.value = frequency;
+                        
+                        gain.gain.setValueAtTime(0, this.ctx.currentTime);
+                        gain.gain.linearRampToValueAtTime(0.1, this.ctx.currentTime + 0.01);
+                        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + beatDuration);
+                        
+                        oscillator.connect(gain);
+                        gain.connect(this.buses.music);
+                        
+                        oscillator.start();
+                        oscillator.stop(this.ctx.currentTime + beatDuration);
+                        
+                        noteIndex = (noteIndex + 1) % layer.pattern.length;
+                        
+                        if (layer.playing) {
+                            setTimeout(playNote, beatDuration * 1000);
+                        }
+                    };
+                    
+                    playNote();
+                }
+            }
+            
+            playSound(type) {
+                if (this.sounds[type] && this.layers.sfx) {
+                    const sound = this.sounds[type]();
+                    this.activeSounds.push(sound);
+                    
+                    // Remove from active sounds after duration
+                    setTimeout(() => {
+                        const index = this.activeSounds.indexOf(sound);
+                        if (index > -1) {
+                            this.activeSounds.splice(index, 1);
+                        }
+                    }, sound.duration * 1000);
+                    
+                    // Add spatial positioning
+                    if (this.layers.spatial) {
+                        this.addSpatialSound(sound, Math.random() * canvas.width, Math.random() * canvas.height);
+                    }
+                }
+            }
+            
+            addSpatialSound(sound, x, y) {
+                const panner = this.ctx.createStereoPanner();
+                const pan = ((x / canvas.width) - 0.5) * 2;
+                panner.pan.value = pan;
+                
+                // Reconnect through panner
+                if (sound.gain) {
+                    sound.gain.disconnect();
+                    sound.gain.connect(panner);
+                    panner.connect(this.buses.sfx);
+                }
+                
+                this.spatialSounds.push({
+                    x: x,
+                    y: y,
+                    sound: sound,
+                    life: 1
+                });
+            }
+            
+            setEnvironment(env) {
+                this.environment = env;
+                document.getElementById('environment').textContent = env;
+                
+                // Adjust reverb and filter based on environment
+                const settings = {
+                    forest: { reverb: 0.3, lowpass: 15000 },
+                    cave: { reverb: 0.8, lowpass: 5000 },
+                    city: { reverb: 0.2, lowpass: 18000 },
+                    underwater: { reverb: 0.5, lowpass: 2000 },
+                    space: { reverb: 0.9, lowpass: 10000 },
+                    dungeon: { reverb: 0.6, lowpass: 8000 }
+                };
+                
+                const setting = settings[env] || { reverb: 0.2, lowpass: 20000 };
+                
+                // Update effects
+                this.effects.lowPass.frequency.value = setting.lowpass;
+                document.getElementById('lowPass').value = setting.lowpass;
+                document.getElementById('lowPassDisplay').textContent = setting.lowpass;
+                
+                // Play ambient sound
+                if (this.layers.ambient) {
+                    this.playAmbient(env);
+                }
+            }
+            
+            playAmbient(env) {
+                // Create ambient soundscape
+                const ambient = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                const filter = this.ctx.createBiquadFilter();
+                
+                ambient.type = 'sine';
+                
+                const frequencies = {
+                    forest: 200,
+                    cave: 100,
+                    city: 300,
+                    underwater: 80,
+                    space: 50,
+                    dungeon: 150
+                };
+                
+                ambient.frequency.value = frequencies[env] || 200;
+                
+                filter.type = 'lowpass';
+                filter.frequency.value = 500;
+                
+                gain.gain.value = 0.05;
+                
+                ambient.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.buses.ambient);
+                
+                ambient.start();
+                
+                // Stop after 10 seconds
+                setTimeout(() => {
+                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 1);
+                    ambient.stop(this.ctx.currentTime + 1);
+                }, 10000);
+            }
+            
+            updateVolume(bus, value) {
+                const volume = value / 100;
+                this.volumes[bus] = volume;
+                
+                if (bus === 'master') {
+                    this.masterGain.gain.value = volume;
+                } else if (this.buses[bus]) {
+                    this.buses[bus].gain.value = volume;
+                }
+            }
+            
+            startVisualization() {
+                // This would normally update the waveform/spectrum data
+                setInterval(() => {
+                    this.analyser.getByteTimeDomainData(this.waveformData);
+                    this.analyser.getByteFrequencyData(this.frequencyData);
+                }, 50);
+            }
+            
+            render(ctx) {
+                // Draw waveform
+                if (document.getElementById('showWaveform').checked) {
+                    ctx.strokeStyle = '#4CAF50';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    
+                    const sliceWidth = canvas.width / this.waveformData.length;
+                    let x = 0;
+                    
+                    for (let i = 0; i < this.waveformData.length; i++) {
+                        const v = this.waveformData[i] / 128.0;
+                        const y = v * canvas.height / 2;
+                        
+                        if (i === 0) {
+                            ctx.moveTo(x, y);
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
+                        
+                        x += sliceWidth;
+                    }
+                    
+                    ctx.stroke();
+                }
+                
+                // Draw frequency spectrum
+                if (document.getElementById('showSpectrum').checked) {
+                    const barWidth = (canvas.width / this.frequencyData.length) * 2;
+                    let x = 0;
+                    
+                    for (let i = 0; i < this.frequencyData.length; i++) {
+                        const barHeight = this.frequencyData[i] / 255 * canvas.height * 0.7;
+                        
+                        const r = barHeight + 25 * (i / this.frequencyData.length);
+                        const g = 250 * (i / this.frequencyData.length);
+                        const b = 50;
+                        
+                        ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+                        ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+                        
+                        x += barWidth + 1;
+                    }
+                }
+                
+                // Draw spatial sound sources
+                if (document.getElementById('showSpatial').checked) {
+                    this.spatialSounds = this.spatialSounds.filter(s => {
+                        s.life -= 0.02;
+                        
+                        if (s.life > 0) {
+                            ctx.globalAlpha = s.life;
+                            ctx.strokeStyle = '#FFD700';
+                            ctx.lineWidth = 2;
+                            
+                            // Draw sound rings
+                            for (let i = 0; i < 3; i++) {
+                                const radius = (1 - s.life) * 50 * (i + 1);
+                                ctx.beginPath();
+                                ctx.arc(s.x, s.y, radius, 0, Math.PI * 2);
+                                ctx.stroke();
+                            }
+                            
+                            return true;
+                        }
+                        return false;
+                    });
+                    ctx.globalAlpha = 1;
+                }
+                
+                // Draw layer levels
+                if (document.getElementById('showLayers').checked) {
+                    const layers = ['music', 'sfx', 'ambient', 'ui', 'voice'];
+                    const x = 20;
+                    let y = 20;
+                    
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                    ctx.fillRect(x - 5, y - 5, 150, layers.length * 25 + 10);
+                    
+                    layers.forEach(layer => {
+                        const active = this.layers[layer];
+                        const volume = this.volumes[layer] || 0;
+                        
+                        // Draw meter
+                        ctx.fillStyle = active ? '#333' : '#222';
+                        ctx.fillRect(x + 50, y, 80, 15);
+                        
+                        ctx.fillStyle = active ? '#4CAF50' : '#666';
+                        ctx.fillRect(x + 50, y, 80 * volume, 15);
+                        
+                        // Draw label
+                        ctx.fillStyle = '#FFF';
+                        ctx.font = '12px Arial';
+                        ctx.fillText(layer, x, y + 10);
+                        
+                        y += 20;
+                    });
+                }
+                
+                // Update stats
+                document.getElementById('activeSounds').textContent = this.activeSounds.length;
+            }
+        }
+
+        // Initialize sound system
+        let soundSystem = null;
+
+        // Start audio context on user interaction
+        canvas.addEventListener('click', (e) => {
+            if (!soundSystem) {
+                soundSystem = new SoundDesignSystem();
+            }
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Play a random sound at click position
+            const sounds = ['explosion', 'laser', 'jump', 'collect', 'hit', 'powerup'];
+            const randomSound = sounds[Math.floor(Math.random() * sounds.length)];
+            soundSystem.playSound(randomSound);
+        });
+
+        // UI Functions
+        window.toggleLayer = function(layer) {
+            if (soundSystem) {
+                soundSystem.layers[layer] = !soundSystem.layers[layer];
+                document.getElementById(layer + '-btn').classList.toggle('active');
+            }
+        };
+
+        window.setMusicState = function(state) {
+            if (soundSystem) {
+                soundSystem.setMusicState(state);
+            }
+        };
+
+        window.updateVolume = function(bus, value) {
+            document.getElementById(bus + 'VolumeDisplay').textContent = value;
+            if (soundSystem) {
+                soundSystem.updateVolume(bus, value);
+            }
+        };
+
+        window.updateFilter = function(filter, value) {
+            document.getElementById(filter + 'Display').textContent = value;
+            if (soundSystem && soundSystem.effects[filter]) {
+                if (filter === 'lowPass') {
+                    soundSystem.effects.lowPass.frequency.value = value;
+                }
+            }
+        };
+
+        window.updateEffect = function(effect, value) {
+            document.getElementById(effect + 'Display').textContent = value;
+            // Update effect parameters
+        };
+
+        window.playSound = function(type) {
+            if (soundSystem) {
+                soundSystem.playSound(type);
+            }
+        };
+
+        window.setEnvironment = function(env) {
+            if (soundSystem) {
+                soundSystem.setEnvironment(env);
+            }
+        };
+
+        // Animation loop
+        function animate() {
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            if (soundSystem) {
+                soundSystem.render(ctx);
+            } else {
+                // Draw instructions
+                ctx.fillStyle = '#FFF';
+                ctx.font = '20px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Click anywhere to start audio system', canvas.width / 2, canvas.height / 2);
+            }
+            
+            requestAnimationFrame(animate);
+        }
+        
+        animate();
+        console.log('Sound Design Studio initialized!');
+    </script>
+
+    <h2>Sound Design Implementation in Python</h2>
+    
+    <pre class="language-python"><code>import pygame
+import numpy as np
+import math
+from typing import Dict, List, Optional, Tuple
+from dataclasses import dataclass
+from enum import Enum
+
+class SoundLayer(Enum):
+    MUSIC = "music"
+    SFX = "sfx"
+    AMBIENT = "ambient"
+    UI = "ui"
+    VOICE = "voice"
+
+@dataclass
+class Sound:
+    """Individual sound instance"""
+    channel: pygame.mixer.Channel
+    volume: float
+    position: Tuple[float, float]
+    layer: SoundLayer
+    loop: bool = False
+    fade_in: float = 0
+    fade_out: float = 0
+
+class SoundManager:
+    """Comprehensive sound management system"""
+    
+    def __init__(self, channels: int = 32):
+        pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=512)
+        pygame.mixer.set_num_channels(channels)
+        
+        # Audio buses
+        self.volumes = {
+            SoundLayer.MUSIC: 0.6,
+            SoundLayer.SFX: 0.8,
+            SoundLayer.AMBIENT: 0.4,
+            SoundLayer.UI: 0.7,
+            SoundLayer.VOICE: 0.9
+        }
+        
+        self.master_volume = 1.0
+        
+        # Sound library
+        self.sounds: Dict[str, pygame.mixer.Sound] = {}
+        self.music_tracks: Dict[str, str] = {}
+        
+        # Active sounds
+        self.active_sounds: List[Sound] = []
+        self.current_music = None
+        self.current_ambient = None
+        
+        # Spatial audio
+        self.listener_pos = (0, 0)
+        self.max_distance = 500
+        
+        # Dynamic music system
+        self.music_layers = {}
+        self.music_state = "explore"
+        self.music_transition_time = 2.0
+        
+    def load_sound(self, name: str, filepath: str, layer: SoundLayer = SoundLayer.SFX):
+        """Load a sound file"""
+        try:
+            sound = pygame.mixer.Sound(filepath)
+            self.sounds[name] = sound
+            return True
+        except:
+            print(f"Failed to load sound: {filepath}")
+            return False
+    
+    def load_music(self, name: str, filepath: str):
+        """Load a music track"""
+        self.music_tracks[name] = filepath
+    
+    def play_sound(self, name: str, volume: float = 1.0, 
+                  position: Optional[Tuple[float, float]] = None,
+                  layer: SoundLayer = SoundLayer.SFX) -> Optional[Sound]:
+        """Play a sound effect"""
+        if name not in self.sounds:
+            return None
+        
+        # Find available channel
+        channel = pygame.mixer.find_channel()
+        if not channel:
+            return None
+        
+        # Calculate volume with layer mixing
+        final_volume = volume * self.volumes[layer] * self.master_volume
+        
+        # Apply spatial audio if position provided
+        if position:
+            final_volume, pan = self.calculate_spatial_audio(position)
+            channel.set_volume(final_volume * (1 - abs(pan)), 
+                              final_volume * (1 + abs(pan)))
+        else:
+            channel.set_volume(final_volume)
+        
+        # Play sound
+        channel.play(self.sounds[name])
+        
+        # Track active sound
+        sound = Sound(channel, volume, position or (0, 0), layer)
+        self.active_sounds.append(sound)
+        
+        return sound
+    
+    def calculate_spatial_audio(self, source_pos: Tuple[float, float]) -> Tuple[float, float]:
+        """Calculate volume and pan based on position"""
+        dx = source_pos[0] - self.listener_pos[0]
+        dy = source_pos[1] - self.listener_pos[1]
+        distance = math.sqrt(dx*dx + dy*dy)
+        
+        # Volume falloff
+        volume = max(0, 1 - distance / self.max_distance)
+        
+        # Stereo panning (-1 to 1)
+        pan = max(-1, min(1, dx / self.max_distance))
+        
+        return volume, pan
+    
+    def play_music(self, name: str, fade_in: float = 0):
+        """Play background music"""
+        if name in self.music_tracks:
+            pygame.mixer.music.load(self.music_tracks[name])
+            pygame.mixer.music.set_volume(self.volumes[SoundLayer.MUSIC] * self.master_volume)
+            
+            if fade_in > 0:
+                pygame.mixer.music.play(-1, fade_ms=int(fade_in * 1000))
+            else:
+                pygame.mixer.music.play(-1)
+            
+            self.current_music = name
+    
+    def stop_music(self, fade_out: float = 0):
+        """Stop background music"""
+        if fade_out > 0:
+            pygame.mixer.music.fadeout(int(fade_out * 1000))
+        else:
+            pygame.mixer.music.stop()
+        
+        self.current_music = None
+    
+    def set_music_state(self, state: str, transition_time: float = 2.0):
+        """Transition to new music state"""
+        self.music_state = state
+        self.music_transition_time = transition_time
+        
+        # Cross-fade to new track
+        if state in self.music_tracks:
+            self.stop_music(transition_time / 2)
+            pygame.time.wait(int(transition_time * 500))
+            self.play_music(state, transition_time / 2)
+    
+    def update(self, dt: float):
+        """Update sound system"""
+        # Clean up finished sounds
+        self.active_sounds = [s for s in self.active_sounds 
+                            if s.channel.get_busy()]
+        
+        # Update spatial audio for active sounds
+        for sound in self.active_sounds:
+            if sound.position:
+                volume, pan = self.calculate_spatial_audio(sound.position)
+                sound.channel.set_volume(
+                    volume * sound.volume * self.volumes[sound.layer] * self.master_volume * (1 - abs(pan)),
+                    volume * sound.volume * self.volumes[sound.layer] * self.master_volume * (1 + abs(pan))
+                )
+    
+    def set_listener_position(self, x: float, y: float):
+        """Update listener position for spatial audio"""
+        self.listener_pos = (x, y)
+    
+    def set_layer_volume(self, layer: SoundLayer, volume: float):
+        """Set volume for specific layer"""
+        self.volumes[layer] = max(0, min(1, volume))
+        
+        # Update music volume if it's playing
+        if layer == SoundLayer.MUSIC and self.current_music:
+            pygame.mixer.music.set_volume(self.volumes[SoundLayer.MUSIC] * self.master_volume)
+    
+    def set_master_volume(self, volume: float):
+        """Set master volume"""
+        self.master_volume = max(0, min(1, volume))
+        
+        # Update all active sounds
+        for sound in self.active_sounds:
+            self.update_sound_volume(sound)
+    
+    def update_sound_volume(self, sound: Sound):
+        """Update individual sound volume"""
+        if sound.position:
+            volume, pan = self.calculate_spatial_audio(sound.position)
+            sound.channel.set_volume(
+                volume * sound.volume * self.volumes[sound.layer] * self.master_volume * (1 - abs(pan)),
+                volume * sound.volume * self.volumes[sound.layer] * self.master_volume * (1 + abs(pan))
+            )
+        else:
+            volume = sound.volume * self.volumes[sound.layer] * self.master_volume
+            sound.channel.set_volume(volume)
+
+class DynamicMusicSystem:
+    """Adaptive music system with layers"""
+    
+    def __init__(self, sound_manager: SoundManager):
+        self.sound_manager = sound_manager
+        self.layers = {}
+        self.current_layers = []
+        self.intensity = 0.5
+        
+    def add_layer(self, name: str, filepath: str, 
+                 min_intensity: float = 0, max_intensity: float = 1):
+        """Add a music layer"""
+        self.layers[name] = {
+            'filepath': filepath,
+            'min_intensity': min_intensity,
+            'max_intensity': max_intensity,
+            'channel': None,
+            'volume': 0
+        }
+    
+    def update_intensity(self, intensity: float):
+        """Update music intensity (0-1)"""
+        self.intensity = max(0, min(1, intensity))
+        
+        # Update layer volumes based on intensity
+        for name, layer in self.layers.items():
+            if layer['min_intensity'] <= self.intensity <= layer['max_intensity']:
+                # Fade in layer
+                target_volume = 1.0
+                layer['volume'] = min(1, layer['volume'] + 0.01)
+            else:
+                # Fade out layer
+                layer['volume'] = max(0, layer['volume'] - 0.01)
+            
+            # Update channel volume
+            if layer['channel'] and layer['channel'].get_busy():
+                layer['channel'].set_volume(layer['volume'])
+
+class AudioEffects:
+    """Audio effect processors"""
+    
+    @staticmethod
+    def apply_reverb(sound: pygame.mixer.Sound, amount: float = 0.3) -> pygame.mixer.Sound:
+        """Apply reverb effect to sound"""
+        # Get sound array
+        array = pygame.sndarray.array(sound)
+        
+        # Simple reverb using delay lines
+        delay_samples = int(44100 * 0.05)  # 50ms delay
+        reverb = np.zeros_like(array)
+        
+        for i in range(len(array)):
+            if i >= delay_samples:
+                reverb[i] = array[i] * (1 - amount) + array[i - delay_samples] * amount
+            else:
+                reverb[i] = array[i]
+        
+        return pygame.sndarray.make_sound(reverb.astype(array.dtype))
+    
+    @staticmethod
+    def apply_echo(sound: pygame.mixer.Sound, delay: float = 0.3, 
+                  feedback: float = 0.5) -> pygame.mixer.Sound:
+        """Apply echo effect"""
+        array = pygame.sndarray.array(sound)
+        delay_samples = int(44100 * delay)
+        
+        echo = np.zeros(len(array) + delay_samples)
+        echo[:len(array)] = array
+        
+        for i in range(delay_samples, len(echo)):
+            if i - delay_samples < len(array):
+                echo[i] += array[i - delay_samples] * feedback
+        
+        return pygame.sndarray.make_sound(echo[:len(array)].astype(array.dtype))
+    
+    @staticmethod
+    def apply_distortion(sound: pygame.mixer.Sound, amount: float = 0.5) -> pygame.mixer.Sound:
+        """Apply distortion effect"""
+        array = pygame.sndarray.array(sound).astype(float)
+        
+        # Clip and amplify
+        distorted = np.clip(array * (1 + amount * 10), -32768, 32767)
+        
+        return pygame.sndarray.make_sound(distorted.astype(np.int16))
+    
+    @staticmethod
+    def apply_low_pass(sound: pygame.mixer.Sound, cutoff: float = 0.5) -> pygame.mixer.Sound:
+        """Apply low-pass filter"""
+        array = pygame.sndarray.array(sound).astype(float)
+        
+        # Simple moving average filter
+        window_size = int(10 * (1 - cutoff) + 1)
+        filtered = np.convolve(array, np.ones(window_size) / window_size, mode='same')
+        
+        return pygame.sndarray.make_sound(filtered.astype(np.int16))
+
+class SoundGenerator:
+    """Generate synthetic sounds"""
+    
+    @staticmethod
+    def create_sine_wave(frequency: float, duration: float, 
+                        sample_rate: int = 44100) -> pygame.mixer.Sound:
+        """Generate sine wave"""
+        samples = int(sample_rate * duration)
+        waves = np.sin(2 * np.pi * frequency * np.arange(samples) / sample_rate)
+        waves = (waves * 32767).astype(np.int16)
+        
+        # Stereo
+        stereo_waves = np.array([waves, waves]).T
+        
+        return pygame.sndarray.make_sound(stereo_waves)
+    
+    @staticmethod
+    def create_explosion(duration: float = 0.5) -> pygame.mixer.Sound:
+        """Generate explosion sound"""
+        sample_rate = 44100
+        samples = int(sample_rate * duration)
+        
+        # White noise with envelope
+        noise = np.random.random(samples) * 2 - 1
+        envelope = np.exp(-np.linspace(0, 10, samples))
+        
+        explosion = noise * envelope * 32767
+        
+        # Add low frequency rumble
+        rumble = np.sin(2 * np.pi * 50 * np.arange(samples) / sample_rate) * envelope * 16000
+        explosion += rumble
+        
+        explosion = np.clip(explosion, -32767, 32767).astype(np.int16)
+        
+        # Stereo
+        stereo = np.array([explosion, explosion]).T
+        
+        return pygame.sndarray.make_sound(stereo)
+    
+    @staticmethod
+    def create_laser(duration: float = 0.3) -> pygame.mixer.Sound:
+        """Generate laser sound"""
+        sample_rate = 44100
+        samples = int(sample_rate * duration)
+        
+        # Frequency sweep
+        start_freq = 1000
+        end_freq = 200
+        t = np.linspace(0, duration, samples)
+        frequency = np.linspace(start_freq, end_freq, samples)
+        
+        phase = 2 * np.pi * np.cumsum(frequency) / sample_rate
+        laser = np.sin(phase)
+        
+        # Envelope
+        envelope = np.exp(-t * 5)
+        laser = laser * envelope * 32767
+        
+        laser = laser.astype(np.int16)
+        
+        # Stereo
+        stereo = np.array([laser, laser]).T
+        
+        return pygame.sndarray.make_sound(stereo)</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Sound Design Tips</h3>
+        <ul>
+            <li><strong>Layer Mixing:</strong> Balance music, SFX, and ambient carefully</li>
+            <li><strong>Dynamic Range:</strong> Leave headroom for important sounds</li>
+            <li><strong>Spatial Audio:</strong> Use 3D positioning for immersion</li>
+            <li><strong>Variation:</strong> Randomize pitch/volume to avoid repetition</li>
+            <li><strong>Feedback Timing:</strong> Sync audio with visual events</li>
+            <li><strong>Compression:</strong> Optimize file sizes without quality loss</li>
+            <li><strong>Accessibility:</strong> Provide subtitles and visual cues</li>
+            <li><strong>Testing:</strong> Test on different speaker setups</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>🎵 Dynamic music adapts to gameplay</li>
+            <li>💥 Sound effects provide crucial feedback</li>
+            <li>🌊 Ambient audio creates atmosphere</li>
+            <li>🎯 Spatial audio enhances immersion</li>
+            <li>🎚️ Proper mixing prevents audio fatigue</li>
+            <li>🔊 Effects processing adds depth</li>
+            <li>🎮 UI sounds confirm player actions</li>
+            <li>📊 Audio optimization is essential</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you understand sound design, next we'll explore difficulty balancing to create engaging challenges for all skill levels!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="polish_tweening.html" class="prev-lesson" aria-label="Previous lesson: Tweening and Juice">Previous Lesson: Tweening and Juice</a>
+        <a href="polish_difficulty.html" class="next-lesson" aria-label="Next lesson: Difficulty Balancing">Next Lesson: Difficulty Balancing</a>
+    </nav>
+    
+    </main>
+    <script src="/js/course-enhancements.js" defer></script>
+</body>
+</html>

@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Learn networking fundamentals for game development. Master client-server architecture, protocols, and basic multiplayer concepts.">
-    <title>Networking Basics - Networking & Multiplayer</title>
+    <meta name="description" content="Learn networking basics for multiplayer games. Understand client-server architecture, peer-to-peer connections, protocols, and synchronization.">
+    <title>Networking Basics - Multiplayer & Networking</title>
     <link rel="stylesheet" href="/styles/main.css">
     <link rel="stylesheet" href="/styles/enhanced.css">
     <link rel="icon" href="/favicon.png">
@@ -32,614 +32,1496 @@
     <nav class="breadcrumb" aria-label="Breadcrumb">
         <a href="index.html">Course Home</a>
         <span class="separator">›</span>
-        <span class="current">Intermediate Module - Section 2: Networking & Multiplayer - Lesson 1</span>
+        <span class="current">Advanced Module - Section 3: Multiplayer & Networking - Lesson 1</span>
     </nav>
 
-    <h2>Understanding Game Networking Fundamentals</h2>
+    <h2>Building Connected Game Experiences</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <p>Game networking enables players to connect and play together! Learn the fundamentals of client-server architecture, network protocols, data synchronization, and the building blocks of multiplayer games! 🌐🎮</p>
+        <p>Master the fundamentals of game networking! Learn client-server architecture, protocols, packet handling, latency compensation, and create smooth multiplayer experiences! 🌐🎮🔗</p>
     </div>
 
-    <h2>Understanding Network Architecture</h2>
+    <h2>Understanding Game Networking</h2>
     
     <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>📮 The Postal System Analogy</h3>
+        <h3>🌐 The Post Office Analogy</h3>
         <p>Think of networking like a postal system:</p>
         <ul>
-            <li><strong>Packets:</strong> Letters being sent between addresses</li>
-            <li><strong>IP Address:</strong> Your home address</li>
-            <li><strong>Port:</strong> Apartment number in a building</li>
-            <li><strong>TCP:</strong> Certified mail (guaranteed delivery)</li>
-            <li><strong>UDP:</strong> Regular mail (faster but might get lost)</li>
-            <li><strong>Latency:</strong> Time for mail to arrive</li>
+            <li><strong>Packets:</strong> Letters containing game data</li>
+            <li><strong>IP Address:</strong> Your street address</li>
+            <li><strong>Port:</strong> Your apartment number</li>
+            <li><strong>Router:</strong> The local post office</li>
+            <li><strong>Latency:</strong> Mail delivery time</li>
+            <li><strong>Packet Loss:</strong> Lost mail</li>
+            <li><strong>Bandwidth:</strong> Size of mailbox</li>
         </ul>
     </div>
 
     <div class="mermaid">
     graph TD
-        A["Network Architecture"] --> B["Client-Server"]
+        A["Networking Architectures"] --> B["Client-Server"]
         A --> C["Peer-to-Peer"]
-        A --> D["Dedicated Server"]
+        A --> D["Hybrid"]
         
         B --> E["Authoritative Server"]
-        B --> F["Client Prediction"]
-        B --> G["Server Reconciliation"]
+        B --> F["Dedicated Server"]
+        B --> G["Listen Server"]
         
-        C --> H["Direct Connection"]
-        C --> I["Mesh Network"]
+        C --> H["Full Mesh"]
+        C --> I["Star Topology"]
         
-        D --> J["Game Server"]
-        D --> K["Match Making"]
-        D --> L["Load Balancing"]
-        
-        M["Protocols"] --> N["TCP"]
-        M --> O["UDP"]
-        M --> P["WebSockets"]
-        
-        Q["Data Sync"] --> R["State Replication"]
-        Q --> S["Delta Compression"]
-        Q --> T["Interpolation"]
+        D --> J["Server-Assisted P2P"]
+        D --> K["Regional Servers"]
     </div>
 
     <h2>Interactive Network Simulator</h2>
     
     <div class="canvas-wrapper" style="text-align: center;">
-        <canvas id="networkCanvas" width="600" height="400" style="border: 1px solid #333; background-color: #1a1a1a; display: inline-block;"></canvas>
+        <canvas id="networkCanvas" width="800" height="600" style="border: 1px solid #333; display: inline-block;"></canvas>
     </div>
     <div style="text-align: center; margin-top: 10px;">
-        <p>Simulate network communication between clients and server!</p>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; max-width: 600px; margin: 10px auto;">
-            <button onclick="addClient()">Add Client</button>
-            <button onclick="removeClient()">Remove Client</button>
-            <button onclick="sendMessage('chat')">Send Chat</button>
-            <button onclick="sendMessage('position')">Update Position</button>
-            <button onclick="sendMessage('action')">Send Action</button>
-            <button onclick="simulatePacketLoss()">Packet Loss</button>
+        <p>Visualize network architectures, packet flow, and latency effects in real-time!</p>
+        
+        <!-- Network Controls -->
+        <div style="margin: 10px auto; padding: 10px; background-color: rgba(0,0,0,0.3); border-radius: 5px; max-width: 800px;">
+            <p style="color: white; margin: 5px;">Network Architecture:</p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 5px;">
+                <button onclick="setArchitecture('client-server')" class="arch-btn active" id="client-server-btn">🖥️ Client-Server</button>
+                <button onclick="setArchitecture('p2p')" class="arch-btn" id="p2p-btn">🔗 Peer-to-Peer</button>
+                <button onclick="setArchitecture('hybrid')" class="arch-btn" id="hybrid-btn">🌐 Hybrid</button>
+                <button onclick="setArchitecture('mesh')" class="arch-btn" id="mesh-btn">🕸️ Full Mesh</button>
+                <button onclick="setArchitecture('star')" class="arch-btn" id="star-btn">⭐ Star</button>
+                <button onclick="setArchitecture('relay')" class="arch-btn" id="relay-btn">📡 Relay Server</button>
+            </div>
         </div>
+        
+        <!-- Protocol Selection -->
+        <div style="margin: 10px auto; padding: 10px; background-color: rgba(0,0,0,0.3); border-radius: 5px; max-width: 800px;">
+            <p style="color: white; margin: 5px;">Protocol:</p>
+            <button onclick="setProtocol('tcp')" class="proto-btn active" id="tcp-btn">📦 TCP (Reliable)</button>
+            <button onclick="setProtocol('udp')" class="proto-btn" id="udp-btn">⚡ UDP (Fast)</button>
+            <button onclick="setProtocol('websocket')" class="proto-btn" id="websocket-btn">🔌 WebSocket</button>
+            <button onclick="setProtocol('webrtc')" class="proto-btn" id="webrtc-btn">📹 WebRTC</button>
+        </div>
+        
+        <!-- Network Conditions -->
         <div style="margin-top: 10px;">
-            <label>Protocol: 
-                <select id="protocol" onchange="setProtocol(this.value)">
-                    <option value="tcp">TCP (Reliable)</option>
-                    <option value="udp">UDP (Fast)</option>
-                    <option value="websocket">WebSocket</option>
-                </select>
-            </label>
-            <label>Architecture: 
-                <select id="architecture" onchange="setArchitecture(this.value)">
-                    <option value="client-server">Client-Server</option>
-                    <option value="peer-to-peer">Peer-to-Peer</option>
-                    <option value="dedicated">Dedicated Server</option>
-                </select>
-            </label>
+            <label>Latency: <input type="range" id="latency" min="0" max="500" value="50" onchange="updateNetworkCondition('latency', this.value)"> <span id="latencyDisplay">50</span>ms</label>
+            <label>Packet Loss: <input type="range" id="packetLoss" min="0" max="50" value="0" onchange="updateNetworkCondition('packetLoss', this.value)"> <span id="packetLossDisplay">0</span>%</label>
+            <label>Bandwidth: <input type="range" id="bandwidth" min="1" max="100" value="100" onchange="updateNetworkCondition('bandwidth', this.value)"> <span id="bandwidthDisplay">100</span>Mbps</label>
         </div>
+        
         <div style="margin-top: 10px;">
-            <label>Latency: <input type="range" id="latency" min="0" max="500" value="50" onchange="setLatency(this.value)"> <span id="latencyDisplay">50ms</span></label>
-            <label>Packet Loss: <input type="range" id="packetLoss" min="0" max="50" value="0" onchange="setPacketLoss(this.value)"> <span id="packetLossDisplay">0%</span></label>
-            <label>Bandwidth: <input type="range" id="bandwidth" min="1" max="100" value="100" onchange="setBandwidth(this.value)"> <span id="bandwidthDisplay">100 Mbps</span></label>
+            <label>Jitter: <input type="range" id="jitter" min="0" max="100" value="10" onchange="updateNetworkCondition('jitter', this.value)"> <span id="jitterDisplay">10</span>ms</label>
+            <label>Players: <input type="range" id="playerCount" min="2" max="16" value="4" onchange="updateNetworkCondition('playerCount', this.value)"> <span id="playerCountDisplay">4</span></label>
+            <label>Tick Rate: <input type="range" id="tickRate" min="10" max="128" step="10" value="60" onchange="updateNetworkCondition('tickRate', this.value)"> <span id="tickRateDisplay">60</span>Hz</label>
         </div>
+        
+        <!-- Simulation Controls -->
+        <div style="margin-top: 10px;">
+            <button onclick="startSimulation()">▶️ Start</button>
+            <button onclick="pauseSimulation()">⏸️ Pause</button>
+            <button onclick="resetSimulation()">🔄 Reset</button>
+            <button onclick="addPlayer()">➕ Add Player</button>
+            <button onclick="removePlayer()">➖ Remove Player</button>
+            <button onclick="simulateAttack()">⚔️ Simulate Action</button>
+        </div>
+        
+        <!-- Optimization Techniques -->
+        <div style="margin-top: 10px;">
+            <h4 style="color: white;">Optimizations:</h4>
+            <label><input type="checkbox" id="interpolation" checked onchange="toggleOptimization('interpolation')"> Interpolation</label>
+            <label><input type="checkbox" id="prediction" checked onchange="toggleOptimization('prediction')"> Client Prediction</label>
+            <label><input type="checkbox" id="lagCompensation" onchange="toggleOptimization('lagCompensation')"> Lag Compensation</label>
+            <label><input type="checkbox" id="compression" onchange="toggleOptimization('compression')"> Compression</label>
+            <label><input type="checkbox" id="deltaCompression" onchange="toggleOptimization('deltaCompression')"> Delta Compression</label>
+            <label><input type="checkbox" id="prioritization" onchange="toggleOptimization('prioritization')"> Packet Priority</label>
+        </div>
+        
+        <!-- Visualization Options -->
+        <div style="margin-top: 10px;">
+            <label><input type="checkbox" id="showPackets" checked> Show Packets</label>
+            <label><input type="checkbox" id="showLatency" checked> Show Latency</label>
+            <label><input type="checkbox" id="showBandwidth"> Show Bandwidth</label>
+            <label><input type="checkbox" id="showTopology" checked> Show Topology</label>
+            <label><input type="checkbox" id="showStats" checked> Show Stats</label>
+            <label><input type="checkbox" id="showTimeline"> Show Timeline</label>
+        </div>
+        
+        <!-- Network Stats -->
         <div style="margin-top: 10px; background-color: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;">
-            <p style="margin: 5px;">Clients: <span id="clientCount">0</span> | Messages Sent: <span id="messagesSent">0</span> | Messages Received: <span id="messagesReceived">0</span></p>
-            <p style="margin: 5px;">Packets Lost: <span id="packetsLost">0</span> | Average Latency: <span id="avgLatency">0ms</span> | Bandwidth Used: <span id="bandwidthUsed">0 KB/s</span></p>
-        </div>
-        <div id="networkLog" style="margin-top: 10px; height: 100px; overflow-y: auto; border: 1px solid #333; padding: 5px; text-align: left; font-size: 12px; background-color: rgba(0,0,0,0.5); font-family: monospace;">
-            <!-- Network log entries will appear here -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+                <div style="color: white;">
+                    <strong>Connection</strong><br>
+                    Status: <span id="connectionStatus" style="color: #4CAF50;">Connected</span><br>
+                    Ping: <span id="currentPing">50</span>ms<br>
+                    Uptime: <span id="uptime">0</span>s
+                </div>
+                <div style="color: white;">
+                    <strong>Traffic</strong><br>
+                    Sent: <span id="packetsSent">0</span> packets<br>
+                    Received: <span id="packetsReceived">0</span> packets<br>
+                    Lost: <span id="packetsLost">0</span> (<span id="lossRate">0</span>%)
+                </div>
+                <div style="color: white;">
+                    <strong>Performance</strong><br>
+                    Bandwidth: <span id="currentBandwidth">0</span> KB/s<br>
+                    Queue: <span id="queueSize">0</span> packets<br>
+                    Lag: <span id="perceivedLag">0</span>ms
+                </div>
+                <div style="color: white;">
+                    <strong>Sync</strong><br>
+                    Server Time: <span id="serverTime">0</span>ms<br>
+                    Client Time: <span id="clientTime">0</span>ms<br>
+                    Drift: <span id="timeDrift">0</span>ms
+                </div>
+            </div>
         </div>
     </div>
 
+    <style>
+        .arch-btn, .proto-btn {
+            padding: 8px;
+            border: 2px solid transparent;
+            background-color: #555;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s;
+            font-size: 12px;
+            margin: 2px;
+        }
+        .arch-btn:hover, .proto-btn:hover {
+            background-color: #666;
+            border-color: #888;
+        }
+        .arch-btn.active, .proto-btn.active {
+            background-color: #4CAF50;
+            border-color: #66BB6A;
+        }
+    </style>
+
     <script>
-        // Network Simulator
         console.log('Network Simulator starting...');
 
-        // Classes for network visualization
-        class NetworkPacket {
-            constructor(source, destination, type, data) {
-                this.id = Math.random().toString(36).substr(2, 9);
-                this.source = source;
-                this.destination = destination;
-                this.type = type;
-                this.data = data;
-                this.x = source.x;
-                this.y = source.y;
-                this.targetX = destination.x;
-                this.targetY = destination.y;
-                this.progress = 0;
-                this.delivered = false;
-                this.lost = false;
-                this.color = this.getPacketColor(type);
-                this.size = 5;
-            }
-            
-            getPacketColor(type) {
-                const colors = {
-                    'chat': '#00ff00',
-                    'position': '#00ffff',
-                    'action': '#ff00ff',
-                    'connect': '#ffff00',
-                    'disconnect': '#ff0000',
-                    'ping': '#ffffff'
+        const canvas = document.getElementById('networkCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Network Simulation System
+        class NetworkSimulator {
+            constructor() {
+                this.architecture = 'client-server';
+                this.protocol = 'tcp';
+                this.running = false;
+                this.time = 0;
+                
+                // Network conditions
+                this.conditions = {
+                    latency: 50,
+                    packetLoss: 0,
+                    bandwidth: 100,
+                    jitter: 10,
+                    playerCount: 4,
+                    tickRate: 60
                 };
-                return colors[type] || '#ffffff';
-            }
-            
-            update(dt, latency, packetLoss) {
-                if (this.delivered || this.lost) return;
                 
-                // Check for packet loss
-                if (this.progress === 0 && Math.random() * 100 < packetLoss) {
-                    this.lost = true;
-                    networkManager.stats.packetsLost++;
-                    return;
-                }
+                // Optimizations
+                this.optimizations = {
+                    interpolation: true,
+                    prediction: true,
+                    lagCompensation: false,
+                    compression: false,
+                    deltaCompression: false,
+                    prioritization: false
+                };
                 
-                // Move packet
-                const speed = 1000 / latency; // Adjust speed based on latency
-                this.progress += dt * speed;
-                
-                if (this.progress >= 1) {
-                    this.progress = 1;
-                    this.delivered = true;
-                    this.destination.receivePacket(this);
-                    networkManager.stats.messagesReceived++;
-                }
-                
-                // Interpolate position
-                this.x = this.source.x + (this.targetX - this.source.x) * this.progress;
-                this.y = this.source.y + (this.targetY - this.source.y) * this.progress;
-            }
-            
-            draw(ctx) {
-                if (this.lost) {
-                    // Draw lost packet
-                    ctx.fillStyle = '#ff0000';
-                    ctx.globalAlpha = 0.5;
-                    ctx.fillText('X', this.x - 5, this.y + 5);
-                    ctx.globalAlpha = 1;
-                } else {
-                    // Draw packet
-                    ctx.fillStyle = this.color;
-                    ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
-                    
-                    // Draw trail
-                    ctx.strokeStyle = this.color + '33';
-                    ctx.beginPath();
-                    ctx.moveTo(this.source.x, this.source.y);
-                    ctx.lineTo(this.x, this.y);
-                    ctx.stroke();
-                }
-            }
-        }
-
-        class NetworkNode {
-            constructor(x, y, type, name) {
-                this.x = x;
-                this.y = y;
-                this.type = type; // 'server', 'client', 'peer'
-                this.name = name;
-                this.connected = true;
-                this.radius = type === 'server' ? 30 : 20;
-                this.color = type === 'server' ? '#4CAF50' : '#2196F3';
-                this.receivedPackets = [];
-                this.pulsePhase = Math.random() * Math.PI * 2;
-            }
-            
-            sendPacket(destination, type, data) {
-                const packet = new NetworkPacket(this, destination, type, data);
-                networkManager.packets.push(packet);
-                networkManager.stats.messagesSent++;
-                
-                networkManager.log(`${this.name} -> ${destination.name}: ${type}`);
-            }
-            
-            receivePacket(packet) {
-                this.receivedPackets.push({
-                    packet: packet,
-                    time: Date.now(),
-                    alpha: 1
-                });
-                
-                // Keep only recent packets
-                const now = Date.now();
-                this.receivedPackets = this.receivedPackets.filter(p => 
-                    now - p.time < 2000
-                );
-            }
-            
-            update(dt) {
-                this.pulsePhase += dt * 2;
-                
-                // Update received packet visuals
-                this.receivedPackets.forEach(p => {
-                    p.alpha = Math.max(0, p.alpha - dt);
-                });
-            }
-            
-            draw(ctx) {
-                // Draw pulse if receiving
-                if (this.receivedPackets.length > 0) {
-                    const pulse = Math.sin(this.pulsePhase) * 10 + 5;
-                    ctx.fillStyle = this.color + '33';
-                    ctx.beginPath();
-                    ctx.arc(this.x, this.y, this.radius + pulse, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-                
-                // Draw node
-                ctx.fillStyle = this.connected ? this.color : '#666666';
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fill();
-                
-                ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = 2;
-                ctx.stroke();
-                
-                // Draw label
-                ctx.fillStyle = '#ffffff';
-                ctx.font = '12px Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(this.name, this.x, this.y);
-                
-                // Draw type icon
-                ctx.font = '10px Arial';
-                ctx.fillText(this.type === 'server' ? '🖥️' : '💻', this.x, this.y - this.radius - 10);
-            }
-        }
-
-        class NetworkManager {
-            constructor(canvas, ctx) {
-                this.canvas = canvas;
-                this.ctx = ctx;
+                // Network entities
                 this.server = null;
                 this.clients = [];
                 this.packets = [];
-                this.protocol = 'tcp';
-                this.architecture = 'client-server';
-                this.latency = 50;
-                this.packetLoss = 0;
-                this.bandwidth = 100;
+                this.connections = [];
                 
+                // Statistics
                 this.stats = {
-                    messagesSent: 0,
-                    messagesReceived: 0,
+                    packetsSent: 0,
+                    packetsReceived: 0,
                     packetsLost: 0,
-                    latencies: [],
-                    bytesTransferred: 0
+                    bytesTransferred: 0,
+                    connectionStartTime: Date.now()
                 };
                 
-                this.logEntries = [];
-                
+                // Initialize network
                 this.initializeNetwork();
             }
             
             initializeNetwork() {
-                // Create server
-                this.server = new NetworkNode(300, 100, 'server', 'Server');
+                // Clear existing
+                this.clients = [];
+                this.packets = [];
+                this.connections = [];
+                
+                // Create network topology
+                switch (this.architecture) {
+                    case 'client-server':
+                        this.createClientServer();
+                        break;
+                    case 'p2p':
+                        this.createP2P();
+                        break;
+                    case 'hybrid':
+                        this.createHybrid();
+                        break;
+                    case 'mesh':
+                        this.createMesh();
+                        break;
+                    case 'star':
+                        this.createStar();
+                        break;
+                    case 'relay':
+                        this.createRelay();
+                        break;
+                }
             }
             
-            addClient() {
-                if (this.clients.length >= 6) {
-                    this.log('Maximum clients reached');
-                    return;
-                }
+            createClientServer() {
+                // Create central server
+                this.server = {
+                    id: 'server',
+                    x: canvas.width / 2,
+                    y: 100,
+                    type: 'server',
+                    state: {},
+                    clients: [],
+                    lastUpdate: 0
+                };
                 
-                const angle = (this.clients.length / 6) * Math.PI * 2;
+                // Create clients
+                const angleStep = (Math.PI * 2) / this.conditions.playerCount;
                 const radius = 150;
-                const x = 300 + Math.cos(angle) * radius;
-                const y = 250 + Math.sin(angle) * radius;
                 
-                const client = new NetworkNode(x, y, 'client', `Client ${this.clients.length + 1}`);
-                this.clients.push(client);
-                
-                // Send connect packet
-                if (this.architecture === 'client-server') {
-                    client.sendPacket(this.server, 'connect', {});
-                    setTimeout(() => {
-                        this.server.sendPacket(client, 'connect', { accepted: true });
-                    }, this.latency);
-                }
-                
-                this.updateStats();
-            }
-            
-            removeClient() {
-                if (this.clients.length > 0) {
-                    const client = this.clients.pop();
+                for (let i = 0; i < this.conditions.playerCount; i++) {
+                    const angle = angleStep * i - Math.PI / 2;
+                    const client = {
+                        id: `client_${i}`,
+                        x: canvas.width / 2 + Math.cos(angle) * radius,
+                        y: 300 + Math.sin(angle) * radius,
+                        type: 'client',
+                        state: {
+                            position: { x: 0, y: 0 },
+                            velocity: { x: 0, y: 0 },
+                            lastAck: 0,
+                            inputBuffer: []
+                        },
+                        ping: this.conditions.latency + Math.random() * this.conditions.jitter,
+                        connected: true
+                    };
                     
-                    // Send disconnect packet
-                    if (this.architecture === 'client-server') {
-                        client.sendPacket(this.server, 'disconnect', {});
-                    }
+                    this.clients.push(client);
+                    this.server.clients.push(client.id);
                     
-                    this.updateStats();
-                }
-            }
-            
-            sendMessage(type) {
-                if (this.clients.length === 0) {
-                    this.log('No clients connected');
-                    return;
-                }
-                
-                const client = this.clients[Math.floor(Math.random() * this.clients.length)];
-                
-                if (this.architecture === 'client-server') {
-                    // Client to server
-                    client.sendPacket(this.server, type, { data: 'test' });
-                    
-                    // Server broadcasts to other clients
-                    setTimeout(() => {
-                        this.clients.forEach(c => {
-                            if (c !== client) {
-                                this.server.sendPacket(c, type, { from: client.name });
-                            }
-                        });
-                    }, this.latency);
-                } else if (this.architecture === 'peer-to-peer') {
-                    // Send to all peers
-                    this.clients.forEach(peer => {
-                        if (peer !== client) {
-                            client.sendPacket(peer, type, { data: 'test' });
-                        }
+                    // Create connection
+                    this.connections.push({
+                        from: client,
+                        to: this.server,
+                        quality: 1 - this.conditions.packetLoss / 100
                     });
                 }
             }
             
-            simulatePacketLoss() {
-                this.packetLoss = 30;
-                this.log('Simulating 30% packet loss for 2 seconds');
-                setTimeout(() => {
-                    this.packetLoss = 0;
-                    this.log('Packet loss simulation ended');
-                }, 2000);
+            createP2P() {
+                // Create peer nodes
+                const angleStep = (Math.PI * 2) / this.conditions.playerCount;
+                const radius = 200;
+                
+                for (let i = 0; i < this.conditions.playerCount; i++) {
+                    const angle = angleStep * i;
+                    const peer = {
+                        id: `peer_${i}`,
+                        x: canvas.width / 2 + Math.cos(angle) * radius,
+                        y: canvas.height / 2 + Math.sin(angle) * radius,
+                        type: 'peer',
+                        state: {},
+                        peers: [],
+                        ping: this.conditions.latency + Math.random() * this.conditions.jitter
+                    };
+                    
+                    this.clients.push(peer);
+                }
+                
+                // Connect peers
+                for (let i = 0; i < this.clients.length; i++) {
+                    for (let j = i + 1; j < this.clients.length; j++) {
+                        this.connections.push({
+                            from: this.clients[i],
+                            to: this.clients[j],
+                            quality: 1 - this.conditions.packetLoss / 100,
+                            bidirectional: true
+                        });
+                        
+                        this.clients[i].peers.push(this.clients[j].id);
+                        this.clients[j].peers.push(this.clients[i].id);
+                    }
+                }
             }
             
-            update(dt) {
-                // Update nodes
-                this.server.update(dt);
-                this.clients.forEach(client => client.update(dt));
+            createHybrid() {
+                // Server for critical data, P2P for non-critical
+                this.createClientServer();
+                
+                // Add P2P connections between clients
+                for (let i = 0; i < this.clients.length; i++) {
+                    for (let j = i + 1; j < this.clients.length; j++) {
+                        this.connections.push({
+                            from: this.clients[i],
+                            to: this.clients[j],
+                            quality: 0.8,
+                            type: 'p2p',
+                            bidirectional: true
+                        });
+                    }
+                }
+            }
+            
+            createMesh() {
+                // Full mesh topology
+                this.createP2P(); // Already creates full mesh
+            }
+            
+            createStar() {
+                // Star topology with one central node
+                const center = {
+                    id: 'center',
+                    x: canvas.width / 2,
+                    y: canvas.height / 2,
+                    type: 'hub',
+                    state: {}
+                };
+                
+                this.server = center;
+                
+                // Create outer nodes
+                const angleStep = (Math.PI * 2) / this.conditions.playerCount;
+                const radius = 200;
+                
+                for (let i = 0; i < this.conditions.playerCount; i++) {
+                    const angle = angleStep * i;
+                    const node = {
+                        id: `node_${i}`,
+                        x: canvas.width / 2 + Math.cos(angle) * radius,
+                        y: canvas.height / 2 + Math.sin(angle) * radius,
+                        type: 'node',
+                        state: {}
+                    };
+                    
+                    this.clients.push(node);
+                    
+                    this.connections.push({
+                        from: node,
+                        to: center,
+                        quality: 1 - this.conditions.packetLoss / 100,
+                        bidirectional: true
+                    });
+                }
+            }
+            
+            createRelay() {
+                // Relay server architecture
+                this.server = {
+                    id: 'relay',
+                    x: canvas.width / 2,
+                    y: canvas.height / 2,
+                    type: 'relay',
+                    state: {},
+                    relay: true
+                };
+                
+                // Create clients around relay
+                const angleStep = (Math.PI * 2) / this.conditions.playerCount;
+                const radius = 200;
+                
+                for (let i = 0; i < this.conditions.playerCount; i++) {
+                    const angle = angleStep * i;
+                    const client = {
+                        id: `client_${i}`,
+                        x: canvas.width / 2 + Math.cos(angle) * radius,
+                        y: canvas.height / 2 + Math.sin(angle) * radius,
+                        type: 'client',
+                        state: {}
+                    };
+                    
+                    this.clients.push(client);
+                    
+                    this.connections.push({
+                        from: client,
+                        to: this.server,
+                        quality: 1 - this.conditions.packetLoss / 100,
+                        relay: true
+                    });
+                }
+            }
+            
+            sendPacket(from, to, data, priority = 0) {
+                // Calculate travel time
+                const baseLatency = this.conditions.latency;
+                const jitter = (Math.random() - 0.5) * this.conditions.jitter * 2;
+                const travelTime = Math.max(0, baseLatency + jitter);
+                
+                // Check packet loss
+                if (Math.random() < this.conditions.packetLoss / 100) {
+                    this.stats.packetsLost++;
+                    return; // Packet lost
+                }
+                
+                // Create packet
+                const packet = {
+                    id: Math.random().toString(36).substr(2, 9),
+                    from: from,
+                    to: to,
+                    data: data,
+                    priority: priority,
+                    sentTime: this.time,
+                    arrivalTime: this.time + travelTime,
+                    protocol: this.protocol,
+                    size: JSON.stringify(data).length,
+                    // Visual properties
+                    x: from.x,
+                    y: from.y,
+                    targetX: to.x,
+                    targetY: to.y,
+                    progress: 0,
+                    color: this.getPacketColor(data.type)
+                };
+                
+                // Apply compression
+                if (this.optimizations.compression) {
+                    packet.size *= 0.6;
+                }
+                
+                if (this.optimizations.deltaCompression && data.type === 'state') {
+                    packet.size *= 0.3;
+                }
+                
+                this.packets.push(packet);
+                this.stats.packetsSent++;
+                this.stats.bytesTransferred += packet.size;
+            }
+            
+            getPacketColor(type) {
+                const colors = {
+                    'state': '#4CAF50',
+                    'input': '#2196F3',
+                    'event': '#FF9800',
+                    'sync': '#9C27B0',
+                    'ack': '#00BCD4',
+                    'ping': '#FFEB3B'
+                };
+                return colors[type] || '#888';
+            }
+            
+            update(deltaTime) {
+                if (!this.running) return;
+                
+                this.time += deltaTime;
                 
                 // Update packets
-                this.packets.forEach(packet => {
-                    packet.update(dt, this.latency, this.packetLoss);
+                this.packets = this.packets.filter(packet => {
+                    // Update packet position
+                    const totalTime = packet.arrivalTime - packet.sentTime;
+                    const elapsed = this.time - packet.sentTime;
+                    packet.progress = Math.min(1, elapsed / totalTime);
+                    
+                    if (packet.progress >= 1) {
+                        // Packet arrived
+                        this.processPacket(packet);
+                        this.stats.packetsReceived++;
+                        return false;
+                    }
+                    
+                    // Update visual position
+                    packet.x = packet.from.x + (packet.targetX - packet.from.x) * packet.progress;
+                    packet.y = packet.from.y + (packet.targetY - packet.from.y) * packet.progress;
+                    
+                    return true;
                 });
                 
-                // Remove delivered/lost packets
-                this.packets = this.packets.filter(p => !p.delivered && !p.lost);
+                // Send periodic updates
+                if (this.time % (1000 / this.conditions.tickRate) < deltaTime) {
+                    this.sendUpdates();
+                }
                 
+                // Update client predictions
+                if (this.optimizations.prediction) {
+                    this.updatePredictions(deltaTime);
+                }
+                
+                // Update interpolation
+                if (this.optimizations.interpolation) {
+                    this.updateInterpolation(deltaTime);
+                }
+                
+                // Update statistics
                 this.updateStats();
             }
             
-            draw() {
-                // Clear canvas
-                this.ctx.fillStyle = '#1a1a1a';
-                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-                
-                // Draw grid
-                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
-                this.ctx.lineWidth = 1;
-                for (let x = 0; x <= this.canvas.width; x += 50) {
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(x, 0);
-                    this.ctx.lineTo(x, this.canvas.height);
-                    this.ctx.stroke();
+            processPacket(packet) {
+                // Process based on packet type
+                switch (packet.data.type) {
+                    case 'state':
+                        this.processStateUpdate(packet);
+                        break;
+                    case 'input':
+                        this.processInput(packet);
+                        break;
+                    case 'event':
+                        this.processEvent(packet);
+                        break;
+                    case 'sync':
+                        this.processSync(packet);
+                        break;
                 }
-                for (let y = 0; y <= this.canvas.height; y += 50) {
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(0, y);
-                    this.ctx.lineTo(this.canvas.width, y);
-                    this.ctx.stroke();
+            }
+            
+            processStateUpdate(packet) {
+                // Update entity state
+                if (packet.to.state) {
+                    Object.assign(packet.to.state, packet.data.state);
+                    packet.to.lastUpdate = this.time;
                 }
-                
-                // Draw connections
-                if (this.architecture === 'client-server') {
-                    this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-                    this.ctx.lineWidth = 1;
-                    this.clients.forEach(client => {
-                        this.ctx.beginPath();
-                        this.ctx.moveTo(this.server.x, this.server.y);
-                        this.ctx.lineTo(client.x, client.y);
-                        this.ctx.stroke();
-                    });
-                } else if (this.architecture === 'peer-to-peer') {
-                    this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
-                    for (let i = 0; i < this.clients.length; i++) {
-                        for (let j = i + 1; j < this.clients.length; j++) {
-                            this.ctx.beginPath();
-                            this.ctx.moveTo(this.clients[i].x, this.clients[i].y);
-                            this.ctx.lineTo(this.clients[j].x, this.clients[j].y);
-                            this.ctx.stroke();
+            }
+            
+            processInput(packet) {
+                // Server processes client input
+                if (this.server && packet.to === this.server) {
+                    // Validate and apply input
+                    const client = this.clients.find(c => c.id === packet.from.id);
+                    if (client) {
+                        // Apply lag compensation if enabled
+                        if (this.optimizations.lagCompensation) {
+                            // Rewind state to when input was made
+                            const rewindTime = this.time - packet.data.timestamp;
+                            // Apply input at past time
                         }
+                        
+                        // Update client state
+                        client.state.inputBuffer = packet.data.inputs;
+                    }
+                }
+            }
+            
+            processEvent(packet) {
+                // Handle game events
+                console.log('Event received:', packet.data.event);
+            }
+            
+            processSync(packet) {
+                // Time synchronization
+                if (packet.to.state) {
+                    packet.to.state.serverTime = packet.data.serverTime;
+                    packet.to.state.timeDrift = this.time - packet.data.serverTime;
+                }
+            }
+            
+            sendUpdates() {
+                // Server sends state updates to clients
+                if (this.server && this.architecture === 'client-server') {
+                    const stateUpdate = {
+                        type: 'state',
+                        timestamp: this.time,
+                        entities: this.clients.map(c => ({
+                            id: c.id,
+                            state: c.state
+                        }))
+                    };
+                    
+                    for (const client of this.clients) {
+                        this.sendPacket(this.server, client, stateUpdate);
                     }
                 }
                 
-                // Draw packets
-                this.packets.forEach(packet => packet.draw(this.ctx));
-                
-                // Draw nodes
-                if (this.architecture !== 'peer-to-peer' || this.clients.length === 0) {
-                    this.server.draw(this.ctx);
+                // P2P updates
+                if (this.architecture === 'p2p') {
+                    for (const peer of this.clients) {
+                        const stateUpdate = {
+                            type: 'state',
+                            timestamp: this.time,
+                            state: peer.state
+                        };
+                        
+                        for (const other of this.clients) {
+                            if (other !== peer) {
+                                this.sendPacket(peer, other, stateUpdate);
+                            }
+                        }
+                    }
                 }
-                this.clients.forEach(client => client.draw(this.ctx));
-                
-                // Draw protocol indicator
-                this.ctx.fillStyle = '#ffffff';
-                this.ctx.font = '14px Arial';
-                this.ctx.textAlign = 'left';
-                this.ctx.fillText(`Protocol: ${this.protocol.toUpperCase()}`, 10, 20);
-                this.ctx.fillText(`Architecture: ${this.architecture}`, 10, 40);
             }
             
-            log(message) {
-                const timestamp = new Date().toLocaleTimeString();
-                this.logEntries.unshift(`[${timestamp}] ${message}`);
-                if (this.logEntries.length > 10) {
-                    this.logEntries.pop();
+            updatePredictions(deltaTime) {
+                // Client-side prediction
+                for (const client of this.clients) {
+                    if (client.state && client.state.velocity) {
+                        // Predict position based on velocity
+                        const prediction = {
+                            x: client.state.position.x + client.state.velocity.x * deltaTime * 0.001,
+                            y: client.state.position.y + client.state.velocity.y * deltaTime * 0.001
+                        };
+                        
+                        // Store prediction for reconciliation
+                        client.state.predictedPosition = prediction;
+                    }
                 }
-                
-                const logDiv = document.getElementById('networkLog');
-                if (logDiv) {
-                    logDiv.innerHTML = this.logEntries.join('<br>');
+            }
+            
+            updateInterpolation(deltaTime) {
+                // Smooth movement between updates
+                for (const client of this.clients) {
+                    if (client.state && client.state.position && client.state.targetPosition) {
+                        const lerp = 0.1; // Interpolation speed
+                        
+                        client.state.position.x += (client.state.targetPosition.x - client.state.position.x) * lerp;
+                        client.state.position.y += (client.state.targetPosition.y - client.state.position.y) * lerp;
+                    }
+                }
+            }
+            
+            simulateAction() {
+                // Simulate a game action (e.g., player shoots)
+                if (this.clients.length > 0) {
+                    const randomClient = this.clients[Math.floor(Math.random() * this.clients.length)];
+                    
+                    const event = {
+                        type: 'event',
+                        event: 'action',
+                        timestamp: this.time,
+                        data: {
+                            action: 'shoot',
+                            position: randomClient.state.position || { x: 0, y: 0 }
+                        }
+                    };
+                    
+                    if (this.server) {
+                        this.sendPacket(randomClient, this.server, event, 1); // High priority
+                    } else {
+                        // P2P broadcast
+                        for (const other of this.clients) {
+                            if (other !== randomClient) {
+                                this.sendPacket(randomClient, other, event, 1);
+                            }
+                        }
+                    }
                 }
             }
             
             updateStats() {
-                document.getElementById('clientCount').textContent = this.clients.length;
-                document.getElementById('messagesSent').textContent = this.stats.messagesSent;
-                document.getElementById('messagesReceived').textContent = this.stats.messagesReceived;
+                const uptime = Math.floor((Date.now() - this.stats.connectionStartTime) / 1000);
+                document.getElementById('uptime').textContent = uptime;
+                document.getElementById('packetsSent').textContent = this.stats.packetsSent;
+                document.getElementById('packetsReceived').textContent = this.stats.packetsReceived;
                 document.getElementById('packetsLost').textContent = this.stats.packetsLost;
                 
-                const avgLatency = this.stats.latencies.length > 0 
-                    ? (this.stats.latencies.reduce((a, b) => a + b, 0) / this.stats.latencies.length).toFixed(0)
-                    : this.latency;
-                document.getElementById('avgLatency').textContent = avgLatency + 'ms';
+                const lossRate = this.stats.packetsSent > 0 ? 
+                    (this.stats.packetsLost / this.stats.packetsSent * 100).toFixed(1) : 0;
+                document.getElementById('lossRate').textContent = lossRate;
                 
-                const bandwidth = ((this.stats.bytesTransferred / 1024) / (Date.now() / 1000)).toFixed(2);
-                document.getElementById('bandwidthUsed').textContent = bandwidth + ' KB/s';
+                const bandwidth = (this.stats.bytesTransferred / 1024 / Math.max(uptime, 1)).toFixed(1);
+                document.getElementById('currentBandwidth').textContent = bandwidth;
+                
+                document.getElementById('queueSize').textContent = this.packets.length;
+                
+                // Calculate perceived lag
+                const avgPing = this.clients.reduce((sum, c) => sum + (c.ping || 0), 0) / Math.max(this.clients.length, 1);
+                const perceivedLag = avgPing + (this.optimizations.prediction ? -20 : 0) + 
+                                    (this.optimizations.interpolation ? 10 : 0);
+                document.getElementById('perceivedLag').textContent = Math.floor(Math.max(0, perceivedLag));
+                
+                document.getElementById('currentPing').textContent = Math.floor(avgPing);
+            }
+            
+            render(ctx) {
+                // Clear canvas
+                ctx.fillStyle = '#0a0a0a';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw grid
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.02)';
+                ctx.lineWidth = 1;
+                for (let x = 0; x < canvas.width; x += 50) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, canvas.height);
+                    ctx.stroke();
+                }
+                for (let y = 0; y < canvas.height; y += 50) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(canvas.width, y);
+                    ctx.stroke();
+                }
+                
+                // Draw connections
+                if (document.getElementById('showTopology').checked) {
+                    this.renderConnections(ctx);
+                }
+                
+                // Draw nodes
+                this.renderNodes(ctx);
+                
+                // Draw packets
+                if (document.getElementById('showPackets').checked) {
+                    this.renderPackets(ctx);
+                }
+                
+                // Draw stats overlay
+                if (document.getElementById('showStats').checked) {
+                    this.renderStats(ctx);
+                }
+                
+                // Draw latency visualization
+                if (document.getElementById('showLatency').checked) {
+                    this.renderLatency(ctx);
+                }
+            }
+            
+            renderConnections(ctx) {
+                for (const connection of this.connections) {
+                    const quality = connection.quality;
+                    
+                    // Connection line
+                    ctx.strokeStyle = quality > 0.9 ? 'rgba(76, 175, 80, 0.3)' :
+                                     quality > 0.7 ? 'rgba(255, 193, 7, 0.3)' :
+                                     'rgba(244, 67, 54, 0.3)';
+                    ctx.lineWidth = 2;
+                    
+                    if (connection.bidirectional) {
+                        ctx.setLineDash([5, 5]);
+                    }
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(connection.from.x, connection.from.y);
+                    ctx.lineTo(connection.to.x, connection.to.y);
+                    ctx.stroke();
+                    
+                    ctx.setLineDash([]);
+                    
+                    // Connection quality indicator
+                    const midX = (connection.from.x + connection.to.x) / 2;
+                    const midY = (connection.from.y + connection.to.y) / 2;
+                    
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                    ctx.font = '10px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`${Math.floor(quality * 100)}%`, midX, midY - 5);
+                }
+            }
+            
+            renderNodes(ctx) {
+                // Draw server
+                if (this.server) {
+                    ctx.fillStyle = '#2196F3';
+                    ctx.beginPath();
+                    ctx.arc(this.server.x, this.server.y, 25, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = 'white';
+                    ctx.font = '12px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(this.server.type.toUpperCase(), this.server.x, this.server.y + 40);
+                }
+                
+                // Draw clients
+                for (const client of this.clients) {
+                    const connected = client.connected !== false;
+                    
+                    ctx.fillStyle = connected ? '#4CAF50' : '#F44336';
+                    ctx.beginPath();
+                    ctx.arc(client.x, client.y, 15, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Draw ping
+                    if (client.ping) {
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                        ctx.font = '10px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(`${Math.floor(client.ping)}ms`, client.x, client.y - 20);
+                    }
+                    
+                    // Draw ID
+                    ctx.fillStyle = 'white';
+                    ctx.font = '10px Arial';
+                    ctx.fillText(client.id, client.x, client.y + 30);
+                }
+            }
+            
+            renderPackets(ctx) {
+                for (const packet of this.packets) {
+                    // Packet trail
+                    const trailLength = 20;
+                    const gradient = ctx.createLinearGradient(
+                        packet.x - trailLength * (packet.targetX - packet.from.x) / 100,
+                        packet.y - trailLength * (packet.targetY - packet.from.y) / 100,
+                        packet.x,
+                        packet.y
+                    );
+                    gradient.addColorStop(0, 'transparent');
+                    gradient.addColorStop(1, packet.color);
+                    
+                    ctx.strokeStyle = gradient;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(
+                        packet.x - trailLength * (packet.targetX - packet.from.x) / 100,
+                        packet.y - trailLength * (packet.targetY - packet.from.y) / 100
+                    );
+                    ctx.lineTo(packet.x, packet.y);
+                    ctx.stroke();
+                    
+                    // Packet
+                    ctx.fillStyle = packet.color;
+                    ctx.beginPath();
+                    ctx.arc(packet.x, packet.y, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Priority indicator
+                    if (packet.priority > 0) {
+                        ctx.strokeStyle = '#FFD700';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(packet.x, packet.y, 6, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                }
+            }
+            
+            renderStats(ctx) {
+                const x = 20;
+                const y = 20;
+                
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(x, y, 200, 120);
+                
+                ctx.fillStyle = 'white';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'left';
+                
+                const stats = [
+                    `Architecture: ${this.architecture}`,
+                    `Protocol: ${this.protocol.toUpperCase()}`,
+                    `Players: ${this.clients.length}`,
+                    `Active Packets: ${this.packets.length}`,
+                    `Tick Rate: ${this.conditions.tickRate}Hz`,
+                    `Bandwidth: ${this.conditions.bandwidth}Mbps`,
+                    `Optimizations: ${Object.values(this.optimizations).filter(o => o).length}/6`
+                ];
+                
+                stats.forEach((text, i) => {
+                    ctx.fillText(text, x + 10, y + 20 + i * 15);
+                });
+            }
+            
+            renderLatency(ctx) {
+                // Visual latency indicator
+                const x = canvas.width - 120;
+                const y = 20;
+                
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(x, y, 100, 60);
+                
+                // Latency bar
+                const latencyPercent = Math.min(this.conditions.latency / 200, 1);
+                const barColor = latencyPercent < 0.3 ? '#4CAF50' :
+                                latencyPercent < 0.6 ? '#FF9800' : '#F44336';
+                
+                ctx.fillStyle = barColor;
+                ctx.fillRect(x + 10, y + 30, 80 * latencyPercent, 20);
+                
+                ctx.strokeStyle = 'white';
+                ctx.strokeRect(x + 10, y + 30, 80, 20);
+                
+                ctx.fillStyle = 'white';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(`${this.conditions.latency}ms`, x + 50, y + 15);
             }
         }
 
-        // Initialize network manager
-        const networkCanvas = document.getElementById('networkCanvas');
-        const ctx = networkCanvas.getContext('2d');
-        const networkManager = new NetworkManager(networkCanvas, ctx);
+        // Initialize simulator
+        const networkSim = new NetworkSimulator();
 
-        // Global functions
-        window.addClient = () => networkManager.addClient();
-        window.removeClient = () => networkManager.removeClient();
-        window.sendMessage = (type) => networkManager.sendMessage(type);
-        window.simulatePacketLoss = () => networkManager.simulatePacketLoss();
-
-        window.setProtocol = (protocol) => {
-            networkManager.protocol = protocol;
-            networkManager.log(`Protocol changed to ${protocol}`);
+        // UI Functions
+        window.setArchitecture = function(arch) {
+            document.querySelectorAll('.arch-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(arch + '-btn').classList.add('active');
+            networkSim.architecture = arch;
+            networkSim.initializeNetwork();
         };
 
-        window.setArchitecture = (architecture) => {
-            networkManager.architecture = architecture;
-            networkManager.log(`Architecture changed to ${architecture}`);
+        window.setProtocol = function(proto) {
+            document.querySelectorAll('.proto-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(proto + '-btn').classList.add('active');
+            networkSim.protocol = proto;
+        };
+
+        window.updateNetworkCondition = function(condition, value) {
+            document.getElementById(condition + 'Display').textContent = value;
+            networkSim.conditions[condition] = parseInt(value);
             
-            // Reset network
-            networkManager.clients = [];
-            networkManager.packets = [];
-            networkManager.updateStats();
+            if (condition === 'playerCount') {
+                networkSim.initializeNetwork();
+            }
         };
 
-        window.setLatency = (value) => {
-            networkManager.latency = parseInt(value);
-            document.getElementById('latencyDisplay').textContent = value + 'ms';
+        window.toggleOptimization = function(optimization) {
+            networkSim.optimizations[optimization] = document.getElementById(optimization).checked;
         };
 
-        window.setPacketLoss = (value) => {
-            networkManager.packetLoss = parseInt(value);
-            document.getElementById('packetLossDisplay').textContent = value + '%';
+        window.startSimulation = function() {
+            networkSim.running = true;
         };
 
-        window.setBandwidth = (value) => {
-            networkManager.bandwidth = parseInt(value);
-            document.getElementById('bandwidthDisplay').textContent = value + ' Mbps';
+        window.pauseSimulation = function() {
+            networkSim.running = !networkSim.running;
         };
+
+        window.resetSimulation = function() {
+            networkSim.running = false;
+            networkSim.time = 0;
+            networkSim.packets = [];
+            networkSim.stats = {
+                packetsSent: 0,
+                packetsReceived: 0,
+                packetsLost: 0,
+                bytesTransferred: 0,
+                connectionStartTime: Date.now()
+            };
+            networkSim.initializeNetwork();
+        };
+
+        window.addPlayer = function() {
+            if (networkSim.conditions.playerCount < 16) {
+                networkSim.conditions.playerCount++;
+                document.getElementById('playerCount').value = networkSim.conditions.playerCount;
+                document.getElementById('playerCountDisplay').textContent = networkSim.conditions.playerCount;
+                networkSim.initializeNetwork();
+            }
+        };
+
+        window.removePlayer = function() {
+            if (networkSim.conditions.playerCount > 2) {
+                networkSim.conditions.playerCount--;
+                document.getElementById('playerCount').value = networkSim.conditions.playerCount;
+                document.getElementById('playerCountDisplay').textContent = networkSim.conditions.playerCount;
+                networkSim.initializeNetwork();
+            }
+        };
+
+        window.simulateAttack = function() {
+            networkSim.simulateAction();
+        };
+
+        // Start simulation
+        networkSim.running = true;
 
         // Animation loop
         let lastTime = performance.now();
-        function animate(currentTime) {
-            const dt = (currentTime - lastTime) / 1000;
+        
+        function animate() {
+            const currentTime = performance.now();
+            const deltaTime = currentTime - lastTime;
             lastTime = currentTime;
             
-            networkManager.update(dt);
-            networkManager.draw();
+            // Update simulation
+            networkSim.update(deltaTime);
+            
+            // Render
+            networkSim.render(ctx);
             
             requestAnimationFrame(animate);
         }
-
-        // Start animation
-        animate(performance.now());
-
-        // Add initial clients
-        setTimeout(() => {
-            networkManager.addClient();
-            networkManager.addClient();
-        }, 100);
-
-        console.log('Network Simulator initialized successfully!');
+        
+        animate();
+        console.log('Network Simulator initialized!');
     </script>
 
-    <h2>Basic Networking Implementation</h2>
+    <h2>Networking Implementation in Python</h2>
     
     <pre class="language-python"><code>import socket
 import threading
 import json
 import time
+import struct
+from typing import Dict, List, Optional, Any, Callable
+from dataclasses import dataclass, asdict
 from enum import Enum
+import queue
 
-class MessageType(Enum):
-    """Types of network messages"""
+class PacketType(Enum):
     CONNECT = "connect"
     DISCONNECT = "disconnect"
-    POSITION = "position"
-    ACTION = "action"
-    CHAT = "chat"
+    STATE = "state"
+    INPUT = "input"
+    EVENT = "event"
     PING = "ping"
     PONG = "pong"
+    ACK = "ack"
 
-# TCP Server
-class TCPGameServer:
-    """TCP-based game server"""
-    def __init__(self, host='localhost', port=5555):
+@dataclass
+class Packet:
+    """Network packet structure"""
+    type: PacketType
+    sequence: int
+    timestamp: float
+    data: Dict[str, Any]
+    reliable: bool = False
+    
+    def serialize(self) -> bytes:
+        """Serialize packet to bytes"""
+        json_data = json.dumps({
+            'type': self.type.value,
+            'seq': self.sequence,
+            'time': self.timestamp,
+            'data': self.data,
+            'rel': self.reliable
+        })
+        
+        # Add header with packet size
+        data = json_data.encode('utf-8')
+        header = struct.pack('!I', len(data))
+        return header + data
+    
+    @staticmethod
+    def deserialize(data: bytes) -> 'Packet':
+        """Deserialize bytes to packet"""
+        json_data = json.loads(data.decode('utf-8'))
+        return Packet(
+            type=PacketType(json_data['type']),
+            sequence=json_data['seq'],
+            timestamp=json_data['time'],
+            data=json_data['data'],
+            reliable=json_data.get('rel', False)
+        )
+
+class NetworkManager:
+    """Base network manager for client and server"""
+    
+    def __init__(self, host: str = 'localhost', port: int = 5555):
         self.host = host
         self.port = port
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.clients = {}
+        self.socket = None
         self.running = False
         
+        self.sequence_number = 0
+        self.pending_acks = {}
+        self.received_sequences = set()
+        
+        self.send_queue = queue.Queue()
+        self.receive_queue = queue.Queue()
+        
+        self.latency = 0
+        self.packet_loss = 0
+        
+        self.callbacks: Dict[PacketType, List[Callable]] = {
+            packet_type: [] for packet_type in PacketType
+        }
+    
+    def register_callback(self, packet_type: PacketType, callback: Callable):
+        """Register callback for packet type"""
+        self.callbacks[packet_type].append(callback)
+    
+    def send_packet(self, packet_type: PacketType, data: Dict[str, Any], 
+                   reliable: bool = False):
+        """Queue packet for sending"""
+        packet = Packet(
+            type=packet_type,
+            sequence=self.sequence_number,
+            timestamp=time.time(),
+            data=data,
+            reliable=reliable
+        )
+        
+        self.sequence_number += 1
+        
+        if reliable:
+            self.pending_acks[packet.sequence] = packet
+        
+        self.send_queue.put(packet)
+    
+    def process_packet(self, packet: Packet):
+        """Process received packet"""
+        # Check for duplicates
+        if packet.sequence in self.received_sequences:
+            return
+        
+        self.received_sequences.add(packet.sequence)
+        
+        # Send ACK for reliable packets
+        if packet.reliable:
+            self.send_packet(PacketType.ACK, {'ack_seq': packet.sequence})
+        
+        # Handle ACK
+        if packet.type == PacketType.ACK:
+            ack_seq = packet.data.get('ack_seq')
+            if ack_seq in self.pending_acks:
+                del self.pending_acks[ack_seq]
+            return
+        
+        # Call registered callbacks
+        for callback in self.callbacks[packet.type]:
+            callback(packet)
+    
+    def calculate_latency(self, ping_time: float) -> float:
+        """Calculate round-trip latency"""
+        return (time.time() - ping_time) * 1000  # Convert to ms
+
+class GameServer(NetworkManager):
+    """Game server implementation"""
+    
+    def __init__(self, host: str = '0.0.0.0', port: int = 5555):
+        super().__init__(host, port)
+        self.clients: Dict[str, Dict[str, Any]] = {}
+        self.game_state = {}
+        self.tick_rate = 60
+        
     def start(self):
-        """Start the server"""
+        """Start server"""
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.bind((self.host, self.port))
         self.socket.listen(5)
         self.running = True
+        
         print(f"Server listening on {self.host}:{self.port}")
         
-        # Accept clients in thread
-        accept_thread = threading.Thread(target=self.accept_clients)
-        accept_thread.daemon = True
-        accept_thread.start()
+        # Start threads
+        threading.Thread(target=self.accept_clients, daemon=True).start()
+        threading.Thread(target=self.game_loop, daemon=True).start()
     
     def accept_clients(self):
-        """Accept new connections"""
+        """Accept new client connections"""
         while self.running:
             try:
                 client_socket, address = self.socket.accept()
                 client_id = f"{address[0]}:{address[1]}"
-                self.clients[client_id] = client_socket
                 
-                # Handle client in thread
-                client_thread = threading.Thread(
+                self.clients[client_id] = {
+                    'socket': client_socket,
+                    'address': address,
+                    'state': {},
+                    'last_input': None,
+                    'ping': 0
+                }
+                
+                print(f"Client connected: {client_id}")
+                
+                # Start client handler
+                threading.Thread(
                     target=self.handle_client,
-                    args=(client_id,)
-                )
-                client_thread.daemon = True
-                client_thread.start()
-                
-                print(f"Client {client_id} connected")
+                    args=(client_id,),
+                    daemon=True
+                ).start()
                 
             except Exception as e:
-                if self.running:
-                    print(f"Error: {e}")</code></pre>
+                print(f"Accept error: {e}")
+    
+    def handle_client(self, client_id: str):
+        """Handle client communication"""
+        client = self.clients[client_id]
+        buffer = b''
+        
+        while self.running and client_id in self.clients:
+            try:
+                # Receive data
+                data = client['socket'].recv(4096)
+                if not data:
+                    break
+                
+                buffer += data
+                
+                # Process complete packets
+                while len(buffer) >= 4:
+                    # Read packet size
+                    size = struct.unpack('!I', buffer[:4])[0]
+                    
+                    if len(buffer) < 4 + size:
+                        break
+                    
+                    # Extract packet
+                    packet_data = buffer[4:4+size]
+                    buffer = buffer[4+size:]
+                    
+                    # Process packet
+                    packet = Packet.deserialize(packet_data)
+                    self.process_client_packet(client_id, packet)
+                    
+            except Exception as e:
+                print(f"Client error {client_id}: {e}")
+                break
+        
+        # Client disconnected
+        self.disconnect_client(client_id)
+    
+    def process_client_packet(self, client_id: str, packet: Packet):
+        """Process packet from client"""
+        client = self.clients.get(client_id)
+        if not client:
+            return
+        
+        if packet.type == PacketType.INPUT:
+            client['last_input'] = packet.data
+            
+        elif packet.type == PacketType.PING:
+            # Send pong
+            self.send_to_client(client_id, PacketType.PONG, 
+                              {'ping_time': packet.data['time']})
+            
+        elif packet.type == PacketType.STATE:
+            client['state'].update(packet.data)
+        
+        # Process with base class
+        self.process_packet(packet)
+    
+    def send_to_client(self, client_id: str, packet_type: PacketType, 
+                      data: Dict[str, Any], reliable: bool = False):
+        """Send packet to specific client"""
+        client = self.clients.get(client_id)
+        if not client:
+            return
+        
+        packet = Packet(
+            type=packet_type,
+            sequence=self.sequence_number,
+            timestamp=time.time(),
+            data=data,
+            reliable=reliable
+        )
+        
+        self.sequence_number += 1
+        
+        try:
+            client['socket'].send(packet.serialize())
+        except:
+            self.disconnect_client(client_id)
+    
+    def broadcast(self, packet_type: PacketType, data: Dict[str, Any], 
+                 exclude: Optional[str] = None):
+        """Broadcast packet to all clients"""
+        for client_id in list(self.clients.keys()):
+            if client_id != exclude:
+                self.send_to_client(client_id, packet_type, data)
+    
+    def disconnect_client(self, client_id: str):
+        """Disconnect and remove client"""
+        if client_id in self.clients:
+            try:
+                self.clients[client_id]['socket'].close()
+            except:
+                pass
+            
+            del self.clients[client_id]
+            print(f"Client disconnected: {client_id}")
+            
+            # Notify other clients
+            self.broadcast(PacketType.EVENT, {
+                'event': 'player_disconnected',
+                'player_id': client_id
+            })
+    
+    def game_loop(self):
+        """Main game loop"""
+        tick_interval = 1.0 / self.tick_rate
+        last_tick = time.time()
+        
+        while self.running:
+            current_time = time.time()
+            delta_time = current_time - last_tick
+            
+            if delta_time >= tick_interval:
+                self.update_game_state(delta_time)
+                self.send_state_updates()
+                last_tick = current_time
+            
+            time.sleep(0.001)
+    
+    def update_game_state(self, delta_time: float):
+        """Update game state"""
+        # Process client inputs
+        for client_id, client in self.clients.items():
+            if client['last_input']:
+                # Apply input to game state
+                self.apply_input(client_id, client['last_input'], delta_time)
+                client['last_input'] = None
+    
+    def apply_input(self, client_id: str, input_data: Dict[str, Any], 
+                    delta_time: float):
+        """Apply client input to game state"""
+        # Example: Move player based on input
+        if client_id not in self.game_state:
+            self.game_state[client_id] = {
+                'position': {'x': 0, 'y': 0},
+                'velocity': {'x': 0, 'y': 0}
+            }
+        
+        player = self.game_state[client_id]
+        
+        # Apply movement
+        if 'move' in input_data:
+            player['velocity']['x'] = input_data['move'].get('x', 0) * 100
+            player['velocity']['y'] = input_data['move'].get('y', 0) * 100
+        
+        # Update position
+        player['position']['x'] += player['velocity']['x'] * delta_time
+        player['position']['y'] += player['velocity']['y'] * delta_time
+    
+    def send_state_updates(self):
+        """Send game state to all clients"""
+        state_data = {
+            'timestamp': time.time(),
+            'players': self.game_state
+        }
+        
+        self.broadcast(PacketType.STATE, state_data)
+
+class GameClient(NetworkManager):
+    """Game client implementation"""
+    
+    def __init__(self):
+        super().__init__()
+        self.connected = False
+        self.local_state = {}
+        self.server_state = {}
+        self.input_buffer = []
+        
+    def connect(self, host: str, port: int):
+        """Connect to server"""
+        self.host = host
+        self.port = port
+        
+        try:
+            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket.connect((host, port))
+            self.connected = True
+            self.running = True
+            
+            print(f"Connected to server {host}:{port}")
+            
+            # Start receive thread
+            threading.Thread(target=self.receive_loop, daemon=True).start()
+            
+            # Send connect packet
+            self.send_packet(PacketType.CONNECT, {'name': 'Player'})
+            
+            return True
+            
+        except Exception as e:
+            print(f"Connection failed: {e}")
+            return False
+    
+    def receive_loop(self):
+        """Receive packets from server"""
+        buffer = b''
+        
+        while self.running and self.connected:
+            try:
+                data = self.socket.recv(4096)
+                if not data:
+                    break
+                
+                buffer += data
+                
+                # Process complete packets
+                while len(buffer) >= 4:
+                    size = struct.unpack('!I', buffer[:4])[0]
+                    
+                    if len(buffer) < 4 + size:
+                        break
+                    
+                    packet_data = buffer[4:4+size]
+                    buffer = buffer[4+size:]
+                    
+                    packet = Packet.deserialize(packet_data)
+                    self.receive_queue.put(packet)
+                    
+            except Exception as e:
+                print(f"Receive error: {e}")
+                break
+        
+        self.disconnect()
+    
+    def send_input(self, input_data: Dict[str, Any]):
+        """Send input to server"""
+        self.input_buffer.append(input_data)
+        self.send_packet(PacketType.INPUT, input_data)
+    
+    def update(self, delta_time: float):
+        """Update client"""
+        # Process received packets
+        while not self.receive_queue.empty():
+            packet = self.receive_queue.get()
+            self.process_packet(packet)
+            
+            if packet.type == PacketType.STATE:
+                self.server_state = packet.data
+                self.reconcile_state()
+        
+        # Send queued packets
+        while not self.send_queue.empty():
+            packet = self.send_queue.get()
+            try:
+                self.socket.send(packet.serialize())
+            except:
+                self.disconnect()
+    
+    def reconcile_state(self):
+        """Reconcile local and server state"""
+        # Client-side prediction reconciliation
+        server_time = self.server_state.get('timestamp', 0)
+        
+        # Remove old inputs
+        self.input_buffer = [
+            inp for inp in self.input_buffer 
+            if inp.get('timestamp', 0) > server_time
+        ]
+        
+        # Re-apply unacknowledged inputs
+        for input_data in self.input_buffer:
+            self.apply_local_input(input_data)
+    
+    def apply_local_input(self, input_data: Dict[str, Any]):
+        """Apply input locally for prediction"""
+        # Update local state immediately
+        if 'move' in input_data:
+            if 'position' not in self.local_state:
+                self.local_state['position'] = {'x': 0, 'y': 0}
+            
+            self.local_state['position']['x'] += input_data['move'].get('x', 0)
+            self.local_state['position']['y'] += input_data['move'].get('y', 0)
+    
+    def disconnect(self):
+        """Disconnect from server"""
+        if self.connected:
+            self.send_packet(PacketType.DISCONNECT, {})
+            self.connected = False
+            self.running = False
+            
+            try:
+                self.socket.close()
+            except:
+                pass
+            
+            print("Disconnected from server")</code></pre>
 
     <h2>Best Practices</h2>
     
     <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>⚡ Networking Tips</h3>
+        <h3>⚡ Networking Best Practices</h3>
         <ul>
-            <li><strong>Protocol Choice:</strong> TCP for reliability, UDP for speed</li>
-            <li><strong>Message Serialization:</strong> Use efficient formats</li>
-            <li><strong>Bandwidth Optimization:</strong> Send only necessary data</li>
-            <li><strong>Latency Compensation:</strong> Client prediction and interpolation</li>
-            <li><strong>Security:</strong> Validate all incoming data</li>
-            <li><strong>Connection Management:</strong> Handle disconnects gracefully</li>
-            <li><strong>Rate Limiting:</strong> Prevent flooding</li>
-            <li><strong>Network Debugging:</strong> Log and monitor traffic</li>
+            <li><strong>Minimize Data:</strong> Send only what changes</li>
+            <li><strong>Prioritize Packets:</strong> Critical data first</li>
+            <li><strong>Handle Disconnects:</strong> Graceful recovery</li>
+            <li><strong>Validate Input:</strong> Never trust the client</li>
+            <li><strong>Interpolate Movement:</strong> Smooth visual updates</li>
+            <li><strong>Predict Locally:</strong> Hide latency with prediction</li>
+            <li><strong>Compress Data:</strong> Reduce bandwidth usage</li>
+            <li><strong>Test Conditions:</strong> Simulate poor networks</li>
         </ul>
     </div>
 
@@ -647,25 +1529,25 @@ class TCPGameServer:
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <ul>
-            <li>🌐 Networking enables multiplayer gaming experiences</li>
-            <li>📡 TCP provides reliable ordered delivery</li>
-            <li>⚡ UDP offers fast, lightweight communication</li>
-            <li>🏗️ Client-server architecture provides authority</li>
-            <li>🔄 P2P reduces server costs but increases complexity</li>
-            <li>📊 Network statistics help optimize performance</li>
-            <li>🔒 Security and validation are critical</li>
-            <li>⏱️ Latency compensation creates smooth gameplay</li>
+            <li>🖥️ Client-server is most common for games</li>
+            <li>📦 TCP guarantees delivery, UDP is faster</li>
+            <li>⏱️ Latency is the enemy of real-time games</li>
+            <li>🔮 Prediction hides network delays</li>
+            <li>🎯 Interpolation smooths movement</li>
+            <li>🔄 State synchronization is critical</li>
+            <li>🛡️ Always validate on the server</li>
+            <li>📊 Monitor network metrics</li>
         </ul>
     </div>
 
     <h2>What's Next?</h2>
     
-    <p>Now that you understand networking basics, next we'll explore real-time multiplayer - implementing client prediction, server reconciliation, and lag compensation!</p>
+    <p>Now that you understand networking basics, next we'll implement a complete multiplayer game with real-time synchronization!</p>
 
     <!-- Lesson Navigation -->
     <nav class="lesson-nav" aria-label="Lesson navigation">
-        <a href="architecture_save_load.html" class="prev-lesson" aria-label="Previous lesson: Save/Load Game State">Previous Lesson: Save/Load Game State</a>
-        <a href="networking_realtime_multiplayer.html" class="next-lesson" aria-label="Next lesson: Real-time Multiplayer">Next Lesson: Real-time Multiplayer</a>
+        <a href="polish_playtesting.html" class="prev-lesson" aria-label="Previous lesson: Playtesting Methods">Previous Lesson: Playtesting Methods</a>
+        <a href="networking_multiplayer.html" class="next-lesson" aria-label="Next lesson: Multiplayer Implementation">Next Lesson: Multiplayer Implementation</a>
     </nav>
     
     </main>

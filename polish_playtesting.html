@@ -1,0 +1,1482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master playtesting methods for games. Learn how to gather feedback, analyze player behavior, conduct usability tests, and iterate on game design.">
+    <title>Playtesting Methods - Game Polish & Feel</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Playtesting Methods</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Advanced Module - Section 2: Game Polish & Feel - Lesson 5</span>
+    </nav>
+
+    <h2>Validate Your Design Through Testing</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Learn how to effectively test your games! Master feedback collection, player observation, analytics, A/B testing, and iterative design to create games players love! 📊🎮👥</p>
+    </div>
+
+    <h2>Understanding Playtesting</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🔬 The Scientific Method Analogy</h3>
+        <p>Think of playtesting like scientific research:</p>
+        <ul>
+            <li><strong>Hypothesis:</strong> Design assumptions to test</li>
+            <li><strong>Experiment:</strong> Structured play sessions</li>
+            <li><strong>Observation:</strong> Watch without interfering</li>
+            <li><strong>Data Collection:</strong> Metrics and feedback</li>
+            <li><strong>Analysis:</strong> Find patterns and issues</li>
+            <li><strong>Iteration:</strong> Improve based on findings</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Playtesting Process"] --> B["Planning"]
+        A --> C["Execution"]
+        A --> D["Analysis"]
+        A --> E["Iteration"]
+        
+        B --> F["Define Goals"]
+        B --> G["Select Testers"]
+        B --> H["Create Protocol"]
+        
+        C --> I["Observe"]
+        C --> J["Record"]
+        C --> K["Interview"]
+        
+        D --> L["Quantitative"]
+        D --> M["Qualitative"]
+        D --> N["Synthesis"]
+        
+        E --> O["Prioritize"]
+        E --> P["Implement"]
+        E --> Q["Validate"]
+    </div>
+
+    <h2>Interactive Playtesting Dashboard</h2>
+    
+    <div class="canvas-wrapper" style="text-align: center;">
+        <canvas id="playtestCanvas" width="800" height="600" style="border: 1px solid #333; display: inline-block;"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Simulate a playtesting session! Track player behavior, gather feedback, and analyze the data!</p>
+        
+        <!-- Test Controls -->
+        <div style="margin: 10px auto; padding: 10px; background-color: rgba(0,0,0,0.3); border-radius: 5px; max-width: 800px;">
+            <p style="color: white; margin: 5px;">Playtest Session Controls:</p>
+            <button onclick="startSession()" id="startBtn">▶️ Start Session</button>
+            <button onclick="pauseSession()" id="pauseBtn" disabled>⏸️ Pause</button>
+            <button onclick="endSession()" id="endBtn" disabled>⏹️ End Session</button>
+            <button onclick="resetSession()">🔄 Reset</button>
+        </div>
+        
+        <!-- Test Type Selection -->
+        <div style="margin: 10px auto; padding: 10px; background-color: rgba(0,0,0,0.3); border-radius: 5px; max-width: 800px;">
+            <p style="color: white; margin: 5px;">Test Type:</p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 5px;">
+                <button onclick="setTestType('usability')" class="test-btn active" id="usability-btn">🎯 Usability</button>
+                <button onclick="setTestType('balance')" class="test-btn" id="balance-btn">⚖️ Balance</button>
+                <button onclick="setTestType('fun')" class="test-btn" id="fun-btn">😊 Fun Factor</button>
+                <button onclick="setTestType('tutorial')" class="test-btn" id="tutorial-btn">📚 Tutorial</button>
+                <button onclick="setTestType('difficulty')" class="test-btn" id="difficulty-btn">📈 Difficulty</button>
+                <button onclick="setTestType('ab')" class="test-btn" id="ab-btn">🔄 A/B Test</button>
+            </div>
+        </div>
+        
+        <!-- Tester Demographics -->
+        <div style="margin-top: 10px;">
+            <h4 style="color: white;">Tester Profile:</h4>
+            <label>Experience: 
+                <select id="experience" onchange="updateTesterProfile()">
+                    <option value="novice">Novice</option>
+                    <option value="casual" selected>Casual</option>
+                    <option value="core">Core Gamer</option>
+                    <option value="hardcore">Hardcore</option>
+                </select>
+            </label>
+            <label>Age Group: 
+                <select id="ageGroup" onchange="updateTesterProfile()">
+                    <option value="child">Child (6-12)</option>
+                    <option value="teen">Teen (13-17)</option>
+                    <option value="adult" selected>Adult (18-35)</option>
+                    <option value="mature">Mature (35+)</option>
+                </select>
+            </label>
+            <label>Sample Size: <input type="number" id="sampleSize" min="1" max="100" value="10" onchange="updateTesterProfile()"></label>
+        </div>
+        
+        <!-- Data Collection Methods -->
+        <div style="margin-top: 10px;">
+            <h4 style="color: white;">Data Collection:</h4>
+            <label><input type="checkbox" id="heatmap" checked onchange="toggleDataCollection('heatmap')"> Heat Maps</label>
+            <label><input type="checkbox" id="pathTracking" checked onchange="toggleDataCollection('pathTracking')"> Path Tracking</label>
+            <label><input type="checkbox" id="inputTracking" checked onchange="toggleDataCollection('inputTracking')"> Input Recording</label>
+            <label><input type="checkbox" id="eyeTracking" onchange="toggleDataCollection('eyeTracking')"> Eye Tracking</label>
+            <label><input type="checkbox" id="emotions" checked onchange="toggleDataCollection('emotions')"> Emotion Tracking</label>
+            <label><input type="checkbox" id="thinkaloud" onchange="toggleDataCollection('thinkaloud')"> Think Aloud</label>
+        </div>
+        
+        <!-- Feedback Questions -->
+        <div style="margin-top: 10px;">
+            <h4 style="color: white;">Survey Questions:</h4>
+            <button onclick="addQuestion('likert')">➕ Likert Scale</button>
+            <button onclick="addQuestion('open')">💬 Open Ended</button>
+            <button onclick="addQuestion('multiple')">☑️ Multiple Choice</button>
+            <button onclick="addQuestion('ranking')">📊 Ranking</button>
+            <button onclick="addQuestion('sus')">📋 SUS Scale</button>
+            <button onclick="addQuestion('custom')">✏️ Custom</button>
+        </div>
+        
+        <!-- Analytics Dashboard -->
+        <div style="margin-top: 10px;">
+            <label><input type="checkbox" id="showHeatmap" checked> Show Heatmap</label>
+            <label><input type="checkbox" id="showPaths" checked> Show Paths</label>
+            <label><input type="checkbox" id="showMetrics" checked> Show Metrics</label>
+            <label><input type="checkbox" id="showTimeline" checked> Show Timeline</label>
+            <label><input type="checkbox" id="showFeedback"> Show Feedback</label>
+            <label><input type="checkbox" id="showInsights" checked> Show Insights</label>
+        </div>
+        
+        <!-- Session Stats -->
+        <div style="margin-top: 10px; background-color: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+                <div style="color: white;">
+                    <strong>Session Info</strong><br>
+                    Duration: <span id="sessionDuration">00:00</span><br>
+                    Testers: <span id="testerCount">0</span><br>
+                    Events: <span id="eventCount">0</span>
+                </div>
+                <div style="color: white;">
+                    <strong>Key Metrics</strong><br>
+                    Completion: <span id="completionRate">0</span>%<br>
+                    Drop-off: <span id="dropoffPoint">N/A</span><br>
+                    Avg Time: <span id="avgTime">0</span>s
+                </div>
+                <div style="color: white;">
+                    <strong>Feedback</strong><br>
+                    Satisfaction: <span id="satisfaction">0</span>/5<br>
+                    Issues Found: <span id="issuesFound">0</span><br>
+                    Suggestions: <span id="suggestions">0</span>
+                </div>
+                <div style="color: white;">
+                    <strong>Behavior</strong><br>
+                    Clicks: <span id="totalClicks">0</span><br>
+                    Errors: <span id="errorCount">0</span><br>
+                    Confusion: <span id="confusionEvents">0</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Export Options -->
+        <div style="margin-top: 10px;">
+            <button onclick="exportData('csv')">📊 Export CSV</button>
+            <button onclick="exportData('json')">📄 Export JSON</button>
+            <button onclick="generateReport()">📑 Generate Report</button>
+            <button onclick="shareResults()">🔗 Share Results</button>
+        </div>
+    </div>
+
+    <style>
+        .test-btn {
+            padding: 8px;
+            border: 2px solid transparent;
+            background-color: #555;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s;
+            font-size: 12px;
+        }
+        .test-btn:hover {
+            background-color: #666;
+            border-color: #888;
+        }
+        .test-btn.active {
+            background-color: #4CAF50;
+            border-color: #66BB6A;
+        }
+    </style>
+
+    <script>
+        console.log('Playtesting Dashboard starting...');
+
+        const canvas = document.getElementById('playtestCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Playtesting System
+        class PlaytestingSystem {
+            constructor() {
+                this.sessionActive = false;
+                this.testType = 'usability';
+                this.startTime = null;
+                this.sessionDuration = 0;
+                
+                // Tester profiles
+                this.testerProfile = {
+                    experience: 'casual',
+                    ageGroup: 'adult',
+                    sampleSize: 10
+                };
+                
+                // Simulated testers
+                this.testers = [];
+                this.activeTester = null;
+                
+                // Data collection
+                this.dataCollection = {
+                    heatmap: true,
+                    pathTracking: true,
+                    inputTracking: true,
+                    eyeTracking: false,
+                    emotions: true,
+                    thinkaloud: false
+                };
+                
+                // Collected data
+                this.heatmapData = [];
+                this.pathData = [];
+                this.inputData = [];
+                this.emotionData = [];
+                this.eventLog = [];
+                
+                // Metrics
+                this.metrics = {
+                    completionRate: 0,
+                    dropoffPoints: [],
+                    averageTime: 0,
+                    satisfaction: 0,
+                    issuesFound: 0,
+                    suggestions: 0,
+                    totalClicks: 0,
+                    errorCount: 0,
+                    confusionEvents: 0
+                };
+                
+                // Questions
+                this.surveyQuestions = [];
+                
+                // Visualization
+                this.visualization = {
+                    showHeatmap: true,
+                    showPaths: true,
+                    showMetrics: true,
+                    showTimeline: true,
+                    showFeedback: false,
+                    showInsights: true
+                };
+                
+                // Initialize
+                this.initializeTesters();
+            }
+            
+            initializeTesters() {
+                this.testers = [];
+                for (let i = 0; i < this.testerProfile.sampleSize; i++) {
+                    this.testers.push(this.createTester(i));
+                }
+            }
+            
+            createTester(id) {
+                // Create tester with personality traits
+                const personalities = ['explorer', 'achiever', 'socializer', 'killer'];
+                const skillLevels = {
+                    'novice': 0.3,
+                    'casual': 0.5,
+                    'core': 0.7,
+                    'hardcore': 0.9
+                };
+                
+                return {
+                    id: id,
+                    name: `Tester_${id + 1}`,
+                    personality: personalities[Math.floor(Math.random() * personalities.length)],
+                    skill: skillLevels[this.testerProfile.experience] + (Math.random() - 0.5) * 0.2,
+                    patience: Math.random(),
+                    curiosity: Math.random(),
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    path: [],
+                    clicks: [],
+                    errors: 0,
+                    completed: false,
+                    satisfaction: null,
+                    feedback: [],
+                    emotionHistory: [],
+                    currentEmotion: 'neutral',
+                    taskProgress: 0
+                };
+            }
+            
+            startSession() {
+                this.sessionActive = true;
+                this.startTime = Date.now();
+                this.activeTester = this.testers[0];
+                
+                // Clear previous data
+                this.heatmapData = [];
+                this.pathData = [];
+                this.inputData = [];
+                this.emotionData = [];
+                this.eventLog = [];
+                
+                // Log event
+                this.logEvent('session_start', {
+                    testType: this.testType,
+                    testerCount: this.testers.length
+                });
+                
+                // Initialize test scenario
+                this.initializeTestScenario();
+            }
+            
+            initializeTestScenario() {
+                // Create test tasks based on type
+                switch (this.testType) {
+                    case 'usability':
+                        this.createUsabilityTasks();
+                        break;
+                    case 'balance':
+                        this.createBalanceTasks();
+                        break;
+                    case 'fun':
+                        this.createFunTasks();
+                        break;
+                    case 'tutorial':
+                        this.createTutorialTasks();
+                        break;
+                    case 'difficulty':
+                        this.createDifficultyTasks();
+                        break;
+                    case 'ab':
+                        this.createABTest();
+                        break;
+                }
+            }
+            
+            createUsabilityTasks() {
+                this.tasks = [
+                    { name: 'Find Start Button', target: { x: 400, y: 300 }, radius: 50 },
+                    { name: 'Navigate Menu', target: { x: 200, y: 200 }, radius: 75 },
+                    { name: 'Complete Action', target: { x: 600, y: 400 }, radius: 60 },
+                    { name: 'Access Settings', target: { x: 750, y: 50 }, radius: 40 },
+                    { name: 'Exit Game', target: { x: 400, y: 550 }, radius: 50 }
+                ];
+            }
+            
+            createBalanceTasks() {
+                this.tasks = [
+                    { name: 'Combat Test', difficulty: 0.5, winRate: 0 },
+                    { name: 'Resource Balance', optimal: 100, current: 0 },
+                    { name: 'Economy Test', targetGold: 1000, currentGold: 0 },
+                    { name: 'Progression Rate', expectedTime: 300, actualTime: 0 }
+                ];
+            }
+            
+            createFunTasks() {
+                this.tasks = [
+                    { name: 'Core Loop', engagement: 0 },
+                    { name: 'Reward Moment', excitement: 0 },
+                    { name: 'Challenge Section', flowState: 'none' },
+                    { name: 'Social Feature', interactions: 0 }
+                ];
+            }
+            
+            createTutorialTasks() {
+                this.tasks = [
+                    { name: 'Learn Controls', understood: false },
+                    { name: 'First Objective', completed: false },
+                    { name: 'Use Ability', attempts: 0, success: false },
+                    { name: 'Read Instructions', timeSpent: 0 }
+                ];
+            }
+            
+            createDifficultyTasks() {
+                this.tasks = [
+                    { name: 'Easy Level', attempts: 0, completed: false },
+                    { name: 'Normal Level', attempts: 0, completed: false },
+                    { name: 'Hard Level', attempts: 0, completed: false },
+                    { name: 'Boss Fight', attempts: 0, completed: false }
+                ];
+            }
+            
+            createABTest() {
+                this.variants = {
+                    A: { name: 'Original', users: [], metrics: {} },
+                    B: { name: 'Variant', users: [], metrics: {} }
+                };
+                
+                // Randomly assign testers to variants
+                this.testers.forEach((tester, i) => {
+                    const variant = i % 2 === 0 ? 'A' : 'B';
+                    this.variants[variant].users.push(tester);
+                    tester.variant = variant;
+                });
+            }
+            
+            update(deltaTime) {
+                if (!this.sessionActive) return;
+                
+                this.sessionDuration += deltaTime;
+                
+                // Simulate tester behavior
+                if (this.activeTester) {
+                    this.simulateTester(this.activeTester, deltaTime);
+                    
+                    // Rotate through testers
+                    if (Math.random() < 0.01) { // 1% chance to switch tester
+                        const nextIndex = (this.testers.indexOf(this.activeTester) + 1) % this.testers.length;
+                        this.activeTester = this.testers[nextIndex];
+                    }
+                }
+                
+                // Update metrics
+                this.updateMetrics();
+            }
+            
+            simulateTester(tester, deltaTime) {
+                // Simulate movement
+                const speed = 100 * tester.skill;
+                const targetX = Math.random() * canvas.width;
+                const targetY = Math.random() * canvas.height;
+                
+                const dx = targetX - tester.x;
+                const dy = targetY - tester.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist > 5) {
+                    tester.x += (dx / dist) * speed * deltaTime * 0.001;
+                    tester.y += (dy / dist) * speed * deltaTime * 0.001;
+                }
+                
+                // Record path
+                if (this.dataCollection.pathTracking) {
+                    tester.path.push({ x: tester.x, y: tester.y, time: this.sessionDuration });
+                    if (tester.path.length > 100) {
+                        tester.path.shift();
+                    }
+                }
+                
+                // Record heatmap data
+                if (this.dataCollection.heatmap) {
+                    this.heatmapData.push({
+                        x: Math.floor(tester.x / 20) * 20,
+                        y: Math.floor(tester.y / 20) * 20,
+                        intensity: 1
+                    });
+                }
+                
+                // Simulate clicks
+                if (Math.random() < 0.02 * tester.curiosity) {
+                    this.simulateClick(tester);
+                }
+                
+                // Simulate emotions
+                if (this.dataCollection.emotions) {
+                    this.updateTesterEmotion(tester);
+                }
+                
+                // Progress through tasks
+                tester.taskProgress += deltaTime * 0.0001 * tester.skill;
+                
+                // Check completion
+                if (tester.taskProgress >= 1 && !tester.completed) {
+                    tester.completed = true;
+                    tester.satisfaction = 3 + Math.random() * 2;
+                    this.metrics.completionRate = this.testers.filter(t => t.completed).length / this.testers.length * 100;
+                }
+            }
+            
+            simulateClick(tester) {
+                tester.clicks.push({ x: tester.x, y: tester.y, time: this.sessionDuration });
+                this.metrics.totalClicks++;
+                
+                // Record input
+                if (this.dataCollection.inputTracking) {
+                    this.inputData.push({
+                        type: 'click',
+                        x: tester.x,
+                        y: tester.y,
+                        testerId: tester.id,
+                        time: this.sessionDuration
+                    });
+                }
+                
+                // Simulate errors based on skill
+                if (Math.random() > tester.skill) {
+                    tester.errors++;
+                    this.metrics.errorCount++;
+                    this.logEvent('error', { testerId: tester.id, x: tester.x, y: tester.y });
+                }
+            }
+            
+            updateTesterEmotion(tester) {
+                const emotions = ['happy', 'neutral', 'confused', 'frustrated', 'excited'];
+                const weights = [
+                    tester.skill * 2,           // happy
+                    1,                           // neutral
+                    (1 - tester.skill) * 2,      // confused
+                    (1 - tester.patience),       // frustrated
+                    tester.curiosity            // excited
+                ];
+                
+                // Weighted random selection
+                const totalWeight = weights.reduce((a, b) => a + b, 0);
+                let random = Math.random() * totalWeight;
+                
+                for (let i = 0; i < emotions.length; i++) {
+                    random -= weights[i];
+                    if (random <= 0) {
+                        tester.currentEmotion = emotions[i];
+                        break;
+                    }
+                }
+                
+                // Track confusion events
+                if (tester.currentEmotion === 'confused') {
+                    this.metrics.confusionEvents++;
+                }
+                
+                tester.emotionHistory.push({
+                    emotion: tester.currentEmotion,
+                    time: this.sessionDuration
+                });
+            }
+            
+            updateMetrics() {
+                // Calculate average time
+                const completedTesters = this.testers.filter(t => t.completed);
+                if (completedTesters.length > 0) {
+                    this.metrics.averageTime = this.sessionDuration / 1000;
+                }
+                
+                // Calculate satisfaction
+                const ratings = this.testers.filter(t => t.satisfaction !== null);
+                if (ratings.length > 0) {
+                    this.metrics.satisfaction = ratings.reduce((sum, t) => sum + t.satisfaction, 0) / ratings.length;
+                }
+                
+                // Find drop-off points
+                const incompleteTesters = this.testers.filter(t => !t.completed);
+                if (incompleteTesters.length > 0) {
+                    const avgProgress = incompleteTesters.reduce((sum, t) => sum + t.taskProgress, 0) / incompleteTesters.length;
+                    this.metrics.dropoffPoint = Math.floor(avgProgress * 100) + '%';
+                }
+            }
+            
+            logEvent(type, data) {
+                this.eventLog.push({
+                    type: type,
+                    data: data,
+                    timestamp: this.sessionDuration
+                });
+                
+                document.getElementById('eventCount').textContent = this.eventLog.length;
+            }
+            
+            render(ctx) {
+                // Clear canvas
+                ctx.fillStyle = '#1a1a2e';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw grid
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+                ctx.lineWidth = 1;
+                for (let x = 0; x < canvas.width; x += 50) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, canvas.height);
+                    ctx.stroke();
+                }
+                for (let y = 0; y < canvas.height; y += 50) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(canvas.width, y);
+                    ctx.stroke();
+                }
+                
+                // Draw heatmap
+                if (this.visualization.showHeatmap && this.heatmapData.length > 0) {
+                    this.renderHeatmap(ctx);
+                }
+                
+                // Draw paths
+                if (this.visualization.showPaths && this.activeTester) {
+                    this.renderPaths(ctx);
+                }
+                
+                // Draw current tester
+                if (this.activeTester) {
+                    this.renderTester(ctx, this.activeTester);
+                }
+                
+                // Draw metrics overlay
+                if (this.visualization.showMetrics) {
+                    this.renderMetrics(ctx);
+                }
+                
+                // Draw timeline
+                if (this.visualization.showTimeline) {
+                    this.renderTimeline(ctx);
+                }
+                
+                // Draw insights
+                if (this.visualization.showInsights) {
+                    this.renderInsights(ctx);
+                }
+                
+                // Draw test elements
+                if (this.tasks) {
+                    this.renderTasks(ctx);
+                }
+            }
+            
+            renderHeatmap(ctx) {
+                // Aggregate heatmap data
+                const heatmap = {};
+                
+                for (const point of this.heatmapData) {
+                    const key = `${point.x},${point.y}`;
+                    heatmap[key] = (heatmap[key] || 0) + point.intensity;
+                }
+                
+                // Find max intensity
+                const maxIntensity = Math.max(...Object.values(heatmap), 1);
+                
+                // Draw heatmap
+                for (const [key, intensity] of Object.entries(heatmap)) {
+                    const [x, y] = key.split(',').map(Number);
+                    const normalizedIntensity = intensity / maxIntensity;
+                    
+                    // Color gradient from blue to red
+                    const r = Math.floor(255 * normalizedIntensity);
+                    const g = Math.floor(255 * (1 - normalizedIntensity) * 0.5);
+                    const b = Math.floor(255 * (1 - normalizedIntensity));
+                    
+                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${normalizedIntensity * 0.5})`;
+                    ctx.fillRect(x, y, 20, 20);
+                }
+            }
+            
+            renderPaths(ctx) {
+                const tester = this.activeTester;
+                
+                if (tester.path.length > 1) {
+                    ctx.strokeStyle = 'rgba(100, 200, 255, 0.5)';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    
+                    ctx.moveTo(tester.path[0].x, tester.path[0].y);
+                    for (let i = 1; i < tester.path.length; i++) {
+                        ctx.lineTo(tester.path[i].x, tester.path[i].y);
+                    }
+                    ctx.stroke();
+                }
+                
+                // Draw clicks
+                ctx.fillStyle = 'rgba(255, 200, 100, 0.8)';
+                for (const click of tester.clicks) {
+                    ctx.beginPath();
+                    ctx.arc(click.x, click.y, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            
+            renderTester(ctx, tester) {
+                // Draw tester avatar
+                const emotionColors = {
+                    happy: '#4CAF50',
+                    neutral: '#2196F3',
+                    confused: '#FF9800',
+                    frustrated: '#F44336',
+                    excited: '#FFD700'
+                };
+                
+                ctx.fillStyle = emotionColors[tester.currentEmotion] || '#2196F3';
+                ctx.beginPath();
+                ctx.arc(tester.x, tester.y, 15, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw emotion indicator
+                ctx.font = '20px Arial';
+                ctx.textAlign = 'center';
+                const emotionEmojis = {
+                    happy: '😊',
+                    neutral: '😐',
+                    confused: '😕',
+                    frustrated: '😠',
+                    excited: '🤩'
+                };
+                ctx.fillText(emotionEmojis[tester.currentEmotion] || '😐', tester.x, tester.y - 20);
+                
+                // Draw tester ID
+                ctx.fillStyle = 'white';
+                ctx.font = '10px Arial';
+                ctx.fillText(tester.name, tester.x, tester.y + 30);
+            }
+            
+            renderTasks(ctx) {
+                // Draw task targets for usability test
+                if (this.testType === 'usability' && this.tasks) {
+                    this.tasks.forEach((task, index) => {
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                        ctx.lineWidth = 2;
+                        ctx.setLineDash([5, 5]);
+                        ctx.beginPath();
+                        ctx.arc(task.target.x, task.target.y, task.radius, 0, Math.PI * 2);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                        
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                        ctx.font = '12px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(task.name, task.target.x, task.target.y);
+                    });
+                }
+            }
+            
+            renderMetrics(ctx) {
+                const x = 20;
+                const y = 20;
+                
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(x, y, 200, 100);
+                
+                ctx.fillStyle = 'white';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'left';
+                
+                const metrics = [
+                    `Test Type: ${this.testType}`,
+                    `Active Tester: ${this.activeTester ? this.activeTester.name : 'None'}`,
+                    `Progress: ${Math.floor(this.activeTester ? this.activeTester.taskProgress * 100 : 0)}%`,
+                    `Emotion: ${this.activeTester ? this.activeTester.currentEmotion : 'N/A'}`,
+                    `Errors: ${this.activeTester ? this.activeTester.errors : 0}`
+                ];
+                
+                metrics.forEach((text, i) => {
+                    ctx.fillText(text, x + 10, y + 20 + i * 15);
+                });
+            }
+            
+            renderTimeline(ctx) {
+                const x = 20;
+                const y = canvas.height - 80;
+                const width = canvas.width - 40;
+                const height = 60;
+                
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(x, y, width, height);
+                
+                // Draw timeline
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.beginPath();
+                ctx.moveTo(x + 10, y + height/2);
+                ctx.lineTo(x + width - 10, y + height/2);
+                ctx.stroke();
+                
+                // Draw events
+                for (const event of this.eventLog) {
+                    const eventX = x + 10 + (event.timestamp / this.sessionDuration) * (width - 20);
+                    
+                    const eventColors = {
+                        session_start: '#4CAF50',
+                        error: '#F44336',
+                        click: '#2196F3',
+                        completion: '#FFD700'
+                    };
+                    
+                    ctx.fillStyle = eventColors[event.type] || '#888';
+                    ctx.beginPath();
+                    ctx.arc(eventX, y + height/2, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                // Draw current position
+                if (this.sessionActive) {
+                    const currentX = x + 10 + (width - 20);
+                    ctx.strokeStyle = '#FFD700';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(currentX, y + 5);
+                    ctx.lineTo(currentX, y + height - 5);
+                    ctx.stroke();
+                }
+            }
+            
+            renderInsights(ctx) {
+                const x = canvas.width - 220;
+                const y = 20;
+                
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(x, y, 200, 150);
+                
+                ctx.fillStyle = '#FFD700';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText('Key Insights', x + 10, y + 20);
+                
+                ctx.fillStyle = 'white';
+                ctx.font = '11px Arial';
+                
+                // Generate insights based on data
+                const insights = [];
+                
+                if (this.metrics.errorCount > this.testers.length * 2) {
+                    insights.push('⚠️ High error rate detected');
+                }
+                
+                if (this.metrics.confusionEvents > this.testers.length) {
+                    insights.push('😕 Users showing confusion');
+                }
+                
+                if (this.metrics.completionRate < 50) {
+                    insights.push('📉 Low completion rate');
+                }
+                
+                if (this.metrics.satisfaction > 4) {
+                    insights.push('⭐ High satisfaction scores');
+                }
+                
+                if (this.metrics.totalClicks > this.testers.length * 10) {
+                    insights.push('🖱️ High interaction rate');
+                }
+                
+                if (insights.length === 0) {
+                    insights.push('📊 Gathering data...');
+                }
+                
+                insights.forEach((insight, i) => {
+                    ctx.fillText(insight, x + 10, y + 45 + i * 20);
+                });
+            }
+            
+            updateUI() {
+                // Update session stats
+                const minutes = Math.floor(this.sessionDuration / 60000);
+                const seconds = Math.floor((this.sessionDuration % 60000) / 1000);
+                document.getElementById('sessionDuration').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                document.getElementById('testerCount').textContent = this.testers.length;
+                document.getElementById('completionRate').textContent = Math.floor(this.metrics.completionRate);
+                document.getElementById('dropoffPoint').textContent = this.metrics.dropoffPoint || 'N/A';
+                document.getElementById('avgTime').textContent = Math.floor(this.metrics.averageTime);
+                document.getElementById('satisfaction').textContent = this.metrics.satisfaction.toFixed(1);
+                document.getElementById('issuesFound').textContent = this.metrics.issuesFound;
+                document.getElementById('suggestions').textContent = this.metrics.suggestions;
+                document.getElementById('totalClicks').textContent = this.metrics.totalClicks;
+                document.getElementById('errorCount').textContent = this.metrics.errorCount;
+                document.getElementById('confusionEvents').textContent = this.metrics.confusionEvents;
+            }
+        }
+
+        // Initialize system
+        const playtestSystem = new PlaytestingSystem();
+
+        // UI Functions
+        window.startSession = function() {
+            playtestSystem.startSession();
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('pauseBtn').disabled = false;
+            document.getElementById('endBtn').disabled = false;
+        };
+
+        window.pauseSession = function() {
+            playtestSystem.sessionActive = !playtestSystem.sessionActive;
+            document.getElementById('pauseBtn').textContent = 
+                playtestSystem.sessionActive ? '⏸️ Pause' : '▶️ Resume';
+        };
+
+        window.endSession = function() {
+            playtestSystem.sessionActive = false;
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('pauseBtn').disabled = true;
+            document.getElementById('endBtn').disabled = true;
+            
+            // Generate final report
+            console.log('Session ended. Final metrics:', playtestSystem.metrics);
+        };
+
+        window.resetSession = function() {
+            playtestSystem.sessionActive = false;
+            playtestSystem.sessionDuration = 0;
+            playtestSystem.metrics = {
+                completionRate: 0,
+                dropoffPoints: [],
+                averageTime: 0,
+                satisfaction: 0,
+                issuesFound: 0,
+                suggestions: 0,
+                totalClicks: 0,
+                errorCount: 0,
+                confusionEvents: 0
+            };
+            playtestSystem.initializeTesters();
+            
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('pauseBtn').disabled = true;
+            document.getElementById('endBtn').disabled = true;
+        };
+
+        window.setTestType = function(type) {
+            document.querySelectorAll('.test-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(type + '-btn').classList.add('active');
+            playtestSystem.testType = type;
+        };
+
+        window.updateTesterProfile = function() {
+            playtestSystem.testerProfile.experience = document.getElementById('experience').value;
+            playtestSystem.testerProfile.ageGroup = document.getElementById('ageGroup').value;
+            playtestSystem.testerProfile.sampleSize = parseInt(document.getElementById('sampleSize').value);
+            playtestSystem.initializeTesters();
+        };
+
+        window.toggleDataCollection = function(type) {
+            playtestSystem.dataCollection[type] = document.getElementById(type).checked;
+        };
+
+        window.addQuestion = function(type) {
+            console.log('Adding question type:', type);
+            // Would implement question builder UI
+        };
+
+        window.exportData = function(format) {
+            const data = {
+                session: {
+                    duration: playtestSystem.sessionDuration,
+                    testType: playtestSystem.testType,
+                    testerCount: playtestSystem.testers.length
+                },
+                metrics: playtestSystem.metrics,
+                events: playtestSystem.eventLog,
+                testers: playtestSystem.testers.map(t => ({
+                    id: t.id,
+                    completed: t.completed,
+                    satisfaction: t.satisfaction,
+                    errors: t.errors,
+                    clicks: t.clicks.length
+                }))
+            };
+            
+            console.log(`Exporting data as ${format}:`, data);
+        };
+
+        window.generateReport = function() {
+            console.log('Generating comprehensive report...');
+            // Would generate detailed PDF report
+        };
+
+        window.shareResults = function() {
+            console.log('Sharing results...');
+            // Would create shareable link
+        };
+
+        // Visualization toggles
+        ['showHeatmap', 'showPaths', 'showMetrics', 'showTimeline', 'showFeedback', 'showInsights'].forEach(option => {
+            document.getElementById(option).addEventListener('change', (e) => {
+                playtestSystem.visualization[option] = e.target.checked;
+            });
+        });
+
+        // Animation loop
+        let lastTime = performance.now();
+        
+        function animate() {
+            const currentTime = performance.now();
+            const deltaTime = currentTime - lastTime;
+            lastTime = currentTime;
+            
+            // Update system
+            playtestSystem.update(deltaTime);
+            playtestSystem.updateUI();
+            
+            // Render
+            playtestSystem.render(ctx);
+            
+            requestAnimationFrame(animate);
+        }
+        
+        animate();
+        console.log('Playtesting Dashboard initialized!');
+    </script>
+
+    <h2>Playtesting Implementation in Python</h2>
+    
+    <pre class="language-python"><code>import json
+import csv
+import time
+import random
+from typing import Dict, List, Optional, Any, Tuple
+from dataclasses import dataclass, asdict
+from enum import Enum
+from datetime import datetime
+import statistics
+
+class TestType(Enum):
+    USABILITY = "usability"
+    BALANCE = "balance"
+    FUN = "fun"
+    TUTORIAL = "tutorial"
+    DIFFICULTY = "difficulty"
+    AB_TEST = "ab_test"
+
+@dataclass
+class TesterProfile:
+    """Playtester demographic information"""
+    id: str
+    age_group: str
+    experience_level: str
+    play_frequency: str
+    genre_preferences: List[str]
+    platform: str
+    
+@dataclass
+class TestEvent:
+    """Individual test event"""
+    timestamp: float
+    event_type: str
+    tester_id: str
+    data: Dict[str, Any]
+    
+@dataclass
+class TestMetrics:
+    """Collected test metrics"""
+    completion_rate: float
+    average_time: float
+    error_count: int
+    satisfaction_score: float
+    task_success_rate: float
+    engagement_score: float
+
+class PlaytestManager:
+    """Comprehensive playtesting system"""
+    
+    def __init__(self):
+        self.session_id = None
+        self.test_type = TestType.USABILITY
+        self.testers: List[TesterProfile] = []
+        self.events: List[TestEvent] = []
+        self.start_time = None
+        self.metrics = TestMetrics(0, 0, 0, 0, 0, 0)
+        
+        # Data collection
+        self.heatmap_data = {}
+        self.path_data = {}
+        self.input_sequences = []
+        self.feedback_responses = []
+        
+        # Analytics
+        self.funnel_analysis = {}
+        self.retention_data = {}
+        self.engagement_metrics = {}
+        
+    def start_session(self, test_type: TestType, testers: List[TesterProfile]):
+        """Start a new playtest session"""
+        self.session_id = f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        self.test_type = test_type
+        self.testers = testers
+        self.start_time = time.time()
+        self.events = []
+        
+        print(f"Starting {test_type.value} test with {len(testers)} testers")
+        
+        # Log session start
+        self.log_event("session_start", "system", {
+            "test_type": test_type.value,
+            "tester_count": len(testers)
+        })
+    
+    def log_event(self, event_type: str, tester_id: str, data: Dict[str, Any]):
+        """Log a test event"""
+        event = TestEvent(
+            timestamp=time.time() - self.start_time if self.start_time else 0,
+            event_type=event_type,
+            tester_id=tester_id,
+            data=data
+        )
+        self.events.append(event)
+    
+    def track_position(self, tester_id: str, x: float, y: float):
+        """Track tester position for heatmap"""
+        grid_x = int(x / 20) * 20
+        grid_y = int(y / 20) * 20
+        key = f"{grid_x},{grid_y}"
+        
+        if key not in self.heatmap_data:
+            self.heatmap_data[key] = 0
+        self.heatmap_data[key] += 1
+        
+        # Track path
+        if tester_id not in self.path_data:
+            self.path_data[tester_id] = []
+        self.path_data[tester_id].append((x, y, time.time()))
+    
+    def track_input(self, tester_id: str, input_type: str, data: Dict[str, Any]):
+        """Track user input"""
+        self.input_sequences.append({
+            'tester_id': tester_id,
+            'type': input_type,
+            'data': data,
+            'timestamp': time.time() - self.start_time
+        })
+        
+        self.log_event(f"input_{input_type}", tester_id, data)
+    
+    def collect_feedback(self, tester_id: str, feedback_type: str, response: Any):
+        """Collect tester feedback"""
+        self.feedback_responses.append({
+            'tester_id': tester_id,
+            'type': feedback_type,
+            'response': response,
+            'timestamp': time.time() - self.start_time
+        })
+    
+    def calculate_metrics(self) -> TestMetrics:
+        """Calculate test metrics"""
+        if not self.events:
+            return self.metrics
+        
+        # Completion rate
+        completions = [e for e in self.events if e.event_type == 'task_complete']
+        starts = [e for e in self.events if e.event_type == 'task_start']
+        completion_rate = len(completions) / max(len(starts), 1)
+        
+        # Average time
+        completion_times = [e.timestamp for e in completions]
+        avg_time = statistics.mean(completion_times) if completion_times else 0
+        
+        # Error count
+        errors = [e for e in self.events if 'error' in e.event_type]
+        error_count = len(errors)
+        
+        # Satisfaction score (from feedback)
+        satisfaction_scores = [
+            f['response'] for f in self.feedback_responses 
+            if f['type'] == 'satisfaction' and isinstance(f['response'], (int, float))
+        ]
+        satisfaction = statistics.mean(satisfaction_scores) if satisfaction_scores else 0
+        
+        # Task success rate
+        task_successes = [e for e in self.events if e.event_type == 'task_success']
+        task_attempts = [e for e in self.events if e.event_type == 'task_attempt']
+        success_rate = len(task_successes) / max(len(task_attempts), 1)
+        
+        # Engagement score (based on interactions)
+        interactions = [e for e in self.events if 'interact' in e.event_type]
+        engagement = min(len(interactions) / (len(self.testers) * 10), 1.0)
+        
+        self.metrics = TestMetrics(
+            completion_rate=completion_rate,
+            average_time=avg_time,
+            error_count=error_count,
+            satisfaction_score=satisfaction,
+            task_success_rate=success_rate,
+            engagement_score=engagement
+        )
+        
+        return self.metrics
+    
+    def analyze_funnel(self, stages: List[str]):
+        """Analyze conversion funnel"""
+        funnel = {}
+        
+        for i, stage in enumerate(stages):
+            stage_events = [e for e in self.events if e.data.get('stage') == stage]
+            unique_testers = set(e.tester_id for e in stage_events)
+            
+            funnel[stage] = {
+                'count': len(unique_testers),
+                'percentage': len(unique_testers) / len(self.testers) * 100 if self.testers else 0
+            }
+            
+            if i > 0:
+                prev_stage = stages[i-1]
+                if prev_stage in funnel:
+                    conversion = funnel[stage]['count'] / max(funnel[prev_stage]['count'], 1) * 100
+                    funnel[stage]['conversion_from_previous'] = conversion
+        
+        self.funnel_analysis = funnel
+        return funnel
+    
+    def generate_heatmap(self) -> Dict[str, float]:
+        """Generate heatmap visualization data"""
+        max_intensity = max(self.heatmap_data.values()) if self.heatmap_data else 1
+        
+        normalized_heatmap = {
+            key: value / max_intensity 
+            for key, value in self.heatmap_data.items()
+        }
+        
+        return normalized_heatmap
+    
+    def identify_pain_points(self) -> List[Dict[str, Any]]:
+        """Identify areas where testers struggle"""
+        pain_points = []
+        
+        # Find high error areas
+        error_events = [e for e in self.events if 'error' in e.event_type]
+        error_locations = {}
+        
+        for event in error_events:
+            if 'x' in event.data and 'y' in event.data:
+                loc = (event.data['x'], event.data['y'])
+                if loc not in error_locations:
+                    error_locations[loc] = 0
+                error_locations[loc] += 1
+        
+        # Find areas with repeated attempts
+        attempt_events = [e for e in self.events if e.event_type == 'task_attempt']
+        repeated_attempts = {}
+        
+        for event in attempt_events:
+            task = event.data.get('task')
+            if task:
+                if task not in repeated_attempts:
+                    repeated_attempts[task] = []
+                repeated_attempts[task].append(event.tester_id)
+        
+        # Compile pain points
+        for task, testers in repeated_attempts.items():
+            if len(testers) > len(set(testers)):  # Multiple attempts by same tester
+                pain_points.append({
+                    'type': 'repeated_attempts',
+                    'task': task,
+                    'severity': len(testers) / len(self.testers)
+                })
+        
+        for loc, count in error_locations.items():
+            if count > len(self.testers) * 0.3:  # 30% threshold
+                pain_points.append({
+                    'type': 'error_hotspot',
+                    'location': loc,
+                    'severity': count / len(self.testers)
+                })
+        
+        return pain_points
+    
+    def export_data(self, format: str = 'json') -> str:
+        """Export test data"""
+        data = {
+            'session_id': self.session_id,
+            'test_type': self.test_type.value,
+            'duration': time.time() - self.start_time if self.start_time else 0,
+            'tester_count': len(self.testers),
+            'metrics': asdict(self.calculate_metrics()),
+            'events_count': len(self.events),
+            'feedback_count': len(self.feedback_responses),
+            'pain_points': self.identify_pain_points()
+        }
+        
+        if format == 'json':
+            return json.dumps(data, indent=2)
+        elif format == 'csv':
+            # Flatten for CSV
+            rows = []
+            for event in self.events:
+                row = {
+                    'timestamp': event.timestamp,
+                    'event_type': event.event_type,
+                    'tester_id': event.tester_id,
+                    **event.data
+                }
+                rows.append(row)
+            
+            if rows:
+                output = []
+                keys = rows[0].keys()
+                output.append(','.join(keys))
+                for row in rows:
+                    output.append(','.join(str(row.get(k, '')) for k in keys))
+                return '\n'.join(output)
+        
+        return str(data)
+
+class SurveyBuilder:
+    """Build and manage playtest surveys"""
+    
+    def __init__(self):
+        self.questions = []
+    
+    def add_likert_scale(self, question: str, scale: int = 5):
+        """Add Likert scale question"""
+        self.questions.append({
+            'type': 'likert',
+            'question': question,
+            'scale': scale,
+            'options': list(range(1, scale + 1))
+        })
+    
+    def add_multiple_choice(self, question: str, options: List[str]):
+        """Add multiple choice question"""
+        self.questions.append({
+            'type': 'multiple_choice',
+            'question': question,
+            'options': options
+        })
+    
+    def add_open_ended(self, question: str):
+        """Add open-ended question"""
+        self.questions.append({
+            'type': 'open_ended',
+            'question': question
+        })
+    
+    def add_sus_scale(self):
+        """Add System Usability Scale questions"""
+        sus_questions = [
+            "I think that I would like to use this game frequently",
+            "I found the game unnecessarily complex",
+            "I thought the game was easy to use",
+            "I think that I would need support to be able to use this game",
+            "I found the various functions in this game were well integrated",
+            "I thought there was too much inconsistency in this game",
+            "I would imagine that most people would learn to use this game very quickly",
+            "I found the game very cumbersome to use",
+            "I felt very confident using the game",
+            "I needed to learn a lot of things before I could get going with this game"
+        ]
+        
+        for q in sus_questions:
+            self.add_likert_scale(q, 5)
+    
+    def calculate_sus_score(self, responses: List[int]) -> float:
+        """Calculate SUS score from responses"""
+        if len(responses) != 10:
+            return 0
+        
+        score = 0
+        for i, response in enumerate(responses):
+            if i % 2 == 0:  # Odd questions (1, 3, 5, 7, 9)
+                score += response - 1
+            else:  # Even questions (2, 4, 6, 8, 10)
+                score += 5 - response
+        
+        return score * 2.5  # Scale to 0-100
+
+class ABTestAnalyzer:
+    """Analyze A/B test results"""
+    
+    def __init__(self):
+        self.variants = {}
+        
+    def add_variant(self, name: str, data: List[float]):
+        """Add variant data"""
+        self.variants[name] = data
+    
+    def calculate_significance(self, variant_a: str, variant_b: str, 
+                              confidence: float = 0.95) -> Dict[str, Any]:
+        """Calculate statistical significance"""
+        import scipy.stats as stats
+        
+        data_a = self.variants.get(variant_a, [])
+        data_b = self.variants.get(variant_b, [])
+        
+        if not data_a or not data_b:
+            return {'significant': False, 'message': 'Insufficient data'}
+        
+        # Perform t-test
+        t_stat, p_value = stats.ttest_ind(data_a, data_b)
+        
+        # Calculate effect size (Cohen's d)
+        mean_a = statistics.mean(data_a)
+        mean_b = statistics.mean(data_b)
+        std_a = statistics.stdev(data_a) if len(data_a) > 1 else 0
+        std_b = statistics.stdev(data_b) if len(data_b) > 1 else 0
+        pooled_std = ((std_a ** 2 + std_b ** 2) / 2) ** 0.5
+        effect_size = (mean_a - mean_b) / pooled_std if pooled_std > 0 else 0
+        
+        return {
+            'significant': p_value < (1 - confidence),
+            'p_value': p_value,
+            'effect_size': effect_size,
+            'mean_a': mean_a,
+            'mean_b': mean_b,
+            'winner': variant_a if mean_a > mean_b else variant_b
+        }</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Playtesting Tips</h3>
+        <ul>
+            <li><strong>Test Early:</strong> Start testing with paper prototypes</li>
+            <li><strong>Test Often:</strong> Regular testing throughout development</li>
+            <li><strong>Diverse Testers:</strong> Include your target audience</li>
+            <li><strong>Observe Silently:</strong> Don't guide or explain</li>
+            <li><strong>Record Everything:</strong> Video, audio, and metrics</li>
+            <li><strong>Ask Why:</strong> Understand motivations, not just actions</li>
+            <li><strong>Iterate Quickly:</strong> Fix major issues first</li>
+            <li><strong>Test Competitors:</strong> Learn from others' solutions</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>📊 Data-driven design improves games</li>
+            <li>👥 Real players reveal unexpected issues</li>
+            <li>🔬 Scientific method validates assumptions</li>
+            <li>📈 Metrics guide design decisions</li>
+            <li>🎯 Focused tests yield better results</li>
+            <li>🔄 Iteration based on feedback is crucial</li>
+            <li>📝 Documentation preserves insights</li>
+            <li>⚖️ A/B testing optimizes features</li>
+        </ul>
+    </div>
+
+    <h2>Congratulations!</h2>
+    
+    <div style="background-color: #e8f5e9; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎉 You've Completed Section 2: Game Polish & Feel!</h3>
+        <p>You've mastered the art of game polish, from screen shake to playtesting! Your games will now feel professional and polished!</p>
+        
+        <h4>Section Summary:</h4>
+        <ul>
+            <li>✅ Screen Shake and Effects</li>
+            <li>✅ Tweening and Juice</li>
+            <li>✅ Sound Design</li>
+            <li>✅ Difficulty Balancing</li>
+            <li>✅ Playtesting Methods</li>
+        </ul>
+        
+        <p>Continue to the next section to learn about multiplayer and networking!</p>
+    </div>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="polish_difficulty.html" class="prev-lesson" aria-label="Previous lesson: Difficulty Balancing">Previous Lesson: Difficulty Balancing</a>
+        <a href="networking_basics.html" class="next-lesson" aria-label="Next section: Multiplayer & Networking">Next Section: Multiplayer & Networking</a>
+    </nav>
+    
+    </main>
+    <script src="/js/course-enhancements.js" defer></script>
+</body>
+</html>

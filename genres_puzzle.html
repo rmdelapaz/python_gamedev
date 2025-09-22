@@ -12,6 +12,47 @@
       import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
       mermaid.initialize({ startOnLoad: true });
     </script>
+    <style>
+        .game-controls button {
+            margin: 2px;
+            padding: 8px 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .game-controls button:hover {
+            background-color: #45a049;
+            transform: translateY(-2px);
+        }
+        .game-controls button:active {
+            transform: translateY(0);
+        }
+        .game-controls button.active {
+            background-color: #2196F3;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        .game-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin: 10px auto;
+            padding: 15px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 10px;
+            max-width: 800px;
+        }
+        .stat-item {
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 5px;
+            text-align: center;
+            color: white;
+        }
+    </style>
 </head>
 <body>
     <!-- Skip to main content for accessibility -->
@@ -25,7 +66,7 @@
     <main id="main-content">
     <header role="banner">
         <h1>Puzzle Game Logic</h1>
-        <div class="reading-time" aria-label="Estimated reading time"></div>
+        <div class="reading-time" aria-label="Estimated reading time">20 minute read</div>
     </header>
     
     <!-- Breadcrumb Navigation -->
@@ -83,229 +124,201 @@
     <h2>Interactive Multi-Puzzle Demo</h2>
     
     <div class="canvas-wrapper" style="text-align: center;">
-        <canvas id="puzzleCanvas" width="800" height="600" style="border: 1px solid #333; display: inline-block;"></canvas>
+        <canvas id="puzzleCanvas" width="800" height="600" style="border: 2px solid #333; background: #2c3e50; display: inline-block;"></canvas>
     </div>
-    <div style="text-align: center; margin-top: 10px;">
+    
+    <div class="game-controls" style="text-align: center; margin-top: 10px;">
         <p>Experience different puzzle mechanics - Match gems, slide tiles, launch projectiles, and solve logic gates!</p>
         
         <!-- Puzzle Type Selector -->
         <div style="margin: 10px auto; padding: 10px; background-color: rgba(0,0,0,0.3); border-radius: 5px;">
             <h4 style="color: white;">Select Puzzle Type:</h4>
-            <button id="btn-match3" onclick="switchPuzzle('match3')">💎 Match-3</button>
-            <button id="btn-sliding" onclick="switchPuzzle('sliding')">🔢 Sliding</button>
-            <button id="btn-physics" onclick="switchPuzzle('physics')">🎯 Physics</button>
-            <button id="btn-pattern" onclick="switchPuzzle('pattern')">🎨 Pattern</button>
-            <button id="btn-logic" onclick="switchPuzzle('logic')">⚡ Logic Gates</button>
+            <button id="btn-match3" class="active">💎 Match-3</button>
+            <button id="btn-sliding">🔢 Sliding</button>
+            <button id="btn-physics">🎯 Physics</button>
+            <button id="btn-pattern">🎨 Pattern</button>
+            <button id="btn-logic">⚡ Logic Gates</button>
         </div>
         
         <!-- Game Controls -->
         <div style="margin: 10px auto; padding: 10px; background-color: rgba(0,0,0,0.3); border-radius: 5px; max-width: 800px;">
             <p style="color: white; margin: 5px;" id="controlsText">
-                Match-3: Click to select, click adjacent gem to swap | Drag to swap
+                Match-3: Click to select, click adjacent gem to swap
             </p>
         </div>
         
         <!-- Game Actions -->
         <div style="margin: 10px auto;">
-            <button onclick="resetPuzzle()">🔄 Reset</button>
-            <button onclick="getHint()">💡 Hint</button>
-            <button onclick="shuffleBoard()">🔀 Shuffle</button>
-            <button onclick="undoMove()">↩️ Undo</button>
-            <button id="solveBtn" onclick="autoSolve()" style="display: none;">🤖 Auto-Solve</button>
+            <button onclick="puzzleGame.reset()">🔄 Reset</button>
+            <button onclick="puzzleGame.hint()">💡 Hint</button>
+            <button onclick="puzzleGame.shuffle()">🔀 Shuffle</button>
         </div>
         
         <!-- Game Stats -->
-        <div style="margin-top: 10px; background-color: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
-                <div style="color: white;">
-                    🏆 Score: <span id="score">0</span>
-                </div>
-                <div style="color: white;">
-                    🎯 Moves: <span id="moves">0</span>
-                </div>
-                <div style="color: white;">
-                    ⏱️ Time: <span id="timer">0:00</span>
-                </div>
-                <div style="color: white;">
-                    ⚡ Combo: <span id="combo">1x</span>
-                </div>
+        <div class="game-stats">
+            <div class="stat-item">
+                🏆 Score: <span id="score">0</span>
             </div>
-        </div>
-        
-        <!-- Level Progress -->
-        <div style="margin-top: 10px; background-color: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;">
-            <div style="color: white; margin-bottom: 5px;">Level Progress:</div>
-            <div style="width: 100%; height: 20px; background-color: rgba(0,0,0,0.5); border-radius: 10px; overflow: hidden;">
-                <div id="progressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #4CAF50, #8BC34A); transition: width 0.3s;"></div>
+            <div class="stat-item">
+                🎯 Moves: <span id="moves">0</span>
+            </div>
+            <div class="stat-item">
+                ⏱️ Time: <span id="timer">0:00</span>
+            </div>
+            <div class="stat-item">
+                ⚡ Combo: <span id="combo">1x</span>
             </div>
         </div>
     </div>
 
-    <style>
-        button {
-            margin: 2px;
-            padding: 8px 12px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s;
-        }
-        button:hover {
-            background-color: #45a049;
-            transform: translateY(-2px);
-        }
-        button:active {
-            transform: translateY(0);
-        }
-        button.active {
-            background-color: #2196F3;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-        }
-    </style>
-
     <script>
-        // Wait for DOM to be fully loaded
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, initializing Puzzle Game Demo...');
-
-            const canvas = document.getElementById('puzzleCanvas');
-            if (!canvas) {
-                console.error('Canvas element not found!');
-                return;
-            }
-            
-            const ctx = canvas.getContext('2d');
-            if (!ctx) {
-                console.error('Could not get 2D context!');
-                return;
-            }
-            
-            console.log('Canvas initialized:', canvas.width, 'x', canvas.height);
-
-            // Game state
-            let currentPuzzleType = 'match3';
-            let score = 0;
-            let moves = 0;
-            let combo = 1;
-            let startTime = Date.now();
-            let moveHistory = [];
-            let animationQueue = [];
-
-            // Input handling
-            const mouse = { x: 0, y: 0, down: false, dragStart: null };
-            
-            canvas.addEventListener('mousemove', e => {
-                const rect = canvas.getBoundingClientRect();
-                mouse.x = e.clientX - rect.left;
-                mouse.y = e.clientY - rect.top;
-                
-                if (mouse.down && mouse.dragStart) {
-                    puzzles[currentPuzzleType].handleDrag(mouse.x, mouse.y);
-                }
-            });
-            
-            canvas.addEventListener('mousedown', e => {
-                mouse.down = true;
-                mouse.dragStart = { x: mouse.x, y: mouse.y };
-                puzzles[currentPuzzleType].handleMouseDown(mouse.x, mouse.y);
-            });
-            
-            canvas.addEventListener('mouseup', e => {
-                if (mouse.dragStart) {
-                    puzzles[currentPuzzleType].handleMouseUp(mouse.x, mouse.y);
-                }
-                mouse.down = false;
-                mouse.dragStart = null;
-            });
-
-            // Match-3 Puzzle
-            class Match3Puzzle {
+        // Puzzle Game System
+        class PuzzleGame {
             constructor() {
+                this.canvas = document.getElementById('puzzleCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.currentPuzzle = 'match3';
+                this.score = 0;
+                this.moves = 0;
+                this.combo = 1;
+                this.startTime = Date.now();
+                
+                this.puzzles = {
+                    match3: new Match3Puzzle(this),
+                    sliding: new SlidingPuzzle(this),
+                    physics: new PhysicsPuzzle(this),
+                    pattern: new PatternPuzzle(this),
+                    logic: new LogicPuzzle(this)
+                };
+                
+                this.init();
+            }
+            
+            init() {
+                // Set up event listeners
+                this.canvas.addEventListener('click', (e) => this.handleClick(e));
+                
+                // Set up button listeners
+                document.getElementById('btn-match3').addEventListener('click', () => this.switchPuzzle('match3'));
+                document.getElementById('btn-sliding').addEventListener('click', () => this.switchPuzzle('sliding'));
+                document.getElementById('btn-physics').addEventListener('click', () => this.switchPuzzle('physics'));
+                document.getElementById('btn-pattern').addEventListener('click', () => this.switchPuzzle('pattern'));
+                document.getElementById('btn-logic').addEventListener('click', () => this.switchPuzzle('logic'));
+                
+                // Start game loop
+                this.gameLoop();
+            }
+            
+            handleClick(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                this.puzzles[this.currentPuzzle].handleClick(x, y);
+            }
+            
+            switchPuzzle(type) {
+                this.currentPuzzle = type;
+                this.reset();
+                
+                // Update buttons
+                document.querySelectorAll('.game-controls button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.getElementById(`btn-${type}`).classList.add('active');
+                
+                // Update instructions
+                const instructions = {
+                    match3: 'Match-3: Click to select, click adjacent gem to swap',
+                    sliding: 'Sliding: Click tiles next to empty space to move',
+                    physics: 'Physics: Click to launch projectile at targets',
+                    pattern: 'Pattern: Watch the sequence, then repeat it',
+                    logic: 'Logic: Toggle inputs to make output match target'
+                };
+                document.getElementById('controlsText').textContent = instructions[type];
+            }
+            
+            reset() {
+                this.puzzles[this.currentPuzzle].init();
+                this.score = 0;
+                this.moves = 0;
+                this.combo = 1;
+                this.startTime = Date.now();
+            }
+            
+            hint() {
+                this.puzzles[this.currentPuzzle].hint();
+            }
+            
+            shuffle() {
+                this.puzzles[this.currentPuzzle].shuffle();
+            }
+            
+            updateStats() {
+                document.getElementById('score').textContent = this.score;
+                document.getElementById('moves').textContent = this.moves;
+                document.getElementById('combo').textContent = this.combo + 'x';
+                
+                const elapsed = Math.floor((Date.now() - this.startTime) / 1000);
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = elapsed % 60;
+                document.getElementById('timer').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            }
+            
+            gameLoop() {
+                // Clear canvas
+                this.ctx.fillStyle = '#2c3e50';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Update and render current puzzle
+                this.puzzles[this.currentPuzzle].update();
+                this.puzzles[this.currentPuzzle].render();
+                
+                // Update UI
+                this.updateStats();
+                
+                requestAnimationFrame(() => this.gameLoop());
+            }
+        }
+        
+        // Match-3 Puzzle
+        class Match3Puzzle {
+            constructor(game) {
+                this.game = game;
                 this.gridSize = 8;
-                this.gemSize = 60;
-                this.gemTypes = 6;
+                this.tileSize = 60;
                 this.grid = [];
                 this.selected = null;
-                this.animating = false;
-                this.cascadeCount = 0;
-                
-                this.gemColors = [
-                    '#FF6B6B', // Red
-                    '#4ECDC4', // Teal
-                    '#45B7D1', // Blue
-                    '#96E6A1', // Green
-                    '#FFEAA7', // Yellow
-                    '#DDA0DD'  // Purple
-                ];
-                
-                this.gemShapes = ['💎', '💠', '🔷', '🔶', '💚', '💜'];
-                this.initialize();
+                this.colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96E6A1', '#FFEAA7', '#DDA0DD'];
+                this.init();
             }
             
-            initialize() {
+            init() {
                 this.grid = [];
                 for (let y = 0; y < this.gridSize; y++) {
                     this.grid[y] = [];
                     for (let x = 0; x < this.gridSize; x++) {
-                        let gem;
-                        do {
-                            gem = Math.floor(Math.random() * this.gemTypes);
-                        } while (this.wouldCreateMatch(x, y, gem));
-                        
-                        this.grid[y][x] = {
-                            type: gem,
-                            x: x * this.gemSize + 100,
-                            y: y * this.gemSize + 50,
-                            targetX: x * this.gemSize + 100,
-                            targetY: y * this.gemSize + 50,
-                            scale: 1,
-                            alpha: 1,
-                            marked: false
-                        };
+                        this.grid[y][x] = Math.floor(Math.random() * 6);
                     }
                 }
+                this.selected = null;
             }
             
-            wouldCreateMatch(x, y, type) {
-                // Check horizontal
-                if (x >= 2) {
-                    if (this.grid[y][x-1]?.type === type && 
-                        this.grid[y][x-2]?.type === type) {
-                        return true;
-                    }
-                }
+            handleClick(mx, my) {
+                const gridX = Math.floor((mx - 100) / this.tileSize);
+                const gridY = Math.floor((my - 50) / this.tileSize);
                 
-                // Check vertical
-                if (y >= 2) {
-                    if (this.grid[y-1]?.[x]?.type === type && 
-                        this.grid[y-2]?.[x]?.type === type) {
-                        return true;
-                    }
-                }
-                
-                return false;
-            }
-            
-            handleMouseDown(mx, my) {
-                if (this.animating) return;
-                
-                const gridX = Math.floor((mx - 100) / this.gemSize);
-                const gridY = Math.floor((my - 50) / this.gemSize);
-                
-                if (gridX >= 0 && gridX < this.gridSize && 
-                    gridY >= 0 && gridY < this.gridSize) {
-                    
+                if (gridX >= 0 && gridX < this.gridSize && gridY >= 0 && gridY < this.gridSize) {
                     if (this.selected) {
-                        const sx = this.selected.x;
-                        const sy = this.selected.y;
+                        const dx = Math.abs(gridX - this.selected.x);
+                        const dy = Math.abs(gridY - this.selected.y);
                         
-                        // Check if adjacent
-                        if ((Math.abs(gridX - sx) === 1 && gridY === sy) ||
-                            (Math.abs(gridY - sy) === 1 && gridX === sx)) {
-                            this.swapGems(sx, sy, gridX, gridY);
+                        if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
+                            // Swap gems
+                            const temp = this.grid[gridY][gridX];
+                            this.grid[gridY][gridX] = this.grid[this.selected.y][this.selected.x];
+                            this.grid[this.selected.y][this.selected.x] = temp;
+                            this.game.moves++;
+                            this.game.score += 10;
                         }
                         this.selected = null;
                     } else {
@@ -314,394 +327,78 @@
                 }
             }
             
-            handleDrag(mx, my) {
-                // Implement drag-to-swap
-                if (!mouse.dragStart || this.animating) return;
-                
-                const startX = Math.floor((mouse.dragStart.x - 100) / this.gemSize);
-                const startY = Math.floor((mouse.dragStart.y - 50) / this.gemSize);
-                const endX = Math.floor((mx - 100) / this.gemSize);
-                const endY = Math.floor((my - 50) / this.gemSize);
-                
-                if (startX !== endX || startY !== endY) {
-                    if ((Math.abs(endX - startX) === 1 && endY === startY) ||
-                        (Math.abs(endY - startY) === 1 && endX === startX)) {
-                        this.swapGems(startX, startY, endX, endY);
-                        mouse.dragStart = null;
-                    }
-                }
-            }
-            
-            handleMouseUp(mx, my) {
-                // Handle mouse up
-            }
-            
-            swapGems(x1, y1, x2, y2) {
-                if (this.animating) return;
-                
-                // Store move for undo
-                moveHistory.push({ 
-                    type: 'swap', 
-                    x1, y1, x2, y2,
-                    gem1: this.grid[y1][x1].type,
-                    gem2: this.grid[y2][x2].type
-                });
-                
-                // Swap gems
-                const temp = this.grid[y1][x1];
-                this.grid[y1][x1] = this.grid[y2][x2];
-                this.grid[y2][x2] = temp;
-                
-                // Update positions
-                this.grid[y1][x1].targetX = x1 * this.gemSize + 100;
-                this.grid[y1][x1].targetY = y1 * this.gemSize + 50;
-                this.grid[y2][x2].targetX = x2 * this.gemSize + 100;
-                this.grid[y2][x2].targetY = y2 * this.gemSize + 50;
-                
-                moves++;
-                this.animating = true;
-                this.cascadeCount = 0;
-                
-                // Check for matches after animation
-                setTimeout(() => {
-                    const matches = this.findMatches();
-                    if (matches.length > 0) {
-                        this.removeMatches(matches);
-                    } else {
-                        // Swap back if no matches
-                        const temp = this.grid[y1][x1];
-                        this.grid[y1][x1] = this.grid[y2][x2];
-                        this.grid[y2][x2] = temp;
-                        this.grid[y1][x1].targetX = x1 * this.gemSize + 100;
-                        this.grid[y1][x1].targetY = y1 * this.gemSize + 50;
-                        this.grid[y2][x2].targetX = x2 * this.gemSize + 100;
-                        this.grid[y2][x2].targetY = y2 * this.gemSize + 50;
-                        moveHistory.pop();
-                        moves--;
-                    }
-                    this.animating = false;
-                }, 300);
-            }
-            
-            findMatches() {
-                const matches = [];
-                
-                // Check horizontal matches
-                for (let y = 0; y < this.gridSize; y++) {
-                    for (let x = 0; x < this.gridSize - 2; x++) {
-                        const type = this.grid[y][x].type;
-                        if (type === this.grid[y][x+1].type && 
-                            type === this.grid[y][x+2].type) {
-                            
-                            let matchLength = 3;
-                            while (x + matchLength < this.gridSize && 
-                                   this.grid[y][x + matchLength].type === type) {
-                                matchLength++;
-                            }
-                            
-                            for (let i = 0; i < matchLength; i++) {
-                                if (!this.grid[y][x+i].marked) {
-                                    matches.push({ x: x+i, y: y });
-                                    this.grid[y][x+i].marked = true;
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                // Check vertical matches
-                for (let x = 0; x < this.gridSize; x++) {
-                    for (let y = 0; y < this.gridSize - 2; y++) {
-                        const type = this.grid[y][x].type;
-                        if (type === this.grid[y+1][x].type && 
-                            type === this.grid[y+2][x].type) {
-                            
-                            let matchLength = 3;
-                            while (y + matchLength < this.gridSize && 
-                                   this.grid[y + matchLength][x].type === type) {
-                                matchLength++;
-                            }
-                            
-                            for (let i = 0; i < matchLength; i++) {
-                                if (!this.grid[y+i][x].marked) {
-                                    matches.push({ x: x, y: y+i });
-                                    this.grid[y+i][x].marked = true;
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                // Clear marked flags
-                for (let y = 0; y < this.gridSize; y++) {
-                    for (let x = 0; x < this.gridSize; x++) {
-                        this.grid[y][x].marked = false;
-                    }
-                }
-                
-                return matches;
-            }
-            
-            removeMatches(matches) {
-                this.cascadeCount++;
-                combo = this.cascadeCount;
-                
-                // Animate removal
-                for (const match of matches) {
-                    this.grid[match.y][match.x].scale = 0;
-                    this.grid[match.y][match.x].alpha = 0;
-                }
-                
-                // Calculate score
-                const baseScore = matches.length * 10;
-                const comboMultiplier = Math.pow(2, this.cascadeCount - 1);
-                score += baseScore * comboMultiplier;
-                
-                setTimeout(() => {
-                    // Remove gems and drop
-                    for (const match of matches) {
-                        this.grid[match.y][match.x] = null;
-                    }
-                    
-                    this.dropGems();
-                    this.fillEmpty();
-                    
-                    // Check for cascading matches
-                    setTimeout(() => {
-                        const newMatches = this.findMatches();
-                        if (newMatches.length > 0) {
-                            this.removeMatches(newMatches);
-                        } else {
-                            combo = 1;
-                            this.cascadeCount = 0;
-                        }
-                    }, 300);
-                }, 200);
-            }
-            
-            dropGems() {
-                for (let x = 0; x < this.gridSize; x++) {
-                    let writePos = this.gridSize - 1;
-                    
-                    for (let y = this.gridSize - 1; y >= 0; y--) {
-                        if (this.grid[y][x] !== null) {
-                            if (y !== writePos) {
-                                this.grid[writePos][x] = this.grid[y][x];
-                                this.grid[writePos][x].targetY = writePos * this.gemSize + 50;
-                                this.grid[y][x] = null;
-                            }
-                            writePos--;
-                        }
-                    }
-                }
-            }
-            
-            fillEmpty() {
-                for (let y = 0; y < this.gridSize; y++) {
-                    for (let x = 0; x < this.gridSize; x++) {
-                        if (this.grid[y][x] === null) {
-                            this.grid[y][x] = {
-                                type: Math.floor(Math.random() * this.gemTypes),
-                                x: x * this.gemSize + 100,
-                                y: -this.gemSize,
-                                targetX: x * this.gemSize + 100,
-                                targetY: y * this.gemSize + 50,
-                                scale: 1,
-                                alpha: 1,
-                                marked: false
-                            };
-                        }
-                    }
-                }
-            }
-            
-            findPossibleMoves() {
-                const moves = [];
-                
-                for (let y = 0; y < this.gridSize; y++) {
-                    for (let x = 0; x < this.gridSize; x++) {
-                        // Try swapping with right neighbor
-                        if (x < this.gridSize - 1) {
-                            this.swapForTest(x, y, x+1, y);
-                            if (this.findMatches().length > 0) {
-                                moves.push({ x1: x, y1: y, x2: x+1, y2: y });
-                            }
-                            this.swapForTest(x, y, x+1, y); // Swap back
-                        }
-                        
-                        // Try swapping with bottom neighbor
-                        if (y < this.gridSize - 1) {
-                            this.swapForTest(x, y, x, y+1);
-                            if (this.findMatches().length > 0) {
-                                moves.push({ x1: x, y1: y, x2: x, y2: y+1 });
-                            }
-                            this.swapForTest(x, y, x, y+1); // Swap back
-                        }
-                    }
-                }
-                
-                return moves;
-            }
-            
-            swapForTest(x1, y1, x2, y2) {
-                const temp = this.grid[y1][x1];
-                this.grid[y1][x1] = this.grid[y2][x2];
-                this.grid[y2][x2] = temp;
-            }
-            
-            getHint() {
-                const moves = this.findPossibleMoves();
-                if (moves.length > 0) {
-                    const move = moves[Math.floor(Math.random() * moves.length)];
-                    // Highlight the suggested move
-                    this.grid[move.y1][move.x1].scale = 1.2;
-                    this.grid[move.y2][move.x2].scale = 1.2;
-                    
-                    setTimeout(() => {
-                        this.grid[move.y1][move.x1].scale = 1;
-                        this.grid[move.y2][move.x2].scale = 1;
-                    }, 1000);
-                }
+            hint() {
+                // Simple hint: highlight a random gem
+                const x = Math.floor(Math.random() * this.gridSize);
+                const y = Math.floor(Math.random() * this.gridSize);
+                this.selected = { x, y };
+                setTimeout(() => { this.selected = null; }, 1000);
             }
             
             shuffle() {
-                const gems = [];
-                for (let y = 0; y < this.gridSize; y++) {
-                    for (let x = 0; x < this.gridSize; x++) {
-                        gems.push(this.grid[y][x].type);
-                    }
-                }
-                
-                // Fisher-Yates shuffle
-                for (let i = gems.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [gems[i], gems[j]] = [gems[j], gems[i]];
-                }
-                
-                let index = 0;
-                for (let y = 0; y < this.gridSize; y++) {
-                    for (let x = 0; x < this.gridSize; x++) {
-                        this.grid[y][x].type = gems[index++];
-                    }
-                }
-                
-                // Remove any existing matches
-                const matches = this.findMatches();
-                if (matches.length > 0) {
-                    this.shuffle();
-                }
+                this.init();
             }
             
             update() {
-                // Animate gems
-                for (let y = 0; y < this.gridSize; y++) {
-                    for (let x = 0; x < this.gridSize; x++) {
-                        const gem = this.grid[y][x];
-                        if (gem) {
-                            // Move towards target
-                            gem.x += (gem.targetX - gem.x) * 0.2;
-                            gem.y += (gem.targetY - gem.y) * 0.2;
-                            
-                            // Scale animation
-                            if (gem.scale < 1) {
-                                gem.scale += 0.05;
-                            } else if (gem.scale > 1) {
-                                gem.scale -= 0.02;
-                            }
-                        }
-                    }
-                }
+                // Animation updates would go here
             }
             
             render() {
-                // Draw grid background
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-                ctx.fillRect(95, 45, this.gridSize * this.gemSize + 10, this.gridSize * this.gemSize + 10);
+                const ctx = this.game.ctx;
                 
-                // Draw grid lines
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-                ctx.lineWidth = 1;
-                for (let i = 0; i <= this.gridSize; i++) {
-                    ctx.beginPath();
-                    ctx.moveTo(100 + i * this.gemSize, 50);
-                    ctx.lineTo(100 + i * this.gemSize, 50 + this.gridSize * this.gemSize);
-                    ctx.stroke();
-                    
-                    ctx.beginPath();
-                    ctx.moveTo(100, 50 + i * this.gemSize);
-                    ctx.lineTo(100 + this.gridSize * this.gemSize, 50 + i * this.gemSize);
-                    ctx.stroke();
-                }
+                // Draw grid background
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                ctx.fillRect(95, 45, this.gridSize * this.tileSize + 10, this.gridSize * this.tileSize + 10);
                 
                 // Draw gems
                 for (let y = 0; y < this.gridSize; y++) {
                     for (let x = 0; x < this.gridSize; x++) {
-                        const gem = this.grid[y][x];
-                        if (gem && gem.alpha > 0) {
-                            ctx.save();
-                            ctx.globalAlpha = gem.alpha;
-                            ctx.translate(gem.x + this.gemSize/2, gem.y + this.gemSize/2);
-                            ctx.scale(gem.scale, gem.scale);
-                            
-                            // Draw gem
-                            ctx.fillStyle = this.gemColors[gem.type];
-                            ctx.beginPath();
-                            ctx.arc(0, 0, this.gemSize/2 - 5, 0, Math.PI * 2);
-                            ctx.fill();
-                            
-                            // Draw highlight
-                            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-                            ctx.beginPath();
-                            ctx.arc(-this.gemSize/6, -this.gemSize/6, this.gemSize/4, 0, Math.PI * 2);
-                            ctx.fill();
-                            
-                            // Draw shape
-                            ctx.font = '30px Arial';
-                            ctx.fillStyle = 'white';
-                            ctx.textAlign = 'center';
-                            ctx.textBaseline = 'middle';
-                            ctx.fillText(this.gemShapes[gem.type], 0, 0);
-                            
-                            ctx.restore();
-                        }
+                        const px = 100 + x * this.tileSize;
+                        const py = 50 + y * this.tileSize;
+                        
+                        // Draw gem
+                        ctx.fillStyle = this.colors[this.grid[y][x]];
+                        ctx.beginPath();
+                        ctx.arc(px + this.tileSize/2, py + this.tileSize/2, this.tileSize/2 - 5, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // Draw highlight
+                        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                        ctx.beginPath();
+                        ctx.arc(px + this.tileSize/3, py + this.tileSize/3, this.tileSize/4, 0, Math.PI * 2);
+                        ctx.fill();
                         
                         // Draw selection
                         if (this.selected && this.selected.x === x && this.selected.y === y) {
                             ctx.strokeStyle = '#FFD700';
                             ctx.lineWidth = 3;
-                            ctx.strokeRect(
-                                x * this.gemSize + 100,
-                                y * this.gemSize + 50,
-                                this.gemSize,
-                                this.gemSize
-                            );
+                            ctx.strokeRect(px, py, this.tileSize, this.tileSize);
                         }
                     }
                 }
             }
         }
-
-        // Simplified other puzzle classes for brevity
+        
+        // Sliding Puzzle
         class SlidingPuzzle {
-            constructor() {
+            constructor(game) {
+                this.game = game;
                 this.size = 4;
                 this.tileSize = 80;
                 this.grid = [];
                 this.emptyPos = { x: 3, y: 3 };
-                this.solved = false;
-                this.initialize();
+                this.init();
             }
             
-            initialize() {
-                // Create solved state
+            init() {
+                // Create solved puzzle
                 this.grid = [];
                 let num = 1;
-                
                 for (let y = 0; y < this.size; y++) {
                     this.grid[y] = [];
                     for (let x = 0; x < this.size; x++) {
                         if (y === this.size - 1 && x === this.size - 1) {
-                            this.grid[y][x] = 0; // Empty tile
+                            this.grid[y][x] = 0;
                         } else {
                             this.grid[y][x] = num++;
                         }
@@ -709,49 +406,40 @@
                 }
                 
                 this.emptyPos = { x: this.size - 1, y: this.size - 1 };
-                this.shuffle();
-            }
-            
-            shuffle() {
-                // Make valid random moves
+                
+                // Shuffle with valid moves
                 for (let i = 0; i < 100; i++) {
-                    const validMoves = this.getValidMoves();
-                    const move = validMoves[Math.floor(Math.random() * validMoves.length)];
-                    this.moveTile(move.x, move.y, false);
-                }
-                moves = 0;
-            }
-            
-            getValidMoves() {
-                const moves = [];
-                const { x, y } = this.emptyPos;
-                
-                if (x > 0) moves.push({ x: x - 1, y });
-                if (x < this.size - 1) moves.push({ x: x + 1, y });
-                if (y > 0) moves.push({ x, y: y - 1 });
-                if (y < this.size - 1) moves.push({ x, y: y + 1 });
-                
-                return moves;
-            }
-            
-            moveTile(x, y, countMove = true) {
-                if (Math.abs(x - this.emptyPos.x) + Math.abs(y - this.emptyPos.y) === 1) {
-                    // Store move for undo
-                    if (countMove) {
-                        moveHistory.push({
-                            type: 'slide',
-                            from: { x, y },
-                            to: { ...this.emptyPos }
-                        });
-                        moves++;
+                    const dirs = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+                    const dir = dirs[Math.floor(Math.random() * 4)];
+                    const newX = this.emptyPos.x + dir[0];
+                    const newY = this.emptyPos.y + dir[1];
+                    
+                    if (newX >= 0 && newX < this.size && newY >= 0 && newY < this.size) {
+                        this.grid[this.emptyPos.y][this.emptyPos.x] = this.grid[newY][newX];
+                        this.grid[newY][newX] = 0;
+                        this.emptyPos = { x: newX, y: newY };
                     }
+                }
+            }
+            
+            handleClick(mx, my) {
+                const gridX = Math.floor((mx - 250) / this.tileSize);
+                const gridY = Math.floor((my - 150) / this.tileSize);
+                
+                if (gridX >= 0 && gridX < this.size && gridY >= 0 && gridY < this.size) {
+                    const dx = Math.abs(gridX - this.emptyPos.x);
+                    const dy = Math.abs(gridY - this.emptyPos.y);
                     
-                    // Swap with empty
-                    this.grid[this.emptyPos.y][this.emptyPos.x] = this.grid[y][x];
-                    this.grid[y][x] = 0;
-                    this.emptyPos = { x, y };
-                    
-                    this.checkWin();
+                    if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
+                        this.grid[this.emptyPos.y][this.emptyPos.x] = this.grid[gridY][gridX];
+                        this.grid[gridY][gridX] = 0;
+                        this.emptyPos = { x: gridX, y: gridY };
+                        this.game.moves++;
+                        
+                        if (this.checkWin()) {
+                            this.game.score += 100;
+                        }
+                    }
                 }
             }
             
@@ -760,53 +448,33 @@
                 for (let y = 0; y < this.size; y++) {
                     for (let x = 0; x < this.size; x++) {
                         if (y === this.size - 1 && x === this.size - 1) {
-                            if (this.grid[y][x] !== 0) return;
+                            if (this.grid[y][x] !== 0) return false;
                         } else {
-                            if (this.grid[y][x] !== expected++) return;
+                            if (this.grid[y][x] !== expected++) return false;
                         }
                     }
                 }
-                
-                this.solved = true;
-                score += 1000;
+                return true;
             }
             
-            handleMouseDown(mx, my) {
-                const gridX = Math.floor((mx - 250) / this.tileSize);
-                const gridY = Math.floor((my - 150) / this.tileSize);
-                
-                if (gridX >= 0 && gridX < this.size && 
-                    gridY >= 0 && gridY < this.size) {
-                    this.moveTile(gridX, gridY);
-                }
-            }
-            
-            handleDrag() {}
-            handleMouseUp() {}
-            
-            getHint() {
-                // Highlight tiles adjacent to empty space
-                const moves = this.getValidMoves();
-                for (const move of moves) {
-                    // Visual hint effect
-                }
+            hint() {
+                // Flash tiles next to empty space
             }
             
             shuffle() {
-                this.initialize();
+                this.init();
             }
             
             update() {}
             
             render() {
+                const ctx = this.game.ctx;
                 const offsetX = 250;
                 const offsetY = 150;
                 
-                // Draw background
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-                ctx.fillRect(offsetX - 5, offsetY - 5, 
-                           this.size * this.tileSize + 10, 
-                           this.size * this.tileSize + 10);
+                // Background
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                ctx.fillRect(offsetX - 5, offsetY - 5, this.size * this.tileSize + 10, this.size * this.tileSize + 10);
                 
                 // Draw tiles
                 for (let y = 0; y < this.size; y++) {
@@ -817,838 +485,348 @@
                             const tileX = offsetX + x * this.tileSize;
                             const tileY = offsetY + y * this.tileSize;
                             
-                            // Tile background
-                            ctx.fillStyle = this.solved ? '#4CAF50' : '#2196F3';
-                            ctx.fillRect(tileX + 2, tileY + 2, 
-                                       this.tileSize - 4, this.tileSize - 4);
+                            ctx.fillStyle = this.checkWin() ? '#4CAF50' : '#2196F3';
+                            ctx.fillRect(tileX + 2, tileY + 2, this.tileSize - 4, this.tileSize - 4);
                             
-                            // Tile border
-                            ctx.strokeStyle = '#fff';
+                            ctx.strokeStyle = 'white';
                             ctx.lineWidth = 2;
-                            ctx.strokeRect(tileX + 2, tileY + 2, 
-                                         this.tileSize - 4, this.tileSize - 4);
+                            ctx.strokeRect(tileX + 2, tileY + 2, this.tileSize - 4, this.tileSize - 4);
                             
-                            // Tile number
                             ctx.fillStyle = 'white';
                             ctx.font = 'bold 36px Arial';
                             ctx.textAlign = 'center';
                             ctx.textBaseline = 'middle';
-                            ctx.fillText(value.toString(), 
-                                       tileX + this.tileSize/2, 
-                                       tileY + this.tileSize/2);
+                            ctx.fillText(value.toString(), tileX + this.tileSize/2, tileY + this.tileSize/2);
                         }
                     }
                 }
                 
-                if (this.solved) {
+                if (this.checkWin()) {
                     ctx.fillStyle = '#4CAF50';
                     ctx.font = 'bold 48px Arial';
                     ctx.textAlign = 'center';
-                    ctx.fillText('SOLVED!', canvas.width/2, 100);
+                    ctx.fillText('SOLVED!', this.game.canvas.width/2, 100);
                 }
             }
         }
-
-        // Physics Puzzle - Angry Birds style
+        
+        // Physics Puzzle
         class PhysicsPuzzle {
-            constructor() {
-                this.projectile = null;
+            constructor(game) {
+                this.game = game;
+                this.projectile = { x: 100, y: 400, vx: 0, vy: 0, launched: false };
                 this.targets = [];
-                this.obstacles = [];
-                this.launchPower = 0;
-                this.launchAngle = -Math.PI/4;
-                this.charging = false;
-                this.gravity = 0.5;
-                this.trails = [];
-                this.initialize();
+                this.init();
             }
             
-            initialize() {
-                // Reset projectile
-                this.projectile = {
-                    x: 100,
-                    y: 400,
-                    vx: 0,
-                    vy: 0,
-                    radius: 10,
-                    launched: false,
-                    color: '#FF6B6B'
-                };
-                
-                // Create targets
+            init() {
+                this.projectile = { x: 100, y: 400, vx: 0, vy: 0, launched: false };
                 this.targets = [];
-                for (let i = 0; i < 5; i++) {
+                for (let i = 0; i < 3; i++) {
                     this.targets.push({
                         x: 500 + Math.random() * 200,
                         y: 200 + Math.random() * 200,
-                        radius: 20,
-                        hit: false,
-                        color: '#4ECDC4'
+                        hit: false
                     });
                 }
-                
-                // Create obstacles
-                this.obstacles = [];
-                for (let i = 0; i < 3; i++) {
-                    this.obstacles.push({
-                        x: 300 + i * 100,
-                        y: 300 + Math.random() * 100,
-                        width: 60,
-                        height: 80,
-                        color: '#8B4513'
-                    });
-                }
-                
-                this.trails = [];
-                moves = 0;
             }
             
-            handleMouseDown(mx, my) {
+            handleClick(mx, my) {
                 if (!this.projectile.launched) {
-                    this.charging = true;
-                    this.launchPower = 0;
-                }
-            }
-            
-            handleDrag(mx, my) {
-                if (this.charging && !this.projectile.launched) {
-                    // Calculate angle and power based on mouse position
                     const dx = mx - this.projectile.x;
                     const dy = my - this.projectile.y;
-                    this.launchAngle = Math.atan2(dy, dx);
-                    this.launchPower = Math.min(20, Math.sqrt(dx*dx + dy*dy) / 10);
-                }
-            }
-            
-            handleMouseUp(mx, my) {
-                if (this.charging && !this.projectile.launched) {
-                    // Launch projectile
-                    this.projectile.vx = Math.cos(this.launchAngle) * this.launchPower;
-                    this.projectile.vy = Math.sin(this.launchAngle) * this.launchPower;
-                    this.projectile.launched = true;
-                    this.charging = false;
-                    moves++;
+                    const angle = Math.atan2(dy, dx);
+                    const power = Math.min(20, Math.sqrt(dx*dx + dy*dy) / 10);
                     
-                    // Store move for undo
-                    moveHistory.push({
-                        type: 'launch',
-                        angle: this.launchAngle,
-                        power: this.launchPower
-                    });
+                    this.projectile.vx = Math.cos(angle) * power;
+                    this.projectile.vy = Math.sin(angle) * power;
+                    this.projectile.launched = true;
+                    this.game.moves++;
                 }
             }
             
-            getHint() {
-                // Show trajectory preview
-                const bestTarget = this.targets.find(t => !t.hit);
-                if (bestTarget) {
-                    // Calculate optimal angle
-                    const dx = bestTarget.x - this.projectile.x;
-                    const dy = bestTarget.y - this.projectile.y;
-                    this.launchAngle = Math.atan2(dy - 100, dx);
-                    this.launchPower = 15;
-                }
-            }
-            
-            shuffle() {
-                this.initialize();
-            }
+            hint() {}
+            shuffle() { this.init(); }
             
             update() {
                 if (this.projectile.launched) {
-                    // Add to trail
-                    this.trails.push({ 
-                        x: this.projectile.x, 
-                        y: this.projectile.y,
-                        life: 30
-                    });
-                    
-                    // Update position
                     this.projectile.x += this.projectile.vx;
                     this.projectile.y += this.projectile.vy;
+                    this.projectile.vy += 0.5;
                     
-                    // Apply gravity
-                    this.projectile.vy += this.gravity;
-                    
-                    // Check collision with targets
                     for (const target of this.targets) {
                         if (!target.hit) {
                             const dx = this.projectile.x - target.x;
                             const dy = this.projectile.y - target.y;
-                            const dist = Math.sqrt(dx*dx + dy*dy);
-                            
-                            if (dist < this.projectile.radius + target.radius) {
+                            if (Math.sqrt(dx*dx + dy*dy) < 30) {
                                 target.hit = true;
-                                score += 100 * combo;
-                                combo = Math.min(5, combo + 1);
+                                this.game.score += 50;
                             }
                         }
                     }
                     
-                    // Check collision with obstacles
-                    for (const obstacle of this.obstacles) {
-                        if (this.projectile.x > obstacle.x && 
-                            this.projectile.x < obstacle.x + obstacle.width &&
-                            this.projectile.y > obstacle.y && 
-                            this.projectile.y < obstacle.y + obstacle.height) {
-                            // Bounce off obstacle
-                            this.projectile.vx *= -0.8;
-                        }
+                    if (this.projectile.y > this.game.canvas.height) {
+                        this.projectile = { x: 100, y: 400, vx: 0, vy: 0, launched: false };
                     }
-                    
-                    // Check if projectile is off screen
-                    if (this.projectile.x < 0 || this.projectile.x > canvas.width ||
-                        this.projectile.y > canvas.height) {
-                        // Reset for next shot
-                        this.projectile = {
-                            x: 100,
-                            y: 400,
-                            vx: 0,
-                            vy: 0,
-                            radius: 10,
-                            launched: false,
-                            color: '#FF6B6B'
-                        };
-                        combo = 1;
-                    }
-                }
-                
-                // Update trails
-                this.trails = this.trails.filter(trail => {
-                    trail.life--;
-                    return trail.life > 0;
-                });
-                
-                // Check win condition
-                if (this.targets.every(t => t.hit)) {
-                    score += 500;
-                    this.initialize();
                 }
             }
             
             render() {
-                // Draw ground
+                const ctx = this.game.ctx;
+                
+                // Ground
                 ctx.fillStyle = '#654321';
-                ctx.fillRect(0, 450, canvas.width, 150);
+                ctx.fillRect(0, 450, this.game.canvas.width, 150);
                 
-                // Draw launch platform
-                ctx.fillStyle = '#8B4513';
-                ctx.fillRect(80, 400, 40, 50);
-                
-                // Draw trail
-                for (let i = 0; i < this.trails.length; i++) {
-                    const trail = this.trails[i];
-                    ctx.fillStyle = `rgba(255, 255, 255, ${trail.life / 30})`;
-                    ctx.beginPath();
-                    ctx.arc(trail.x, trail.y, 3, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-                
-                // Draw obstacles
-                for (const obstacle of this.obstacles) {
-                    ctx.fillStyle = obstacle.color;
-                    ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
-                    
-                    // Draw wood texture
-                    ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
-                    ctx.lineWidth = 2;
-                    for (let i = 0; i < 3; i++) {
-                        ctx.beginPath();
-                        ctx.moveTo(obstacle.x, obstacle.y + i * 25);
-                        ctx.lineTo(obstacle.x + obstacle.width, obstacle.y + i * 25);
-                        ctx.stroke();
-                    }
-                }
-                
-                // Draw targets
+                // Targets
                 for (const target of this.targets) {
                     if (!target.hit) {
-                        ctx.fillStyle = target.color;
+                        ctx.fillStyle = '#4ECDC4';
                         ctx.beginPath();
-                        ctx.arc(target.x, target.y, target.radius, 0, Math.PI * 2);
+                        ctx.arc(target.x, target.y, 20, 0, Math.PI * 2);
                         ctx.fill();
-                        
-                        // Draw target pattern
-                        ctx.strokeStyle = 'white';
-                        ctx.lineWidth = 2;
-                        ctx.beginPath();
-                        ctx.arc(target.x, target.y, target.radius - 5, 0, Math.PI * 2);
-                        ctx.stroke();
-                        ctx.beginPath();
-                        ctx.arc(target.x, target.y, target.radius - 10, 0, Math.PI * 2);
-                        ctx.stroke();
                     }
                 }
                 
-                // Draw projectile
-                ctx.fillStyle = this.projectile.color;
+                // Projectile
+                ctx.fillStyle = '#FF6B6B';
                 ctx.beginPath();
-                ctx.arc(this.projectile.x, this.projectile.y, this.projectile.radius, 0, Math.PI * 2);
+                ctx.arc(this.projectile.x, this.projectile.y, 10, 0, Math.PI * 2);
                 ctx.fill();
-                
-                // Draw aiming indicator
-                if (this.charging && !this.projectile.launched) {
-                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-                    ctx.lineWidth = 2;
-                    ctx.setLineDash([5, 5]);
-                    ctx.beginPath();
-                    ctx.moveTo(this.projectile.x, this.projectile.y);
-                    const endX = this.projectile.x + Math.cos(this.launchAngle) * this.launchPower * 10;
-                    const endY = this.projectile.y + Math.sin(this.launchAngle) * this.launchPower * 10;
-                    ctx.lineTo(endX, endY);
-                    ctx.stroke();
-                    ctx.setLineDash([]);
-                    
-                    // Draw power indicator
-                    ctx.fillStyle = `rgba(255, ${255 - this.launchPower * 10}, 0, 0.7)`;
-                    ctx.fillRect(this.projectile.x - 30, this.projectile.y - 40, this.launchPower * 3, 10);
-                }
             }
         }
-
-        // Pattern Memory Puzzle - Simon Says style
+        
+        // Pattern Puzzle
         class PatternPuzzle {
-            constructor() {
-                this.colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96E6A1'];
-                this.buttons = [];
-                this.pattern = [];
-                this.playerInput = [];
+            constructor(game) {
+                this.game = game;
+                this.sequence = [];
+                this.playerSequence = [];
                 this.showing = false;
-                this.currentIndex = 0;
-                this.level = 1;
-                this.gameState = 'waiting'; // waiting, showing, playing, gameover
-                this.initialize();
+                this.colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96E6A1'];
+                this.init();
             }
             
-            initialize() {
-                // Create 4 buttons in a 2x2 grid
-                const buttonSize = 120;
-                const spacing = 20;
+            init() {
+                this.sequence = [Math.floor(Math.random() * 4)];
+                this.playerSequence = [];
+                this.showSequence();
+            }
+            
+            showSequence() {
+                this.showing = true;
+                setTimeout(() => { this.showing = false; }, 1000);
+            }
+            
+            handleClick(mx, my) {
+                if (!this.showing) {
+                    const buttonSize = 100;
+                    const startX = 300;
+                    const startY = 200;
+                    
+                    for (let i = 0; i < 4; i++) {
+                        const row = Math.floor(i / 2);
+                        const col = i % 2;
+                        const bx = startX + col * (buttonSize + 20);
+                        const by = startY + row * (buttonSize + 20);
+                        
+                        if (mx >= bx && mx <= bx + buttonSize && my >= by && my <= by + buttonSize) {
+                            this.playerSequence.push(i);
+                            this.game.moves++;
+                            
+                            const idx = this.playerSequence.length - 1;
+                            if (this.playerSequence[idx] === this.sequence[idx]) {
+                                if (this.playerSequence.length === this.sequence.length) {
+                                    this.game.score += 25 * this.sequence.length;
+                                    this.sequence.push(Math.floor(Math.random() * 4));
+                                    this.playerSequence = [];
+                                    setTimeout(() => this.showSequence(), 500);
+                                }
+                            } else {
+                                this.init();
+                            }
+                        }
+                    }
+                }
+            }
+            
+            hint() {}
+            shuffle() { this.init(); }
+            update() {}
+            
+            render() {
+                const ctx = this.game.ctx;
+                const buttonSize = 100;
                 const startX = 300;
                 const startY = 200;
                 
-                this.buttons = [];
                 for (let i = 0; i < 4; i++) {
                     const row = Math.floor(i / 2);
                     const col = i % 2;
+                    const bx = startX + col * (buttonSize + 20);
+                    const by = startY + row * (buttonSize + 20);
                     
-                    this.buttons.push({
-                        x: startX + col * (buttonSize + spacing),
-                        y: startY + row * (buttonSize + spacing),
-                        width: buttonSize,
-                        height: buttonSize,
-                        color: this.colors[i],
-                        lit: false,
-                        index: i
-                    });
-                }
-                
-                this.pattern = [];
-                this.playerInput = [];
-                this.level = 1;
-                this.gameState = 'waiting';
-                this.addToPattern();
-                setTimeout(() => this.showPattern(), 1000);
-            }
-            
-            addToPattern() {
-                this.pattern.push(Math.floor(Math.random() * 4));
-            }
-            
-            showPattern() {
-                this.gameState = 'showing';
-                this.currentIndex = 0;
-                this.showNextInPattern();
-            }
-            
-            showNextInPattern() {
-                if (this.currentIndex >= this.pattern.length) {
-                    this.gameState = 'playing';
-                    this.playerInput = [];
-                    return;
-                }
-                
-                const buttonIndex = this.pattern[this.currentIndex];
-                this.buttons[buttonIndex].lit = true;
-                
-                setTimeout(() => {
-                    this.buttons[buttonIndex].lit = false;
-                    this.currentIndex++;
-                    setTimeout(() => this.showNextInPattern(), 300);
-                }, 600);
-            }
-            
-            handleMouseDown(mx, my) {
-                if (this.gameState !== 'playing') return;
-                
-                for (const button of this.buttons) {
-                    if (mx >= button.x && mx <= button.x + button.width &&
-                        my >= button.y && my <= button.y + button.height) {
-                        
-                        // Light up button
-                        button.lit = true;
-                        setTimeout(() => button.lit = false, 300);
-                        
-                        // Add to player input
-                        this.playerInput.push(button.index);
-                        
-                        // Check if correct
-                        const inputIndex = this.playerInput.length - 1;
-                        if (this.playerInput[inputIndex] !== this.pattern[inputIndex]) {
-                            this.gameState = 'gameover';
-                            combo = 1;
-                            setTimeout(() => this.initialize(), 2000);
-                        } else if (this.playerInput.length === this.pattern.length) {
-                            // Pattern complete!
-                            score += 50 * this.level * combo;
-                            this.level++;
-                            combo = Math.min(5, combo + 1);
-                            this.addToPattern();
-                            setTimeout(() => this.showPattern(), 1000);
-                        }
-                        
-                        moves++;
+                    if (this.showing && this.sequence[0] === i) {
+                        ctx.fillStyle = this.colors[i];
+                    } else {
+                        ctx.fillStyle = this.colors[i] + '80';
                     }
-                }
-            }
-            
-            handleDrag() {}
-            handleMouseUp() {}
-            
-            getHint() {
-                // Flash the next button in sequence
-                if (this.gameState === 'playing' && this.playerInput.length < this.pattern.length) {
-                    const nextButton = this.pattern[this.playerInput.length];
-                    this.buttons[nextButton].lit = true;
-                    setTimeout(() => this.buttons[nextButton].lit = false, 500);
-                }
-            }
-            
-            shuffle() {
-                this.initialize();
-            }
-            
-            update() {}
-            
-            render() {
-                // Draw background
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-                ctx.fillRect(280, 180, 280, 280);
-                
-                // Draw buttons
-                for (const button of this.buttons) {
-                    // Button shadow
-                    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-                    ctx.fillRect(button.x + 5, button.y + 5, button.width, button.height);
                     
-                    // Button
-                    ctx.fillStyle = button.lit ? button.color : 
-                                   `rgba(${parseInt(button.color.slice(1,3), 16)}, 
-                                         ${parseInt(button.color.slice(3,5), 16)}, 
-                                         ${parseInt(button.color.slice(5,7), 16)}, 0.5)`;
-                    ctx.fillRect(button.x, button.y, button.width, button.height);
-                    
-                    // Button border
-                    ctx.strokeStyle = button.lit ? 'white' : 'rgba(255, 255, 255, 0.3)';
-                    ctx.lineWidth = button.lit ? 4 : 2;
-                    ctx.strokeRect(button.x, button.y, button.width, button.height);
-                }
-                
-                // Draw status
-                ctx.fillStyle = 'white';
-                ctx.font = 'bold 24px Arial';
-                ctx.textAlign = 'center';
-                
-                if (this.gameState === 'showing') {
-                    ctx.fillText('WATCH THE PATTERN', canvas.width/2, 150);
-                } else if (this.gameState === 'playing') {
-                    ctx.fillText('REPEAT THE PATTERN', canvas.width/2, 150);
-                    ctx.font = '18px Arial';
-                    ctx.fillText(`Level ${this.level} - ${this.playerInput.length}/${this.pattern.length}`, 
-                               canvas.width/2, 500);
-                } else if (this.gameState === 'gameover') {
-                    ctx.fillStyle = '#FF6B6B';
-                    ctx.font = 'bold 36px Arial';
-                    ctx.fillText('GAME OVER!', canvas.width/2, 150);
-                } else {
-                    ctx.fillText('GET READY...', canvas.width/2, 150);
-                }
-            }
-        }
-
-        // Logic Gates Puzzle
-        class LogicPuzzle {
-            constructor() {
-                this.gates = [];
-                this.wires = [];
-                this.inputs = [];
-                this.outputs = [];
-                this.targetOutput = [];
-                this.level = 1;
-                this.solved = false;
-                this.initialize();
-            }
-            
-            initialize() {
-                // Create simple logic puzzle
-                this.inputs = [
-                    { x: 100, y: 200, value: false, label: 'A' },
-                    { x: 100, y: 300, value: false, label: 'B' },
-                    { x: 100, y: 400, value: false, label: 'C' }
-                ];
-                
-                // Create gates based on level
-                this.gates = [];
-                if (this.level === 1) {
-                    // Simple AND gate
-                    this.gates.push({
-                        x: 300,
-                        y: 250,
-                        type: 'AND',
-                        inputs: [0, 1], // Input indices
-                        output: false
-                    });
-                    
-                    this.outputs = [
-                        { x: 500, y: 250, value: false, label: 'OUT' }
-                    ];
-                    
-                    this.targetOutput = [true]; // A AND B should be true
-                } else {
-                    // More complex circuit
-                    this.gates.push({
-                        x: 250,
-                        y: 250,
-                        type: 'AND',
-                        inputs: [0, 1],
-                        output: false
-                    });
-                    
-                    this.gates.push({
-                        x: 400,
-                        y: 300,
-                        type: 'OR',
-                        inputs: [null, 2], // First input from previous gate
-                        output: false
-                    });
-                    
-                    this.outputs = [
-                        { x: 600, y: 300, value: false, label: 'OUT' }
-                    ];
-                    
-                    this.targetOutput = [true];
-                }
-                
-                this.solved = false;
-                this.updateCircuit();
-            }
-            
-            handleMouseDown(mx, my) {
-                // Toggle inputs
-                for (const input of this.inputs) {
-                    if (Math.abs(mx - input.x) < 30 && Math.abs(my - input.y) < 30) {
-                        input.value = !input.value;
-                        moves++;
-                        this.updateCircuit();
-                        this.checkWin();
-                    }
-                }
-            }
-            
-            handleDrag() {}
-            handleMouseUp() {}
-            
-            updateCircuit() {
-                // Update gate outputs
-                for (const gate of this.gates) {
-                    const input1 = gate.inputs[0] !== null ? this.inputs[gate.inputs[0]].value : 
-                                  this.gates[0].output; // From previous gate
-                    const input2 = gate.inputs[1] !== null ? this.inputs[gate.inputs[1]].value : false;
-                    
-                    switch (gate.type) {
-                        case 'AND':
-                            gate.output = input1 && input2;
-                            break;
-                        case 'OR':
-                            gate.output = input1 || input2;
-                            break;
-                        case 'XOR':
-                            gate.output = input1 !== input2;
-                            break;
-                        case 'NOT':
-                            gate.output = !input1;
-                            break;
-                    }
-                }
-                
-                // Update outputs
-                this.outputs[0].value = this.gates[this.gates.length - 1].output;
-            }
-            
-            checkWin() {
-                let allCorrect = true;
-                for (let i = 0; i < this.outputs.length; i++) {
-                    if (this.outputs[i].value !== this.targetOutput[i]) {
-                        allCorrect = false;
-                        break;
-                    }
-                }
-                
-                if (allCorrect && !this.solved) {
-                    this.solved = true;
-                    score += 200 * this.level;
-                    combo = Math.min(5, combo + 1);
-                    
-                    // Next level after delay
-                    setTimeout(() => {
-                        this.level++;
-                        this.initialize();
-                    }, 2000);
-                }
-            }
-            
-            getHint() {
-                // Show correct input configuration briefly
-                if (this.level === 1) {
-                    this.inputs[0].value = true;
-                    this.inputs[1].value = true;
-                    this.inputs[2].value = false;
-                } else {
-                    this.inputs[0].value = true;
-                    this.inputs[1].value = false;
-                    this.inputs[2].value = true;
-                }
-                
-                this.updateCircuit();
-                setTimeout(() => {
-                    this.inputs.forEach(input => input.value = false);
-                    this.updateCircuit();
-                }, 1000);
-            }
-            
-            shuffle() {
-                this.initialize();
-            }
-            
-            update() {}
-            
-            render() {
-                // Draw background
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-                ctx.fillRect(50, 150, 700, 350);
-                
-                // Draw inputs
-                for (const input of this.inputs) {
-                    // Draw wire from input
-                    ctx.strokeStyle = input.value ? '#4CAF50' : '#666';
-                    ctx.lineWidth = 3;
-                    ctx.beginPath();
-                    ctx.moveTo(input.x + 20, input.y);
-                    ctx.lineTo(input.x + 100, input.y);
-                    ctx.stroke();
-                    
-                    // Draw input switch
-                    ctx.fillStyle = input.value ? '#4CAF50' : '#333';
-                    ctx.beginPath();
-                    ctx.arc(input.x, input.y, 20, 0, Math.PI * 2);
-                    ctx.fill();
-                    
+                    ctx.fillRect(bx, by, buttonSize, buttonSize);
                     ctx.strokeStyle = 'white';
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                    
-                    // Draw label
-                    ctx.fillStyle = 'white';
-                    ctx.font = 'bold 16px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.fillText(input.label, input.x, input.y + 5);
+                    ctx.strokeRect(bx, by, buttonSize, buttonSize);
                 }
                 
-                // Draw gates
-                for (const gate of this.gates) {
-                    // Draw gate body
-                    ctx.fillStyle = '#2196F3';
-                    ctx.fillRect(gate.x - 40, gate.y - 30, 80, 60);
-                    
-                    // Draw gate type
-                    ctx.fillStyle = 'white';
-                    ctx.font = 'bold 18px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.fillText(gate.type, gate.x, gate.y + 5);
-                    
-                    // Draw output wire
-                    ctx.strokeStyle = gate.output ? '#4CAF50' : '#666';
-                    ctx.lineWidth = 3;
-                    ctx.beginPath();
-                    ctx.moveTo(gate.x + 40, gate.y);
-                    ctx.lineTo(gate.x + 100, gate.y);
-                    ctx.stroke();
-                }
-                
-                // Draw outputs
-                for (const output of this.outputs) {
-                    // Draw output indicator
-                    ctx.fillStyle = output.value ? '#4CAF50' : '#333';
-                    ctx.beginPath();
-                    ctx.arc(output.x, output.y, 25, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    ctx.strokeStyle = 'white';
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                    
-                    // Draw label
-                    ctx.fillStyle = 'white';
-                    ctx.font = 'bold 16px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.fillText(output.label, output.x, output.y + 5);
-                }
-                
-                // Draw target
                 ctx.fillStyle = 'white';
-                ctx.font = 'bold 20px Arial';
+                ctx.font = '24px Arial';
                 ctx.textAlign = 'center';
-                ctx.fillText('Target Output: ' + (this.targetOutput[0] ? 'ON' : 'OFF'), 
-                           canvas.width/2, 100);
-                
-                if (this.solved) {
-                    ctx.fillStyle = '#4CAF50';
-                    ctx.font = 'bold 36px Arial';
-                    ctx.fillText('SOLVED!', canvas.width/2, 550);
-                }
-                
-                // Draw level
-                ctx.fillStyle = 'white';
-                ctx.font = '16px Arial';
-                ctx.fillText(`Level ${this.level}`, canvas.width/2, 130);
+                ctx.fillText(this.showing ? 'WATCH!' : 'REPEAT!', this.game.canvas.width/2, 150);
+                ctx.fillText(`Level: ${this.sequence.length}`, this.game.canvas.width/2, 400);
             }
-        }
-
-            // Initialize puzzles
-            const puzzles = {
-                match3: new Match3Puzzle(),
-                sliding: new SlidingPuzzle(),
-                physics: new PhysicsPuzzle(),
-                pattern: new PatternPuzzle(),
-                logic: new LogicPuzzle()
-            };
-
-            // UI Functions
-            window.switchPuzzle = function(type) {
-            currentPuzzleType = type;
-            
-            // Update button states
-            document.querySelectorAll('button').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            document.getElementById(`btn-${type}`).classList.add('active');
-            
-            // Update controls text
-            const controlsText = {
-                match3: 'Match-3: Click to select, click adjacent gem to swap | Drag to swap',
-                sliding: 'Sliding: Click a tile adjacent to empty space to move it',
-                physics: 'Physics: Click to launch projectile at target',
-                pattern: 'Pattern: Watch the sequence, then repeat it',
-                logic: 'Logic: Click inputs to toggle, make output match target'
-            };
-            document.getElementById('controlsText').textContent = controlsText[type];
-            
-            // Show/hide solve button for certain puzzles
-            document.getElementById('solveBtn').style.display = 
-                (type === 'sliding' || type === 'logic') ? 'inline-block' : 'none';
-            
-            // Reset stats
-            resetPuzzle();
-        };
-
-            window.resetPuzzle = function() {
-                puzzles[currentPuzzleType].initialize();
-                score = 0;
-                moves = 0;
-                combo = 1;
-                startTime = Date.now();
-                moveHistory = [];
-            };
-
-            window.getHint = function() {
-                puzzles[currentPuzzleType].getHint();
-            };
-
-            window.shuffleBoard = function() {
-                puzzles[currentPuzzleType].shuffle();
-            };
-
-            window.undoMove = function() {
-                if (moveHistory.length > 0) {
-                    const lastMove = moveHistory.pop();
-                    // Implement undo for each puzzle type
-                    moves = Math.max(0, moves - 1);
-                }
-            };
-
-            window.autoSolve = function() {
-                // Implement auto-solve for applicable puzzles
-                if (currentPuzzleType === 'sliding') {
-                    // A* solver implementation
-                    console.log('Auto-solving sliding puzzle...');
-                }
-            };
-
-            // Update UI
-            function updateUI() {
-            document.getElementById('score').textContent = score;
-            document.getElementById('moves').textContent = moves;
-            document.getElementById('combo').textContent = combo + 'x';
-            
-            // Update timer
-            const elapsed = Math.floor((Date.now() - startTime) / 1000);
-            const minutes = Math.floor(elapsed / 60);
-            const seconds = elapsed % 60;
-            document.getElementById('timer').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-            
-            // Update progress bar
-            const progress = Math.min(100, (score / 1000) * 100);
-            document.getElementById('progressBar').style.width = progress + '%';
-        }
-
-            // Game loop
-            let lastTime = performance.now();
-            
-            function gameLoop() {
-            const currentTime = performance.now();
-            const deltaTime = currentTime - lastTime;
-            lastTime = currentTime;
-            
-            // Clear canvas
-            ctx.fillStyle = '#1a1a2e';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // Update and render current puzzle
-            puzzles[currentPuzzleType].update();
-            puzzles[currentPuzzleType].render();
-            
-            // Update UI
-            updateUI();
-            
-            requestAnimationFrame(gameLoop);
         }
         
-            // Start with Match-3 selected
-            document.getElementById('btn-match3').classList.add('active');
-            gameLoop();
+        // Logic Puzzle
+        class LogicPuzzle {
+            constructor(game) {
+                this.game = game;
+                this.inputs = [false, false, false];
+                this.init();
+            }
             
-            console.log('Puzzle Game System initialized!');
-        }); // End of DOMContentLoaded
+            init() {
+                this.inputs = [false, false, false];
+            }
+            
+            handleClick(mx, my) {
+                for (let i = 0; i < 3; i++) {
+                    const ix = 150;
+                    const iy = 200 + i * 80;
+                    
+                    if (Math.abs(mx - ix) < 30 && Math.abs(my - iy) < 30) {
+                        this.inputs[i] = !this.inputs[i];
+                        this.game.moves++;
+                        
+                        if (this.inputs[0] && this.inputs[1]) {
+                            this.game.score += 50;
+                        }
+                    }
+                }
+            }
+            
+            hint() {}
+            shuffle() { this.init(); }
+            update() {}
+            
+            render() {
+                const ctx = this.game.ctx;
+                
+                for (let i = 0; i < 3; i++) {
+                    const ix = 150;
+                    const iy = 200 + i * 80;
+                    
+                    ctx.fillStyle = this.inputs[i] ? '#4CAF50' : '#333';
+                    ctx.beginPath();
+                    ctx.arc(ix, iy, 20, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = 'white';
+                    ctx.font = '16px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(['A', 'B', 'C'][i], ix, iy + 5);
+                }
+                
+                ctx.fillStyle = '#2196F3';
+                ctx.fillRect(300, 250, 80, 60);
+                ctx.fillStyle = 'white';
+                ctx.font = '20px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('AND', 340, 285);
+                
+                const output = this.inputs[0] && this.inputs[1];
+                ctx.fillStyle = output ? '#4CAF50' : '#333';
+                ctx.beginPath();
+                ctx.arc(500, 280, 25, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = 'white';
+                ctx.font = '20px Arial';
+                ctx.fillText('Make the output GREEN!', this.game.canvas.width/2, 100);
+            }
+        }
+        
+        // Initialize the game
+        const puzzleGame = new PuzzleGame();
     </script>
+
+    <h2>Core Puzzle Types Explained</h2>
+    
+    <div style="background-color: #f9f9f9; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎮 Essential Puzzle Mechanics</h3>
+        
+        <h4>1. Match-3 Mechanics</h4>
+        <ul>
+            <li>Grid-based gem/tile matching</li>
+            <li>Gravity and cascading effects</li>
+            <li>Special tiles and power-ups</li>
+            <li>Combo multipliers</li>
+        </ul>
+        
+        <h4>2. Sliding Puzzles</h4>
+        <ul>
+            <li>15-puzzle and variants</li>
+            <li>Optimal move counting</li>
+            <li>Solvability detection</li>
+            <li>A* pathfinding for hints</li>
+        </ul>
+        
+        <h4>3. Physics Puzzles</h4>
+        <ul>
+            <li>Projectile mechanics</li>
+            <li>Collision detection</li>
+            <li>Force and momentum</li>
+            <li>Environmental interactions</li>
+        </ul>
+        
+        <h4>4. Pattern Matching</h4>
+        <ul>
+            <li>Sequence memorization</li>
+            <li>Progressive difficulty</li>
+            <li>Visual and audio cues</li>
+            <li>Time-based challenges</li>
+        </ul>
+        
+        <h4>5. Logic Gates</h4>
+        <ul>
+            <li>Boolean operations</li>
+            <li>Circuit simulation</li>
+            <li>Truth tables</li>
+            <li>Complex gate combinations</li>
+        </ul>
+    </div>
 
     <h2>Puzzle Game Implementation in Python</h2>
     
-    <p>See <a href="genres_puzzle_python.html">the complete Python implementation</a> for the full code including all puzzle types with Pygame.</p>
+    <div style="background-color: #f0fff0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🐍 Complete Python Implementation</h3>
+        <p>For the full Python implementation with Pygame including all puzzle types, advanced features, and procedural generation, <a href="/genres_puzzle_python.html">Python code</a>.</p>
+        
+        <h4>Key Implementation Features:</h4>
+        <ul>
+            <li>Object-oriented puzzle system</li>
+            <li>Modular game states</li>
+            <li>Animation framework</li>
+            <li>Score and combo system</li>
+            <li>Level progression</li>
+            <li>Save/load functionality</li>
+            <li>Procedural puzzle generation</li>
+            <li>Hint and auto-solve algorithms</li>
+        </ul>
+    </div>
 
     <h2>Best Practices</h2>
     
     <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>⚡ Puzzle Game Best Practices</h3>
+        <h3>✨ Puzzle Game Best Practices</h3>
         <ul>
             <li><strong>Clear Rules:</strong> Players should understand mechanics immediately</li>
             <li><strong>Progressive Difficulty:</strong> Smooth learning curve</li>

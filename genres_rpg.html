@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Build complete RPG systems. Learn inventory management, character stats, skill trees, quest systems, and dialogue mechanics.">
+    <title>RPG Systems - Different Game Genres</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>RPG Systems</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Advanced Module - Section 3: Different Game Genres - Lesson 1</span>
+    </nav>
+
+    <h2>Building Complete RPG Mechanics</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Master RPG game systems! Create inventory management, character progression, skill trees, quest systems, dialogue trees, and combat mechanics! ⚔️📊🎭</p>
+    </div>
+
+    <h2>Understanding RPG Systems</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎲 The Tabletop RPG Analogy</h3>
+        <p>Think of RPG systems like a tabletop game:</p>
+        <ul>
+            <li><strong>Character Sheet:</strong> Stats and attributes</li>
+            <li><strong>Dice Rolls:</strong> Combat and skill checks</li>
+            <li><strong>Inventory:</strong> Equipment and items</li>
+            <li><strong>Experience:</strong> Character progression</li>
+            <li><strong>Quests:</strong> Story objectives</li>
+            <li><strong>Dialogue:</strong> NPC interactions</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["RPG Systems"] --> B["Character System"]
+        A --> C["Inventory"]
+        A --> D["Combat"]
+        A --> E["Progression"]
+        
+        B --> F["Stats/Attributes"]
+        B --> G["Skills/Abilities"]
+        B --> H["Equipment"]
+        
+        C --> I["Item Management"]
+        C --> J["Crafting"]
+        C --> K["Trading"]
+        
+        D --> L["Turn-Based"]
+        D --> M["Real-Time"]
+        D --> N["Hybrid"]
+        
+        E --> O["Experience"]
+        E --> P["Skill Trees"]
+        E --> Q["Classes"]
+    </div>
+
+    <h2>Interactive RPG System Demo</h2>
+    
+    <div class="canvas-wrapper" style="text-align: center;">
+        <canvas id="rpgCanvas" width="800" height="600" style="border: 1px solid #333; display: inline-block;"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Experience a complete RPG system with inventory, stats, skills, quests, and dialogue!</p>
+        
+        <!-- Character Controls -->
+        <div style="margin: 10px auto; padding: 10px; background-color: rgba(0,0,0,0.3); border-radius: 5px; max-width: 800px;">
+            <p style="color: white; margin: 5px;">Controls: Click to move, Right-click to interact, I for inventory, C for character, Q for quests</p>
+        </div>
+        
+        <!-- Character Creation -->
+        <div style="margin: 10px auto; padding: 10px; background-color: rgba(0,0,0,0.3); border-radius: 5px;">
+            <h4 style="color: white;">Character Creation:</h4>
+            <input type="text" id="charName" placeholder="Character Name" value="Hero">
+            <select id="charClass">
+                <option value="warrior">⚔️ Warrior</option>
+                <option value="mage">🔮 Mage</option>
+                <option value="rogue">🗡️ Rogue</option>
+                <option value="cleric">✨ Cleric</option>
+            </select>
+            <button onclick="createCharacter()">Create Character</button>
+            <button onclick="saveGame()">💾 Save</button>
+            <button onclick="loadGame()">📂 Load</button>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div style="margin-top: 10px;">
+            <h4 style="color: white;">Quick Actions:</h4>
+            <button onclick="usePotion()">🧪 Use Potion (<span id="potionCount">3</span>)</button>
+            <button onclick="rest()">🏕️ Rest</button>
+            <button onclick="levelUp()">⬆️ Level Up</button>
+            <button onclick="openShop()">🏪 Shop</button>
+            <button onclick="startCombat()">⚔️ Battle</button>
+            <button onclick="openDialogue()">💬 Talk</button>
+        </div>
+        
+        <!-- Character Stats Display -->
+        <div style="margin-top: 10px; background-color: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+                <div style="color: white;">
+                    <strong>Character</strong><br>
+                    Name: <span id="playerName">Hero</span><br>
+                    Class: <span id="playerClass">Warrior</span><br>
+                    Level: <span id="playerLevel">1</span><br>
+                    XP: <span id="playerXP">0</span>/<span id="xpToNext">100</span>
+                </div>
+                <div style="color: white;">
+                    <strong>Vitals</strong><br>
+                    HP: <span id="playerHP">100</span>/<span id="maxHP">100</span><br>
+                    MP: <span id="playerMP">50</span>/<span id="maxMP">50</span><br>
+                    Stamina: <span id="playerStamina">100</span>/<span id="maxStamina">100</span>
+                </div>
+                <div style="color: white;">
+                    <strong>Attributes</strong><br>
+                    STR: <span id="statSTR">10</span> (+<span id="bonusSTR">0</span>)<br>
+                    INT: <span id="statINT">10</span> (+<span id="bonusINT">0</span>)<br>
+                    DEX: <span id="statDEX">10</span> (+<span id="bonusDEX">0</span>)<br>
+                    VIT: <span id="statVIT">10</span> (+<span id="bonusVIT">0</span>)
+                </div>
+                <div style="color: white;">
+                    <strong>Combat Stats</strong><br>
+                    Attack: <span id="attackPower">15</span><br>
+                    Defense: <span id="defensePower">10</span><br>
+                    Crit: <span id="critChance">5</span>%<br>
+                    Gold: <span id="playerGold">100</span>💰
+                </div>
+            </div>
+        </div>
+        
+        <!-- Inventory Grid -->
+        <div id="inventoryPanel" style="display: none; margin-top: 10px; background-color: rgba(0,0,0,0.8); padding: 10px; border-radius: 5px;">
+            <h4 style="color: white;">Inventory (Press I to toggle)</h4>
+            <div id="inventoryGrid" style="display: grid; grid-template-columns: repeat(10, 50px); gap: 2px; margin: 10px 0;">
+                <!-- Inventory slots will be generated here -->
+            </div>
+            <div style="color: white;">
+                <strong>Equipment:</strong><br>
+                Weapon: <span id="equippedWeapon">Iron Sword</span><br>
+                Armor: <span id="equippedArmor">Leather Armor</span><br>
+                Accessory: <span id="equippedAccessory">None</span>
+            </div>
+        </div>
+        
+        <!-- Quest Log -->
+        <div id="questPanel" style="display: none; margin-top: 10px; background-color: rgba(0,0,0,0.8); padding: 10px; border-radius: 5px;">
+            <h4 style="color: white;">Quest Log (Press Q to toggle)</h4>
+            <div id="activeQuests" style="color: white; max-height: 150px; overflow-y: auto;">
+                <!-- Quests will be listed here -->
+            </div>
+        </div>
+        
+        <!-- Skill Tree -->
+        <div id="skillPanel" style="display: none; margin-top: 10px; background-color: rgba(0,0,0,0.8); padding: 10px; border-radius: 5px;">
+            <h4 style="color: white;">Skills (Press K to toggle)</h4>
+            <div style="color: white;">
+                Skill Points: <span id="skillPoints">0</span><br>
+                <div id="skillTree" style="margin-top: 10px;">
+                    <!-- Skill tree will be rendered here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .inventory-slot {
+            width: 48px;
+            height: 48px;
+            border: 1px solid #555;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+        }
+        .inventory-slot:hover {
+            border-color: #FFD700;
+            background-color: rgba(255, 215, 0, 0.1);
+        }
+        .item-icon {
+            font-size: 24px;
+        }
+        .item-count {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            font-size: 10px;
+            color: white;
+            background: rgba(0,0,0,0.7);
+            padding: 1px 3px;
+            border-radius: 2px;
+        }
+    </style>
+
+    <script>
+        console.log('RPG System Demo starting...');
+
+        const canvas = document.getElementById('rpgCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Input handling
+        const keys = {};
+        const mouse = { x: 0, y: 0, left: false, right: false };
+
+        window.addEventListener('keydown', e => {
+            keys[e.key.toLowerCase()] = true;
+            
+            // Toggle panels
+            if (e.key.toLowerCase() === 'i') {
+                toggleInventory();
+            } else if (e.key.toLowerCase() === 'q') {
+                toggleQuests();
+            } else if (e.key.toLowerCase() === 'k') {
+                toggleSkills();
+            }
+        });
+        
+        window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+        
+        canvas.addEventListener('mousemove', e => {
+            const rect = canvas.getBoundingClientRect();
+            mouse.x = e.clientX - rect.left;
+            mouse.y = e.clientY - rect.top;
+        });
+        
+        canvas.addEventListener('mousedown', e => {
+            if (e.button === 0) mouse.left = true;
+            if (e.button === 2) mouse.right = true;
+        });
+        
+        canvas.addEventListener('mouseup', e => {
+            if (e.button === 0) mouse.left = false;
+            if (e.button === 2) mouse.right = false;
+        });
+        
+        canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+        // RPG System
+        class RPGSystem {
+            constructor() {
+                // Character data
+                this.character = {
+                    name: 'Hero',
+                    class: 'warrior',
+                    level: 1,
+                    experience: 0,
+                    experienceToNext: 100,
+                    
+                    // Vitals
+                    hp: 100,
+                    maxHp: 100,
+                    mp: 50,
+                    maxMp: 50,
+                    stamina: 100,
+                    maxStamina: 100,
+                    
+                    // Position
+                    x: 400,
+                    y: 300,
+                    targetX: 400,
+                    targetY: 300,
+                    speed: 2,
+                    
+                    // Base attributes
+                    strength: 10,
+                    intelligence: 10,
+                    dexterity: 10,
+                    vitality: 10,
+                    
+                    // Bonus attributes (from equipment)
+                    bonusStrength: 0,
+                    bonusIntelligence: 0,
+                    bonusDexterity: 0,
+                    bonusVitality: 0,
+                    
+                    // Derived stats
+                    attack: 15,
+                    defense: 10,
+                    critChance: 5,
+                    
+                    // Currency
+                    gold: 100,
+                    
+                    // Skill points
+                    skillPoints: 0,
+                    skills: [],
+                    
+                    // State
+                    inCombat: false,
+                    isMoving: false
+                };
+                
+                // Inventory system
+                this.inventory = {
+                    slots: new Array(40).fill(null),
+                    equipment: {
+                        weapon: { name: 'Iron Sword', stats: { attack: 5, strength: 2 }, icon: '⚔️' },
+                        armor: { name: 'Leather Armor', stats: { defense: 3, vitality: 1 }, icon: '🛡️' },
+                        accessory: null
+                    }
+                };
+                
+                // Initialize inventory with starting items
+                this.addItem({ name: 'Health Potion', type: 'consumable', icon: '🧪', quantity: 3, effect: 'heal', value: 50 });
+                this.addItem({ name: 'Mana Potion', type: 'consumable', icon: '💙', quantity: 2, effect: 'mana', value: 30 });
+                this.addItem({ name: 'Iron Ore', type: 'material', icon: '⛏️', quantity: 5 });
+                this.addItem({ name: 'Wolf Pelt', type: 'material', icon: '🐺', quantity: 2 });
+                
+                // Quest system
+                this.quests = [
+                    {
+                        id: 'main_1',
+                        name: 'The Journey Begins',
+                        description: 'Reach level 3 and explore the world',
+                        objectives: [
+                            { text: 'Reach level 3', completed: false, current: 1, required: 3 },
+                            { text: 'Defeat 5 enemies', completed: false, current: 0, required: 5 },
+                            { text: 'Collect 10 gold', completed: true, current: 100, required: 10 }
+                        ],
+                        rewards: { exp: 200, gold: 50, items: ['Steel Sword'] },
+                        completed: false
+                    },
+                    {
+                        id: 'side_1',
+                        name: 'Herb Collector',
+                        description: 'Gather herbs for the village healer',
+                        objectives: [
+                            { text: 'Collect 10 herbs', completed: false, current: 0, required: 10 }
+                        ],
+                        rewards: { exp: 50, gold: 20 },
+                        completed: false
+                    }
+                ];
+                
+                // Skill tree
+                this.skillTree = {
+                    warrior: [
+                        { id: 'power_strike', name: 'Power Strike', level: 0, maxLevel: 5, cost: 1, 
+                          description: 'Increase attack power by 10% per level', unlocked: true },
+                        { id: 'iron_skin', name: 'Iron Skin', level: 0, maxLevel: 5, cost: 1,
+                          description: 'Increase defense by 5% per level', unlocked: true },
+                        { id: 'berserker', name: 'Berserker Rage', level: 0, maxLevel: 3, cost: 2,
+                          description: 'Increase crit chance by 5% per level', unlocked: false, requirement: 'power_strike:3' }
+                    ],
+                    mage: [
+                        { id: 'fireball', name: 'Fireball', level: 0, maxLevel: 5, cost: 1,
+                          description: 'Deals fire damage', unlocked: true },
+                        { id: 'frost_armor', name: 'Frost Armor', level: 0, maxLevel: 3, cost: 1,
+                          description: 'Reduces damage taken', unlocked: true },
+                        { id: 'teleport', name: 'Teleport', level: 0, maxLevel: 1, cost: 3,
+                          description: 'Instantly move to target location', unlocked: false }
+                    ]
+                };
+                
+                // NPCs
+                this.npcs = [
+                    {
+                        name: 'Village Elder',
+                        x: 200,
+                        y: 200,
+                        dialogue: [
+                            { text: "Welcome, young hero! Our village needs your help.", responses: [
+                                { text: "How can I help?", next: 1 },
+                                { text: "I'm busy.", next: -1 }
+                            ]},
+                            { text: "Monsters have been attacking our farms. Please help us!", responses: [
+                                { text: "I'll take care of it.", next: -1, quest: 'main_1' },
+                                { text: "What's in it for me?", next: 2 }
+                            ]},
+                            { text: "We'll reward you with gold and equipment!", responses: [
+                                { text: "Deal!", next: -1, quest: 'main_1' }
+                            ]}
+                        ],
+                        currentDialogue: 0
+                    },
+                    {
+                        name: 'Merchant',
+                        x: 500,
+                        y: 200,
+                        isShop: true,
+                        inventory: [
+                            { name: 'Steel Sword', type: 'weapon', stats: { attack: 10 }, price: 200, icon: '⚔️' },
+                            { name: 'Chain Mail', type: 'armor', stats: { defense: 5 }, price: 150, icon: '🛡️' },
+                            { name: 'Health Potion', type: 'consumable', price: 20, icon: '🧪' },
+                            { name: 'Mana Potion', type: 'consumable', price: 25, icon: '💙' }
+                        ]
+                    }
+                ];
+                
+                // Enemies
+                this.enemies = [];
+                this.combatLog = [];
+                
+                // Particles and effects
+                this.particles = [];
+                this.floatingTexts = [];
+                
+                // UI state
+                this.showInventory = false;
+                this.showQuests = false;
+                this.showSkills = false;
+                this.selectedSlot = null;
+                this.dialogueActive = false;
+                this.currentDialogue = null;
+                
+                // Initialize
+                this.updateStats();
+                this.initializeInventoryUI();
+                this.updateQuestUI();
+            }
+            
+            createCharacter(name, charClass) {
+                this.character.name = name || 'Hero';
+                this.character.class = charClass || 'warrior';
+                
+                // Set class-specific stats
+                switch(charClass) {
+                    case 'warrior':
+                        this.character.strength = 15;
+                        this.character.vitality = 12;
+                        this.character.maxHp = 120;
+                        this.character.hp = 120;
+                        break;
+                    case 'mage':
+                        this.character.intelligence = 15;
+                        this.character.maxMp = 100;
+                        this.character.mp = 100;
+                        break;
+                    case 'rogue':
+                        this.character.dexterity = 15;
+                        this.character.critChance = 10;
+                        this.character.speed = 3;
+                        break;
+                    case 'cleric':
+                        this.character.intelligence = 12;
+                        this.character.vitality = 12;
+                        this.character.maxMp = 80;
+                        this.character.mp = 80;
+                        break;
+                }
+                
+                this.updateStats();
+                this.createFloatingText(this.character.x, this.character.y, 'Character Created!', '#FFD700');
+            }
+            
+            addItem(item) {
+                // Find empty slot or stack
+                for (let i = 0; i < this.inventory.slots.length; i++) {
+                    const slot = this.inventory.slots[i];
+                    
+                    if (!slot) {
+                        // Empty slot
+                        this.inventory.slots[i] = { ...item, quantity: item.quantity || 1 };
+                        return true;
+                    } else if (slot.name === item.name && slot.type === 'consumable') {
+                        // Stack consumables
+                        slot.quantity += item.quantity || 1;
+                        return true;
+                    }
+                }
+                
+                return false; // Inventory full
+            }
+            
+            useItem(slotIndex) {
+                const item = this.inventory.slots[slotIndex];
+                if (!item) return;
+                
+                if (item.type === 'consumable') {
+                    // Use consumable
+                    if (item.effect === 'heal') {
+                        const healAmount = item.value || 50;
+                        this.character.hp = Math.min(this.character.maxHp, this.character.hp + healAmount);
+                        this.createFloatingText(this.character.x, this.character.y, `+${healAmount} HP`, '#00FF00');
+                    } else if (item.effect === 'mana') {
+                        const manaAmount = item.value || 30;
+                        this.character.mp = Math.min(this.character.maxMp, this.character.mp + manaAmount);
+                        this.createFloatingText(this.character.x, this.character.y, `+${manaAmount} MP`, '#00AAFF');
+                    }
+                    
+                    // Reduce quantity
+                    item.quantity--;
+                    if (item.quantity <= 0) {
+                        this.inventory.slots[slotIndex] = null;
+                    }
+                    
+                    this.updateStats();
+                } else if (item.type === 'weapon' || item.type === 'armor') {
+                    // Equip item
+                    this.equipItem(item, item.type);
+                }
+            }
+            
+            equipItem(item, slot) {
+                // Unequip current item
+                const currentEquip = this.inventory.equipment[slot];
+                if (currentEquip) {
+                    this.addItem(currentEquip);
+                    
+                    // Remove stats
+                    if (currentEquip.stats) {
+                        this.character.bonusStrength -= currentEquip.stats.strength || 0;
+                        this.character.bonusIntelligence -= currentEquip.stats.intelligence || 0;
+                        this.character.bonusDexterity -= currentEquip.stats.dexterity || 0;
+                        this.character.bonusVitality -= currentEquip.stats.vitality || 0;
+                    }
+                }
+                
+                // Equip new item
+                this.inventory.equipment[slot] = item;
+                
+                // Apply stats
+                if (item.stats) {
+                    this.character.bonusStrength += item.stats.strength || 0;
+                    this.character.bonusIntelligence += item.stats.intelligence || 0;
+                    this.character.bonusDexterity += item.stats.dexterity || 0;
+                    this.character.bonusVitality += item.stats.vitality || 0;
+                }
+                
+                this.updateStats();
+            }
+            
+            gainExperience(amount) {
+                this.character.experience += amount;
+                this.createFloatingText(this.character.x, this.character.y, `+${amount} XP`, '#FFD700');
+                
+                // Check level up
+                while (this.character.experience >= this.character.experienceToNext) {
+                    this.levelUp();
+                }
+                
+                this.updateStats();
+            }
+            
+            levelUp() {
+                this.character.level++;
+                this.character.experience -= this.character.experienceToNext;
+                this.character.experienceToNext = Math.floor(this.character.experienceToNext * 1.5);
+                
+                // Increase stats
+                this.character.maxHp += 10;
+                this.character.hp = this.character.maxHp;
+                this.character.maxMp += 5;
+                this.character.mp = this.character.maxMp;
+                this.character.strength++;
+                this.character.intelligence++;
+                this.character.dexterity++;
+                this.character.vitality++;
+                this.character.skillPoints++;
+                
+                this.createFloatingText(this.character.x, this.character.y, 'LEVEL UP!', '#FFD700', 30);
+                this.updateStats();
+                
+                // Check quest progress
+                this.updateQuestProgress('level', this.character.level);
+            }
+            
+            updateQuestProgress(type, value) {
+                for (const quest of this.quests) {
+                    if (quest.completed) continue;
+                    
+                    for (const objective of quest.objectives) {
+                        if (type === 'level' && objective.text.includes('level')) {
+                            objective.current = value;
+                            if (objective.current >= objective.required) {
+                                objective.completed = true;
+                            }
+                        } else if (type === 'kill' && objective.text.includes('enemies')) {
+                            objective.current++;
+                            if (objective.current >= objective.required) {
+                                objective.completed = true;
+                            }
+                        } else if (type === 'collect' && objective.text.includes(value)) {
+                            objective.current++;
+                            if (objective.current >= objective.required) {
+                                objective.completed = true;
+                            }
+                        }
+                    }
+                    
+                    // Check quest completion
+                    if (quest.objectives.every(o => o.completed) && !quest.completed) {
+                        this.completeQuest(quest);
+                    }
+                }
+                
+                this.updateQuestUI();
+            }
+            
+            completeQuest(quest) {
+                quest.completed = true;
+                
+                // Give rewards
+                if (quest.rewards.exp) {
+                    this.gainExperience(quest.rewards.exp);
+                }
+                if (quest.rewards.gold) {
+                    this.character.gold += quest.rewards.gold;
+                }
+                if (quest.rewards.items) {
+                    for (const itemName of quest.rewards.items) {
+                        this.addItem({ name: itemName, type: 'weapon', icon: '⚔️' });
+                    }
+                }
+                
+                this.createFloatingText(this.character.x, this.character.y, `Quest Complete: ${quest.name}`, '#FFD700', 30);
+            }
+            
+            startCombat() {
+                if (this.enemies.length === 0) {
+                    // Spawn enemy
+                    this.enemies.push({
+                        name: 'Goblin',
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        hp: 50,
+                        maxHp: 50,
+                        attack: 8,
+                        defense: 5,
+                        speed: 1,
+                        targetX: 0,
+                        targetY: 0
+                    });
+                }
+                
+                this.character.inCombat = true;
+            }
+            
+            performAttack(attacker, defender) {
+                // Calculate damage
+                const baseDamage = attacker.attack || 15;
+                const defense = defender.defense || 0;
+                const damage = Math.max(1, baseDamage - defense + Math.floor(Math.random() * 10 - 5));
+                
+                // Check crit
+                const critRoll = Math.random() * 100;
+                const isCrit = critRoll < (attacker.critChance || 5);
+                const finalDamage = isCrit ? damage * 2 : damage;
+                
+                // Apply damage
+                defender.hp -= finalDamage;
+                
+                // Visual feedback
+                const color = isCrit ? '#FF0000' : '#FFAA00';
+                const text = isCrit ? `CRIT! ${finalDamage}` : `${finalDamage}`;
+                this.createFloatingText(defender.x, defender.y, text, color);
+                
+                // Check defeat
+                if (defender.hp <= 0) {
+                    if (defender === this.character) {
+                        this.character.hp = 0;
+                        this.createFloatingText(this.character.x, this.character.y, 'DEFEATED!', '#FF0000', 30);
+                    } else {
+                        // Enemy defeated
+                        const index = this.enemies.indexOf(defender);
+                        if (index > -1) {
+                            this.enemies.splice(index, 1);
+                            this.gainExperience(50);
+                            this.character.gold += 10;
+                            this.updateQuestProgress('kill');
+                            
+                            // Drop items
+                            if (Math.random() > 0.5) {
+                                this.addItem({ name: 'Wolf Pelt', type: 'material', icon: '🐺', quantity: 1 });
+                            }
+                        }
+                    }
+                }
+                
+                return finalDamage;
+            }
+            
+            createFloatingText(x, y, text, color, size = 20) {
+                this.floatingTexts.push({
+                    x: x,
+                    y: y,
+                    text: text,
+                    color: color,
+                    size: size,
+                    life: 60,
+                    vy: -2
+                });
+            }
+            
+            createParticles(x, y, count, color) {
+                for (let i = 0; i < count; i++) {
+                    this.particles.push({
+                        x: x,
+                        y: y,
+                        vx: (Math.random() - 0.5) * 5,
+                        vy: (Math.random() - 0.5) * 5,
+                        color: color,
+                        life: 30
+                    });
+                }
+            }
+            
+            updateStats() {
+                // Calculate derived stats
+                this.character.attack = 15 + this.character.strength + this.character.bonusStrength;
+                this.character.defense = 10 + Math.floor(this.character.vitality / 2) + this.character.bonusVitality;
+                this.character.critChance = 5 + Math.floor(this.character.dexterity / 2) + this.character.bonusDexterity;
+                
+                if (this.inventory.equipment.weapon && this.inventory.equipment.weapon.stats) {
+                    this.character.attack += this.inventory.equipment.weapon.stats.attack || 0;
+                }
+                if (this.inventory.equipment.armor && this.inventory.equipment.armor.stats) {
+                    this.character.defense += this.inventory.equipment.armor.stats.defense || 0;
+                }
+                
+                // Update UI
+                document.getElementById('playerName').textContent = this.character.name;
+                document.getElementById('playerClass').textContent = this.character.class;
+                document.getElementById('playerLevel').textContent = this.character.level;
+                document.getElementById('playerXP').textContent = this.character.experience;
+                document.getElementById('xpToNext').textContent = this.character.experienceToNext;
+                
+                document.getElementById('playerHP').textContent = Math.floor(this.character.hp);
+                document.getElementById('maxHP').textContent = this.character.maxHp;
+                document.getElementById('playerMP').textContent = Math.floor(this.character.mp);
+                document.getElementById('maxMP').textContent = this.character.maxMp;
+                document.getElementById('playerStamina').textContent = Math.floor(this.character.stamina);
+                document.getElementById('maxStamina').textContent = this.character.maxStamina;
+                
+                document.getElementById('statSTR').textContent = this.character.strength;
+                document.getElementById('bonusSTR').textContent = this.character.bonusStrength;
+                document.getElementById('statINT').textContent = this.character.intelligence;
+                document.getElementById('bonusINT').textContent = this.character.bonusIntelligence;
+                document.getElementById('statDEX').textContent = this.character.dexterity;
+                document.getElementById('bonusDEX').textContent = this.character.bonusDexterity;
+                document.getElementById('statVIT').textContent = this.character.vitality;
+                document.getElementById('bonusVIT').textContent = this.character.bonusVitality;
+                
+                document.getElementById('attackPower').textContent = this.character.attack;
+                document.getElementById('defensePower').textContent = this.character.defense;
+                document.getElementById('critChance').textContent = this.character.critChance;
+                document.getElementById('playerGold').textContent = this.character.gold;
+                
+                document.getElementById('skillPoints').textContent = this.character.skillPoints;
+                
+                // Update equipment display
+                document.getElementById('equippedWeapon').textContent = this.inventory.equipment.weapon?.name || 'None';
+                document.getElementById('equippedArmor').textContent = this.inventory.equipment.armor?.name || 'None';
+                document.getElementById('equippedAccessory').textContent = this.inventory.equipment.accessory?.name || 'None';
+            }
+            
+            initializeInventoryUI() {
+                const grid = document.getElementById('inventoryGrid');
+                grid.innerHTML = '';
+                
+                for (let i = 0; i < 40; i++) {
+                    const slot = document.createElement('div');
+                    slot.className = 'inventory-slot';
+                    slot.onclick = () => this.useItem(i);
+                    
+                    const item = this.inventory.slots[i];
+                    if (item) {
+                        const icon = document.createElement('span');
+                        icon.className = 'item-icon';
+                        icon.textContent = item.icon || '📦';
+                        slot.appendChild(icon);
+                        
+                        if (item.quantity > 1) {
+                            const count = document.createElement('span');
+                            count.className = 'item-count';
+                            count.textContent = item.quantity;
+                            slot.appendChild(count);
+                        }
+                        
+                        slot.title = `${item.name}${item.quantity > 1 ? ` (${item.quantity})` : ''}`;
+                    }
+                    
+                    grid.appendChild(slot);
+                }
+            }
+            
+            updateQuestUI() {
+                const questDiv = document.getElementById('activeQuests');
+                questDiv.innerHTML = '';
+                
+                for (const quest of this.quests) {
+                    if (quest.completed) continue;
+                    
+                    const questElement = document.createElement('div');
+                    questElement.style.marginBottom = '10px';
+                    questElement.innerHTML = `
+                        <strong>${quest.name}</strong><br>
+                        <span style="color: #AAA; font-size: 12px;">${quest.description}</span><br>
+                    `;
+                    
+                    for (const obj of quest.objectives) {
+                        const status = obj.completed ? '✅' : '⬜';
+                        const progress = obj.required > 1 ? ` (${obj.current}/${obj.required})` : '';
+                        questElement.innerHTML += `${status} ${obj.text}${progress}<br>`;
+                    }
+                    
+                    questDiv.appendChild(questElement);
+                }
+            }
+            
+            update(deltaTime) {
+                // Character movement
+                if (mouse.left) {
+                    this.character.targetX = mouse.x;
+                    this.character.targetY = mouse.y;
+                    this.character.isMoving = true;
+                }
+                
+                if (this.character.isMoving) {
+                    const dx = this.character.targetX - this.character.x;
+                    const dy = this.character.targetY - this.character.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist > 5) {
+                        this.character.x += (dx / dist) * this.character.speed;
+                        this.character.y += (dy / dist) * this.character.speed;
+                    } else {
+                        this.character.isMoving = false;
+                    }
+                }
+                
+                // Update enemies
+                for (const enemy of this.enemies) {
+                    // Simple AI - move toward player
+                    const dx = this.character.x - enemy.x;
+                    const dy = this.character.y - enemy.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist > 50) {
+                        enemy.x += (dx / dist) * enemy.speed;
+                        enemy.y += (dy / dist) * enemy.speed;
+                    } else if (dist < 60 && Math.random() < 0.02) {
+                        // Attack player
+                        this.performAttack(enemy, this.character);
+                    }
+                }
+                
+                // Combat check
+                if (this.character.inCombat && mouse.right) {
+                    // Player attacks nearest enemy
+                    let nearestEnemy = null;
+                    let nearestDist = Infinity;
+                    
+                    for (const enemy of this.enemies) {
+                        const dx = enemy.x - this.character.x;
+                        const dy = enemy.y - this.character.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (dist < nearestDist && dist < 100) {
+                            nearestDist = dist;
+                            nearestEnemy = enemy;
+                        }
+                    }
+                    
+                    if (nearestEnemy) {
+                        this.performAttack(this.character, nearestEnemy);
+                        mouse.right = false;
+                    }
+                }
+                
+                // Update particles
+                this.particles = this.particles.filter(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.5;
+                    p.life--;
+                    return p.life > 0;
+                });
+                
+                // Update floating texts
+                this.floatingTexts = this.floatingTexts.filter(t => {
+                    t.y += t.vy;
+                    t.vy += 0.1;
+                    t.life--;
+                    return t.life > 0;
+                });
+                
+                // Regeneration
+                if (this.character.hp < this.character.maxHp) {
+                    this.character.hp += 0.01;
+                }
+                if (this.character.mp < this.character.maxMp) {
+                    this.character.mp += 0.02;
+                }
+                if (this.character.stamina < this.character.maxStamina) {
+                    this.character.stamina += 0.05;
+                }
+                
+                this.updateStats();
+            }
+            
+            render() {
+                // Clear canvas
+                ctx.fillStyle = '#2a4d3a';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw grass pattern
+                ctx.fillStyle = '#1e3a29';
+                for (let x = 0; x < canvas.width; x += 50) {
+                    for (let y = 0; y < canvas.height; y += 50) {
+                        if ((x + y) % 100 === 0) {
+                            ctx.fillRect(x, y, 50, 50);
+                        }
+                    }
+                }
+                
+                // Draw NPCs
+                for (const npc of this.npcs) {
+                    ctx.fillStyle = '#8B4513';
+                    ctx.fillRect(npc.x - 15, npc.y - 15, 30, 30);
+                    
+                    ctx.fillStyle = 'white';
+                    ctx.font = '10px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(npc.name, npc.x, npc.y - 20);
+                    
+                    // Quest indicator
+                    if (npc.dialogue) {
+                        ctx.fillStyle = '#FFD700';
+                        ctx.font = '16px Arial';
+                        ctx.fillText('!', npc.x, npc.y - 30);
+                    }
+                }
+                
+                // Draw enemies
+                for (const enemy of this.enemies) {
+                    ctx.fillStyle = '#8B0000';
+                    ctx.beginPath();
+                    ctx.arc(enemy.x, enemy.y, 15, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Health bar
+                    const barWidth = 30;
+                    const barHeight = 4;
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                    ctx.fillRect(enemy.x - barWidth/2, enemy.y - 25, barWidth, barHeight);
+                    
+                    ctx.fillStyle = '#FF0000';
+                    ctx.fillRect(enemy.x - barWidth/2, enemy.y - 25, barWidth * (enemy.hp / enemy.maxHp), barHeight);
+                    
+                    ctx.fillStyle = 'white';
+                    ctx.font = '10px Arial';
+                    ctx.fillText(enemy.name, enemy.x, enemy.y - 30);
+                }
+                
+                // Draw character
+                ctx.fillStyle = this.character.class === 'warrior' ? '#4169E1' :
+                               this.character.class === 'mage' ? '#9932CC' :
+                               this.character.class === 'rogue' ? '#228B22' : '#FFD700';
+                ctx.beginPath();
+                ctx.arc(this.character.x, this.character.y, 12, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Character health bar
+                const barWidth = 40;
+                const barHeight = 4;
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                ctx.fillRect(this.character.x - barWidth/2, this.character.y - 20, barWidth, barHeight);
+                
+                ctx.fillStyle = '#00FF00';
+                ctx.fillRect(this.character.x - barWidth/2, this.character.y - 20, barWidth * (this.character.hp / this.character.maxHp), barHeight);
+                
+                // Mana bar
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                ctx.fillRect(this.character.x - barWidth/2, this.character.y - 15, barWidth, barHeight);
+                
+                ctx.fillStyle = '#0099FF';
+                ctx.fillRect(this.character.x - barWidth/2, this.character.y - 15, barWidth * (this.character.mp / this.character.maxMp), barHeight);
+                
+                // Draw particles
+                for (const particle of this.particles) {
+                    ctx.globalAlpha = particle.life / 30;
+                    ctx.fillStyle = particle.color;
+                    ctx.fillRect(particle.x - 2, particle.y - 2, 4, 4);
+                }
+                ctx.globalAlpha = 1;
+                
+                // Draw floating texts
+                for (const text of this.floatingTexts) {
+                    ctx.globalAlpha = text.life / 60;
+                    ctx.fillStyle = text.color;
+                    ctx.font = `bold ${text.size}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.fillText(text.text, text.x, text.y);
+                }
+                ctx.globalAlpha = 1;
+                
+                // Draw UI hints
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(10, 10, 200, 60);
+                
+                ctx.fillStyle = 'white';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText(`Level ${this.character.level} ${this.character.class}`, 20, 30);
+                ctx.fillText(`HP: ${Math.floor(this.character.hp)}/${this.character.maxHp}`, 20, 45);
+                ctx.fillText(`Gold: ${this.character.gold}`, 20, 60);
+                
+                // Combat indicator
+                if (this.character.inCombat) {
+                    ctx.fillStyle = '#FF0000';
+                    ctx.font = 'bold 20px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('COMBAT!', canvas.width/2, 50);
+                }
+            }
+        }
+
+        // Initialize RPG system
+        const rpgSystem = new RPGSystem();
+
+        // UI Functions
+        window.createCharacter = function() {
+            const name = document.getElementById('charName').value;
+            const charClass = document.getElementById('charClass').value;
+            rpgSystem.createCharacter(name, charClass);
+        };
+
+        window.usePotion = function() {
+            // Find and use first potion
+            for (let i = 0; i < rpgSystem.inventory.slots.length; i++) {
+                const item = rpgSystem.inventory.slots[i];
+                if (item && item.name === 'Health Potion') {
+                    rpgSystem.useItem(i);
+                    rpgSystem.initializeInventoryUI();
+                    
+                    // Update potion count
+                    let potionCount = 0;
+                    for (const slot of rpgSystem.inventory.slots) {
+                        if (slot && slot.name === 'Health Potion') {
+                            potionCount += slot.quantity;
+                        }
+                    }
+                    document.getElementById('potionCount').textContent = potionCount;
+                    break;
+                }
+            }
+        };
+
+        window.rest = function() {
+            rpgSystem.character.hp = rpgSystem.character.maxHp;
+            rpgSystem.character.mp = rpgSystem.character.maxMp;
+            rpgSystem.character.stamina = rpgSystem.character.maxStamina;
+            rpgSystem.createFloatingText(rpgSystem.character.x, rpgSystem.character.y, 'Rested!', '#00FF00');
+            rpgSystem.updateStats();
+        };
+
+        window.levelUp = function() {
+            rpgSystem.gainExperience(rpgSystem.character.experienceToNext);
+        };
+
+        window.openShop = function() {
+            console.log('Shop opened');
+            // Would implement shop UI
+        };
+
+        window.startCombat = function() {
+            rpgSystem.startCombat();
+        };
+
+        window.openDialogue = function() {
+            console.log('Dialogue opened');
+            // Would implement dialogue UI
+        };
+
+        window.toggleInventory = function() {
+            rpgSystem.showInventory = !rpgSystem.showInventory;
+            document.getElementById('inventoryPanel').style.display = 
+                rpgSystem.showInventory ? 'block' : 'none';
+            rpgSystem.initializeInventoryUI();
+        };
+
+        window.toggleQuests = function() {
+            rpgSystem.showQuests = !rpgSystem.showQuests;
+            document.getElementById('questPanel').style.display = 
+                rpgSystem.showQuests ? 'block' : 'none';
+        };
+
+        window.toggleSkills = function() {
+            rpgSystem.showSkills = !rpgSystem.showSkills;
+            document.getElementById('skillPanel').style.display = 
+                rpgSystem.showSkills ? 'block' : 'none';
+        };
+
+        window.saveGame = function() {
+            const saveData = {
+                character: rpgSystem.character,
+                inventory: rpgSystem.inventory,
+                quests: rpgSystem.quests
+            };
+            localStorage.setItem('rpgSave', JSON.stringify(saveData));
+            rpgSystem.createFloatingText(rpgSystem.character.x, rpgSystem.character.y, 'Game Saved!', '#FFD700');
+        };
+
+        window.loadGame = function() {
+            const saveData = localStorage.getItem('rpgSave');
+            if (saveData) {
+                const data = JSON.parse(saveData);
+                rpgSystem.character = data.character;
+                rpgSystem.inventory = data.inventory;
+                rpgSystem.quests = data.quests;
+                rpgSystem.updateStats();
+                rpgSystem.initializeInventoryUI();
+                rpgSystem.updateQuestUI();
+                rpgSystem.createFloatingText(rpgSystem.character.x, rpgSystem.character.y, 'Game Loaded!', '#FFD700');
+            }
+        };
+
+        // Game loop
+        let lastTime = performance.now();
+        
+        function gameLoop() {
+            const currentTime = performance.now();
+            const deltaTime = currentTime - lastTime;
+            lastTime = currentTime;
+            
+            rpgSystem.update(deltaTime);
+            rpgSystem.render();
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        gameLoop();
+        console.log('RPG System initialized!');
+    </script>
+
+    <h2>RPG System Implementation in Python</h2>
+    
+    <p>See <a href="genres_rpg_python.html">the complete Python implementation</a> for the full code including Character classes, Inventory system, Quest management, Skill trees, Crafting system, and Trading mechanics.</p>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ RPG System Best Practices</h3>
+        <ul>
+            <li><strong>Balance:</strong> Playtest extensively to balance progression</li>
+            <li><strong>Save System:</strong> Implement robust save/load functionality</li>
+            <li><strong>Inventory UI:</strong> Make item management intuitive</li>
+            <li><strong>Quest Clarity:</strong> Clear objectives and progress tracking</li>
+            <li><strong>Skill Trees:</strong> Meaningful choices and build variety</li>
+            <li><strong>Economy:</strong> Balance gold income and item prices</li>
+            <li><strong>Combat Feel:</strong> Make combat responsive and satisfying</li>
+            <li><strong>Story Integration:</strong> Weave mechanics into narrative</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>📊 Character progression drives player engagement</li>
+            <li>🎒 Inventory management is core to RPGs</li>
+            <li>⚔️ Combat systems need depth and strategy</li>
+            <li>📜 Quest systems provide structure and goals</li>
+            <li>💬 Dialogue trees create narrative branches</li>
+            <li>🌳 Skill trees offer customization</li>
+            <li>⚗️ Crafting adds resource management</li>
+            <li>💰 Economy systems create meaningful choices</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you've mastered RPG systems, next we'll explore strategy game mechanics!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="networking_lobby_complete.html" class="prev-lesson">Previous: Lobby Systems</a>
+        <a href="genres_strategy_complete.html" class="next-lesson">Next: Strategy Game Mechanics</a>
+    </nav>
+    
+    </main>
+</body>
+</html>

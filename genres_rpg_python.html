@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Build complete RPG systems. Learn inventory management, character stats, skill trees, quest systems, and dialogue mechanics.">
+    <title>RPG Systems (continued) - Different Game Genres</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+</head>
+<body>
+    <main id="main-content">
+    <header role="banner">
+        <h1>RPG Systems Implementation (continued)</h1>
+    </header>
+
+    <pre class="language-python"><code>        response2.add_action('give_quest', 'main_1')
+        
+        self.npcs.append({
+            'name': 'Village Elder',
+            'x': 200,
+            'y': 200,
+            'dialogue': root
+        })
+    
+    def use_item(self, item: Item):
+        """Use consumable item"""
+        if item.item_type == ItemType.CONSUMABLE:
+            if item.effect == 'heal':
+                heal_amount = item.value or 50
+                self.character.hp = min(self.character.max_hp,
+                                       self.character.hp + heal_amount)
+                return True
+            elif item.effect == 'mana':
+                mana_amount = item.value or 30
+                self.character.mp = min(self.character.max_mp,
+                                       self.character.mp + mana_amount)
+                return True
+        return False
+    
+    def perform_attack(self, attacker: Character, target: Dict) -> int:
+        """Perform combat attack"""
+        # Base damage calculation
+        base_damage = attacker.get_attack_power()
+        defense = target.get('defense', 0)
+        
+        # Random variation
+        damage_variance = random.randint(-5, 5)
+        damage = max(1, base_damage - defense + damage_variance)
+        
+        # Critical hit check
+        if random.random() * 100 < attacker.get_crit_chance():
+            damage *= 2
+            print(f"Critical hit! {damage} damage!")
+        
+        # Apply damage
+        target['hp'] -= damage
+        
+        return damage
+    
+    def update_quest_progress(self, quest_type: str, amount: int = 1):
+        """Update quest progress"""
+        for quest in self.quests:
+            if quest.completed:
+                continue
+                
+            for i, obj in enumerate(quest.objectives):
+                if quest_type in obj['text'].lower():
+                    quest.update_progress(i, amount)
+                    
+                    if quest.is_complete():
+                        self.complete_quest(quest)
+    
+    def complete_quest(self, quest: Quest):
+        """Complete a quest and give rewards"""
+        if quest.rewards['exp']:
+            self.character.gain_experience(quest.rewards['exp'])
+        
+        if quest.rewards['gold']:
+            self.character.gold += quest.rewards['gold']
+        
+        for item_name in quest.rewards.get('items', []):
+            # Create and add reward items
+            item = Item(item_name, ItemType.WEAPON, "🎁")
+            self.inventory.add_item(item)
+        
+        print(f"Quest completed: {quest.name}")
+    
+    def save_game(self, filename: str = "savegame.json"):
+        """Save game state"""
+        save_data = {
+            'character': asdict(self.character),
+            'inventory': {
+                'slots': [asdict(item) if item else None 
+                         for item in self.inventory.slots],
+                'equipment': {
+                    k: asdict(v) if v else None 
+                    for k, v in self.inventory.equipment.items()
+                }
+            },
+            'quests': [
+                {
+                    'id': q.id,
+                    'objectives': q.objectives,
+                    'completed': q.completed
+                } for q in self.quests
+            ]
+        }
+        
+        with open(filename, 'w') as f:
+            json.dump(save_data, f, indent=2)
+        
+        print(f"Game saved to {filename}")
+    
+    def load_game(self, filename: str = "savegame.json"):
+        """Load game state"""
+        try:
+            with open(filename, 'r') as f:
+                save_data = json.load(f)
+            
+            # Restore character
+            char_data = save_data['character']
+            self.character = Character(
+                char_data['name'],
+                CharacterClass(char_data['char_class'])
+            )
+            for key, value in char_data.items():
+                if hasattr(self.character, key):
+                    setattr(self.character, key, value)
+            
+            # Restore inventory
+            self.inventory = Inventory()
+            for i, item_data in enumerate(save_data['inventory']['slots']):
+                if item_data:
+                    item = Item(
+                        item_data['name'],
+                        ItemType(item_data['item_type']),
+                        item_data.get('icon', '📦'),
+                        item_data.get('quantity', 1)
+                    )
+                    self.inventory.slots[i] = item
+            
+            print(f"Game loaded from {filename}")
+            
+        except FileNotFoundError:
+            print(f"Save file {filename} not found")
+    
+    def render_ui(self):
+        """Render game UI"""
+        # Character info
+        info_text = [
+            f"Name: {self.character.name}",
+            f"Class: {self.character.char_class.value}",
+            f"Level: {self.character.level}",
+            f"HP: {int(self.character.hp)}/{self.character.max_hp}",
+            f"MP: {int(self.character.mp)}/{self.character.max_mp}",
+            f"Gold: {self.character.gold}",
+            f"XP: {self.character.experience}/{self.character.exp_to_next}"
+        ]
+        
+        font = pygame.font.Font(None, 24)
+        y_offset = 10
+        for text in info_text:
+            text_surface = font.render(text, True, (255, 255, 255))
+            self.screen.blit(text_surface, (10, y_offset))
+            y_offset += 25
+        
+        # Inventory display
+        if self.show_inventory:
+            self.render_inventory()
+        
+        # Quest display
+        if self.show_quests:
+            self.render_quests()
+    
+    def render_inventory(self):
+        """Render inventory UI"""
+        # Background
+        inv_surface = pygame.Surface((600, 400))
+        inv_surface.fill((50, 50, 50))
+        inv_surface.set_alpha(240)
+        self.screen.blit(inv_surface, (100, 100))
+        
+        # Title
+        font = pygame.font.Font(None, 32)
+        title = font.render("Inventory", True, (255, 255, 255))
+        self.screen.blit(title, (350, 110))
+        
+        # Grid
+        slot_size = 50
+        margin = 5
+        cols = 10
+        
+        for i, item in enumerate(self.inventory.slots):
+            row = i // cols
+            col = i % cols
+            x = 110 + col * (slot_size + margin)
+            y = 150 + row * (slot_size + margin)
+            
+            # Slot background
+            pygame.draw.rect(self.screen, (100, 100, 100),
+                           (x, y, slot_size, slot_size), 2)
+            
+            if item:
+                # Item icon (simplified)
+                font = pygame.font.Font(None, 36)
+                icon = font.render(item.icon, True, (255, 255, 255))
+                self.screen.blit(icon, (x + 10, y + 10))
+                
+                # Quantity
+                if item.quantity > 1:
+                    font = pygame.font.Font(None, 16)
+                    qty = font.render(str(item.quantity), True, (255, 255, 0))
+                    self.screen.blit(qty, (x + 35, y + 35))
+    
+    def render_quests(self):
+        """Render quest log"""
+        # Background
+        quest_surface = pygame.Surface((400, 300))
+        quest_surface.fill((50, 50, 50))
+        quest_surface.set_alpha(240)
+        self.screen.blit(quest_surface, (200, 150))
+        
+        # Title
+        font = pygame.font.Font(None, 32)
+        title = font.render("Quest Log", True, (255, 255, 255))
+        self.screen.blit(title, (350, 160))
+        
+        # Quests
+        y_offset = 200
+        for quest in self.quests:
+            if quest.completed:
+                continue
+            
+            # Quest name
+            font = pygame.font.Font(None, 24)
+            name_text = font.render(quest.name, True, (255, 215, 0))
+            self.screen.blit(name_text, (220, y_offset))
+            y_offset += 25
+            
+            # Objectives
+            font = pygame.font.Font(None, 20)
+            for obj in quest.objectives:
+                status = "✓" if obj['completed'] else "○"
+                obj_text = f"{status} {obj['text']} ({obj['current']}/{obj['required']})"
+                text_surface = font.render(obj_text, True, (200, 200, 200))
+                self.screen.blit(text_surface, (240, y_offset))
+                y_offset += 20
+            
+            y_offset += 10
+    
+    def run(self):
+        """Main game loop"""
+        running = True
+        
+        while running:
+            dt = self.clock.tick(60) / 1000.0  # Delta time in seconds
+            
+            # Handle events
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_i:
+                        self.show_inventory = not self.show_inventory
+                    elif event.key == pygame.K_q:
+                        self.show_quests = not self.show_quests
+                    elif event.key == pygame.K_c:
+                        self.show_character = not self.show_character
+                    elif event.key == pygame.K_s and pygame.key.get_mods() & pygame.KMOD_CTRL:
+                        self.save_game()
+                    elif event.key == pygame.K_l and pygame.key.get_mods() & pygame.KMOD_CTRL:
+                        self.load_game()
+            
+            # Update
+            # Regeneration
+            if self.character.hp < self.character.max_hp:
+                self.character.hp += 0.1 * dt
+            if self.character.mp < self.character.max_mp:
+                self.character.mp += 0.2 * dt
+            
+            # Render
+            self.screen.fill((34, 139, 34))  # Forest green background
+            
+            # Draw game world
+            # (simplified - would include tile map, entities, etc.)
+            
+            # Draw UI
+            self.render_ui()
+            
+            pygame.display.flip()
+        
+        pygame.quit()
+
+# Skill Tree System
+class Skill:
+    """Individual skill in skill tree"""
+    
+    def __init__(self, skill_id: str, name: str, max_level: int = 5):
+        self.id = skill_id
+        self.name = name
+        self.level = 0
+        self.max_level = max_level
+        self.cost = 1
+        self.requirements = []
+        self.effects = {}
+    
+    def can_learn(self, character: Character, skill_tree: 'SkillTree') -> bool:
+        """Check if skill can be learned"""
+        if self.level >= self.max_level:
+            return False
+        
+        if character.skill_points < self.cost:
+            return False
+        
+        # Check requirements
+        for req in self.requirements:
+            req_skill = skill_tree.get_skill(req['skill_id'])
+            if not req_skill or req_skill.level < req['level']:
+                return False
+        
+        return True
+    
+    def learn(self, character: Character):
+        """Learn or upgrade skill"""
+        if character.skill_points >= self.cost:
+            self.level += 1
+            character.skill_points -= self.cost
+            
+            # Apply effects
+            for stat, value in self.effects.items():
+                if hasattr(character, stat):
+                    current = getattr(character, stat)
+                    setattr(character, stat, current + value)
+            
+            return True
+        return False
+
+class SkillTree:
+    """Skill tree system"""
+    
+    def __init__(self):
+        self.skills = {}
+        self.create_default_skills()
+    
+    def create_default_skills(self):
+        """Create default skill trees"""
+        # Warrior skills
+        power_strike = Skill('power_strike', 'Power Strike')
+        power_strike.effects = {'strength': 2}
+        self.skills['power_strike'] = power_strike
+        
+        iron_skin = Skill('iron_skin', 'Iron Skin')
+        iron_skin.effects = {'vitality': 3, 'max_hp': 10}
+        self.skills['iron_skin'] = iron_skin
+        
+        berserker = Skill('berserker', 'Berserker Rage', max_level=3)
+        berserker.cost = 2
+        berserker.requirements = [{'skill_id': 'power_strike', 'level': 3}]
+        berserker.effects = {'strength': 5}
+        self.skills['berserker'] = berserker
+        
+        # Mage skills
+        fireball = Skill('fireball', 'Fireball')
+        fireball.effects = {'intelligence': 2}
+        self.skills['fireball'] = fireball
+        
+        mana_shield = Skill('mana_shield', 'Mana Shield')
+        mana_shield.effects = {'max_mp': 20}
+        self.skills['mana_shield'] = mana_shield
+        
+        teleport = Skill('teleport', 'Teleport', max_level=1)
+        teleport.cost = 3
+        teleport.requirements = [{'skill_id': 'fireball', 'level': 3}]
+        self.skills['teleport'] = teleport
+    
+    def get_skill(self, skill_id: str) -> Optional[Skill]:
+        """Get skill by ID"""
+        return self.skills.get(skill_id)
+    
+    def get_available_skills(self, character: Character) -> List[Skill]:
+        """Get skills available to learn"""
+        available = []
+        for skill in self.skills.values():
+            if skill.can_learn(character, self):
+                available.append(skill)
+        return available
+
+# Crafting System
+class Recipe:
+    """Crafting recipe"""
+    
+    def __init__(self, result: Item, ingredients: List[Tuple[str, int]]):
+        self.result = result
+        self.ingredients = ingredients  # List of (item_name, quantity) tuples
+    
+    def can_craft(self, inventory: Inventory) -> bool:
+        """Check if recipe can be crafted"""
+        for ingredient_name, required_qty in self.ingredients:
+            found_qty = 0
+            for item in inventory.slots:
+                if item and item.name == ingredient_name:
+                    found_qty += item.quantity
+            
+            if found_qty < required_qty:
+                return False
+        
+        return True
+    
+    def craft(self, inventory: Inventory) -> bool:
+        """Craft the item"""
+        if not self.can_craft(inventory):
+            return False
+        
+        # Remove ingredients
+        for ingredient_name, required_qty in self.ingredients:
+            remaining = required_qty
+            for i, item in enumerate(inventory.slots):
+                if item and item.name == ingredient_name:
+                    if item.quantity <= remaining:
+                        remaining -= item.quantity
+                        inventory.slots[i] = None
+                    else:
+                        item.quantity -= remaining
+                        remaining = 0
+                    
+                    if remaining == 0:
+                        break
+        
+        # Add crafted item
+        inventory.add_item(self.result)
+        return True
+
+# Trading System
+class Shop:
+    """Shop/merchant system"""
+    
+    def __init__(self, name: str):
+        self.name = name
+        self.inventory = []
+        self.buy_multiplier = 1.0  # Price multiplier when buying
+        self.sell_multiplier = 0.5  # Price multiplier when selling
+    
+    def add_item(self, item: Item, stock: int = -1):
+        """Add item to shop (-1 for infinite stock)"""
+        self.inventory.append({
+            'item': item,
+            'stock': stock,
+            'price': item.price
+        })
+    
+    def buy_item(self, item_index: int, character: Character, 
+                player_inventory: Inventory) -> bool:
+        """Player buys item from shop"""
+        if 0 <= item_index < len(self.inventory):
+            shop_item = self.inventory[item_index]
+            price = int(shop_item['price'] * self.buy_multiplier)
+            
+            if character.gold >= price:
+                if shop_item['stock'] != 0:  # Check stock
+                    if player_inventory.add_item(shop_item['item']):
+                        character.gold -= price
+                        if shop_item['stock'] > 0:
+                            shop_item['stock'] -= 1
+                        return True
+        
+        return False
+    
+    def sell_item(self, item: Item, character: Character) -> bool:
+        """Player sells item to shop"""
+        price = int(item.price * self.sell_multiplier)
+        character.gold += price
+        return True
+
+if __name__ == "__main__":
+    game = RPGGame()
+    game.run()</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ RPG System Best Practices</h3>
+        <ul>
+            <li><strong>Balance:</strong> Playtest extensively to balance progression</li>
+            <li><strong>Save System:</strong> Implement robust save/load functionality</li>
+            <li><strong>Inventory UI:</strong> Make item management intuitive</li>
+            <li><strong>Quest Clarity:</strong> Clear objectives and progress tracking</li>
+            <li><strong>Skill Trees:</strong> Meaningful choices and build variety</li>
+            <li><strong>Economy:</strong> Balance gold income and item prices</li>
+            <li><strong>Combat Feel:</strong> Make combat responsive and satisfying</li>
+            <li><strong>Story Integration:</strong> Weave mechanics into narrative</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>📊 Character progression drives player engagement</li>
+            <li>🎒 Inventory management is core to RPGs</li>
+            <li>⚔️ Combat systems need depth and strategy</li>
+            <li>📜 Quest systems provide structure and goals</li>
+            <li>💬 Dialogue trees create narrative branches</li>
+            <li>🌳 Skill trees offer customization</li>
+            <li>⚗️ Crafting adds resource management</li>
+            <li>💰 Economy systems create meaningful choices</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you've mastered RPG systems, next we'll explore strategy game mechanics!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="networking_lobby_complete.html" class="prev-lesson">Previous: Lobby Systems</a>
+        <a href="genres_strategy.html" class="next-lesson">Next: Strategy Game Mechanics</a>
+    </nav>
+    
+    </main>
+</body>
+</html>

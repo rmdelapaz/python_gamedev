@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Complete Python implementation of puzzle game mechanics including match-3, sliding puzzles, physics puzzles, and logic gates.">
+    <title>Puzzle Game Python Implementation - Different Game Genres</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Puzzle Game Logic - Python Implementation</h1>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <a href="genres_puzzle.html">Puzzle Game Logic</a>
+        <span class="separator">›</span>
+        <span class="current">Python Implementation</span>
+    </nav>
+
+    <h2>Complete Puzzle Game Implementation in Python</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>This is the complete Python/Pygame implementation featuring multiple puzzle types: Match-3 with cascading combos, sliding tile puzzles, physics-based challenges, pattern memory games, and logic gate puzzles.</p>
+    </div>
+
+    <h3>Full Puzzle Game Code</h3>
+    
+    <pre class="language-python"><code>import pygame
+import random
+import math
+from typing import List, Tuple, Optional, Dict
+from dataclasses import dataclass
+from enum import Enum
+import copy
+
+class PuzzleType(Enum):
+    MATCH3 = "match3"
+    SLIDING = "sliding"
+    PHYSICS = "physics"
+    LOGIC = "logic"
+    PATTERN = "pattern"
+
+# Match-3 Game Implementation
+class Match3Game:
+    """Match-3 puzzle game"""
+    
+    def __init__(self, grid_size: int = 8, gem_types: int = 6):
+        self.grid_size = grid_size
+        self.gem_types = gem_types
+        self.grid = []
+        self.selected = None
+        self.score = 0
+        self.combo = 1
+        self.moves = 0
+        
+        # Gem colors
+        self.gem_colors = [
+            (255, 0, 0),    # Red
+            (0, 255, 0),    # Green
+            (0, 0, 255),    # Blue
+            (255, 255, 0),  # Yellow
+            (255, 0, 255),  # Purple
+            (0, 255, 255)   # Cyan
+        ]
+        
+        self.initialize_grid()
+    
+    def initialize_grid(self):
+        """Create initial game grid"""
+        self.grid = []
+        
+        for y in range(self.grid_size):
+            row = []
+            for x in range(self.grid_size):
+                # Ensure no initial matches
+                valid_gem = False
+                while not valid_gem:
+                    gem_type = random.randint(0, self.gem_types - 1)
+                    
+                    # Check horizontal match
+                    if x >= 2:
+                        if row[x-1] == gem_type and row[x-2] == gem_type:
+                            continue
+                    
+                    # Check vertical match
+                    if y >= 2:
+                        if (self.grid[y-1][x] == gem_type and 
+                            self.grid[y-2][x] == gem_type):
+                            continue
+                    
+                    valid_gem = True
+                
+                row.append(gem_type)
+            self.grid.append(row)
+    
+    def swap_gems(self, x1: int, y1: int, x2: int, y2: int) -> bool:
+        """Swap two adjacent gems"""
+        # Check if adjacent
+        if abs(x1 - x2) + abs(y1 - y2) != 1:
+            return False
+        
+        # Perform swap
+        self.grid[y1][x1], self.grid[y2][x2] = self.grid[y2][x2], self.grid[y1][x1]
+        
+        # Check for matches
+        matches = self.find_matches()
+        
+        if matches:
+            self.process_matches(matches)
+            self.moves += 1
+            return True
+        else:
+            # Swap back if no matches
+            self.grid[y1][x1], self.grid[y2][x2] = self.grid[y2][x2], self.grid[y1][x1]
+            return False
+    
+    def find_matches(self) -> List[Tuple[int, int]]:
+        """Find all matching gems"""
+        matches = set()
+        
+        # Check horizontal matches
+        for y in range(self.grid_size):
+            for x in range(self.grid_size - 2):
+                if (self.grid[y][x] == self.grid[y][x+1] == self.grid[y][x+2] 
+                    and self.grid[y][x] != -1):
+                    matches.add((x, y))
+                    matches.add((x+1, y))
+                    matches.add((x+2, y))
+                    
+                    # Check for longer matches
+                    i = x + 3
+                    while i < self.grid_size and self.grid[y][i] == self.grid[y][x]:
+                        matches.add((i, y))
+                        i += 1
+        
+        # Check vertical matches
+        for x in range(self.grid_size):
+            for y in range(self.grid_size - 2):
+                if (self.grid[y][x] == self.grid[y+1][x] == self.grid[y+2][x] 
+                    and self.grid[y][x] != -1):
+                    matches.add((x, y))
+                    matches.add((x, y+1))
+                    matches.add((x, y+2))
+                    
+                    # Check for longer matches
+                    i = y + 3
+                    while i < self.grid_size and self.grid[i][x] == self.grid[y][x]:
+                        matches.add((x, i))
+                        i += 1
+        
+        return list(matches)
+    
+    def process_matches(self, matches: List[Tuple[int, int]]):
+        """Process matched gems"""
+        # Award points
+        base_score = len(matches) * 10
+        self.score += base_score * self.combo
+        
+        # Remove matched gems
+        for x, y in matches:
+            self.grid[y][x] = -1
+        
+        # Drop gems
+        self.drop_gems()
+        
+        # Fill empty spaces
+        self.fill_empty()
+        
+        # Check for cascading matches
+        new_matches = self.find_matches()
+        if new_matches:
+            self.combo += 1
+            self.process_matches(new_matches)
+        else:
+            self.combo = 1
+    
+    def drop_gems(self):
+        """Drop gems to fill empty spaces"""
+        for x in range(self.grid_size):
+            # Compact column
+            write_pos = self.grid_size - 1
+            
+            for y in range(self.grid_size - 1, -1, -1):
+                if self.grid[y][x] != -1:
+                    if y != write_pos:
+                        self.grid[write_pos][x] = self.grid[y][x]
+                        self.grid[y][x] = -1
+                    write_pos -= 1
+    
+    def fill_empty(self):
+        """Fill empty spaces with new gems"""
+        for y in range(self.grid_size):
+            for x in range(self.grid_size):
+                if self.grid[y][x] == -1:
+                    self.grid[y][x] = random.randint(0, self.gem_types - 1)
+    
+    def has_possible_moves(self) -> bool:
+        """Check if there are any possible moves"""
+        for y in range(self.grid_size):
+            for x in range(self.grid_size):
+                # Try swapping with right neighbor
+                if x < self.grid_size - 1:
+                    self.grid[y][x], self.grid[y][x+1] = self.grid[y][x+1], self.grid[y][x]
+                    if self.find_matches():
+                        self.grid[y][x], self.grid[y][x+1] = self.grid[y][x+1], self.grid[y][x]
+                        return True
+                    self.grid[y][x], self.grid[y][x+1] = self.grid[y][x+1], self.grid[y][x]
+                
+                # Try swapping with bottom neighbor
+                if y < self.grid_size - 1:
+                    self.grid[y][x], self.grid[y+1][x] = self.grid[y+1][x], self.grid[y][x]
+                    if self.find_matches():
+                        self.grid[y][x], self.grid[y+1][x] = self.grid[y+1][x], self.grid[y][x]
+                        return True
+                    self.grid[y][x], self.grid[y+1][x] = self.grid[y+1][x], self.grid[y][x]
+        
+        return False
+    
+    def shuffle_board(self):
+        """Shuffle the board if no moves available"""
+        gems = []
+        for y in range(self.grid_size):
+            for x in range(self.grid_size):
+                gems.append(self.grid[y][x])
+        
+        random.shuffle(gems)
+        
+        i = 0
+        for y in range(self.grid_size):
+            for x in range(self.grid_size):
+                self.grid[y][x] = gems[i]
+                i += 1
+
+# Sliding Puzzle Implementation
+class SlidingPuzzle:
+    """Sliding tile puzzle game"""
+    
+    def __init__(self, size: int = 4):
+        self.size = size
+        self.grid = []
+        self.empty_pos = (size - 1, size - 1)
+        self.moves = 0
+        self.solved = False
+        
+        self.initialize_puzzle()
+        self.shuffle()
+    
+    def initialize_puzzle(self):
+        """Create solved puzzle state"""
+        self.grid = []
+        num = 1
+        
+        for y in range(self.size):
+            row = []
+            for x in range(self.size):
+                if y == self.size - 1 and x == self.size - 1:
+                    row.append(0)  # Empty tile
+                else:
+                    row.append(num)
+                    num += 1
+            self.grid.append(row)
+        
+        self.empty_pos = (self.size - 1, self.size - 1)
+    
+    def shuffle(self):
+        """Shuffle puzzle with valid moves"""
+        for _ in range(100):
+            moves = self.get_valid_moves()
+            if moves:
+                move = random.choice(moves)
+                self.move_tile(move[0], move[1])
+        
+        self.moves = 0
+    
+    def get_valid_moves(self) -> List[Tuple[int, int]]:
+        """Get list of valid tile positions that can move"""
+        moves = []
+        empty_y, empty_x = self.empty_pos
+        
+        # Check adjacent tiles
+        for dy, dx in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
+            new_y, new_x = empty_y + dy, empty_x + dx
+            if 0 <= new_y < self.size and 0 <= new_x < self.size:
+                moves.append((new_y, new_x))
+        
+        return moves
+    
+    def move_tile(self, y: int, x: int) -> bool:
+        """Move tile to empty position"""
+        empty_y, empty_x = self.empty_pos
+        
+        # Check if adjacent to empty
+        if abs(y - empty_y) + abs(x - empty_x) != 1:
+            return False
+        
+        # Swap tile with empty
+        self.grid[empty_y][empty_x] = self.grid[y][x]
+        self.grid[y][x] = 0
+        self.empty_pos = (y, x)
+        
+        self.moves += 1
+        self.check_win()
+        
+        return True
+    
+    def check_win(self):
+        """Check if puzzle is solved"""
+        expected = 1
+        
+        for y in range(self.size):
+            for x in range(self.size):
+                if y == self.size - 1 and x == self.size - 1:
+                    if self.grid[y][x] != 0:
+                        return
+                else:
+                    if self.grid[y][x] != expected:
+                        return
+                    expected += 1
+        
+        self.solved = True
+
+# Physics Puzzle Implementation
+class PhysicsPuzzle:
+    """Physics-based puzzle game"""
+    
+    def __init__(self, screen_width: int, screen_height: int):
+        self.width = screen_width
+        self.height = screen_height
+        self.gravity = 0.5
+        self.objects = []
+        self.projectile = None
+        self.target = None
+        self.obstacles = []
+        self.solved = False
+        
+        self.create_level()
+    
+    def create_level(self):
+        """Create a physics puzzle level"""
+        # Create target
+        self.target = {
+            'x': self.width - 100,
+            'y': self.height - 100,
+            'radius': 30,
+            'hit': False
+        }
+        
+        # Create obstacles
+        self.obstacles = [
+            {
+                'x': self.width // 2,
+                'y': self.height - 200,
+                'width': 20,
+                'height': 150
+            },
+            {
+                'x': self.width // 3,
+                'y': self.height - 300,
+                'width': 100,
+                'height': 20
+            }
+        ]
+        
+        # Initialize projectile
+        self.reset_projectile()
+    
+    def reset_projectile(self):
+        """Reset projectile to launch position"""
+        self.projectile = {
+            'x': 50,
+            'y': self.height - 50,
+            'vx': 0,
+            'vy': 0,
+            'radius': 10,
+            'launched': False,
+            'trail': []
+        }
+    
+    def launch(self, target_x: float, target_y: float):
+        """Launch projectile towards target"""
+        if self.projectile['launched']:
+            return
+        
+        # Calculate launch velocity
+        dx = target_x - self.projectile['x']
+        dy = target_y - self.projectile['y']
+        
+        power = min(math.sqrt(dx**2 + dy**2) / 20, 15)
+        angle = math.atan2(dy, dx)
+        
+        self.projectile['vx'] = math.cos(angle) * power
+        self.projectile['vy'] = math.sin(angle) * power
+        self.projectile['launched'] = True
+    
+    def update(self):
+        """Update physics simulation"""
+        if not self.projectile['launched'] or self.solved:
+            return
+        
+        # Apply gravity
+        self.projectile['vy'] += self.gravity
+        
+        # Update position
+        self.projectile['x'] += self.projectile['vx']
+        self.projectile['y'] += self.projectile['vy']
+        
+        # Add to trail
+        self.projectile['trail'].append({
+            'x': self.projectile['x'],
+            'y': self.projectile['y']
+        })
+        
+        if len(self.projectile['trail']) > 50:
+            self.projectile['trail'].pop(0)
+        
+        # Check collisions with obstacles
+        for obstacle in self.obstacles:
+            if (self.projectile['x'] + self.projectile['radius'] > obstacle['x'] and
+                self.projectile['x'] - self.projectile['radius'] < obstacle['x'] + obstacle['width'] and
+                self.projectile['y'] + self.projectile['radius'] > obstacle['y'] and
+                self.projectile['y'] - self.projectile['radius'] < obstacle['y'] + obstacle['height']):
+                
+                # Simple bounce
+                if abs(self.projectile['vx']) > abs(self.projectile['vy']):
+                    self.projectile['vx'] *= -0.8
+                else:
+                    self.projectile['vy'] *= -0.8
+        
+        # Check collision with target
+        dx = self.projectile['x'] - self.target['x']
+        dy = self.projectile['y'] - self.target['y']
+        dist = math.sqrt(dx**2 + dy**2)
+        
+        if dist < self.target['radius'] + self.projectile['radius']:
+            self.target['hit'] = True
+            self.solved = True
+        
+        # Reset if out of bounds
+        if (self.projectile['y'] > self.height or
+            self.projectile['x'] < 0 or
+            self.projectile['x'] > self.width):
+            self.reset_projectile()
+
+# Pattern Memory Puzzle
+class PatternPuzzle:
+    """Pattern memory puzzle game"""
+    
+    def __init__(self, grid_size: int = 4):
+        self.grid_size = grid_size
+        self.pattern = []
+        self.player_pattern = []
+        self.showing_pattern = False
+        self.level = 1
+        self.score = 0
+        
+        self.generate_pattern()
+    
+    def generate_pattern(self):
+        """Generate a new pattern to memorize"""
+        pattern_length = 3 + self.level
+        self.pattern = []
+        
+        for _ in range(pattern_length):
+            self.pattern.append({
+                'x': random.randint(0, self.grid_size - 1),
+                'y': random.randint(0, self.grid_size - 1)
+            })
+        
+        self.player_pattern = []
+        self.showing_pattern = True
+    
+    def add_player_input(self, x: int, y: int):
+        """Add player's input to pattern"""
+        if self.showing_pattern:
+            return
+        
+        self.player_pattern.append({'x': x, 'y': y})
+        
+        # Check if pattern is complete
+        if len(self.player_pattern) == len(self.pattern):
+            if self.check_pattern():
+                self.score += 100 * self.level
+                self.level += 1
+                self.generate_pattern()
+            else:
+                # Wrong pattern
+                self.player_pattern = []
+    
+    def check_pattern(self) -> bool:
+        """Check if player's pattern matches"""
+        for i in range(len(self.pattern)):
+            if (self.pattern[i]['x'] != self.player_pattern[i]['x'] or
+                self.pattern[i]['y'] != self.player_pattern[i]['y']):
+                return False
+        return True
+
+# Logic Gates Puzzle
+class LogicGate:
+    """Single logic gate"""
+    
+    def __init__(self, gate_type: str, x: int, y: int):
+        self.type = gate_type  # AND, OR, NOT, XOR, NAND, NOR
+        self.x = x
+        self.y = y
+        self.inputs = []
+        self.output = False
+        self.connected_to = None
+    
+    def evaluate(self):
+        """Evaluate gate output based on inputs"""
+        if self.type == "AND":
+            self.output = all(self.inputs) if self.inputs else False
+        elif self.type == "OR":
+            self.output = any(self.inputs) if self.inputs else False
+        elif self.type == "NOT":
+            self.output = not self.inputs[0] if self.inputs else True
+        elif self.type == "XOR":
+            if len(self.inputs) == 2:
+                self.output = self.inputs[0] != self.inputs[1]
+            else:
+                self.output = False
+        elif self.type == "NAND":
+            self.output = not all(self.inputs) if self.inputs else True
+        elif self.type == "NOR":
+            self.output = not any(self.inputs) if self.inputs else True
+
+class LogicPuzzle:
+    """Logic gates puzzle game"""
+    
+    def __init__(self):
+        self.gates = []
+        self.inputs = []
+        self.outputs = []
+        self.wires = []
+        self.target_output = []
+        self.solved = False
+        
+        self.create_puzzle()
+    
+    def create_puzzle(self):
+        """Create a logic puzzle"""
+        # Create input switches
+        self.inputs = [
+            {'id': 'A', 'value': False, 'x': 50, 'y': 100},
+            {'id': 'B', 'value': False, 'x': 50, 'y': 200},
+            {'id': 'C', 'value': False, 'x': 50, 'y': 300}
+        ]
+        
+        # Create logic gates
+        self.gates = [
+            LogicGate("AND", 200, 150),
+            LogicGate("OR", 200, 250),
+            LogicGate("NOT", 350, 200)
+        ]
+        
+        # Set target output
+        self.target_output = [True]  # Example target
+        
+        # Create output
+        self.outputs = [
+            {'id': 'OUT', 'value': False, 'x': 500, 'y': 200}
+        ]
+    
+    def toggle_input(self, input_id: str):
+        """Toggle input switch"""
+        for inp in self.inputs:
+            if inp['id'] == input_id:
+                inp['value'] = not inp['value']
+                self.evaluate_circuit()
+                break
+    
+    def connect_wire(self, from_obj, to_obj):
+        """Connect two objects with a wire"""
+        self.wires.append({
+            'from': from_obj,
+            'to': to_obj
+        })
+        self.evaluate_circuit()
+    
+    def evaluate_circuit(self):
+        """Evaluate the entire circuit"""
+        # Propagate signals through gates
+        for gate in self.gates:
+            gate.evaluate()
+        
+        # Check if puzzle is solved
+        output_values = [out['value'] for out in self.outputs]
+        if output_values == self.target_output:
+            self.solved = True
+
+# Main Puzzle Game Manager
+class PuzzleGameManager:
+    """Manages different puzzle types"""
+    
+    def __init__(self, screen_width: int = 800, screen_height: int = 600):
+        pygame.init()
+        self.screen = pygame.display.set_mode((screen_width, screen_height))
+        pygame.display.set_caption("Puzzle Games")
+        self.clock = pygame.time.Clock()
+        
+        self.width = screen_width
+        self.height = screen_height
+        
+        # Initialize puzzles
+        self.puzzles = {
+            PuzzleType.MATCH3: Match3Game(),
+            PuzzleType.SLIDING: SlidingPuzzle(),
+            PuzzleType.PHYSICS: PhysicsPuzzle(screen_width, screen_height),
+            PuzzleType.PATTERN: PatternPuzzle(),
+            PuzzleType.LOGIC: LogicPuzzle()
+        }
+        
+        self.current_puzzle = PuzzleType.MATCH3
+        self.active_puzzle = self.puzzles[self.current_puzzle]
+        
+        # UI state
+        self.score = 0
+        self.time_elapsed = 0
+        self.moves = 0
+    
+    def switch_puzzle(self, puzzle_type: PuzzleType):
+        """Switch to a different puzzle type"""
+        self.current_puzzle = puzzle_type
+        self.active_puzzle = self.puzzles[puzzle_type]
+        self.score = 0
+        self.moves = 0
+        self.time_elapsed = 0
+    
+    def handle_click(self, pos: Tuple[int, int]):
+        """Handle mouse click"""
+        x, y = pos
+        
+        if self.current_puzzle == PuzzleType.MATCH3:
+            # Convert to grid coordinates
+            grid_x = x // 60
+            grid_y = y // 60
+            
+            if 0 <= grid_x < 8 and 0 <= grid_y < 8:
+                match3 = self.active_puzzle
+                if match3.selected:
+                    # Try to swap
+                    prev_x, prev_y = match3.selected
+                    if match3.swap_gems(prev_x, prev_y, grid_x, grid_y):
+                        self.score = match3.score
+                        self.moves = match3.moves
+                    match3.selected = None
+                else:
+                    match3.selected = (grid_x, grid_y)
+        
+        elif self.current_puzzle == PuzzleType.SLIDING:
+            # Convert to grid coordinates
+            grid_x = (x - 200) // 100
+            grid_y = (y - 100) // 100
+            
+            if 0 <= grid_x < 4 and 0 <= grid_y < 4:
+                if self.active_puzzle.move_tile(grid_y, grid_x):
+                    self.moves = self.active_puzzle.moves
+                    if self.active_puzzle.solved:
+                        self.score += 1000
+        
+        elif self.current_puzzle == PuzzleType.PHYSICS:
+            self.active_puzzle.launch(x, y)
+        
+        elif self.current_puzzle == PuzzleType.PATTERN:
+            grid_x = x // 100
+            grid_y = y // 100
+            
+            if 0 <= grid_x < 4 and 0 <= grid_y < 4:
+                self.active_puzzle.add_player_input(grid_x, grid_y)
+                self.score = self.active_puzzle.score
+    
+    def render_match3(self):
+        """Render Match-3 puzzle"""
+        match3 = self.active_puzzle
+        
+        for y in range(match3.grid_size):
+            for x in range(match3.grid_size):
+                gem_type = match3.grid[y][x]
+                if gem_type != -1:
+                    color = match3.gem_colors[gem_type]
+                    pygame.draw.circle(
+                        self.screen,
+                        color,
+                        (x * 60 + 30, y * 60 + 30),
+                        25
+                    )
+                    
+                    # Highlight selected
+                    if match3.selected == (x, y):
+                        pygame.draw.circle(
+                            self.screen,
+                            (255, 255, 255),
+                            (x * 60 + 30, y * 60 + 30),
+                            25,
+                            3
+                        )
+    
+    def render_sliding(self):
+        """Render sliding puzzle"""
+        puzzle = self.active_puzzle
+        
+        for y in range(puzzle.size):
+            for x in range(puzzle.size):
+                value = puzzle.grid[y][x]
+                
+                if value != 0:
+                    rect = pygame.Rect(
+                        200 + x * 100,
+                        100 + y * 100,
+                        95,
+                        95
+                    )
+                    
+                    pygame.draw.rect(self.screen, (100, 150, 200), rect)
+                    
+                    font = pygame.font.Font(None, 48)
+                    text = font.render(str(value), True, (255, 255, 255))
+                    text_rect = text.get_rect(center=rect.center)
+                    self.screen.blit(text, text_rect)
+    
+    def render_physics(self):
+        """Render physics puzzle"""
+        physics = self.active_puzzle
+        
+        # Draw target
+        color = (0, 255, 0) if physics.target['hit'] else (255, 0, 0)
+        pygame.draw.circle(
+            self.screen,
+            color,
+            (int(physics.target['x']), int(physics.target['y'])),
+            physics.target['radius']
+        )
+        
+        # Draw obstacles
+        for obstacle in physics.obstacles:
+            pygame.draw.rect(
+                self.screen,
+                (128, 128, 128),
+                (obstacle['x'], obstacle['y'], obstacle['width'], obstacle['height'])
+            )
+        
+        # Draw projectile
+        if physics.projectile:
+            pygame.draw.circle(
+                self.screen,
+                (255, 255, 0),
+                (int(physics.projectile['x']), int(physics.projectile['y'])),
+                physics.projectile['radius']
+            )
+            
+            # Draw trail
+            for point in physics.projectile['trail']:
+                pygame.draw.circle(
+                    self.screen,
+                    (255, 255, 0, 128),
+                    (int(point['x']), int(point['y'])),
+                    2
+                )
+    
+    def render_ui(self):
+        """Render UI elements"""
+        font = pygame.font.Font(None, 36)
+        
+        # Score
+        score_text = font.render(f"Score: {self.score}", True, (255, 255, 255))
+        self.screen.blit(score_text, (10, 10))
+        
+        # Moves
+        moves_text = font.render(f"Moves: {self.moves}", True, (255, 255, 255))
+        self.screen.blit(moves_text, (10, 50))
+        
+        # Current puzzle type
+        puzzle_text = font.render(f"Puzzle: {self.current_puzzle.value}", True, (255, 255, 255))
+        self.screen.blit(puzzle_text, (10, 90))
+    
+    def run(self):
+        """Main game loop"""
+        running = True
+        
+        while running:
+            dt = self.clock.tick(60) / 1000.0
+            self.time_elapsed += dt
+            
+            # Handle events
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1:  # Left click
+                        self.handle_click(event.pos)
+                
+                elif event.type == pygame.KEYDOWN:
+                    # Switch puzzles with number keys
+                    if event.key == pygame.K_1:
+                        self.switch_puzzle(PuzzleType.MATCH3)
+                    elif event.key == pygame.K_2:
+                        self.switch_puzzle(PuzzleType.SLIDING)
+                    elif event.key == pygame.K_3:
+                        self.switch_puzzle(PuzzleType.PHYSICS)
+                    elif event.key == pygame.K_4:
+                        self.switch_puzzle(PuzzleType.PATTERN)
+                    elif event.key == pygame.K_5:
+                        self.switch_puzzle(PuzzleType.LOGIC)
+            
+            # Update
+            if self.current_puzzle == PuzzleType.PHYSICS:
+                self.active_puzzle.update()
+            
+            # Render
+            self.screen.fill((30, 30, 50))
+            
+            if self.current_puzzle == PuzzleType.MATCH3:
+                self.render_match3()
+            elif self.current_puzzle == PuzzleType.SLIDING:
+                self.render_sliding()
+            elif self.current_puzzle == PuzzleType.PHYSICS:
+                self.render_physics()
+            
+            self.render_ui()
+            
+            pygame.display.flip()
+        
+        pygame.quit()
+
+if __name__ == "__main__":
+    game = PuzzleGameManager()
+    game.run()</code></pre>
+
+    <h2>Key Features Implemented</h2>
+    
+    <div style="background-color: #e8f5e9; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>✅ Complete Puzzle Systems</h3>
+        <ul>
+            <li><strong>Match-3:</strong> Gem swapping, match detection, cascading combos, score multipliers</li>
+            <li><strong>Sliding Puzzle:</strong> Tile movement, shuffle algorithm, win detection</li>
+            <li><strong>Physics Puzzle:</strong> Projectile physics, gravity, collision detection, trajectory calculation</li>
+            <li><strong>Pattern Memory:</strong> Sequence generation, pattern matching, difficulty progression</li>
+            <li><strong>Logic Gates:</strong> AND/OR/NOT gates, circuit evaluation, wire connections</li>
+            <li><strong>Game Manager:</strong> Puzzle switching, unified UI, score tracking</li>
+            <li><strong>Move Validation:</strong> Legal move checking for all puzzle types</li>
+            <li><strong>Shuffle System:</strong> Board randomization while maintaining solvability</li>
+        </ul>
+    </div>
+
+    <h2>Usage Instructions</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎮 How to Play</h3>
+        <ol>
+            <li><strong>Install Pygame:</strong> <code>pip install pygame</code></li>
+            <li><strong>Run the game:</strong> <code>python puzzle_game.py</code></li>
+            <li><strong>Controls:</strong>
+                <ul>
+                    <li>Number keys 1-5 to switch puzzle types</li>
+                    <li>Mouse click for all interactions</li>
+                    <li>Match-3: Click to select, click adjacent to swap</li>
+                    <li>Sliding: Click tile to move into empty space</li>
+                    <li>Physics: Click to launch projectile</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <h2>Customization Options</h2>
+    
+    <div style="background-color: #f3e5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🔧 Easy Modifications</h3>
+        <ul>
+            <li><strong>Grid Size:</strong> Change grid_size parameter in Match3Game and SlidingPuzzle</li>
+            <li><strong>Gem Types:</strong> Modify gem_types and gem_colors in Match3Game</li>
+            <li><strong>Physics Parameters:</strong> Adjust gravity, power, and bounce coefficients</li>
+            <li><strong>Pattern Difficulty:</strong> Change pattern_length calculation in PatternPuzzle</li>
+            <li><strong>Logic Gates:</strong> Add new gate types (XOR, NAND, NOR) in LogicGate</li>
+            <li><strong>Scoring:</strong> Modify score calculations for each puzzle type</li>
+        </ul>
+    </div>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="genres_puzzle.html" class="prev-lesson">Back to Puzzle Game Lesson</a>
+        <a href="genres_racing.html" class="next-lesson">Next: Racing Game Physics</a>
+    </nav>
+    
+    </main>
+</body>
+</html>

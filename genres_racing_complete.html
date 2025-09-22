@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Build racing game physics. Learn vehicle dynamics, drift mechanics, track design, AI opponents, and lap timing systems.">
+    <title>Racing Game Physics (continued) - Different Game Genres</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+</head>
+<body>
+    <main id="main-content">
+    <header role="banner">
+        <h1>Racing Game Physics Implementation (continued)</h1>
+    </header>
+
+    <pre class="language-python"><code>        track.add_wall(750, 50, 10, 500)
+        
+        # Inner walls
+        track.add_wall(250, 200, 300, 10)
+        track.add_wall(250, 400, 300, 10)
+        track.add_wall(250, 200, 10, 200)
+        track.add_wall(550, 200, 10, 200)
+        
+        return track
+    
+    def handle_input(self):
+        """Handle player input"""
+        keys = pygame.key.get_pressed()
+        
+        # Throttle and brake
+        if keys[pygame.K_UP] or keys[pygame.K_w]:
+            self.player_car.throttle = 1.0
+            self.player_car.brake = 0
+        elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
+            self.player_car.throttle = 0
+            self.player_car.brake = 1.0
+        else:
+            self.player_car.throttle = 0
+            self.player_car.brake = 0
+        
+        # Steering
+        if keys[pygame.K_LEFT] or keys[pygame.K_a]:
+            self.player_car.steering = -1.0
+        elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+            self.player_car.steering = 1.0
+        else:
+            self.player_car.steering = 0
+        
+        # Handbrake
+        self.player_car.handbrake = keys[pygame.K_SPACE]
+    
+    def update_camera(self):
+        """Update camera to follow player"""
+        target_x = self.player_car.x - self.screen.get_width() / 2
+        target_y = self.player_car.y - self.screen.get_height() / 2
+        
+        # Smooth camera movement
+        self.camera_x += (target_x - self.camera_x) * 0.1
+        self.camera_y += (target_y - self.camera_y) * 0.1
+    
+    def check_collisions(self):
+        """Handle collision detection and response"""
+        for car in self.race_manager.cars:
+            # Check wall collisions
+            if self.track.check_collision(car):
+                # Simple bounce back
+                car.velocity_x *= -0.5
+                car.velocity_y *= -0.5
+                
+                # Move car away from wall
+                car.x -= car.velocity_x * 0.1
+                car.y -= car.velocity_y * 0.1
+            
+            # Car vs car collisions
+            for other_car in self.race_manager.cars:
+                if car != other_car:
+                    dx = car.x - other_car.x
+                    dy = car.y - other_car.y
+                    distance = math.sqrt(dx*dx + dy*dy)
+                    
+                    if distance < 30:  # Collision threshold
+                        # Elastic collision
+                        # Calculate collision normal
+                        nx = dx / distance
+                        ny = dy / distance
+                        
+                        # Relative velocity
+                        dvx = car.velocity_x - other_car.velocity_x
+                        dvy = car.velocity_y - other_car.velocity_y
+                        
+                        # Relative velocity along collision normal
+                        dvn = dvx * nx + dvy * ny
+                        
+                        # Don't resolve if velocities are separating
+                        if dvn > 0:
+                            continue
+                        
+                        # Calculate impulse
+                        restitution = 0.5
+                        impulse = 2 * dvn / (1/car.stats.weight + 1/other_car.stats.weight)
+                        
+                        # Apply impulse
+                        car.velocity_x -= impulse * nx / car.stats.weight
+                        car.velocity_y -= impulse * ny / car.stats.weight
+                        other_car.velocity_x += impulse * nx / other_car.stats.weight
+                        other_car.velocity_y += impulse * ny / other_car.stats.weight
+                        
+                        # Separate cars
+                        separation = 30 - distance
+                        car.x += nx * separation / 2
+                        car.y += ny * separation / 2
+                        other_car.x -= nx * separation / 2
+                        other_car.y -= ny * separation / 2
+    
+    def render_track(self):
+        """Render the track"""
+        # Track surface
+        self.screen.fill((80, 80, 80))  # Asphalt color
+        
+        # Draw track markings
+        for checkpoint in self.track.checkpoints:
+            rect = pygame.Rect(
+                checkpoint['x'] - checkpoint['width']/2 - self.camera_x,
+                checkpoint['y'] - checkpoint['height']/2 - self.camera_y,
+                checkpoint['width'],
+                checkpoint['height']
+            )
+            pygame.draw.rect(self.screen, (255, 255, 0), rect, 2)
+        
+        # Draw walls
+        for wall in self.track.walls:
+            rect = pygame.Rect(
+                wall['x'] - self.camera_x,
+                wall['y'] - self.camera_y,
+                wall['width'],
+                wall['height']
+            )
+            pygame.draw.rect(self.screen, (150, 150, 150), rect)
+        
+        # Draw start/finish line
+        if self.track.checkpoints:
+            start = self.track.checkpoints[0]
+            rect = pygame.Rect(
+                start['x'] - start['width']/2 - self.camera_x,
+                start['y'] - 5 - self.camera_y,
+                start['width'],
+                10
+            )
+            
+            # Checkered pattern
+            for i in range(0, int(start['width']), 10):
+                for j in range(0, 10, 5):
+                    if (i//10 + j//5) % 2 == 0:
+                        pygame.draw.rect(
+                            self.screen,
+                            (255, 255, 255),
+                            (rect.x + i, rect.y + j, 10, 5)
+                        )
+    
+    def render_car(self, car: Car, color: Tuple[int, int, int]):
+        """Render a car"""
+        # Create car surface
+        car_surface = pygame.Surface((car.length, car.width), pygame.SRCALPHA)
+        
+        # Draw car body
+        pygame.draw.rect(car_surface, color, (0, 0, car.length, car.width))
+        
+        # Draw windows
+        pygame.draw.rect(
+            car_surface,
+            (50, 50, 50),
+            (car.length//4, car.width//4, car.length//2, car.width//2)
+        )
+        
+        # Rotate surface
+        rotated = pygame.transform.rotate(car_surface, -math.degrees(car.angle))
+        
+        # Position on screen
+        rect = rotated.get_rect()
+        rect.center = (car.x - self.camera_x, car.y - self.camera_y)
+        
+        self.screen.blit(rotated, rect)
+        
+        # Draw skid marks if drifting
+        if car.handbrake and abs(car.steering) > 0.5:
+            pygame.draw.circle(
+                self.screen,
+                (20, 20, 20),
+                (int(car.x - self.camera_x), int(car.y - self.camera_y)),
+                5
+            )
+    
+    def render_ui(self):
+        """Render UI elements"""
+        font = pygame.font.Font(None, 36)
+        small_font = pygame.font.Font(None, 24)
+        
+        # Position
+        position = self.race_manager.get_position(self.player_car)
+        position_text = font.render(f"Position: {position}/{len(self.race_manager.cars)}", 
+                                   True, (255, 255, 255))
+        self.screen.blit(position_text, (10, 10))
+        
+        # Lap counter
+        player_id = id(self.player_car)
+        current_lap = self.race_manager.car_laps[player_id] + 1
+        lap_text = font.render(f"Lap: {current_lap}/{self.race_manager.num_laps}", 
+                              True, (255, 255, 255))
+        self.screen.blit(lap_text, (10, 50))
+        
+        # Speed
+        speed_kmh = int(self.player_car.get_speed_kmh())
+        speed_text = font.render(f"{speed_kmh} km/h", True, (255, 255, 255))
+        self.screen.blit(speed_text, (10, 90))
+        
+        # Race time
+        minutes = int(self.race_manager.race_time // 60)
+        seconds = int(self.race_manager.race_time % 60)
+        milliseconds = int((self.race_manager.race_time % 1) * 1000)
+        time_text = small_font.render(
+            f"Time: {minutes:02d}:{seconds:02d}.{milliseconds:03d}",
+            True, (255, 255, 255)
+        )
+        self.screen.blit(time_text, (10, 130))
+        
+        # Best lap time
+        if self.race_manager.best_lap_time < float('inf'):
+            best_minutes = int(self.race_manager.best_lap_time // 60)
+            best_seconds = int(self.race_manager.best_lap_time % 60)
+            best_ms = int((self.race_manager.best_lap_time % 1) * 1000)
+            best_text = small_font.render(
+                f"Best Lap: {best_minutes:02d}:{best_seconds:02d}.{best_ms:03d}",
+                True, (255, 215, 0)
+            )
+            self.screen.blit(best_text, (10, 160))
+        
+        # Controls help
+        controls = [
+            "↑/W - Accelerate",
+            "↓/S - Brake",
+            "←/A - Turn Left",
+            "→/D - Turn Right",
+            "Space - Handbrake"
+        ]
+        
+        y = self.screen.get_height() - 150
+        for control in controls:
+            control_text = small_font.render(control, True, (200, 200, 200))
+            self.screen.blit(control_text, (10, y))
+            y += 25
+        
+        # Race status
+        if not self.race_manager.race_started:
+            start_text = font.render("Press ENTER to Start Race", True, (255, 255, 0))
+            rect = start_text.get_rect(center=(self.screen.get_width()//2, 
+                                              self.screen.get_height()//2))
+            self.screen.blit(start_text, rect)
+        elif self.race_manager.race_finished:
+            finish_text = font.render("RACE FINISHED!", True, (0, 255, 0))
+            rect = finish_text.get_rect(center=(self.screen.get_width()//2, 
+                                               self.screen.get_height()//2))
+            self.screen.blit(finish_text, rect)
+    
+    def render_minimap(self):
+        """Render minimap"""
+        minimap_size = 150
+        minimap_surface = pygame.Surface((minimap_size, minimap_size))
+        minimap_surface.fill((30, 30, 30))
+        
+        # Scale factor
+        scale = minimap_size / 800  # Assuming 800x800 track
+        
+        # Draw track elements
+        for wall in self.track.walls:
+            rect = pygame.Rect(
+                wall['x'] * scale,
+                wall['y'] * scale,
+                wall['width'] * scale,
+                wall['height'] * scale
+            )
+            pygame.draw.rect(minimap_surface, (100, 100, 100), rect)
+        
+        # Draw cars
+        for car in self.race_manager.cars:
+            color = (0, 255, 0) if car == self.player_car else (255, 0, 0)
+            pygame.draw.circle(
+                minimap_surface,
+                color,
+                (int(car.x * scale), int(car.y * scale)),
+                3
+            )
+        
+        # Draw minimap on screen
+        minimap_rect = minimap_surface.get_rect()
+        minimap_rect.topright = (self.screen.get_width() - 10, 10)
+        
+        # Border
+        pygame.draw.rect(self.screen, (255, 255, 255), 
+                        minimap_rect.inflate(4, 4), 2)
+        
+        self.screen.blit(minimap_surface, minimap_rect)
+    
+    def run(self):
+        """Main game loop"""
+        running = True
+        
+        while running:
+            dt = self.clock.tick(60) / 1000.0  # 60 FPS
+            
+            # Handle events
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+                        if not self.race_manager.race_started:
+                            self.race_manager.race_started = True
+                    elif event.key == pygame.K_r:
+                        # Reset race
+                        self.__init__(self.screen.get_width(), 
+                                    self.screen.get_height())
+            
+            # Update
+            if self.race_manager.race_started:
+                # Handle input
+                self.handle_input()
+                
+                # Update cars
+                for car in self.race_manager.cars:
+                    car.update(dt)
+                
+                # Update AI
+                for ai_driver in self.ai_drivers:
+                    ai_driver.update()
+                
+                # Check collisions
+                self.check_collisions()
+                
+                # Update race
+                self.race_manager.update(dt)
+                
+                # Update camera
+                self.update_camera()
+            
+            # Render
+            self.render_track()
+            
+            # Render cars
+            self.render_car(self.player_car, (0, 150, 255))
+            for ai_driver in self.ai_drivers:
+                self.render_car(ai_driver.car, (255, 100, 100))
+            
+            # Render UI
+            self.render_ui()
+            self.render_minimap()
+            
+            pygame.display.flip()
+        
+        pygame.quit()
+
+# Drift Physics Extension
+class DriftPhysics:
+    """Advanced drift physics calculations"""
+    
+    @staticmethod
+    def calculate_slip_angle(velocity_x: float, velocity_y: float, 
+                           heading_angle: float) -> float:
+        """Calculate tire slip angle"""
+        velocity_angle = math.atan2(velocity_y, velocity_x)
+        slip_angle = velocity_angle - heading_angle
+        
+        # Normalize to [-pi, pi]
+        while slip_angle > math.pi:
+            slip_angle -= 2 * math.pi
+        while slip_angle < -math.pi:
+            slip_angle += 2 * math.pi
+        
+        return slip_angle
+    
+    @staticmethod
+    def calculate_tire_force(slip_angle: float, normal_force: float,
+                           peak_grip: float = 1.0) -> Tuple[float, float]:
+        """Calculate tire forces using Pacejka magic formula (simplified)"""
+        # Simplified tire model
+        slip_deg = math.degrees(slip_angle)
+        
+        # Peak grip at ~8 degrees slip
+        normalized_slip = slip_deg / 8.0
+        
+        # Grip falloff curve
+        if abs(normalized_slip) < 1.0:
+            grip = peak_grip * math.sin(normalized_slip * math.pi / 2)
+        else:
+            # Sliding
+            grip = peak_grip * 0.7 * math.copysign(1, normalized_slip)
+        
+        # Calculate forces
+        lateral_force = grip * normal_force
+        longitudinal_force = normal_force * (1 - abs(normalized_slip) * 0.1)
+        
+        return longitudinal_force, lateral_force
+    
+    @staticmethod
+    def calculate_weight_transfer(acceleration: float, braking: float,
+                                 lateral_g: float, weight: float) -> Dict[str, float]:
+        """Calculate weight transfer between wheels"""
+        # Base weight distribution
+        front_weight = weight * 0.5
+        rear_weight = weight * 0.5
+        
+        # Longitudinal transfer
+        if acceleration > 0:
+            transfer = acceleration * weight * 0.2
+            front_weight -= transfer
+            rear_weight += transfer
+        elif braking > 0:
+            transfer = braking * weight * 0.3
+            front_weight += transfer
+            rear_weight -= transfer
+        
+        # Lateral transfer (simplified)
+        left_weight = weight * 0.5
+        right_weight = weight * 0.5
+        
+        lateral_transfer = lateral_g * weight * 0.3
+        if lateral_g > 0:  # Turning right
+            left_weight += lateral_transfer
+            right_weight -= lateral_transfer
+        else:  # Turning left
+            left_weight -= lateral_transfer
+            right_weight += lateral_transfer
+        
+        return {
+            'front': front_weight,
+            'rear': rear_weight,
+            'left': left_weight,
+            'right': right_weight
+        }
+
+# Telemetry System
+class Telemetry:
+    """Racing telemetry data collection"""
+    
+    def __init__(self):
+        self.data_points = []
+        self.max_points = 1000
+    
+    def record(self, car: Car, lap_time: float, position: int):
+        """Record telemetry data point"""
+        data = {
+            'time': lap_time,
+            'position': position,
+            'x': car.x,
+            'y': car.y,
+            'speed': car.get_speed_kmh(),
+            'angle': car.angle,
+            'throttle': car.throttle,
+            'brake': car.brake,
+            'steering': car.steering,
+            'slip_angle': DriftPhysics.calculate_slip_angle(
+                car.velocity_x, car.velocity_y, car.angle
+            )
+        }
+        
+        self.data_points.append(data)
+        
+        # Limit data points
+        if len(self.data_points) > self.max_points:
+            self.data_points.pop(0)
+    
+    def get_best_lap_data(self) -> List[Dict]:
+        """Get telemetry for best lap"""
+        # Would return filtered data for best lap
+        return self.data_points
+    
+    def export_csv(self, filename: str):
+        """Export telemetry to CSV"""
+        import csv
+        
+        if not self.data_points:
+            return
+        
+        with open(filename, 'w', newline='') as csvfile:
+            fieldnames = self.data_points[0].keys()
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            
+            writer.writeheader()
+            for data in self.data_points:
+                writer.writerow(data)
+
+if __name__ == "__main__":
+    game = RacingGame()
+    game.run()</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Racing Game Best Practices</h3>
+        <ul>
+            <li><strong>Physics Accuracy:</strong> Balance realism with fun</li>
+            <li><strong>Input Responsiveness:</strong> Minimize input lag</li>
+            <li><strong>Camera Work:</strong> Smooth following with lookahead</li>
+            <li><strong>AI Difficulty:</strong> Progressive skill levels</li>
+            <li><strong>Track Design:</strong> Clear racing line</li>
+            <li><strong>Feedback:</strong> Visual and audio cues</li>
+            <li><strong>Tuning Options:</strong> Let players customize</li>
+            <li><strong>Replays:</strong> Record and playback races</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>🏎️ Vehicle physics create realistic handling</li>
+            <li>🎮 Input processing affects feel</li>
+            <li>💨 Drift mechanics add excitement</li>
+            <li>🏁 Checkpoint systems track progress</li>
+            <li>🤖 AI opponents provide challenge</li>
+            <li>⏱️ Timing systems drive competition</li>
+            <li>🛠️ Tuning adds depth and customization</li>
+            <li>📊 Telemetry helps players improve</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you've mastered racing game physics, next we'll explore tower defense patterns!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="genres_puzzle_complete.html" class="prev-lesson">Previous: Puzzle Game Logic</a>
+        <a href="genres_tower_defense.html" class="next-lesson">Next: Tower Defense Patterns</a>
+    </nav>
+    
+    </main>
+</body>
+</html>

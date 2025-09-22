@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master shaders and visual effects in game development. Learn GLSL shaders, post-processing, and creating stunning visual effects.">
+    <title>Shaders and Effects - Advanced Graphics</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Shaders and Effects</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Advanced Module - Section 1: Advanced Graphics - Lesson 1</span>
+    </nav>
+
+    <h2>GPU Programming for Visual Effects</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Unlock the power of GPU programming! Learn to write vertex and fragment shaders, create stunning visual effects, and implement real-time post-processing that will make your games visually spectacular! 🎨✨🌟</p>
+    </div>
+
+    <h2>Understanding Shaders</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎨 The Graphics Pipeline Analogy</h3>
+        <p>Think of shaders like an assembly line for pixels:</p>
+        <ul>
+            <li><strong>Vertex Shader:</strong> Positions and transforms geometry</li>
+            <li><strong>Fragment Shader:</strong> Colors each pixel</li>
+            <li><strong>Uniforms:</strong> Global variables (time, mouse position)</li>
+            <li><strong>Attributes:</strong> Per-vertex data (position, color, UV)</li>
+            <li><strong>Varyings:</strong> Data passed between shaders</li>
+            <li><strong>GPU Parallel:</strong> Thousands of pixels processed simultaneously</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph LR
+        A["3D Model"] --> B["Vertex Shader"]
+        B --> C["Rasterization"]
+        C --> D["Fragment Shader"]
+        D --> E["Screen"]
+        
+        F["Uniforms"] --> B
+        F --> D
+        G["Textures"] --> D
+        H["Attributes"] --> B
+    </div>
+
+    <h2>Interactive Shader Playground</h2>
+    
+    <div class="canvas-wrapper" style="text-align: center;">
+        <canvas id="shaderCanvas" width="600" height="400" style="border: 1px solid #333; display: inline-block;"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Interact with live shaders! Move your mouse to see effects change in real-time!</p>
+        
+        <!-- Shader Selection -->
+        <div style="margin: 10px auto; padding: 10px; background-color: rgba(0,0,0,0.3); border-radius: 5px; max-width: 600px;">
+            <p style="color: white; margin: 5px;">Choose Shader Effect:</p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 5px;">
+                <button onclick="loadShader('wave')" class="shader-btn">🌊 Wave</button>
+                <button onclick="loadShader('plasma')" class="shader-btn">🔥 Plasma</button>
+                <button onclick="loadShader('ripple')" class="shader-btn">💧 Ripple</button>
+                <button onclick="loadShader('pixelate')" class="shader-btn">🎮 Pixelate</button>
+                <button onclick="loadShader('chromatic')" class="shader-btn">🌈 Chromatic</button>
+                <button onclick="loadShader('glitch')" class="shader-btn">📺 Glitch</button>
+                <button onclick="loadShader('blur')" class="shader-btn">😵 Blur</button>
+                <button onclick="loadShader('vortex')" class="shader-btn">🌀 Vortex</button>
+            </div>
+        </div>
+        
+        <!-- Shader Controls -->
+        <div style="margin-top: 10px;">
+            <label>Intensity: <input type="range" id="intensity" min="0" max="2" step="0.01" value="1" onchange="updateUniform('intensity', this.value)"> <span id="intensityDisplay">1.0</span></label>
+            <label>Speed: <input type="range" id="speed" min="0" max="5" step="0.1" value="1" onchange="updateUniform('speed', this.value)"> <span id="speedDisplay">1.0</span></label>
+        </div>
+        <div style="margin-top: 10px;">
+            <label>Color R: <input type="range" id="colorR" min="0" max="1" step="0.01" value="1" onchange="updateColor()"></label>
+            <label>Color G: <input type="range" id="colorG" min="0" max="1" step="0.01" value="1" onchange="updateColor()"></label>
+            <label>Color B: <input type="range" id="colorB" min="0" max="1" step="0.01" value="1" onchange="updateColor()"></label>
+        </div>
+        
+        <!-- Effect Toggles -->
+        <div style="margin-top: 10px;">
+            <label><input type="checkbox" id="animateToggle" checked> Animate</label>
+            <label><input type="checkbox" id="mouseInteraction" checked> Mouse Interaction</label>
+            <label><input type="checkbox" id="showCode"> Show Shader Code</label>
+            <button onclick="resetShader()">Reset</button>
+            <button onclick="randomizeParams()">🎲 Randomize</button>
+            <button onclick="captureFrame()">📸 Screenshot</button>
+        </div>
+        
+        <!-- Shader Code Display -->
+        <div id="shaderCode" style="display: none; margin-top: 10px; padding: 10px; background-color: rgba(0,0,0,0.8); border-radius: 5px; text-align: left;">
+            <h3 style="color: white;">Vertex Shader:</h3>
+            <pre id="vertexCode" style="color: #4CAF50; font-size: 12px; overflow-x: auto;"></pre>
+            <h3 style="color: white;">Fragment Shader:</h3>
+            <pre id="fragmentCode" style="color: #2196F3; font-size: 12px; overflow-x: auto;"></pre>
+        </div>
+    </div>
+
+    <style>
+        .shader-btn {
+            padding: 8px;
+            border: 2px solid transparent;
+            background-color: #555;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        .shader-btn:hover {
+            background-color: #666;
+            border-color: #888;
+        }
+        .shader-btn.active {
+            background-color: #4CAF50;
+            border-color: #66BB6A;
+        }
+    </style>
+
+    <script>
+        console.log('Shader Effects Demo starting...');
+
+        // WebGL setup
+        const canvas = document.getElementById('shaderCanvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        
+        if (!gl) {
+            alert('WebGL not supported!');
+        }
+
+        // Shader definitions
+        const shaders = {
+            wave: {
+                vertex: `
+                    attribute vec2 a_position;
+                    attribute vec2 a_texCoord;
+                    varying vec2 v_texCoord;
+                    uniform float u_time;
+                    uniform float u_intensity;
+                    
+                    void main() {
+                        v_texCoord = a_texCoord;
+                        vec2 pos = a_position;
+                        pos.y += sin(pos.x * 10.0 + u_time) * 0.05 * u_intensity;
+                        gl_Position = vec4(pos, 0.0, 1.0);
+                    }
+                `,
+                fragment: `
+                    precision mediump float;
+                    varying vec2 v_texCoord;
+                    uniform float u_time;
+                    uniform vec2 u_resolution;
+                    uniform vec2 u_mouse;
+                    uniform float u_intensity;
+                    uniform vec3 u_color;
+                    
+                    void main() {
+                        vec2 uv = v_texCoord;
+                        float wave = sin(uv.x * 20.0 + u_time * 2.0) * 0.5 + 0.5;
+                        wave *= sin(uv.y * 15.0 - u_time * 1.5) * 0.5 + 0.5;
+                        
+                        vec3 color = mix(vec3(0.1, 0.2, 0.3), u_color, wave);
+                        color *= u_intensity;
+                        
+                        gl_FragColor = vec4(color, 1.0);
+                    }
+                `
+            },
+            plasma: {
+                vertex: `
+                    attribute vec2 a_position;
+                    attribute vec2 a_texCoord;
+                    varying vec2 v_texCoord;
+                    
+                    void main() {
+                        v_texCoord = a_texCoord;
+                        gl_Position = vec4(a_position, 0.0, 1.0);
+                    }
+                `,
+                fragment: `
+                    precision mediump float;
+                    varying vec2 v_texCoord;
+                    uniform float u_time;
+                    uniform vec2 u_resolution;
+                    uniform vec2 u_mouse;
+                    uniform float u_intensity;
+                    uniform vec3 u_color;
+                    
+                    void main() {
+                        vec2 uv = v_texCoord;
+                        vec2 center = vec2(0.5, 0.5);
+                        
+                        float t = u_time * 0.5;
+                        
+                        for(float i = 1.0; i < 8.0; i++) {
+                            vec2 p = center + vec2(
+                                cos(t + i * 0.5) * 0.3,
+                                sin(t + i * 0.7) * 0.3
+                            );
+                            float d = length(uv - p);
+                            uv += (uv - p) / (d * d * 50.0) * u_intensity * 0.01;
+                        }
+                        
+                        float r = sin(uv.x * 10.0 + t) * 0.5 + 0.5;
+                        float g = sin(uv.y * 10.0 + t * 1.3) * 0.5 + 0.5;
+                        float b = sin((uv.x + uv.y) * 10.0 + t * 1.7) * 0.5 + 0.5;
+                        
+                        vec3 color = vec3(r, g, b) * u_color;
+                        gl_FragColor = vec4(color, 1.0);
+                    }
+                `
+            },
+            ripple: {
+                vertex: `
+                    attribute vec2 a_position;
+                    attribute vec2 a_texCoord;
+                    varying vec2 v_texCoord;
+                    
+                    void main() {
+                        v_texCoord = a_texCoord;
+                        gl_Position = vec4(a_position, 0.0, 1.0);
+                    }
+                `,
+                fragment: `
+                    precision mediump float;
+                    varying vec2 v_texCoord;
+                    uniform float u_time;
+                    uniform vec2 u_resolution;
+                    uniform vec2 u_mouse;
+                    uniform float u_intensity;
+                    uniform vec3 u_color;
+                    
+                    void main() {
+                        vec2 uv = v_texCoord;
+                        vec2 center = u_mouse;
+                        
+                        float dist = distance(uv, center);
+                        float ripple = sin(dist * 30.0 - u_time * 5.0) * exp(-dist * 3.0);
+                        ripple *= u_intensity;
+                        
+                        vec3 color = u_color * (0.5 + ripple * 0.5);
+                        
+                        // Add circular waves
+                        float wave = sin(dist * 50.0 - u_time * 3.0) * 0.1;
+                        color += wave * u_intensity;
+                        
+                        gl_FragColor = vec4(color, 1.0);
+                    }
+                `
+            },
+            pixelate: {
+                vertex: `
+                    attribute vec2 a_position;
+                    attribute vec2 a_texCoord;
+                    varying vec2 v_texCoord;
+                    
+                    void main() {
+                        v_texCoord = a_texCoord;
+                        gl_Position = vec4(a_position, 0.0, 1.0);
+                    }
+                `,
+                fragment: `
+                    precision mediump float;
+                    varying vec2 v_texCoord;
+                    uniform float u_time;
+                    uniform vec2 u_resolution;
+                    uniform float u_intensity;
+                    uniform vec3 u_color;
+                    
+                    void main() {
+                        float pixelSize = 0.02 * u_intensity;
+                        vec2 uv = floor(v_texCoord / pixelSize) * pixelSize;
+                        
+                        float pattern = sin(uv.x * 100.0) * sin(uv.y * 100.0);
+                        pattern = step(0.0, pattern);
+                        
+                        vec3 color = mix(u_color * 0.3, u_color, pattern);
+                        
+                        // Animated scan lines
+                        float scanline = sin(uv.y * 200.0 + u_time * 2.0) * 0.04;
+                        color += scanline;
+                        
+                        gl_FragColor = vec4(color, 1.0);
+                    }
+                `
+            },
+            chromatic: {
+                vertex: `
+                    attribute vec2 a_position;
+                    attribute vec2 a_texCoord;
+                    varying vec2 v_texCoord;
+                    
+                    void main() {
+                        v_texCoord = a_texCoord;
+                        gl_Position = vec4(a_position, 0.0, 1.0);
+                    }
+                `,
+                fragment: `
+                    precision mediump float;
+                    varying vec2 v_texCoord;
+                    uniform float u_time;
+                    uniform vec2 u_resolution;
+                    uniform vec2 u_mouse;
+                    uniform float u_intensity;
+                    uniform vec3 u_color;
+                    
+                    vec3 getColor(vec2 uv, float offset) {
+                        float dist = distance(uv, vec2(0.5, 0.5));
+                        float wave = sin(dist * 10.0 - u_time * 2.0 + offset) * 0.5 + 0.5;
+                        return vec3(wave);
+                    }
+                    
+                    void main() {
+                        vec2 uv = v_texCoord;
+                        float aberration = 0.01 * u_intensity;
+                        
+                        vec3 color;
+                        color.r = getColor(uv + vec2(aberration, 0.0), 0.0).r * u_color.r;
+                        color.g = getColor(uv, 2.0).g * u_color.g;
+                        color.b = getColor(uv - vec2(aberration, 0.0), 4.0).b * u_color.b;
+                        
+                        // Add vignette
+                        float vignette = distance(uv, vec2(0.5, 0.5));
+                        vignette = 1.0 - vignette * vignette;
+                        color *= vignette;
+                        
+                        gl_FragColor = vec4(color, 1.0);
+                    }
+                `
+            },
+            glitch: {
+                vertex: `
+                    attribute vec2 a_position;
+                    attribute vec2 a_texCoord;
+                    varying vec2 v_texCoord;
+                    uniform float u_time;
+                    uniform float u_intensity;
+                    
+                    void main() {
+                        v_texCoord = a_texCoord;
+                        vec2 pos = a_position;
+                        
+                        // Random vertex displacement
+                        float glitch = step(0.98, sin(u_time * 20.0));
+                        pos.x += glitch * sin(u_time * 100.0) * 0.03 * u_intensity;
+                        
+                        gl_Position = vec4(pos, 0.0, 1.0);
+                    }
+                `,
+                fragment: `
+                    precision mediump float;
+                    varying vec2 v_texCoord;
+                    uniform float u_time;
+                    uniform vec2 u_resolution;
+                    uniform float u_intensity;
+                    uniform vec3 u_color;
+                    
+                    float random(vec2 st) {
+                        return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
+                    }
+                    
+                    void main() {
+                        vec2 uv = v_texCoord;
+                        
+                        // Digital noise
+                        float noise = random(uv + u_time) * 0.1;
+                        
+                        // Color shifting
+                        vec3 color = u_color;
+                        float glitchLine = step(0.99, sin(uv.y * 100.0 + u_time * 50.0));
+                        
+                        if (glitchLine > 0.0) {
+                            color.r = u_color.g;
+                            color.g = u_color.b;
+                            color.b = u_color.r;
+                            uv.x += random(vec2(u_time)) * 0.1 * u_intensity;
+                        }
+                        
+                        // Data corruption effect
+                        float corruption = step(0.98, random(vec2(floor(uv.y * 20.0), u_time)));
+                        if (corruption > 0.0) {
+                            color = vec3(random(uv + u_time));
+                        }
+                        
+                        color += noise * u_intensity;
+                        
+                        gl_FragColor = vec4(color, 1.0);
+                    }
+                `
+            },
+            blur: {
+                vertex: `
+                    attribute vec2 a_position;
+                    attribute vec2 a_texCoord;
+                    varying vec2 v_texCoord;
+                    
+                    void main() {
+                        v_texCoord = a_texCoord;
+                        gl_Position = vec4(a_position, 0.0, 1.0);
+                    }
+                `,
+                fragment: `
+                    precision mediump float;
+                    varying vec2 v_texCoord;
+                    uniform float u_time;
+                    uniform vec2 u_resolution;
+                    uniform vec2 u_mouse;
+                    uniform float u_intensity;
+                    uniform vec3 u_color;
+                    
+                    void main() {
+                        vec2 uv = v_texCoord;
+                        vec3 color = vec3(0.0);
+                        float blurAmount = 0.01 * u_intensity;
+                        
+                        // 9-sample box blur
+                        for(float x = -1.0; x <= 1.0; x++) {
+                            for(float y = -1.0; y <= 1.0; y++) {
+                                vec2 offset = vec2(x, y) * blurAmount;
+                                vec2 sampleUV = uv + offset;
+                                
+                                // Create pattern to blur
+                                float pattern = sin(sampleUV.x * 30.0 + u_time) * 
+                                              sin(sampleUV.y * 30.0 - u_time);
+                                color += vec3(pattern) * u_color / 9.0;
+                            }
+                        }
+                        
+                        gl_FragColor = vec4(color, 1.0);
+                    }
+                `
+            },
+            vortex: {
+                vertex: `
+                    attribute vec2 a_position;
+                    attribute vec2 a_texCoord;
+                    varying vec2 v_texCoord;
+                    
+                    void main() {
+                        v_texCoord = a_texCoord;
+                        gl_Position = vec4(a_position, 0.0, 1.0);
+                    }
+                `,
+                fragment: `
+                    precision mediump float;
+                    varying vec2 v_texCoord;
+                    uniform float u_time;
+                    uniform vec2 u_resolution;
+                    uniform vec2 u_mouse;
+                    uniform float u_intensity;
+                    uniform vec3 u_color;
+                    
+                    void main() {
+                        vec2 uv = v_texCoord - 0.5;
+                        float angle = atan(uv.y, uv.x);
+                        float radius = length(uv);
+                        
+                        // Spiral distortion
+                        angle += radius * 10.0 * u_intensity - u_time * 2.0;
+                        
+                        // Recreate UV from polar coordinates
+                        uv = vec2(cos(angle), sin(angle)) * radius;
+                        uv += 0.5;
+                        
+                        // Create spiral pattern
+                        float spiral = sin(angle * 5.0 + radius * 20.0);
+                        spiral = spiral * 0.5 + 0.5;
+                        
+                        vec3 color = mix(u_color * 0.2, u_color, spiral);
+                        
+                        // Add pulsing
+                        color *= 1.0 + sin(u_time * 3.0) * 0.1;
+                        
+                        // Fade edges
+                        color *= 1.0 - radius * 2.0;
+                        
+                        gl_FragColor = vec4(color, 1.0);
+                    }
+                `
+            }
+        };
+
+        // Current shader state
+        let currentShader = 'wave';
+        let shaderProgram = null;
+        let uniforms = {};
+        let animationId = null;
+        let startTime = Date.now();
+        let mouseX = 0.5;
+        let mouseY = 0.5;
+
+        // Shader compilation
+        function compileShader(source, type) {
+            const shader = gl.createShader(type);
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
+            
+            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                console.error('Shader compilation error:', gl.getShaderInfoLog(shader));
+                gl.deleteShader(shader);
+                return null;
+            }
+            
+            return shader;
+        }
+
+        function createShaderProgram(vertexSource, fragmentSource) {
+            const vertexShader = compileShader(vertexSource, gl.VERTEX_SHADER);
+            const fragmentShader = compileShader(fragmentSource, gl.FRAGMENT_SHADER);
+            
+            if (!vertexShader || !fragmentShader) {
+                return null;
+            }
+            
+            const program = gl.createProgram();
+            gl.attachShader(program, vertexShader);
+            gl.attachShader(program, fragmentShader);
+            gl.linkProgram(program);
+            
+            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                console.error('Program linking error:', gl.getProgramInfoLog(program));
+                gl.deleteProgram(program);
+                return null;
+            }
+            
+            return program;
+        }
+
+        // Create geometry
+        function createQuad() {
+            const vertices = new Float32Array([
+                -1, -1,  0, 1,  // bottom left
+                 1, -1,  1, 1,  // bottom right
+                -1,  1,  0, 0,  // top left
+                 1,  1,  1, 0   // top right
+            ]);
+            
+            const buffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+            gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+            
+            return buffer;
+        }
+
+        // Initialize shader
+        function initShader(shaderName) {
+            const shader = shaders[shaderName];
+            if (!shader) return;
+            
+            // Clean up old shader
+            if (shaderProgram) {
+                gl.deleteProgram(shaderProgram);
+            }
+            
+            // Create new shader program
+            shaderProgram = createShaderProgram(shader.vertex, shader.fragment);
+            if (!shaderProgram) return;
+            
+            gl.useProgram(shaderProgram);
+            
+            // Set up attributes
+            const positionLoc = gl.getAttribLocation(shaderProgram, 'a_position');
+            const texCoordLoc = gl.getAttribLocation(shaderProgram, 'a_texCoord');
+            
+            const quadBuffer = createQuad();
+            gl.bindBuffer(gl.ARRAY_BUFFER, quadBuffer);
+            
+            if (positionLoc >= 0) {
+                gl.enableVertexAttribArray(positionLoc);
+                gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 16, 0);
+            }
+            
+            if (texCoordLoc >= 0) {
+                gl.enableVertexAttribArray(texCoordLoc);
+                gl.vertexAttribPointer(texCoordLoc, 2, gl.FLOAT, false, 16, 8);
+            }
+            
+            // Cache uniform locations
+            uniforms = {
+                time: gl.getUniformLocation(shaderProgram, 'u_time'),
+                resolution: gl.getUniformLocation(shaderProgram, 'u_resolution'),
+                mouse: gl.getUniformLocation(shaderProgram, 'u_mouse'),
+                intensity: gl.getUniformLocation(shaderProgram, 'u_intensity'),
+                color: gl.getUniformLocation(shaderProgram, 'u_color'),
+                speed: gl.getUniformLocation(shaderProgram, 'u_speed')
+            };
+            
+            // Update code display if visible
+            if (document.getElementById('showCode').checked) {
+                document.getElementById('vertexCode').textContent = shader.vertex;
+                document.getElementById('fragmentCode').textContent = shader.fragment;
+            }
+        }
+
+        // Render loop
+        function render() {
+            if (!shaderProgram) return;
+            
+            const time = (Date.now() - startTime) / 1000;
+            const speed = parseFloat(document.getElementById('speed').value);
+            const intensity = parseFloat(document.getElementById('intensity').value);
+            
+            gl.clearColor(0, 0, 0, 1);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            
+            gl.useProgram(shaderProgram);
+            
+            // Set uniforms
+            if (uniforms.time) {
+                gl.uniform1f(uniforms.time, time * speed);
+            }
+            
+            if (uniforms.resolution) {
+                gl.uniform2f(uniforms.resolution, canvas.width, canvas.height);
+            }
+            
+            if (uniforms.mouse && document.getElementById('mouseInteraction').checked) {
+                gl.uniform2f(uniforms.mouse, mouseX, mouseY);
+            } else if (uniforms.mouse) {
+                gl.uniform2f(uniforms.mouse, 0.5, 0.5);
+            }
+            
+            if (uniforms.intensity) {
+                gl.uniform1f(uniforms.intensity, intensity);
+            }
+            
+            if (uniforms.color) {
+                const r = parseFloat(document.getElementById('colorR').value);
+                const g = parseFloat(document.getElementById('colorG').value);
+                const b = parseFloat(document.getElementById('colorB').value);
+                gl.uniform3f(uniforms.color, r, g, b);
+            }
+            
+            // Draw quad
+            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+            
+            if (document.getElementById('animateToggle').checked) {
+                animationId = requestAnimationFrame(render);
+            }
+        }
+
+        // UI functions
+        window.loadShader = function(shaderName) {
+            currentShader = shaderName;
+            
+            // Update button states
+            document.querySelectorAll('.shader-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            initShader(shaderName);
+            
+            // Update code display if needed
+            if (document.getElementById('showCode').checked) {
+                const shader = shaders[shaderName];
+                document.getElementById('vertexCode').textContent = shader.vertex;
+                document.getElementById('fragmentCode').textContent = shader.fragment;
+            }
+            
+            if (!animationId) {
+                render();
+            }
+        };
+
+        window.updateUniform = function(name, value) {
+            document.getElementById(name + 'Display').textContent = parseFloat(value).toFixed(1);
+            if (!animationId) {
+                render();
+            }
+        };
+
+        window.updateColor = function() {
+            if (!animationId) {
+                render();
+            }
+        };
+
+        window.resetShader = function() {
+            document.getElementById('intensity').value = 1;
+            document.getElementById('speed').value = 1;
+            document.getElementById('colorR').value = 1;
+            document.getElementById('colorG').value = 1;
+            document.getElementById('colorB').value = 1;
+            
+            updateUniform('intensity', 1);
+            updateUniform('speed', 1);
+            
+            startTime = Date.now();
+        };
+
+        window.randomizeParams = function() {
+            document.getElementById('intensity').value = Math.random() * 2;
+            document.getElementById('speed').value = Math.random() * 5;
+            document.getElementById('colorR').value = Math.random();
+            document.getElementById('colorG').value = Math.random();
+            document.getElementById('colorB').value = Math.random();
+            
+            updateUniform('intensity', document.getElementById('intensity').value);
+            updateUniform('speed', document.getElementById('speed').value);
+        };
+
+        window.captureFrame = function() {
+            const link = document.createElement('a');
+            link.download = `shader_${currentShader}_${Date.now()}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+        };
+
+        // Event listeners
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = (e.clientX - rect.left) / rect.width;
+            mouseY = 1.0 - (e.clientY - rect.top) / rect.height; // Flip Y coordinate
+        });
+
+        document.getElementById('animateToggle').addEventListener('change', (e) => {
+            if (e.target.checked) {
+                render();
+            } else {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+        });
+
+        document.getElementById('showCode').addEventListener('change', (e) => {
+            const codeDisplay = document.getElementById('shaderCode');
+            codeDisplay.style.display = e.target.checked ? 'block' : 'none';
+            
+            if (e.target.checked) {
+                const shader = shaders[currentShader];
+                document.getElementById('vertexCode').textContent = shader.vertex;
+                document.getElementById('fragmentCode').textContent = shader.fragment;
+            }
+        });
+
+        // Initialize
+        initShader('wave');
+        render();
+
+        console.log('Shader Effects initialized!');
+    </script>
+
+    <h2>Shader Implementation in Python/ModernGL</h2>
+    
+    <pre class="language-python"><code>import moderngl
+import numpy as np
+import pygame
+from pygame.locals import *
+import time
+import math
+
+class ShaderRenderer:
+    """GPU shader renderer using ModernGL"""
+    def __init__(self, width: int = 800, height: int = 600):
+        pygame.init()
+        self.width = width
+        self.height = height
+        
+        # Create OpenGL context
+        pygame.display.set_mode(
+            (width, height),
+            DOUBLEBUF | OPENGL
+        )
+        self.ctx = moderngl.create_context()
+        
+        # Create screen quad
+        self.quad = self.create_quad()
+        self.start_time = time.time()
+        
+    def create_quad(self):
+        """Create fullscreen quad"""
+        vertices = np.array([
+            # x,    y,   u,   v
+            [-1.0, -1.0, 0.0, 0.0],
+            [ 1.0, -1.0, 1.0, 0.0],
+            [-1.0,  1.0, 0.0, 1.0],
+            [ 1.0,  1.0, 1.0, 1.0],
+        ], dtype='f4')
+        
+        vbo = self.ctx.buffer(vertices)
+        return vbo
+    
+    def compile_shader(self, vertex_shader: str, fragment_shader: str):
+        """Compile shader program"""
+        try:
+            program = self.ctx.program(
+                vertex_shader=vertex_shader,
+                fragment_shader=fragment_shader
+            )
+            return program
+        except Exception as e:
+            print(f"Shader compilation error: {e}")
+            return None
+    
+    def create_wave_shader(self):
+        """Create wave distortion shader"""
+        vertex_shader = '''
+        #version 330
+        
+        in vec2 in_position;
+        in vec2 in_texcoord;
+        
+        out vec2 v_texcoord;
+        
+        uniform float u_time;
+        uniform float u_intensity;
+        
+        void main() {
+            v_texcoord = in_texcoord;
+            vec2 pos = in_position;
+            
+            // Wave distortion
+            pos.y += sin(pos.x * 10.0 + u_time * 2.0) * 0.1 * u_intensity;
+            
+            gl_Position = vec4(pos, 0.0, 1.0);
+        }
+        '''
+        
+        fragment_shader = '''
+        #version 330
+        
+        in vec2 v_texcoord;
+        out vec4 f_color;
+        
+        uniform float u_time;
+        uniform vec2 u_resolution;
+        uniform float u_intensity;
+        uniform vec3 u_color;
+        
+        void main() {
+            vec2 uv = v_texcoord;
+            
+            // Create wave pattern
+            float wave = sin(uv.x * 20.0 + u_time * 2.0);
+            wave *= sin(uv.y * 15.0 - u_time * 1.5);
+            wave = wave * 0.5 + 0.5;
+            
+            vec3 color = mix(vec3(0.1, 0.2, 0.3), u_color, wave);
+            color *= u_intensity;
+            
+            f_color = vec4(color, 1.0);
+        }
+        '''
+        
+        return self.compile_shader(vertex_shader, fragment_shader)</code></pre>
+
+    <h2>Post-Processing Effects</h2>
+    
+    <pre class="language-python"><code>class PostProcessing:
+    """Post-processing effects pipeline"""
+    def __init__(self, ctx: moderngl.Context, width: int, height: int):
+        self.ctx = ctx
+        self.width = width
+        self.height = height
+        
+        # Create framebuffer for rendering
+        self.create_framebuffer()
+        
+        # Load post-process shaders
+        self.effects = {
+            'bloom': self.create_bloom_shader(),
+            'blur': self.create_blur_shader(),
+            'chromatic': self.create_chromatic_shader(),
+            'vignette': self.create_vignette_shader()
+        }
+    
+    def create_framebuffer(self):
+        """Create render target"""
+        # Color texture
+        self.color_texture = self.ctx.texture(
+            (self.width, self.height), 4
+        )
+        self.color_texture.filter = (
+            moderngl.LINEAR, moderngl.LINEAR
+        )
+        
+        # Depth buffer
+        self.depth_buffer = self.ctx.depth_renderbuffer(
+            (self.width, self.height)
+        )
+        
+        # Framebuffer
+        self.fbo = self.ctx.framebuffer(
+            color_attachments=[self.color_texture],
+            depth_attachment=self.depth_buffer
+        )
+    
+    def create_bloom_shader(self):
+        """Create bloom effect shader"""
+        fragment_shader = '''
+        #version 330
+        
+        in vec2 v_texcoord;
+        out vec4 f_color;
+        
+        uniform sampler2D u_texture;
+        uniform float u_threshold;
+        uniform float u_intensity;
+        
+        vec3 sample_box(sampler2D tex, vec2 uv, float size) {
+            vec3 color = vec3(0.0);
+            vec2 texel = 1.0 / textureSize(tex, 0);
+            
+            for (int x = -2; x <= 2; x++) {
+                for (int y = -2; y <= 2; y++) {
+                    vec2 offset = vec2(x, y) * texel * size;
+                    color += texture(tex, uv + offset).rgb;
+                }
+            }
+            
+            return color / 25.0;
+        }
+        
+        void main() {
+            vec3 color = texture(u_texture, v_texcoord).rgb;
+            
+            // Extract bright areas
+            vec3 bright = max(color - u_threshold, 0.0);
+            
+            // Blur bright areas
+            vec3 bloom = sample_box(u_texture, v_texcoord, 2.0);
+            bloom = max(bloom - u_threshold, 0.0);
+            
+            // Combine
+            color += bloom * u_intensity;
+            
+            f_color = vec4(color, 1.0);
+        }
+        '''
+        
+        return fragment_shader</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Shader Tips</h3>
+        <ul>
+            <li><strong>Performance:</strong> Minimize texture lookups and complex math</li>
+            <li><strong>Precision:</strong> Use appropriate float precision (lowp, mediump, highp)</li>
+            <li><strong>Branching:</strong> Avoid if statements when possible</li>
+            <li><strong>Uniforms:</strong> Update uniforms sparingly</li>
+            <li><strong>Batching:</strong> Draw similar objects together</li>
+            <li><strong>Mobile:</strong> Test on target hardware</li>
+            <li><strong>Debugging:</strong> Use color outputs for visualization</li>
+            <li><strong>Fallbacks:</strong> Provide simpler shaders for older hardware</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>🎨 Shaders run on the GPU for parallel processing</li>
+            <li>📐 Vertex shaders transform geometry</li>
+            <li>🎯 Fragment shaders color pixels</li>
+            <li>🌊 Uniforms pass data to shaders</li>
+            <li>✨ Post-processing adds polish</li>
+            <li>⚡ GPU programming requires different thinking</li>
+            <li>🔧 GLSL is the shader language</li>
+            <li>📊 Visualize math with colors</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you understand shaders, next we'll explore lighting systems to create atmospheric and realistic illumination!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="ai_decision_making.html" class="prev-lesson" aria-label="Previous lesson: Decision Making">Previous Module: AI for Games</a>
+        <a href="graphics_lighting.html" class="next-lesson" aria-label="Next lesson: Lighting Systems">Next Lesson: Lighting Systems</a>
+    </nav>
+    
+    </main>
+    <script src="/js/course-enhancements.js" defer></script>
+</body>
+</html>

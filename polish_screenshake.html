@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master screen shake and game feel effects. Learn camera trauma, impact effects, and visual feedback techniques that make games feel amazing.">
+    <title>Screen Shake and Effects - Game Polish & Feel</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Screen Shake and Effects</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Advanced Module - Section 2: Game Polish & Feel - Lesson 1</span>
+    </nav>
+
+    <h2>Making Games Feel Amazing</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Transform your games from functional to phenomenal! Master screen shake, impact effects, freeze frames, and visual feedback techniques that create visceral, satisfying gameplay experiences! 💥📳✨</p>
+    </div>
+
+    <h2>Understanding Game Feel</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>💥 The Impact Analogy</h3>
+        <p>Think of game feel like movie special effects:</p>
+        <ul>
+            <li><strong>Screen Shake:</strong> The camera shakes during explosions</li>
+            <li><strong>Hit Stop:</strong> Time freezes at the moment of impact</li>
+            <li><strong>Chromatic Aberration:</strong> Colors split during intense moments</li>
+            <li><strong>Recoil:</strong> Everything reacts to force</li>
+            <li><strong>Particle Bursts:</strong> Visual debris and sparkles</li>
+            <li><strong>Sound Sync:</strong> Audio reinforces visual impact</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph LR
+        A["Player Action"] --> B["Impact Detection"]
+        B --> C["Screen Shake"]
+        B --> D["Hit Stop"]
+        B --> E["Particles"]
+        B --> F["Sound Effect"]
+        
+        C --> G["Camera Offset"]
+        D --> H["Time Scale"]
+        E --> I["Visual Feedback"]
+        F --> J["Audio Feedback"]
+        
+        G --> K["Feel"]
+        H --> K
+        I --> K
+        J --> K
+    </div>
+
+    <h2>Interactive Screen Shake Demo</h2>
+    
+    <div class="canvas-wrapper" style="text-align: center;">
+        <canvas id="shakeCanvas" width="800" height="600" style="border: 1px solid #333; display: inline-block;"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Click to create explosions! Experience different screen shake techniques and visual effects!</p>
+        
+        <!-- Effect Controls -->
+        <div style="margin: 10px auto; padding: 10px; background-color: rgba(0,0,0,0.3); border-radius: 5px; max-width: 800px;">
+            <p style="color: white; margin: 5px;">Enable/Disable Effects:</p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 5px;">
+                <button onclick="toggleEffect('shake')" class="effect-btn active" id="shake-btn">📳 Screen Shake</button>
+                <button onclick="toggleEffect('hitstop')" class="effect-btn active" id="hitstop-btn">⏸️ Hit Stop</button>
+                <button onclick="toggleEffect('chromatic')" class="effect-btn active" id="chromatic-btn">🌈 Chromatic</button>
+                <button onclick="toggleEffect('particles')" class="effect-btn active" id="particles-btn">✨ Particles</button>
+                <button onclick="toggleEffect('flash')" class="effect-btn active" id="flash-btn">⚡ Flash</button>
+                <button onclick="toggleEffect('zoom')" class="effect-btn active" id="zoom-btn">🔍 Zoom Pulse</button>
+                <button onclick="toggleEffect('blur')" class="effect-btn" id="blur-btn">💨 Motion Blur</button>
+                <button onclick="toggleEffect('ripple')" class="effect-btn" id="ripple-btn">💧 Ripple</button>
+            </div>
+        </div>
+        
+        <!-- Shake Parameters -->
+        <div style="margin-top: 10px;">
+            <label>Intensity: <input type="range" id="shakeIntensity" min="1" max="50" step="1" value="20" onchange="updateParam('intensity', this.value)"> <span id="intensityDisplay">20</span></label>
+            <label>Duration: <input type="range" id="shakeDuration" min="100" max="1000" step="50" value="300" onchange="updateParam('duration', this.value)"> <span id="durationDisplay">300</span>ms</label>
+            <label>Frequency: <input type="range" id="shakeFrequency" min="10" max="100" step="5" value="30" onchange="updateParam('frequency', this.value)"> <span id="frequencyDisplay">30</span>Hz</label>
+        </div>
+        
+        <!-- Advanced Settings -->
+        <div style="margin-top: 10px;">
+            <label>Decay: 
+                <select id="decayType" onchange="setDecayType(this.value)">
+                    <option value="linear">Linear</option>
+                    <option value="exponential" selected>Exponential</option>
+                    <option value="elastic">Elastic</option>
+                    <option value="bounce">Bounce</option>
+                </select>
+            </label>
+            <label>Direction: 
+                <select id="shakeDirection" onchange="setShakeDirection(this.value)">
+                    <option value="random" selected>Random</option>
+                    <option value="horizontal">Horizontal</option>
+                    <option value="vertical">Vertical</option>
+                    <option value="circular">Circular</option>
+                </select>
+            </label>
+        </div>
+        
+        <!-- Preset Effects -->
+        <div style="margin-top: 10px;">
+            <button onclick="triggerPreset('explosion')">💥 Explosion</button>
+            <button onclick="triggerPreset('gunshot')">🔫 Gunshot</button>
+            <button onclick="triggerPreset('earthquake')">🌍 Earthquake</button>
+            <button onclick="triggerPreset('impact')">👊 Impact</button>
+            <button onclick="triggerPreset('laser')">⚡ Laser</button>
+            <button onclick="triggerPreset('powerup')">⭐ Power-up</button>
+        </div>
+        
+        <!-- Debug Info -->
+        <div style="margin-top: 10px; background-color: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;">
+            <p style="margin: 5px; color: white;">
+                Active Shakes: <span id="activeShakes">0</span> | 
+                Particles: <span id="particleCount">0</span> | 
+                Camera Offset: (<span id="cameraX">0</span>, <span id="cameraY">0</span>) | 
+                Time Scale: <span id="timeScale">1.0</span>
+            </p>
+        </div>
+    </div>
+
+    <style>
+        .effect-btn {
+            padding: 8px;
+            border: 2px solid transparent;
+            background-color: #555;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s;
+            font-size: 12px;
+        }
+        .effect-btn:hover {
+            background-color: #666;
+            border-color: #888;
+        }
+        .effect-btn.active {
+            background-color: #4CAF50;
+            border-color: #66BB6A;
+        }
+    </style>
+
+    <script>
+        console.log('Screen Shake and Effects Demo starting...');
+
+        const canvas = document.getElementById('shakeCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Game Feel System
+        class GameFeelSystem {
+            constructor() {
+                this.cameraX = 0;
+                this.cameraY = 0;
+                this.zoom = 1;
+                this.rotation = 0;
+                this.timeScale = 1;
+                
+                this.shakes = [];
+                this.particles = [];
+                this.flashes = [];
+                this.ripples = [];
+                
+                this.effects = {
+                    shake: true,
+                    hitstop: true,
+                    chromatic: true,
+                    particles: true,
+                    flash: true,
+                    zoom: true,
+                    blur: false,
+                    ripple: false
+                };
+                
+                this.shakeParams = {
+                    intensity: 20,
+                    duration: 300,
+                    frequency: 30,
+                    decayType: 'exponential',
+                    direction: 'random'
+                };
+                
+                this.gameObjects = [];
+                this.initGameObjects();
+            }
+            
+            initGameObjects() {
+                // Create some objects to demonstrate shake
+                for (let i = 0; i < 10; i++) {
+                    this.gameObjects.push({
+                        x: 100 + Math.random() * 600,
+                        y: 100 + Math.random() * 400,
+                        vx: (Math.random() - 0.5) * 2,
+                        vy: (Math.random() - 0.5) * 2,
+                        size: 20 + Math.random() * 30,
+                        color: `hsl(${Math.random() * 360}, 70%, 50%)`,
+                        type: 'box'
+                    });
+                }
+            }
+            
+            addShake(x, y, intensity, duration) {
+                if (!this.effects.shake) return;
+                
+                this.shakes.push({
+                    x: x,
+                    y: y,
+                    intensity: intensity || this.shakeParams.intensity,
+                    duration: duration || this.shakeParams.duration,
+                    elapsed: 0,
+                    frequency: this.shakeParams.frequency,
+                    decayType: this.shakeParams.decayType,
+                    direction: this.shakeParams.direction
+                });
+            }
+            
+            addHitStop(duration) {
+                if (!this.effects.hitstop) return;
+                
+                this.timeScale = 0.01;
+                setTimeout(() => {
+                    this.timeScale = 1;
+                }, duration);
+            }
+            
+            addParticles(x, y, count, color) {
+                if (!this.effects.particles) return;
+                
+                for (let i = 0; i < count; i++) {
+                    const angle = (Math.PI * 2 / count) * i + Math.random() * 0.5;
+                    const speed = 5 + Math.random() * 10;
+                    
+                    this.particles.push({
+                        x: x,
+                        y: y,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed,
+                        life: 1,
+                        maxLife: 1,
+                        size: 2 + Math.random() * 4,
+                        color: color || '#FFFF00',
+                        gravity: 0.5
+                    });
+                }
+            }
+            
+            addFlash(color, duration) {
+                if (!this.effects.flash) return;
+                
+                this.flashes.push({
+                    color: color || 'rgba(255, 255, 255, 0.8)',
+                    alpha: 1,
+                    duration: duration || 100,
+                    elapsed: 0
+                });
+            }
+            
+            addZoomPulse(amount, duration) {
+                if (!this.effects.zoom) return;
+                
+                const startZoom = this.zoom;
+                const targetZoom = this.zoom * amount;
+                const startTime = Date.now();
+                
+                const animate = () => {
+                    const elapsed = Date.now() - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    
+                    if (progress < 0.5) {
+                        // Zoom in
+                        this.zoom = startZoom + (targetZoom - startZoom) * (progress * 2);
+                    } else {
+                        // Zoom out
+                        this.zoom = targetZoom - (targetZoom - startZoom) * ((progress - 0.5) * 2);
+                    }
+                    
+                    if (progress < 1) {
+                        requestAnimationFrame(animate);
+                    }
+                };
+                
+                animate();
+            }
+            
+            addRipple(x, y, maxRadius) {
+                if (!this.effects.ripple) return;
+                
+                this.ripples.push({
+                    x: x,
+                    y: y,
+                    radius: 0,
+                    maxRadius: maxRadius || 200,
+                    alpha: 1,
+                    speed: 5
+                });
+            }
+            
+            update(deltaTime) {
+                // Update camera shake
+                this.cameraX = 0;
+                this.cameraY = 0;
+                
+                this.shakes = this.shakes.filter(shake => {
+                    shake.elapsed += deltaTime;
+                    
+                    if (shake.elapsed >= shake.duration) {
+                        return false;
+                    }
+                    
+                    const progress = shake.elapsed / shake.duration;
+                    let decay = 1;
+                    
+                    // Apply decay function
+                    switch (shake.decayType) {
+                        case 'linear':
+                            decay = 1 - progress;
+                            break;
+                        case 'exponential':
+                            decay = Math.pow(1 - progress, 2);
+                            break;
+                        case 'elastic':
+                            decay = Math.cos(progress * Math.PI * 4) * (1 - progress);
+                            break;
+                        case 'bounce':
+                            decay = Math.abs(Math.sin(progress * Math.PI * 3)) * (1 - progress);
+                            break;
+                    }
+                    
+                    const intensity = shake.intensity * decay;
+                    
+                    // Apply direction
+                    switch (shake.direction) {
+                        case 'random':
+                            this.cameraX += (Math.random() - 0.5) * intensity;
+                            this.cameraY += (Math.random() - 0.5) * intensity;
+                            break;
+                        case 'horizontal':
+                            this.cameraX += Math.sin(shake.elapsed * shake.frequency * 0.01) * intensity;
+                            break;
+                        case 'vertical':
+                            this.cameraY += Math.sin(shake.elapsed * shake.frequency * 0.01) * intensity;
+                            break;
+                        case 'circular':
+                            const angle = shake.elapsed * shake.frequency * 0.01;
+                            this.cameraX += Math.cos(angle) * intensity;
+                            this.cameraY += Math.sin(angle) * intensity;
+                            break;
+                    }
+                    
+                    return true;
+                });
+                
+                // Update particles
+                this.particles = this.particles.filter(particle => {
+                    particle.x += particle.vx * deltaTime * 0.1 * this.timeScale;
+                    particle.y += particle.vy * deltaTime * 0.1 * this.timeScale;
+                    particle.vy += particle.gravity * deltaTime * 0.1 * this.timeScale;
+                    particle.life -= deltaTime * 0.002 * this.timeScale;
+                    
+                    return particle.life > 0;
+                });
+                
+                // Update flashes
+                this.flashes = this.flashes.filter(flash => {
+                    flash.elapsed += deltaTime;
+                    flash.alpha = 1 - (flash.elapsed / flash.duration);
+                    return flash.elapsed < flash.duration;
+                });
+                
+                // Update ripples
+                this.ripples = this.ripples.filter(ripple => {
+                    ripple.radius += ripple.speed;
+                    ripple.alpha = 1 - (ripple.radius / ripple.maxRadius);
+                    return ripple.radius < ripple.maxRadius;
+                });
+                
+                // Update game objects
+                for (const obj of this.gameObjects) {
+                    obj.x += obj.vx * deltaTime * 0.1 * this.timeScale;
+                    obj.y += obj.vy * deltaTime * 0.1 * this.timeScale;
+                    
+                    // Bounce off walls
+                    if (obj.x < obj.size || obj.x > canvas.width - obj.size) {
+                        obj.vx = -obj.vx;
+                        obj.x = Math.max(obj.size, Math.min(canvas.width - obj.size, obj.x));
+                    }
+                    if (obj.y < obj.size || obj.y > canvas.height - obj.size) {
+                        obj.vy = -obj.vy;
+                        obj.y = Math.max(obj.size, Math.min(canvas.height - obj.size, obj.y));
+                    }
+                }
+                
+                // Update stats
+                document.getElementById('activeShakes').textContent = this.shakes.length;
+                document.getElementById('particleCount').textContent = this.particles.length;
+                document.getElementById('cameraX').textContent = Math.round(this.cameraX);
+                document.getElementById('cameraY').textContent = Math.round(this.cameraY);
+                document.getElementById('timeScale').textContent = this.timeScale.toFixed(2);
+            }
+            
+            render() {
+                // Clear canvas
+                ctx.fillStyle = '#222';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Apply camera transformations
+                ctx.save();
+                ctx.translate(canvas.width / 2, canvas.height / 2);
+                ctx.scale(this.zoom, this.zoom);
+                ctx.rotate(this.rotation);
+                ctx.translate(-canvas.width / 2, -canvas.height / 2);
+                ctx.translate(this.cameraX, this.cameraY);
+                
+                // Apply chromatic aberration
+                if (this.effects.chromatic && this.shakes.length > 0) {
+                    const intensity = this.cameraX * 0.1;
+                    ctx.globalCompositeOperation = 'screen';
+                    
+                    // Red channel
+                    ctx.fillStyle = 'rgba(255, 0, 0, 0.1)';
+                    ctx.fillRect(-intensity, 0, canvas.width, canvas.height);
+                    
+                    // Blue channel
+                    ctx.fillStyle = 'rgba(0, 0, 255, 0.1)';
+                    ctx.fillRect(intensity, 0, canvas.width, canvas.height);
+                    
+                    ctx.globalCompositeOperation = 'source-over';
+                }
+                
+                // Draw grid (to show shake effect)
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+                ctx.lineWidth = 1;
+                for (let x = 0; x < canvas.width; x += 50) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, canvas.height);
+                    ctx.stroke();
+                }
+                for (let y = 0; y < canvas.height; y += 50) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(canvas.width, y);
+                    ctx.stroke();
+                }
+                
+                // Draw game objects
+                for (const obj of this.gameObjects) {
+                    ctx.fillStyle = obj.color;
+                    ctx.fillRect(obj.x - obj.size/2, obj.y - obj.size/2, obj.size, obj.size);
+                    
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(obj.x - obj.size/2, obj.y - obj.size/2, obj.size, obj.size);
+                }
+                
+                // Draw ripples
+                for (const ripple of this.ripples) {
+                    ctx.strokeStyle = `rgba(255, 255, 255, ${ripple.alpha * 0.5})`;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+                
+                // Draw particles
+                for (const particle of this.particles) {
+                    ctx.globalAlpha = particle.life;
+                    ctx.fillStyle = particle.color;
+                    ctx.fillRect(particle.x - particle.size/2, particle.y - particle.size/2, 
+                               particle.size, particle.size);
+                }
+                ctx.globalAlpha = 1;
+                
+                ctx.restore();
+                
+                // Draw flashes (screen space)
+                for (const flash of this.flashes) {
+                    ctx.globalAlpha = flash.alpha;
+                    ctx.fillStyle = flash.color;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                }
+                ctx.globalAlpha = 1;
+                
+                // Motion blur effect
+                if (this.effects.blur && this.shakes.length > 0) {
+                    ctx.globalAlpha = 0.2;
+                    ctx.drawImage(canvas, this.cameraX * 2, this.cameraY * 2);
+                    ctx.globalAlpha = 1;
+                }
+            }
+            
+            triggerExplosion(x, y) {
+                this.addShake(x, y, 30, 400);
+                this.addHitStop(50);
+                this.addParticles(x, y, 20, '#FF6600');
+                this.addFlash('rgba(255, 200, 0, 0.5)', 100);
+                this.addZoomPulse(1.1, 200);
+                this.addRipple(x, y, 300);
+            }
+            
+            triggerGunshot(x, y) {
+                this.addShake(x, y, 10, 100);
+                this.addHitStop(20);
+                this.addParticles(x, y, 5, '#FFFF00');
+                this.addFlash('rgba(255, 255, 255, 0.3)', 50);
+            }
+            
+            triggerEarthquake() {
+                this.addShake(canvas.width/2, canvas.height/2, 15, 2000);
+            }
+            
+            triggerImpact(x, y) {
+                this.addShake(x, y, 25, 200);
+                this.addHitStop(100);
+                this.addZoomPulse(0.95, 150);
+                this.addParticles(x, y, 10, '#FFFFFF');
+            }
+            
+            triggerLaser(x, y) {
+                this.addShake(x, y, 5, 150);
+                this.addFlash('rgba(0, 255, 255, 0.4)', 75);
+                this.addParticles(x, y, 15, '#00FFFF');
+            }
+            
+            triggerPowerup(x, y) {
+                this.addZoomPulse(1.2, 300);
+                this.addParticles(x, y, 30, '#FFD700');
+                this.addFlash('rgba(255, 215, 0, 0.3)', 200);
+                this.addRipple(x, y, 400);
+            }
+        }
+
+        // Initialize system
+        const gameFeelSystem = new GameFeelSystem();
+
+        // Mouse click handler
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            gameFeelSystem.triggerExplosion(x, y);
+        });
+
+        // UI Functions
+        window.toggleEffect = function(effect) {
+            gameFeelSystem.effects[effect] = !gameFeelSystem.effects[effect];
+            document.getElementById(effect + '-btn').classList.toggle('active');
+        };
+
+        window.updateParam = function(param, value) {
+            document.getElementById(param + 'Display').textContent = value;
+            gameFeelSystem.shakeParams[param] = parseFloat(value);
+        };
+
+        window.setDecayType = function(type) {
+            gameFeelSystem.shakeParams.decayType = type;
+        };
+
+        window.setShakeDirection = function(direction) {
+            gameFeelSystem.shakeParams.direction = direction;
+        };
+
+        window.triggerPreset = function(type) {
+            const x = canvas.width / 2 + (Math.random() - 0.5) * 200;
+            const y = canvas.height / 2 + (Math.random() - 0.5) * 200;
+            
+            switch(type) {
+                case 'explosion':
+                    gameFeelSystem.triggerExplosion(x, y);
+                    break;
+                case 'gunshot':
+                    gameFeelSystem.triggerGunshot(x, y);
+                    break;
+                case 'earthquake':
+                    gameFeelSystem.triggerEarthquake();
+                    break;
+                case 'impact':
+                    gameFeelSystem.triggerImpact(x, y);
+                    break;
+                case 'laser':
+                    gameFeelSystem.triggerLaser(x, y);
+                    break;
+                case 'powerup':
+                    gameFeelSystem.triggerPowerup(x, y);
+                    break;
+            }
+        };
+
+        // Animation loop
+        let lastTime = performance.now();
+        
+        function animate() {
+            const currentTime = performance.now();
+            const deltaTime = currentTime - lastTime;
+            lastTime = currentTime;
+            
+            gameFeelSystem.update(deltaTime);
+            gameFeelSystem.render();
+            
+            requestAnimationFrame(animate);
+        }
+        
+        animate();
+        console.log('Screen Shake and Effects initialized!');
+    </script>
+
+    <h2>Screen Shake Implementation in Python</h2>
+    
+    <pre class="language-python"><code>import pygame
+import math
+import random
+from typing import List, Tuple, Optional
+from enum import Enum
+
+class ShakeType(Enum):
+    RANDOM = "random"
+    HORIZONTAL = "horizontal"
+    VERTICAL = "vertical"
+    CIRCULAR = "circular"
+    DIRECTIONAL = "directional"
+
+class DecayType(Enum):
+    LINEAR = "linear"
+    EXPONENTIAL = "exponential"
+    ELASTIC = "elastic"
+    BOUNCE = "bounce"
+
+class ScreenShake:
+    """Advanced screen shake system"""
+    
+    def __init__(self):
+        self.trauma = 0.0  # Current trauma level (0-1)
+        self.max_offset = 50  # Maximum shake offset in pixels
+        self.max_angle = 5  # Maximum rotation in degrees
+        self.decay_rate = 0.8  # Trauma decay per second
+        
+        # Camera properties
+        self.offset_x = 0
+        self.offset_y = 0
+        self.angle = 0
+        self.zoom = 1.0
+        
+        # Active shakes
+        self.shakes: List[Shake] = []
+        
+    def add_trauma(self, amount: float):
+        """Add trauma (0-1) to trigger shake"""
+        self.trauma = min(1.0, self.trauma + amount)
+    
+    def add_shake(self, intensity: float, duration: float,
+                  shake_type: ShakeType = ShakeType.RANDOM,
+                  decay_type: DecayType = DecayType.EXPONENTIAL):
+        """Add a specific shake effect"""
+        shake = Shake(intensity, duration, shake_type, decay_type)
+        self.shakes.append(shake)
+    
+    def update(self, dt: float):
+        """Update all active shakes"""
+        # Update trauma-based shake
+        if self.trauma > 0:
+            self.trauma = max(0, self.trauma - self.decay_rate * dt)
+            
+            # Calculate shake amount (trauma^2 for better feel)
+            shake = self.trauma * self.trauma
+            
+            # Random offset
+            self.offset_x = self.max_offset * shake * (random.random() * 2 - 1)
+            self.offset_y = self.max_offset * shake * (random.random() * 2 - 1)
+            self.angle = self.max_angle * shake * (random.random() * 2 - 1)
+            self.zoom = 1 + shake * 0.1
+        else:
+            self.offset_x = 0
+            self.offset_y = 0
+            self.angle = 0
+            self.zoom = 1.0
+        
+        # Update individual shakes
+        total_x = 0
+        total_y = 0
+        total_angle = 0
+        
+        self.shakes = [s for s in self.shakes if not s.is_finished()]
+        
+        for shake in self.shakes:
+            shake.update(dt)
+            offset = shake.get_offset()
+            total_x += offset[0]
+            total_y += offset[1]
+            total_angle += shake.get_rotation()
+        
+        # Combine all shakes
+        self.offset_x += total_x
+        self.offset_y += total_y
+        self.angle += total_angle
+    
+    def apply_to_surface(self, surface: pygame.Surface, screen: pygame.Surface):
+        """Apply shake transformation to rendered surface"""
+        # Create transformed surface
+        if abs(self.angle) > 0.01:
+            rotated = pygame.transform.rotate(surface, self.angle)
+        else:
+            rotated = surface
+        
+        if abs(self.zoom - 1.0) > 0.01:
+            size = rotated.get_size()
+            new_size = (int(size[0] * self.zoom), int(size[1] * self.zoom))
+            zoomed = pygame.transform.scale(rotated, new_size)
+        else:
+            zoomed = rotated
+        
+        # Calculate position with offset
+        rect = zoomed.get_rect()
+        rect.center = (screen.get_width() // 2 + self.offset_x,
+                      screen.get_height() // 2 + self.offset_y)
+        
+        screen.blit(zoomed, rect)
+
+class Shake:
+    """Individual shake instance"""
+    
+    def __init__(self, intensity: float, duration: float,
+                 shake_type: ShakeType, decay_type: DecayType):
+        self.intensity = intensity
+        self.duration = duration
+        self.shake_type = shake_type
+        self.decay_type = decay_type
+        self.elapsed = 0
+        self.frequency = 30  # Oscillation frequency
+        
+    def update(self, dt: float):
+        """Update shake progress"""
+        self.elapsed += dt
+    
+    def is_finished(self) -> bool:
+        """Check if shake is complete"""
+        return self.elapsed >= self.duration
+    
+    def get_decay(self) -> float:
+        """Calculate decay based on progress"""
+        progress = self.elapsed / self.duration
+        
+        if self.decay_type == DecayType.LINEAR:
+            return 1 - progress
+        elif self.decay_type == DecayType.EXPONENTIAL:
+            return (1 - progress) ** 2
+        elif self.decay_type == DecayType.ELASTIC:
+            return math.cos(progress * math.pi * 4) * (1 - progress)
+        elif self.decay_type == DecayType.BOUNCE:
+            return abs(math.sin(progress * math.pi * 3)) * (1 - progress)
+        
+        return 1 - progress
+    
+    def get_offset(self) -> Tuple[float, float]:
+        """Get current shake offset"""
+        decay = self.get_decay()
+        strength = self.intensity * decay
+        
+        if self.shake_type == ShakeType.RANDOM:
+            return (
+                (random.random() * 2 - 1) * strength,
+                (random.random() * 2 - 1) * strength
+            )
+        elif self.shake_type == ShakeType.HORIZONTAL:
+            return (
+                math.sin(self.elapsed * self.frequency) * strength,
+                0
+            )
+        elif self.shake_type == ShakeType.VERTICAL:
+            return (
+                0,
+                math.sin(self.elapsed * self.frequency) * strength
+            )
+        elif self.shake_type == ShakeType.CIRCULAR:
+            angle = self.elapsed * self.frequency
+            return (
+                math.cos(angle) * strength,
+                math.sin(angle) * strength
+            )
+        
+        return (0, 0)
+    
+    def get_rotation(self) -> float:
+        """Get current rotation amount"""
+        return (random.random() * 2 - 1) * self.intensity * 0.1 * self.get_decay()
+
+class HitStop:
+    """Freeze frame effect system"""
+    
+    def __init__(self):
+        self.duration = 0
+        self.elapsed = 0
+        self.active = False
+        self.time_scale = 1.0
+    
+    def trigger(self, duration: float):
+        """Trigger hit stop effect"""
+        self.duration = duration
+        self.elapsed = 0
+        self.active = True
+        self.time_scale = 0.01
+    
+    def update(self, dt: float) -> float:
+        """Update and return modified delta time"""
+        if self.active:
+            self.elapsed += dt
+            
+            if self.elapsed >= self.duration:
+                self.active = False
+                self.time_scale = 1.0
+            
+            return dt * self.time_scale
+        
+        return dt
+
+class ImpactEffects:
+    """Visual impact effects manager"""
+    
+    def __init__(self, screen: pygame.Surface):
+        self.screen = screen
+        self.particles: List[Particle] = []
+        self.flashes: List[Flash] = []
+        self.ripples: List[Ripple] = []
+    
+    def add_impact(self, x: float, y: float, impact_type: str = "normal"):
+        """Add impact at position"""
+        if impact_type == "explosion":
+            self.add_particles(x, y, 30, (255, 100, 0))
+            self.add_flash((255, 200, 0, 128), 100)
+            self.add_ripple(x, y, 200, 5)
+        elif impact_type == "hit":
+            self.add_particles(x, y, 10, (255, 255, 255))
+            self.add_flash((255, 255, 255, 64), 50)
+        elif impact_type == "powerup":
+            self.add_particles(x, y, 20, (255, 215, 0))
+            self.add_ripple(x, y, 150, 3)
+    
+    def add_particles(self, x: float, y: float, count: int, color: Tuple[int, int, int]):
+        """Spawn particles at position"""
+        for _ in range(count):
+            angle = random.uniform(0, math.pi * 2)
+            speed = random.uniform(50, 200)
+            self.particles.append(Particle(x, y, angle, speed, color))
+    
+    def add_flash(self, color: Tuple[int, int, int, int], duration: float):
+        """Add screen flash effect"""
+        self.flashes.append(Flash(color, duration))
+    
+    def add_ripple(self, x: float, y: float, max_radius: float, speed: float):
+        """Add ripple effect"""
+        self.ripples.append(Ripple(x, y, max_radius, speed))
+    
+    def update(self, dt: float):
+        """Update all effects"""
+        self.particles = [p for p in self.particles if p.update(dt)]
+        self.flashes = [f for f in self.flashes if f.update(dt)]
+        self.ripples = [r for r in self.ripples if r.update(dt)]
+    
+    def render(self):
+        """Render all effects"""
+        for ripple in self.ripples:
+            ripple.render(self.screen)
+        
+        for particle in self.particles:
+            particle.render(self.screen)
+        
+        for flash in self.flashes:
+            flash.render(self.screen)
+
+class Particle:
+    """Particle effect"""
+    
+    def __init__(self, x: float, y: float, angle: float, speed: float, color: Tuple[int, int, int]):
+        self.x = x
+        self.y = y
+        self.vx = math.cos(angle) * speed
+        self.vy = math.sin(angle) * speed
+        self.color = color
+        self.life = 1.0
+        self.size = random.randint(2, 6)
+    
+    def update(self, dt: float) -> bool:
+        """Update particle, return False when dead"""
+        self.x += self.vx * dt
+        self.y += self.vy * dt
+        self.vy += 200 * dt  # Gravity
+        self.life -= dt * 2
+        
+        return self.life > 0
+    
+    def render(self, screen: pygame.Surface):
+        """Render particle"""
+        if self.life > 0:
+            alpha = int(self.life * 255)
+            color = (*self.color, alpha)
+            pygame.draw.circle(screen, color[:3], 
+                             (int(self.x), int(self.y)), 
+                             int(self.size * self.life))
+
+class Flash:
+    """Screen flash effect"""
+    
+    def __init__(self, color: Tuple[int, int, int, int], duration: float):
+        self.color = color
+        self.duration = duration
+        self.elapsed = 0
+    
+    def update(self, dt: float) -> bool:
+        """Update flash, return False when done"""
+        self.elapsed += dt * 1000
+        return self.elapsed < self.duration
+    
+    def render(self, screen: pygame.Surface):
+        """Render flash overlay"""
+        alpha = int((1 - self.elapsed / self.duration) * self.color[3])
+        flash_surface = pygame.Surface(screen.get_size())
+        flash_surface.fill(self.color[:3])
+        flash_surface.set_alpha(alpha)
+        screen.blit(flash_surface, (0, 0))
+
+class Ripple:
+    """Expanding ripple effect"""
+    
+    def __init__(self, x: float, y: float, max_radius: float, speed: float):
+        self.x = x
+        self.y = y
+        self.radius = 0
+        self.max_radius = max_radius
+        self.speed = speed
+    
+    def update(self, dt: float) -> bool:
+        """Update ripple, return False when done"""
+        self.radius += self.speed * dt * 100
+        return self.radius < self.max_radius
+    
+    def render(self, screen: pygame.Surface):
+        """Render ripple"""
+        alpha = 1 - (self.radius / self.max_radius)
+        if alpha > 0:
+            pygame.draw.circle(screen, (255, 255, 255), 
+                             (int(self.x), int(self.y)), 
+                             int(self.radius), 
+                             max(1, int(3 * alpha)))</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Game Feel Tips</h3>
+        <ul>
+            <li><strong>Less is More:</strong> Subtle effects often feel better than extreme ones</li>
+            <li><strong>Context Matters:</strong> Scale effects to match action importance</li>
+            <li><strong>Combine Effects:</strong> Layer multiple small effects for big impacts</li>
+            <li><strong>Timing:</strong> Hit stop makes impacts feel powerful</li>
+            <li><strong>Decay Curves:</strong> Exponential decay usually feels most natural</li>
+            <li><strong>Accessibility:</strong> Allow players to reduce or disable effects</li>
+            <li><strong>Performance:</strong> Pool particles and limit active effects</li>
+            <li><strong>Test Thoroughly:</strong> Effects should enhance, not distract</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>💥 Screen shake adds visceral impact to actions</li>
+            <li>⏸️ Hit stop emphasizes collision moments</li>
+            <li>✨ Particles provide visual feedback and polish</li>
+            <li>📊 Decay curves control how effects fade</li>
+            <li>🎯 Direction matters for shake feel</li>
+            <li>🔄 Combine multiple effects for maximum impact</li>
+            <li>⚙️ Trauma system provides smooth, stacking shakes</li>
+            <li>♿ Always consider accessibility needs</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you understand screen shake and impact effects, next we'll explore tweening and juice to make every interaction feel amazing!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="graphics_procedural.html" class="prev-lesson" aria-label="Previous lesson: Procedural Generation">Previous Lesson: Procedural Generation</a>
+        <a href="polish_tweening.html" class="next-lesson" aria-label="Next lesson: Tweening and Juice">Next Lesson: Tweening and Juice</a>
+    </nav>
+    
+    </main>
+    <script src="/js/course-enhancements.js" defer></script>
+</body>
+</html>

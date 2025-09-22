@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master UI and HUD development for games. Learn health bars, inventories, menus, dialog systems, and responsive interfaces.">
+    <title>UI/HUD Development - Advanced Graphics</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>UI/HUD Development</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Advanced Module - Section 1: Advanced Graphics - Lesson 4</span>
+    </nav>
+
+    <h2>Creating Polished Game Interfaces</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Design and implement professional game UIs! Master health bars, inventories, menus, dialog systems, minimaps, and create responsive interfaces that enhance gameplay without overwhelming players! 🎮📊💬</p>
+    </div>
+
+    <h2>Understanding Game UI/HUD</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎮 The Dashboard Analogy</h3>
+        <p>Think of game UI like a car's dashboard:</p>
+        <ul>
+            <li><strong>HUD (Heads-Up Display):</strong> Critical info always visible (speedometer)</li>
+            <li><strong>Menus:</strong> Detailed controls when stopped (settings panel)</li>
+            <li><strong>Feedback:</strong> Immediate responses to actions (warning lights)</li>
+            <li><strong>Diegetic UI:</strong> Part of the game world (in-car GPS)</li>
+            <li><strong>Non-Diegetic UI:</strong> Overlay information (score display)</li>
+            <li><strong>Responsive:</strong> Adapts to different screens and situations</li>
+        </ul>
+    </div>
+
+    <h2>UI/HUD Implementation in Python</h2>
+    
+    <pre class="language-python"><code>import pygame
+import math
+from enum import Enum
+from typing import Dict, List, Optional, Tuple
+
+class UIElement:
+    """Base class for all UI elements"""
+    def __init__(self, x: int, y: int, width: int, height: int):
+        self.rect = pygame.Rect(x, y, width, height)
+        self.visible = True
+        self.interactive = True
+        self.animations = []
+        
+    def update(self, dt: float):
+        """Update element state"""
+        # Update animations
+        self.animations = [anim for anim in self.animations 
+                         if anim.update(dt)]
+    
+    def render(self, surface: pygame.Surface):
+        """Render the element"""
+        pass
+    
+    def handle_event(self, event: pygame.event.Event) -> bool:
+        """Handle input events"""
+        return False
+
+class HealthBar(UIElement):
+    """Health bar UI element"""
+    def __init__(self, x: int, y: int, width: int, height: int):
+        super().__init__(x, y, width, height)
+        self.max_health = 100
+        self.current_health = 100
+        self.animated_health = 100
+        self.damage_preview = 0
+        
+        # Visual settings
+        self.bg_color = (50, 50, 50)
+        self.health_color = (255, 0, 0)
+        self.damage_color = (255, 255, 0)
+        self.border_color = (100, 100, 100)
+        
+    def set_health(self, value: int, max_value: int = None):
+        """Update health values"""
+        self.current_health = max(0, min(value, self.max_health))
+        if max_value:
+            self.max_health = max_value
+    
+    def preview_damage(self, amount: int):
+        """Show damage preview"""
+        self.damage_preview = amount
+    
+    def update(self, dt: float):
+        super().update(dt)
+        
+        # Smooth health bar animation
+        diff = self.current_health - self.animated_health
+        self.animated_health += diff * dt * 5
+        
+        # Fade damage preview
+        if self.damage_preview > 0:
+            self.damage_preview = max(0, self.damage_preview - dt * 50)
+    
+    def render(self, surface: pygame.Surface):
+        if not self.visible:
+            return
+        
+        # Draw background
+        pygame.draw.rect(surface, self.bg_color, self.rect)
+        
+        # Draw health fill
+        if self.animated_health > 0:
+            health_rect = self.rect.copy()
+            health_rect.width = int((self.animated_health / self.max_health) * self.rect.width)
+            pygame.draw.rect(surface, self.health_color, health_rect)
+        
+        # Draw damage preview
+        if self.damage_preview > 0:
+            damage_rect = self.rect.copy()
+            damage_rect.x += int((self.animated_health / self.max_health) * self.rect.width)
+            damage_rect.width = int((self.damage_preview / self.max_health) * self.rect.width)
+            pygame.draw.rect(surface, self.damage_color, damage_rect)
+        
+        # Draw border
+        pygame.draw.rect(surface, self.border_color, self.rect, 2)
+        
+        # Draw text
+        font = pygame.font.Font(None, 20)
+        text = font.render(f"{int(self.current_health)}/{self.max_health}", 
+                          True, (255, 255, 255))
+        text_rect = text.get_rect(center=self.rect.center)
+        surface.blit(text, text_rect)
+
+class Minimap(UIElement):
+    """Minimap UI element"""
+    def __init__(self, x: int, y: int, size: int):
+        super().__init__(x, y, size, size)
+        self.world_size = (1000, 1000)
+        self.zoom = 0.1
+        self.player_pos = (500, 500)
+        self.entities = []
+        self.objectives = []
+        
+    def world_to_map(self, world_pos: Tuple[float, float]) -> Tuple[int, int]:
+        """Convert world coordinates to minimap coordinates"""
+        x = int(self.rect.x + (world_pos[0] / self.world_size[0]) * self.rect.width)
+        y = int(self.rect.y + (world_pos[1] / self.world_size[1]) * self.rect.height)
+        return (x, y)
+    
+    def render(self, surface: pygame.Surface):
+        if not self.visible:
+            return
+        
+        # Create minimap surface with transparency
+        map_surface = pygame.Surface((self.rect.width, self.rect.height))
+        map_surface.set_alpha(200)
+        map_surface.fill((20, 20, 30))
+        
+        # Draw grid
+        grid_size = 20
+        for i in range(0, self.rect.width, grid_size):
+            pygame.draw.line(map_surface, (40, 40, 50), 
+                           (i, 0), (i, self.rect.height), 1)
+            pygame.draw.line(map_surface, (40, 40, 50), 
+                           (0, i), (self.rect.width, i), 1)
+        
+        # Draw objectives
+        for obj in self.objectives:
+            map_pos = self.world_to_map(obj['pos'])
+            pygame.draw.rect(map_surface, (255, 215, 0), 
+                           (map_pos[0] - 3, map_pos[1] - 3, 6, 6))
+        
+        # Draw entities
+        for entity in self.entities:
+            map_pos = self.world_to_map(entity['pos'])
+            color = (255, 0, 0) if entity['type'] == 'enemy' else (0, 255, 0)
+            pygame.draw.circle(map_surface, color, map_pos, 2)
+        
+        # Draw player
+        player_map_pos = self.world_to_map(self.player_pos)
+        pygame.draw.polygon(map_surface, (0, 255, 0), [
+            (player_map_pos[0], player_map_pos[1] - 4),
+            (player_map_pos[0] - 3, player_map_pos[1] + 4),
+            (player_map_pos[0] + 3, player_map_pos[1] + 4)
+        ])
+        
+        # Draw view cone
+        pygame.draw.circle(map_surface, (100, 200, 255, 50), 
+                         player_map_pos, 20, 1)
+        
+        # Blit to main surface
+        surface.blit(map_surface, self.rect)
+        
+        # Draw border
+        pygame.draw.rect(surface, (100, 100, 100), self.rect, 2)
+
+class DialogBox(UIElement):
+    """Dialog/conversation UI"""
+    def __init__(self, x: int, y: int, width: int, height: int):
+        super().__init__(x, y, width, height)
+        self.speaker = ""
+        self.text = ""
+        self.displayed_text = ""
+        self.text_speed = 30  # Characters per second
+        self.text_progress = 0
+        self.choices = []
+        self.selected_choice = 0
+        self.active = False
+        
+    def show_dialog(self, speaker: str, text: str, choices: List[str] = None):
+        """Display a new dialog"""
+        self.speaker = speaker
+        self.text = text
+        self.displayed_text = ""
+        self.text_progress = 0
+        self.choices = choices or []
+        self.selected_choice = 0
+        self.active = True
+        self.visible = True
+    
+    def update(self, dt: float):
+        if not self.active:
+            return
+        
+        super().update(dt)
+        
+        # Typewriter effect
+        if self.text_progress < len(self.text):
+            self.text_progress += self.text_speed * dt
+            self.displayed_text = self.text[:int(self.text_progress)]
+    
+    def render(self, surface: pygame.Surface):
+        if not self.visible:
+            return
+        
+        # Create dialog surface
+        dialog_surface = pygame.Surface((self.rect.width, self.rect.height))
+        dialog_surface.set_alpha(240)
+        dialog_surface.fill((20, 20, 30))
+        
+        # Draw border
+        pygame.draw.rect(dialog_surface, (139, 115, 85), 
+                        (0, 0, self.rect.width, self.rect.height), 3)
+        
+        # Draw speaker name
+        if self.speaker:
+            font = pygame.font.Font(None, 24)
+            speaker_text = font.render(self.speaker, True, (255, 215, 0))
+            dialog_surface.blit(speaker_text, (10, 10))
+        
+        # Draw text
+        font = pygame.font.Font(None, 20)
+        y_offset = 40
+        
+        # Word wrap
+        words = self.displayed_text.split(' ')
+        lines = []
+        current_line = []
+        
+        for word in words:
+            test_line = ' '.join(current_line + [word])
+            text_width = font.size(test_line)[0]
+            
+            if text_width > self.rect.width - 20:
+                if current_line:
+                    lines.append(' '.join(current_line))
+                    current_line = [word]
+                else:
+                    lines.append(word)
+            else:
+                current_line.append(word)
+        
+        if current_line:
+            lines.append(' '.join(current_line))
+        
+        for line in lines:
+            text_surface = font.render(line, True, (255, 255, 255))
+            dialog_surface.blit(text_surface, (10, y_offset))
+            y_offset += 25
+        
+        # Draw choices if available
+        if self.choices and self.text_progress >= len(self.text):
+            y_offset += 20
+            for i, choice in enumerate(self.choices):
+                color = (255, 215, 0) if i == self.selected_choice else (200, 200, 200)
+                choice_text = font.render(f"> {choice}", True, color)
+                dialog_surface.blit(choice_text, (20, y_offset))
+                y_offset += 25
+        
+        # Blit to main surface
+        surface.blit(dialog_surface, self.rect)
+
+class UIManager:
+    """Manages all UI elements"""
+    def __init__(self, screen_width: int, screen_height: int):
+        self.screen_width = screen_width
+        self.screen_height = screen_height
+        self.elements: Dict[str, UIElement] = {}
+        self.init_ui()
+    
+    def init_ui(self):
+        """Initialize UI elements"""
+        # Health bar
+        self.elements['health'] = HealthBar(20, 20, 200, 25)
+        
+        # Minimap
+        self.elements['minimap'] = Minimap(
+            self.screen_width - 150, 20, 130
+        )
+        
+        # Dialog box
+        self.elements['dialog'] = DialogBox(
+            self.screen_width // 2 - 250,
+            self.screen_height - 180,
+            500, 150
+        )
+    
+    def update(self, dt: float):
+        """Update all UI elements"""
+        for element in self.elements.values():
+            element.update(dt)
+    
+    def render(self, surface: pygame.Surface):
+        """Render all UI elements"""
+        for element in self.elements.values():
+            element.render(surface)
+    
+    def handle_event(self, event: pygame.event.Event) -> bool:
+        """Handle input events"""
+        for element in self.elements.values():
+            if element.handle_event(event):
+                return True
+        return False</code></pre>
+
+    <h2>Advanced UI Features</h2>
+    
+    <pre class="language-python"><code># Inventory System
+class Inventory(UIElement):
+    """Grid-based inventory UI"""
+    def __init__(self, x: int, y: int, cols: int, rows: int):
+        self.cols = cols
+        self.rows = rows
+        self.slot_size = 50
+        width = cols * self.slot_size
+        height = rows * self.slot_size
+        super().__init__(x, y, width, height)
+        
+        self.items = [[None for _ in range(cols)] for _ in range(rows)]
+        self.selected_slot = None
+        self.dragging_item = None
+        
+    def add_item(self, item) -> bool:
+        """Add item to first available slot"""
+        for y in range(self.rows):
+            for x in range(self.cols):
+                if self.items[y][x] is None:
+                    self.items[y][x] = item
+                    return True
+        return False
+
+# Notification System
+class NotificationSystem:
+    """Manages temporary notifications"""
+    def __init__(self):
+        self.notifications = []
+        self.position = (10, 100)
+        self.max_notifications = 5
+        
+    def add_notification(self, text: str, duration: float = 3.0,
+                         color=(255, 255, 255), icon=None):
+        """Add a new notification"""
+        self.notifications.append({
+            'text': text,
+            'duration': duration,
+            'elapsed': 0,
+            'color': color,
+            'icon': icon,
+            'alpha': 255
+        })
+        
+        # Limit notifications
+        if len(self.notifications) > self.max_notifications:
+            self.notifications.pop(0)
+
+# Tooltip System
+class TooltipSystem:
+    """Manages hover tooltips"""
+    def __init__(self):
+        self.current_tooltip = None
+        self.hover_time = 0
+        self.show_delay = 0.5
+        
+    def set_tooltip(self, text: str, x: int, y: int):
+        """Set tooltip for current frame"""
+        self.current_tooltip = {
+            'text': text,
+            'x': x,
+            'y': y
+        }</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ UI/HUD Tips</h3>
+        <ul>
+            <li><strong>Clarity First:</strong> Information should be instantly readable</li>
+            <li><strong>Consistency:</strong> Use consistent visual language</li>
+            <li><strong>Responsive Design:</strong> Support multiple resolutions</li>
+            <li><strong>Minimal Obstruction:</strong> Don't block important gameplay</li>
+            <li><strong>Visual Hierarchy:</strong> Most important info most prominent</li>
+            <li><strong>Feedback:</strong> Immediate response to player actions</li>
+            <li><strong>Accessibility:</strong> Color blind modes, scalable text</li>
+            <li><strong>Context Sensitive:</strong> Show/hide based on situation</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>🎮 Good UI enhances gameplay without distraction</li>
+            <li>📊 HUD shows critical info at a glance</li>
+            <li>💬 Dialog systems drive narrative</li>
+            <li>🗺️ Minimaps aid navigation</li>
+            <li>🎒 Inventories need intuitive interaction</li>
+            <li>✨ Animations provide polish and feedback</li>
+            <li>📱 Responsive design adapts to screens</li>
+            <li>♿ Accessibility ensures everyone can play</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you understand UI/HUD development, next we'll explore procedural generation to create infinite, unique game content!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="graphics_postprocessing.html" class="prev-lesson" aria-label="Previous lesson: Post-processing Effects">Previous Lesson: Post-processing Effects</a>
+        <a href="graphics_procedural.html" class="next-lesson" aria-label="Next lesson: Procedural Generation">Next Lesson: Procedural Generation</a>
+    </nav>
+    
+    </main>
+    <script src="/js/course-enhancements.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master decision-making systems for game AI. Learn utility AI, decision trees, fuzzy logic, and goal-oriented action planning.">
+    <title>Simple Decision Making - AI for Games</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Simple Decision Making</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Intermediate Module - Section 3: AI for Games - Lesson 5</span>
+    </nav>
+
+    <h2>Intelligent Decision Systems</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Create AI that makes smart choices! Learn utility-based AI, decision trees, fuzzy logic, and goal-oriented action planning (GOAP) to build NPCs that adapt to changing situations! 🧠💡🎯</p>
+    </div>
+
+    <h2>Understanding Decision Making</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🤔 The Decision Process Analogy</h3>
+        <p>Think of AI decision-making like choosing what to have for lunch:</p>
+        <ul>
+            <li><strong>Options:</strong> Available choices (pizza, salad, sandwich)</li>
+            <li><strong>Criteria:</strong> What matters (taste, health, cost, time)</li>
+            <li><strong>Weights:</strong> How much each criterion matters</li>
+            <li><strong>Scoring:</strong> Evaluate each option</li>
+            <li><strong>Selection:</strong> Pick the best option</li>
+            <li><strong>Adaptation:</strong> Learn from outcomes</li>
+        </ul>
+    </div>
+
+    <h2>Decision Making Implementation</h2>
+    
+    <pre class="language-python"><code>import math
+import random
+from enum import Enum
+from typing import Dict, List, Tuple, Optional
+
+class UtilityAI:
+    """Utility-based AI decision system"""
+    def __init__(self, agent):
+        self.agent = agent
+        self.actions = []
+        self.setup_actions()
+    
+    def setup_actions(self):
+        """Define available actions with scoring functions"""
+        self.actions = [
+            {
+                'name': 'eat',
+                'score_func': self.score_eat,
+                'requirements': lambda: self.agent.find_food() is not None
+            },
+            {
+                'name': 'fight',
+                'score_func': self.score_fight,
+                'requirements': lambda: self.agent.find_enemy() is not None
+            },
+            {
+                'name': 'flee',
+                'score_func': self.score_flee,
+                'requirements': lambda: self.agent.find_threat() is not None
+            },
+            {
+                'name': 'explore',
+                'score_func': self.score_explore,
+                'requirements': lambda: True
+            }
+        ]
+    
+    def decide(self) -> str:
+        """Select best action based on utility scores"""
+        best_action = None
+        best_score = float('-inf')
+        
+        for action in self.actions:
+            # Check if action is possible
+            if not action['requirements']():
+                continue
+            
+            # Calculate score
+            score = action['score_func']()
+            
+            # Apply personality modifiers
+            score *= self.get_personality_modifier(action['name'])
+            
+            if score > best_score:
+                best_score = score
+                best_action = action['name']
+        
+        return best_action or 'idle'
+    
+    # Response curves
+    def linear(self, value: float, min_val: float = 0, max_val: float = 1) -> float:
+        """Linear response curve"""
+        return max(min_val, min(max_val, value))
+    
+    def quadratic(self, value: float) -> float:
+        """Quadratic response curve"""
+        return value * value
+    
+    def exponential(self, value: float, power: float = 2) -> float:
+        """Exponential response curve"""
+        return math.pow(value, power)
+    
+    def sigmoid(self, value: float, steepness: float = 10, center: float = 0.5) -> float:
+        """Sigmoid response curve"""
+        return 1 / (1 + math.exp(-steepness * (value - center)))
+    
+    def gaussian(self, value: float, center: float = 0.5, width: float = 0.2) -> float:
+        """Gaussian (bell curve) response"""
+        return math.exp(-math.pow(value - center, 2) / (2 * width * width))
+    
+    # Scoring functions
+    def score_eat(self) -> float:
+        """Score eating action"""
+        hunger = self.agent.needs['hunger']
+        food = self.agent.find_food()
+        
+        if not food:
+            return 0
+        
+        distance = self.agent.distance_to(food)
+        distance_score = 1 - (distance / 500)
+        
+        # High hunger = high score
+        hunger_score = self.exponential(hunger, 3)
+        
+        return hunger_score * distance_score
+    
+    def score_fight(self) -> float:
+        """Score fighting action"""
+        enemy = self.agent.find_enemy()
+        if not enemy:
+            return 0
+        
+        health = self.agent.needs['health']
+        strength = self.agent.attributes['strength']
+        
+        # Consider health and strength
+        combat_score = self.sigmoid(health) * strength
+        
+        # Consider enemy threat level
+        threat_score = enemy.threat_level * 0.5
+        
+        return combat_score - threat_score
+    
+    def score_flee(self) -> float:
+        """Score fleeing action"""
+        threat = self.agent.find_threat()
+        if not threat:
+            return 0
+        
+        health = self.agent.needs['health']
+        fear = 1 - self.agent.needs['safety']
+        
+        # Low health + high fear = flee
+        flee_score = self.exponential(fear) * (1 - health)
+        
+        # Distance to threat
+        distance = self.agent.distance_to(threat)
+        urgency = 1 - (distance / 200)
+        
+        return flee_score * urgency
+    
+    def score_explore(self) -> float:
+        """Score exploration action"""
+        curiosity = self.agent.personality['curiosity']
+        boredom = self.agent.needs['stimulation']
+        safety = self.agent.needs['safety']
+        
+        # High curiosity + boredom + safety = explore
+        return curiosity * boredom * safety * 0.5
+    
+    def get_personality_modifier(self, action: str) -> float:
+        """Apply personality-based modifiers"""
+        personality = self.agent.personality
+        
+        modifiers = {
+            'fight': personality.get('aggression', 0.5),
+            'flee': personality.get('caution', 0.5),
+            'explore': personality.get('curiosity', 0.5),
+            'eat': 1.0  # No personality modifier
+        }
+        
+        return modifiers.get(action, 1.0)</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Decision Making Tips</h3>
+        <ul>
+            <li><strong>Response Curves:</strong> Use different curves for different behaviors</li>
+            <li><strong>Weight Tuning:</strong> Expose weights for designer control</li>
+            <li><strong>Context Awareness:</strong> Consider environment in decisions</li>
+            <li><strong>Personality Traits:</strong> Add variety to NPCs</li>
+            <li><strong>Action Validation:</strong> Check if actions are possible</li>
+            <li><strong>Hysteresis:</strong> Prevent rapid switching between actions</li>
+            <li><strong>Debugging Tools:</strong> Visualize decision scores</li>
+            <li><strong>Performance:</strong> Cache calculations when possible</li>
+            <li><strong>Emergent Behavior:</strong> Simple rules create complex behaviors</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>🧠 Utility AI provides flexible, designer-friendly systems</li>
+            <li>📈 Response curves shape behavior naturally</li>
+            <li>🎯 GOAP creates goal-driven intelligent agents</li>
+            <li>🔀 Fuzzy logic handles uncertainty gracefully</li>
+            <li>🌳 Decision trees offer clear, debuggable logic</li>
+            <li>⚖️ Weighted scoring balances multiple concerns</li>
+            <li>🎭 Personality traits create unique NPCs</li>
+            <li>📊 Visualization helps debug and tune AI</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Congratulations! You've completed the AI for Games section! Next, we'll dive into Networking & Multiplayer to create connected gaming experiences!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="ai_flocking.html" class="prev-lesson" aria-label="Previous lesson: Flocking/Swarm Behavior">Previous Lesson: Flocking Behavior</a>
+        <a href="networking_basics.html" class="next-lesson" aria-label="Next lesson: Networking Basics">Next Section: Networking & Multiplayer</a>
+    </nav>
+    
+    </main>
+    <script src="/js/course-enhancements.js" defer></script>
+</body>
+</html>

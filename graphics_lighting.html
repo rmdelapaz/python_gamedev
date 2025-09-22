@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master lighting systems for games. Learn ambient, directional, point, and spot lights, shadows, and advanced lighting techniques.">
+    <title>Lighting Systems - Advanced Graphics</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Lighting Systems</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Advanced Module - Section 1: Advanced Graphics - Lesson 2</span>
+    </nav>
+
+    <h2>Illuminating Your Game World</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Bring your games to life with dynamic lighting! Master different light types, implement real-time shadows, and create atmospheric effects using advanced lighting techniques like normal mapping and deferred rendering! 💡🌟🔦</p>
+    </div>
+
+    <h2>Understanding Lighting</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>💡 The Light Physics Analogy</h3>
+        <p>Think of lighting like how light works in the real world:</p>
+        <ul>
+            <li><strong>Ambient:</strong> Indirect light bouncing everywhere (sky light)</li>
+            <li><strong>Diffuse:</strong> Direct light on surfaces (matte reflection)</li>
+            <li><strong>Specular:</strong> Shiny highlights (mirror-like reflection)</li>
+            <li><strong>Attenuation:</strong> Light fades with distance</li>
+            <li><strong>Normal Mapping:</strong> Fake surface detail with light</li>
+            <li><strong>Shadows:</strong> Where light doesn't reach</li>
+        </ul>
+    </div>
+
+    <h2>Lighting Implementation in Python/ModernGL</h2>
+    
+    <pre class="language-python"><code>import moderngl
+import numpy as np
+import pygame
+from pygame.locals import *
+import math
+
+class LightingSystem:
+    """Advanced lighting system for 3D games"""
+    def __init__(self, ctx: moderngl.Context):
+        self.ctx = ctx
+        self.lights = []
+        self.max_lights = 32
+        
+        # Create lighting shader
+        self.shader = self.create_lighting_shader()
+        
+    def create_lighting_shader(self):
+        """Create advanced lighting shader with PBR support"""
+        vertex_shader = '''
+        #version 330
+        
+        in vec3 in_position;
+        in vec3 in_normal;
+        in vec2 in_texcoord;
+        in vec3 in_tangent;
+        
+        out vec3 v_position;
+        out vec3 v_normal;
+        out vec2 v_texcoord;
+        out vec3 v_tangent;
+        out vec3 v_bitangent;
+        out vec3 v_world_pos;
+        out vec4 v_shadow_coord;
+        
+        uniform mat4 u_model;
+        uniform mat4 u_view;
+        uniform mat4 u_projection;
+        uniform mat4 u_light_space_matrix;
+        
+        void main() {
+            vec4 world_pos = u_model * vec4(in_position, 1.0);
+            v_world_pos = world_pos.xyz;
+            v_position = (u_view * world_pos).xyz;
+            
+            // Transform normals
+            mat3 normal_matrix = transpose(inverse(mat3(u_model)));
+            v_normal = normalize(normal_matrix * in_normal);
+            v_tangent = normalize(normal_matrix * in_tangent);
+            v_bitangent = cross(v_normal, v_tangent);
+            
+            v_texcoord = in_texcoord;
+            
+            // Shadow mapping
+            v_shadow_coord = u_light_space_matrix * world_pos;
+            
+            gl_Position = u_projection * u_view * world_pos;
+        }
+        '''
+        
+        fragment_shader = '''
+        #version 330
+        
+        in vec3 v_position;
+        in vec3 v_normal;
+        in vec2 v_texcoord;
+        in vec3 v_tangent;
+        in vec3 v_bitangent;
+        in vec3 v_world_pos;
+        in vec4 v_shadow_coord;
+        
+        out vec4 f_color;
+        
+        // Material properties
+        uniform vec3 u_albedo;
+        uniform float u_metallic;
+        uniform float u_roughness;
+        uniform float u_ao;
+        
+        // Camera
+        uniform vec3 u_camera_pos;
+        
+        // Lights
+        struct Light {
+            int type; // 0=dir, 1=point, 2=spot
+            vec3 position;
+            vec3 direction;
+            vec3 color;
+            float intensity;
+            float range;
+        };
+        
+        uniform Light u_lights[32];
+        uniform int u_light_count;
+        uniform vec3 u_ambient_color;
+        
+        const float PI = 3.14159265359;
+        
+        // PBR calculations
+        vec3 calculatePBR(vec3 albedo, float metallic, float roughness,
+                         vec3 normal, vec3 viewDir, vec3 lightDir, 
+                         vec3 radiance) {
+            vec3 halfwayDir = normalize(viewDir + lightDir);
+            
+            // Fresnel
+            vec3 F0 = mix(vec3(0.04), albedo, metallic);
+            float cosTheta = max(dot(halfwayDir, viewDir), 0.0);
+            vec3 F = F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+            
+            // Distribution
+            float NDF = pow(max(dot(normal, halfwayDir), 0.0), 2.0 / (roughness * roughness) - 2.0);
+            NDF /= PI * roughness * roughness;
+            
+            // Geometry
+            float k = (roughness + 1.0) * (roughness + 1.0) / 8.0;
+            float NdotV = max(dot(normal, viewDir), 0.0);
+            float NdotL = max(dot(normal, lightDir), 0.0);
+            float G = (NdotV / (NdotV * (1.0 - k) + k)) * 
+                     (NdotL / (NdotL * (1.0 - k) + k));
+            
+            // BRDF
+            vec3 numerator = NDF * G * F;
+            float denominator = 4.0 * NdotV * NdotL + 0.001;
+            vec3 specular = numerator / denominator;
+            
+            vec3 kS = F;
+            vec3 kD = vec3(1.0) - kS;
+            kD *= 1.0 - metallic;
+            
+            return (kD * albedo / PI + specular) * radiance * NdotL;
+        }
+        
+        void main() {
+            vec3 normal = normalize(v_normal);
+            vec3 viewDir = normalize(u_camera_pos - v_world_pos);
+            
+            vec3 color = vec3(0.0);
+            
+            // Process each light
+            for(int i = 0; i < u_light_count; i++) {
+                Light light = u_lights[i];
+                
+                vec3 lightDir;
+                float attenuation = 1.0;
+                
+                if(light.type == 0) { // Directional
+                    lightDir = normalize(-light.direction);
+                } else if(light.type == 1) { // Point
+                    lightDir = normalize(light.position - v_world_pos);
+                    float distance = length(light.position - v_world_pos);
+                    attenuation = 1.0 / (1.0 + 0.09 * distance + 
+                                       0.032 * distance * distance);
+                } else if(light.type == 2) { // Spot
+                    lightDir = normalize(light.position - v_world_pos);
+                    float distance = length(light.position - v_world_pos);
+                    float theta = dot(lightDir, normalize(-light.direction));
+                    float intensity = smoothstep(0.9, 0.95, theta);
+                    attenuation = intensity / (distance * distance);
+                }
+                
+                vec3 radiance = light.color * light.intensity * attenuation;
+                
+                color += calculatePBR(u_albedo, u_metallic, u_roughness,
+                                     normal, viewDir, lightDir, radiance);
+            }
+            
+            // Ambient lighting
+            vec3 ambient = u_ambient_color * u_albedo * u_ao;
+            color += ambient;
+            
+            // Tone mapping and gamma correction
+            color = color / (color + vec3(1.0));
+            color = pow(color, vec3(1.0/2.2));
+            
+            f_color = vec4(color, 1.0);
+        }
+        '''
+        
+        return self.ctx.program(
+            vertex_shader=vertex_shader,
+            fragment_shader=fragment_shader
+        )
+
+class Light:
+    """Base light class"""
+    def __init__(self, light_type: str = 'point'):
+        self.type = light_type
+        self.position = np.array([0.0, 10.0, 0.0], dtype='f4')
+        self.direction = np.array([0.0, -1.0, 0.0], dtype='f4')
+        self.color = np.array([1.0, 1.0, 1.0], dtype='f4')
+        self.intensity = 1.0
+        self.range = 50.0
+        self.cast_shadow = False
+
+class DirectionalLight(Light):
+    """Directional light (sun/moon)"""
+    def __init__(self):
+        super().__init__('directional')
+        self.direction = np.array([-0.5, -0.7, -0.5], dtype='f4')
+        self.cast_shadow = True
+
+class PointLight(Light):
+    """Point light source"""
+    def __init__(self, position):
+        super().__init__('point')
+        self.position = np.array(position, dtype='f4')
+        self.attenuation = np.array([1.0, 0.09, 0.032], dtype='f4')
+
+class SpotLight(Light):
+    """Spot light source"""
+    def __init__(self, position, direction):
+        super().__init__('spot')
+        self.position = np.array(position, dtype='f4')
+        self.direction = np.array(direction, dtype='f4')
+        self.inner_cone = math.radians(30)
+        self.outer_cone = math.radians(45)</code></pre>
+
+    <h2>Shadow Mapping</h2>
+    
+    <pre class="language-python"><code>class ShadowMapper:
+    """Shadow mapping system"""
+    def __init__(self, ctx: moderngl.Context, size: int = 2048):
+        self.ctx = ctx
+        self.size = size
+        
+        # Create shadow map texture
+        self.shadow_texture = ctx.depth_texture((size, size))
+        self.shadow_fbo = ctx.framebuffer(
+            depth_attachment=self.shadow_texture
+        )
+        
+        # Shadow pass shader
+        self.shadow_shader = self.create_shadow_shader()
+    
+    def create_shadow_shader(self):
+        """Create depth-only shader for shadow mapping"""
+        vertex_shader = '''
+        #version 330
+        
+        in vec3 in_position;
+        
+        uniform mat4 u_light_space_matrix;
+        uniform mat4 u_model;
+        
+        void main() {
+            gl_Position = u_light_space_matrix * u_model * vec4(in_position, 1.0);
+        }
+        '''
+        
+        fragment_shader = '''
+        #version 330
+        
+        void main() {
+            // OpenGL handles depth writing automatically
+        }
+        '''
+        
+        return self.ctx.program(
+            vertex_shader=vertex_shader,
+            fragment_shader=fragment_shader
+        )
+    
+    def render_shadow_map(self, scene, light):
+        """Render scene from light's perspective"""
+        self.shadow_fbo.use()
+        self.ctx.viewport = (0, 0, self.size, self.size)
+        self.shadow_fbo.clear()
+        
+        # Render all shadow-casting objects
+        for obj in scene.objects:
+            if obj.cast_shadow:
+                self.shadow_shader['u_model'].value = obj.model_matrix
+                obj.render(self.shadow_shader)
+        
+        # Reset viewport
+        self.ctx.screen.use()</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Lighting Tips</h3>
+        <ul>
+            <li><strong>Light Count:</strong> Limit dynamic lights for performance</li>
+            <li><strong>Deferred Rendering:</strong> Handle many lights efficiently</li>
+            <li><strong>LOD for Shadows:</strong> Use cascaded shadow maps</li>
+            <li><strong>Baked Lighting:</strong> Precompute static lights</li>
+            <li><strong>Light Culling:</strong> Only process visible lights</li>
+            <li><strong>Soft Shadows:</strong> Use PCF or variance shadow maps</li>
+            <li><strong>HDR:</strong> Use high dynamic range for realistic lighting</li>
+            <li><strong>Light Probes:</strong> Capture environment lighting</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>💡 Different light types serve different purposes</li>
+            <li>🌈 PBR provides realistic material rendering</li>
+            <li>🌑 Shadow mapping adds depth and realism</li>
+            <li>✨ Specular highlights make surfaces shine</li>
+            <li>🌍 Normal mapping adds surface detail</li>
+            <li>💡 Ambient light provides base illumination</li>
+            <li>🎮 Deferred rendering handles many lights</li>
+            <li>📊 Performance requires careful optimization</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you understand lighting systems, next we'll explore post-processing effects to add the final polish to your visuals!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="graphics_shaders.html" class="prev-lesson" aria-label="Previous lesson: Shaders and Effects">Previous Lesson: Shaders and Effects</a>
+        <a href="graphics_postprocessing.html" class="next-lesson" aria-label="Next lesson: Post-processing Effects">Next Lesson: Post-processing Effects</a>
+    </nav>
+    
+    </main>
+    <script src="/js/course-enhancements.js" defer></script>
+</body>
+</html>

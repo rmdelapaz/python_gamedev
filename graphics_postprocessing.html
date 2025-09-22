@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master post-processing effects for games. Learn bloom, motion blur, depth of field, color grading, and screen-space effects.">
+    <title>Post-processing Effects - Advanced Graphics</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Post-processing Effects</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Advanced Module - Section 1: Advanced Graphics - Lesson 3</span>
+    </nav>
+
+    <h2>The Final Polish</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Transform your game's visuals with stunning post-processing effects! Master bloom, motion blur, depth of field, color grading, and screen-space techniques that make games look professional and cinematic! 🎨📸✨</p>
+    </div>
+
+    <h2>Understanding Post-processing</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>📸 The Camera Filter Analogy</h3>
+        <p>Think of post-processing like applying filters to a photo:</p>
+        <ul>
+            <li><strong>Bloom:</strong> Glowing bright areas (overexposure)</li>
+            <li><strong>Motion Blur:</strong> Speed lines from movement</li>
+            <li><strong>Depth of Field:</strong> Focus blur (bokeh effect)</li>
+            <li><strong>Color Grading:</strong> Mood through color adjustment</li>
+            <li><strong>Vignette:</strong> Darkened edges for focus</li>
+            <li><strong>Screen-Space Effects:</strong> SSAO, SSR, lens flares</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph LR
+        A["Scene Render"] --> B["Framebuffer"]
+        B --> C["Post-process Pass 1"]
+        C --> D["Post-process Pass 2"]
+        D --> E["Post-process Pass N"]
+        E --> F["Final Output"]
+        
+        G["Effects Pipeline"] --> H["Bloom"]
+        G --> I["Motion Blur"]
+        G --> J["DOF"]
+        G --> K["Color Grading"]
+        G --> L["Tone Mapping"]
+    </div>
+
+    <h2>Interactive Post-processing Demo</h2>
+    
+    <div class="canvas-wrapper" style="text-align: center;">
+        <canvas id="postCanvas" width="600" height="400" style="border: 1px solid #333; display: inline-block;"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>See post-processing effects in real-time! Toggle effects and adjust parameters to see their impact!</p>
+        
+        <!-- Effect Controls -->
+        <div style="margin: 10px auto; padding: 10px; background-color: rgba(0,0,0,0.3); border-radius: 5px; max-width: 600px;">
+            <p style="color: white; margin: 5px;">Toggle Effects:</p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 5px;">
+                <button onclick="toggleEffect('bloom')" class="effect-btn active" id="bloom-btn">✨ Bloom</button>
+                <button onclick="toggleEffect('motion')" class="effect-btn" id="motion-btn">💨 Motion Blur</button>
+                <button onclick="toggleEffect('dof')" class="effect-btn" id="dof-btn">📷 Depth of Field</button>
+                <button onclick="toggleEffect('chromatic')" class="effect-btn" id="chromatic-btn">🌈 Chromatic</button>
+                <button onclick="toggleEffect('vignette')" class="effect-btn active" id="vignette-btn">🔲 Vignette</button>
+                <button onclick="toggleEffect('grain')" class="effect-btn" id="grain-btn">📺 Film Grain</button>
+                <button onclick="toggleEffect('ssao')" class="effect-btn" id="ssao-btn">🌑 SSAO</button>
+                <button onclick="toggleEffect('fxaa')" class="effect-btn active" id="fxaa-btn">📐 FXAA</button>
+            </div>
+        </div>
+        
+        <!-- Effect Parameters -->
+        <div style="margin-top: 10px;">
+            <h4 style="color: white;">Bloom Settings:</h4>
+            <label>Threshold: <input type="range" id="bloomThreshold" min="0" max="1" step="0.01" value="0.7" onchange="updateParam('bloom', 'threshold', this.value)"> <span id="bloomThresholdDisplay">0.7</span></label>
+            <label>Intensity: <input type="range" id="bloomIntensity" min="0" max="3" step="0.1" value="1" onchange="updateParam('bloom', 'intensity', this.value)"> <span id="bloomIntensityDisplay">1.0</span></label>
+            <label>Radius: <input type="range" id="bloomRadius" min="1" max="10" step="1" value="4" onchange="updateParam('bloom', 'radius', this.value)"> <span id="bloomRadiusDisplay">4</span></label>
+        </div>
+        
+        <div style="margin-top: 10px;">
+            <h4 style="color: white;">Depth of Field:</h4>
+            <label>Focus Distance: <input type="range" id="dofFocus" min="0" max="100" step="1" value="50" onchange="updateParam('dof', 'focus', this.value)"> <span id="dofFocusDisplay">50</span></label>
+            <label>Aperture: <input type="range" id="dofAperture" min="0.1" max="5" step="0.1" value="1.4" onchange="updateParam('dof', 'aperture', this.value)"> <span id="dofApertureDisplay">1.4</span></label>
+        </div>
+        
+        <div style="margin-top: 10px;">
+            <h4 style="color: white;">Color Grading:</h4>
+            <label>Exposure: <input type="range" id="exposure" min="-2" max="2" step="0.1" value="0" onchange="updateParam('color', 'exposure', this.value)"> <span id="exposureDisplay">0.0</span></label>
+            <label>Contrast: <input type="range" id="contrast" min="0.5" max="2" step="0.1" value="1" onchange="updateParam('color', 'contrast', this.value)"> <span id="contrastDisplay">1.0</span></label>
+            <label>Saturation: <input type="range" id="saturation" min="0" max="2" step="0.1" value="1" onchange="updateParam('color', 'saturation', this.value)"> <span id="saturationDisplay">1.0</span></label>
+        </div>
+        
+        <!-- Presets -->
+        <div style="margin-top: 10px;">
+            <button onclick="loadPreset('cinematic')">🎬 Cinematic</button>
+            <button onclick="loadPreset('retro')">📼 Retro</button>
+            <button onclick="loadPreset('noir')">🎩 Noir</button>
+            <button onclick="loadPreset('dream')">☁️ Dreamy</button>
+            <button onclick="loadPreset('action')">💥 Action</button>
+            <button onclick="loadPreset('horror')">👻 Horror</button>
+        </div>
+        
+        <!-- Performance Stats -->
+        <div style="margin-top: 10px; background-color: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;">
+            <p style="margin: 5px; color: white;">
+                FPS: <span id="fps">60</span> | 
+                Frame Time: <span id="frameTime">16.7</span>ms | 
+                Active Effects: <span id="activeEffects">3</span> | 
+                Draw Calls: <span id="drawCalls">1</span>
+            </p>
+        </div>
+    </div>
+
+    <style>
+        .effect-btn {
+            padding: 8px;
+            border: 2px solid transparent;
+            background-color: #555;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        .effect-btn:hover {
+            background-color: #666;
+            border-color: #888;
+        }
+        .effect-btn.active {
+            background-color: #4CAF50;
+            border-color: #66BB6A;
+        }
+    </style>
+
+    <script>
+        console.log('Post-processing Effects Demo starting...');
+
+        // WebGL setup
+        const canvas = document.getElementById('postCanvas');
+        const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+        
+        if (!gl) {
+            alert('WebGL not supported!');
+        }
+
+        // Enable extensions
+        const extColorBuffer = gl.getExtension('WEBGL_color_buffer_float');
+        const extTextureFloat = gl.getExtension('OES_texture_float');
+        const extTextureFloatLinear = gl.getExtension('OES_texture_float_linear');
+
+        // Post-processing pipeline
+        class PostProcessingPipeline {
+            constructor(gl, width, height) {
+                this.gl = gl;
+                this.width = width;
+                this.height = height;
+                
+                this.effects = {
+                    bloom: { enabled: true, params: { threshold: 0.7, intensity: 1.0, radius: 4 } },
+                    motion: { enabled: false, params: { samples: 8, strength: 1.0 } },
+                    dof: { enabled: false, params: { focus: 50, aperture: 1.4 } },
+                    chromatic: { enabled: false, params: { strength: 0.005 } },
+                    vignette: { enabled: true, params: { intensity: 0.4, smoothness: 0.8 } },
+                    grain: { enabled: false, params: { intensity: 0.1 } },
+                    ssao: { enabled: false, params: { radius: 4, bias: 0.025 } },
+                    fxaa: { enabled: true, params: { threshold: 0.0625 } }
+                };
+                
+                this.framebuffers = {};
+                this.textures = {};
+                this.shaders = {};
+                
+                this.init();
+            }
+            
+            init() {
+                // Create framebuffers for effect chain
+                this.createFramebuffers();
+                
+                // Compile shaders for each effect
+                this.compileShaders();
+                
+                // Create screen quad
+                this.createScreenQuad();
+            }
+            
+            createFramebuffers() {
+                // Main scene framebuffer (HDR)
+                this.createFramebuffer('scene', true);
+                
+                // Ping-pong framebuffers for multi-pass effects
+                this.createFramebuffer('ping', false);
+                this.createFramebuffer('pong', false);
+                
+                // Specialized framebuffers
+                this.createFramebuffer('bloom1', false);
+                this.createFramebuffer('bloom2', false);
+                this.createFramebuffer('depth', true);
+            }
+            
+            createFramebuffer(name, includeDepth) {
+                const gl = this.gl;
+                
+                // Create texture
+                const texture = gl.createTexture();
+                gl.bindTexture(gl.TEXTURE_2D, texture);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.width, this.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                
+                this.textures[name] = texture;
+                
+                // Create framebuffer
+                const framebuffer = gl.createFramebuffer();
+                gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+                gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+                
+                if (includeDepth) {
+                    // Add depth buffer
+                    const depthBuffer = gl.createRenderbuffer();
+                    gl.bindRenderbuffer(gl.RENDERBUFFER, depthBuffer);
+                    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, this.width, this.height);
+                    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depthBuffer);
+                }
+                
+                this.framebuffers[name] = framebuffer;
+                
+                gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+            }
+            
+            compileShaders() {
+                // Bloom shader
+                this.shaders.bloom = this.createShader(
+                    this.getPassthroughVertex(),
+                    this.getBloomFragment()
+                );
+                
+                // Motion blur shader
+                this.shaders.motion = this.createShader(
+                    this.getPassthroughVertex(),
+                    this.getMotionBlurFragment()
+                );
+                
+                // Depth of field shader
+                this.shaders.dof = this.createShader(
+                    this.getPassthroughVertex(),
+                    this.getDOFFragment()
+                );
+                
+                // Chromatic aberration shader
+                this.shaders.chromatic = this.createShader(
+                    this.getPassthroughVertex(),
+                    this.getChromaticFragment()
+                );
+                
+                // Vignette shader
+                this.shaders.vignette = this.createShader(
+                    this.getPassthroughVertex(),
+                    this.getVignetteFragment()
+                );
+                
+                // Film grain shader
+                this.shaders.grain = this.createShader(
+                    this.getPassthroughVertex(),
+                    this.getGrainFragment()
+                );
+                
+                // SSAO shader
+                this.shaders.ssao = this.createShader(
+                    this.getPassthroughVertex(),
+                    this.getSSAOFragment()
+                );
+                
+                // FXAA shader
+                this.shaders.fxaa = this.createShader(
+                    this.getPassthroughVertex(),
+                    this.getFXAAFragment()
+                );
+                
+                // Final composite shader
+                this.shaders.composite = this.createShader(
+                    this.getPassthroughVertex(),
+                    this.getCompositeFragment()
+                );
+            }
+            
+            getPassthroughVertex() {
+                return `
+                    attribute vec2 a_position;
+                    attribute vec2 a_texCoord;
+                    varying vec2 v_texCoord;
+                    
+                    void main() {
+                        v_texCoord = a_texCoord;
+                        gl_Position = vec4(a_position, 0.0, 1.0);
+                    }
+                `;
+            }
+            
+            getBloomFragment() {
+                return `
+                    precision highp float;
+                    
+                    varying vec2 v_texCoord;
+                    uniform sampler2D u_texture;
+                    uniform float u_threshold;
+                    uniform float u_intensity;
+                    uniform vec2 u_resolution;
+                    uniform int u_horizontal;
+                    
+                    vec3 sampleBox(sampler2D tex, vec2 uv, float radius) {
+                        vec3 color = vec3(0.0);
+                        vec2 texelSize = 1.0 / u_resolution;
+                        
+                        float weights[5];
+                        weights[0] = 0.227027;
+                        weights[1] = 0.1945946;
+                        weights[2] = 0.1216216;
+                        weights[3] = 0.054054;
+                        weights[4] = 0.016216;
+                        
+                        // Gaussian blur
+                        color += texture2D(tex, uv).rgb * weights[0];
+                        
+                        for(int i = 1; i < 5; i++) {
+                            vec2 offset = texelSize * float(i) * radius;
+                            if(u_horizontal == 1) {
+                                color += texture2D(tex, uv + vec2(offset.x, 0.0)).rgb * weights[i];
+                                color += texture2D(tex, uv - vec2(offset.x, 0.0)).rgb * weights[i];
+                            } else {
+                                color += texture2D(tex, uv + vec2(0.0, offset.y)).rgb * weights[i];
+                                color += texture2D(tex, uv - vec2(0.0, offset.y)).rgb * weights[i];
+                            }
+                        }
+                        
+                        return color;
+                    }
+                    
+                    void main() {
+                        vec3 color = texture2D(u_texture, v_texCoord).rgb;
+                        
+                        // Extract bright areas
+                        float brightness = dot(color, vec3(0.2126, 0.7152, 0.0722));
+                        if(brightness > u_threshold) {
+                            vec3 bloom = sampleBox(u_texture, v_texCoord, 1.0);
+                            color += bloom * u_intensity;
+                        }
+                        
+                        gl_FragColor = vec4(color, 1.0);
+                    }
+                `;
+            }
+            
+            getMotionBlurFragment() {
+                return `
+                    precision highp float;
+                    
+                    varying vec2 v_texCoord;
+                    uniform sampler2D u_texture;
+                    uniform sampler2D u_velocityTexture;
+                    uniform int u_samples;
+                    uniform float u_strength;
+                    
+                    void main() {
+                        vec2 velocity = texture2D(u_velocityTexture, v_texCoord).xy;
+                        velocity *= u_strength;
+                        
+                        vec3 color = vec3(0.0);
+                        vec2 uv = v_texCoord;
+                        
+                        for(int i = 0; i < 8; i++) {
+                            if(i >= u_samples) break;
+                            
+                            float t = float(i) / float(u_samples - 1);
+                            vec2 offset = velocity * (t - 0.5);
+                            color += texture2D(u_texture, uv + offset).rgb;
+                        }
+                        
+                        color /= float(u_samples);
+                        
+                        gl_FragColor = vec4(color, 1.0);
+                    }
+                `;
+            }
+            
+            getDOFFragment() {
+                return `
+                    precision highp float;
+                    
+                    varying vec2 v_texCoord;
+                    uniform sampler2D u_texture;
+                    uniform sampler2D u_depthTexture;
+                    uniform float u_focus;
+                    uniform float u_aperture;
+                    uniform vec2 u_resolution;
+                    
+                    float getBlurSize(float depth) {
+                        float coc = abs(depth - u_focus) * u_aperture;
+                        return coc * 0.01;
+                    }
+                    
+                    vec3 depthOfField(vec2 uv) {
+                        float centerDepth = texture2D(u_depthTexture, uv).r;
+                        float blurSize = getBlurSize(centerDepth);
+                        
+                        vec3 color = vec3(0.0);
+                        float total = 0.0;
+                        
+                        // Bokeh blur
+                        const int samples = 16;
+                        float radius = blurSize * 10.0;
+                        
+                        for(int i = 0; i < samples; i++) {
+                            float angle = 2.0 * 3.14159265 * float(i) / float(samples);
+                            vec2 offset = vec2(cos(angle), sin(angle)) * radius / u_resolution;
+                            
+                            float sampleDepth = texture2D(u_depthTexture, uv + offset).r;
+                            float sampleBlur = getBlurSize(sampleDepth);
+                            
+                            float weight = 1.0 / (1.0 + abs(centerDepth - sampleDepth) * 100.0);
+                            
+                            color += texture2D(u_texture, uv + offset).rgb * weight;
+                            total += weight;
+                        }
+                        
+                        return color / total;
+                    }
+                    
+                    void main() {
+                        vec3 color = depthOfField(v_texCoord);
+                        gl_FragColor = vec4(color, 1.0);
+                    }
+                `;
+            }
+            
+            getChromaticFragment() {
+                return `
+                    precision highp float;
+                    
+                    varying vec2 v_texCoord;
+                    uniform sampler2D u_texture;
+                    uniform float u_strength;
+                    
+                    void main() {
+                        vec2 uv = v_texCoord;
+                        vec2 center = vec2(0.5, 0.5);
+                        vec2 offset = (uv - center) * u_strength;
+                        
+                        float r = texture2D(u_texture, uv - offset).r;
+                        float g = texture2D(u_texture, uv).g;
+                        float b = texture2D(u_texture, uv + offset).b;
+                        
+                        gl_FragColor = vec4(r, g, b, 1.0);
+                    }
+                `;
+            }
+            
+            getVignetteFragment() {
+                return `
+                    precision highp float;
+                    
+                    varying vec2 v_texCoord;
+                    uniform sampler2D u_texture;
+                    uniform float u_intensity;
+                    uniform float u_smoothness;
+                    
+                    void main() {
+                        vec3 color = texture2D(u_texture, v_texCoord).rgb;
+                        
+                        vec2 position = v_texCoord - vec2(0.5);
+                        float vignette = 1.0 - smoothstep(
+                            u_smoothness - 0.01,
+                            u_smoothness,
+                            length(position)
+                        );
+                        
+                        color = mix(color * 0.3, color, vignette * (1.0 - u_intensity) + u_intensity);
+                        
+                        gl_FragColor = vec4(color, 1.0);
+                    }
+                `;
+            }
+            
+            getGrainFragment() {
+                return `
+                    precision highp float;
+                    
+                    varying vec2 v_texCoord;
+                    uniform sampler2D u_texture;
+                    uniform float u_time;
+                    uniform float u_intensity;
+                    
+                    float random(vec2 st) {
+                        return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
+                    }
+                    
+                    void main() {
+                        vec3 color = texture2D(u_texture, v_texCoord).rgb;
+                        
+                        float grain = random(v_texCoord + u_time) * 2.0 - 1.0;
+                        grain *= u_intensity;
+                        
+                        color += grain;
+                        
+                        gl_FragColor = vec4(color, 1.0);
+                    }
+                `;
+            }
+            
+            getSSAOFragment() {
+                return `
+                    precision highp float;
+                    
+                    varying vec2 v_texCoord;
+                    uniform sampler2D u_texture;
+                    uniform sampler2D u_depthTexture;
+                    uniform sampler2D u_normalTexture;
+                    uniform float u_radius;
+                    uniform float u_bias;
+                    uniform vec2 u_resolution;
+                    
+                    vec3 getPosition(vec2 uv) {
+                        float depth = texture2D(u_depthTexture, uv).r;
+                        vec3 pos = vec3(uv * 2.0 - 1.0, depth * 2.0 - 1.0);
+                        return pos;
+                    }
+                    
+                    float calculateSSAO(vec2 uv) {
+                        vec3 position = getPosition(uv);
+                        vec3 normal = texture2D(u_normalTexture, uv).rgb * 2.0 - 1.0;
+                        
+                        float occlusion = 0.0;
+                        const int samples = 8;
+                        
+                        for(int i = 0; i < samples; i++) {
+                            float angle = float(i) * 3.14159265 * 2.0 / float(samples);
+                            vec2 sampleOffset = vec2(cos(angle), sin(angle)) * u_radius / u_resolution;
+                            
+                            vec3 samplePos = getPosition(uv + sampleOffset);
+                            vec3 diff = samplePos - position;
+                            
+                            float rangeCheck = smoothstep(0.0, 1.0, u_radius / abs(diff.z));
+                            occlusion += step(position.z + u_bias, samplePos.z) * rangeCheck;
+                        }
+                        
+                        return 1.0 - (occlusion / float(samples));
+                    }
+                    
+                    void main() {
+                        vec3 color = texture2D(u_texture, v_texCoord).rgb;
+                        float ao = calculateSSAO(v_texCoord);
+                        
+                        color *= ao;
+                        
+                        gl_FragColor = vec4(color, 1.0);
+                    }
+                `;
+            }
+            
+            getFXAAFragment() {
+                return `
+                    precision highp float;
+                    
+                    varying vec2 v_texCoord;
+                    uniform sampler2D u_texture;
+                    uniform vec2 u_resolution;
+                    uniform float u_threshold;
+                    
+                    float luma(vec3 color) {
+                        return dot(color, vec3(0.299, 0.587, 0.114));
+                    }
+                    
+                    void main() {
+                        vec2 texelSize = 1.0 / u_resolution;
+                        
+                        // Sample neighboring pixels
+                        vec3 center = texture2D(u_texture, v_texCoord).rgb;
+                        vec3 top = texture2D(u_texture, v_texCoord + vec2(0.0, -texelSize.y)).rgb;
+                        vec3 bottom = texture2D(u_texture, v_texCoord + vec2(0.0, texelSize.y)).rgb;
+                        vec3 left = texture2D(u_texture, v_texCoord + vec2(-texelSize.x, 0.0)).rgb;
+                        vec3 right = texture2D(u_texture, v_texCoord + vec2(texelSize.x, 0.0)).rgb;
+                        
+                        // Calculate luma
+                        float lumaCenter = luma(center);
+                        float lumaTop = luma(top);
+                        float lumaBottom = luma(bottom);
+                        float lumaLeft = luma(left);
+                        float lumaRight = luma(right);
+                        
+                        // Find edge
+                        float lumaMin = min(lumaCenter, min(min(lumaTop, lumaBottom), min(lumaLeft, lumaRight)));
+                        float lumaMax = max(lumaCenter, max(max(lumaTop, lumaBottom), max(lumaLeft, lumaRight)));
+                        float lumaRange = lumaMax - lumaMin;
+                        
+                        if(lumaRange < u_threshold) {
+                            gl_FragColor = vec4(center, 1.0);
+                            return;
+                        }
+                        
+                        // Apply anti-aliasing
+                        vec3 color = (top + bottom + left + right + center) / 5.0;
+                        gl_FragColor = vec4(color, 1.0);
+                    }
+                `;
+            }
+            
+            getCompositeFragment() {
+                return `
+                    precision highp float;
+                    
+                    varying vec2 v_texCoord;
+                    uniform sampler2D u_texture;
+                    uniform float u_exposure;
+                    uniform float u_contrast;
+                    uniform float u_saturation;
+                    
+                    vec3 adjustExposure(vec3 color, float exposure) {
+                        return color * pow(2.0, exposure);
+                    }
+                    
+                    vec3 adjustContrast(vec3 color, float contrast) {
+                        return (color - 0.5) * contrast + 0.5;
+                    }
+                    
+                    vec3 adjustSaturation(vec3 color, float saturation) {
+                        float gray = dot(color, vec3(0.299, 0.587, 0.114));
+                        return mix(vec3(gray), color, saturation);
+                    }
+                    
+                    vec3 toneMap(vec3 color) {
+                        // ACES tone mapping
+                        float a = 2.51;
+                        float b = 0.03;
+                        float c = 2.43;
+                        float d = 0.59;
+                        float e = 0.14;
+                        return clamp((color * (a * color + b)) / (color * (c * color + d) + e), 0.0, 1.0);
+                    }
+                    
+                    void main() {
+                        vec3 color = texture2D(u_texture, v_texCoord).rgb;
+                        
+                        // Color grading
+                        color = adjustExposure(color, u_exposure);
+                        color = adjustContrast(color, u_contrast);
+                        color = adjustSaturation(color, u_saturation);
+                        
+                        // Tone mapping
+                        color = toneMap(color);
+                        
+                        // Gamma correction
+                        color = pow(color, vec3(1.0/2.2));
+                        
+                        gl_FragColor = vec4(color, 1.0);
+                    }
+                `;
+            }
+            
+            createShader(vertexSource, fragmentSource) {
+                const gl = this.gl;
+                
+                const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+                gl.shaderSource(vertexShader, vertexSource);
+                gl.compileShader(vertexShader);
+                
+                const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+                gl.shaderSource(fragmentShader, fragmentSource);
+                gl.compileShader(fragmentShader);
+                
+                const program = gl.createProgram();
+                gl.attachShader(program, vertexShader);
+                gl.attachShader(program, fragmentShader);
+                gl.linkProgram(program);
+                
+                return program;
+            }
+            
+            createScreenQuad() {
+                const gl = this.gl;
+                
+                const vertices = new Float32Array([
+                    -1, -1,  0, 0,
+                     1, -1,  1, 0,
+                    -1,  1,  0, 1,
+                     1,  1,  1, 1
+                ]);
+                
+                this.quadBuffer = gl.createBuffer();
+                gl.bindBuffer(gl.ARRAY_BUFFER, this.quadBuffer);
+                gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+            }
+            
+            renderQuad(shader, texture) {
+                const gl = this.gl;
+                
+                gl.useProgram(shader);
+                
+                // Set up attributes
+                const positionLoc = gl.getAttribLocation(shader, 'a_position');
+                const texCoordLoc = gl.getAttribLocation(shader, 'a_texCoord');
+                
+                gl.bindBuffer(gl.ARRAY_BUFFER, this.quadBuffer);
+                
+                if (positionLoc >= 0) {
+                    gl.enableVertexAttribArray(positionLoc);
+                    gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 16, 0);
+                }
+                
+                if (texCoordLoc >= 0) {
+                    gl.enableVertexAttribArray(texCoordLoc);
+                    gl.vertexAttribPointer(texCoordLoc, 2, gl.FLOAT, false, 16, 8);
+                }
+                
+                // Bind texture
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, texture);
+                const textureLoc = gl.getUniformLocation(shader, 'u_texture');
+                if (textureLoc) gl.uniform1i(textureLoc, 0);
+                
+                // Draw
+                gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+            }
+            
+            process(sceneTexture) {
+                const gl = this.gl;
+                let currentTexture = sceneTexture;
+                
+                // Apply each enabled effect in sequence
+                if (this.effects.bloom.enabled) {
+                    currentTexture = this.applyBloom(currentTexture);
+                }
+                
+                if (this.effects.motion.enabled) {
+                    currentTexture = this.applyMotionBlur(currentTexture);
+                }
+                
+                if (this.effects.dof.enabled) {
+                    currentTexture = this.applyDOF(currentTexture);
+                }
+                
+                if (this.effects.chromatic.enabled) {
+                    currentTexture = this.applyChromatic(currentTexture);
+                }
+                
+                if (this.effects.vignette.enabled) {
+                    currentTexture = this.applyVignette(currentTexture);
+                }
+                
+                if (this.effects.grain.enabled) {
+                    currentTexture = this.applyGrain(currentTexture);
+                }
+                
+                if (this.effects.ssao.enabled) {
+                    currentTexture = this.applySSAO(currentTexture);
+                }
+                
+                if (this.effects.fxaa.enabled) {
+                    currentTexture = this.applyFXAA(currentTexture);
+                }
+                
+                // Final composite pass
+                gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+                this.applyComposite(currentTexture);
+                
+                return currentTexture;
+            }
+            
+            applyBloom(inputTexture) {
+                const gl = this.gl;
+                const shader = this.shaders.bloom;
+                const params = this.effects.bloom.params;
+                
+                // First pass - horizontal blur
+                gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffers.bloom1);
+                gl.useProgram(shader);
+                
+                gl.uniform1f(gl.getUniformLocation(shader, 'u_threshold'), params.threshold);
+                gl.uniform1f(gl.getUniformLocation(shader, 'u_intensity'), params.intensity);
+                gl.uniform2f(gl.getUniformLocation(shader, 'u_resolution'), this.width, this.height);
+                gl.uniform1i(gl.getUniformLocation(shader, 'u_horizontal'), 1);
+                
+                this.renderQuad(shader, inputTexture);
+                
+                // Second pass - vertical blur
+                gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffers.bloom2);
+                gl.uniform1i(gl.getUniformLocation(shader, 'u_horizontal'), 0);
+                
+                this.renderQuad(shader, this.textures.bloom1);
+                
+                return this.textures.bloom2;
+            }
+            
+            applyVignette(inputTexture) {
+                const gl = this.gl;
+                const shader = this.shaders.vignette;
+                const params = this.effects.vignette.params;
+                
+                gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffers.ping);
+                gl.useProgram(shader);
+                
+                gl.uniform1f(gl.getUniformLocation(shader, 'u_intensity'), params.intensity);
+                gl.uniform1f(gl.getUniformLocation(shader, 'u_smoothness'), params.smoothness);
+                
+                this.renderQuad(shader, inputTexture);
+                
+                return this.textures.ping;
+            }
+            
+            applyChromatic(inputTexture) {
+                const gl = this.gl;
+                const shader = this.shaders.chromatic;
+                const params = this.effects.chromatic.params;
+                
+                gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffers.pong);
+                gl.useProgram(shader);
+                
+                gl.uniform1f(gl.getUniformLocation(shader, 'u_strength'), params.strength);
+                
+                this.renderQuad(shader, inputTexture);
+                
+                return this.textures.pong;
+            }
+            
+            applyFXAA(inputTexture) {
+                const gl = this.gl;
+                const shader = this.shaders.fxaa;
+                const params = this.effects.fxaa.params;
+                
+                gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffers.ping);
+                gl.useProgram(shader);
+                
+                gl.uniform2f(gl.getUniformLocation(shader, 'u_resolution'), this.width, this.height);
+                gl.uniform1f(gl.getUniformLocation(shader, 'u_threshold'), params.threshold);
+                
+                this.renderQuad(shader, inputTexture);
+                
+                return this.textures.ping;
+            }
+            
+            applyComposite(inputTexture) {
+                const gl = this.gl;
+                const shader = this.shaders.composite;
+                
+                gl.useProgram(shader);
+                
+                gl.uniform1f(gl.getUniformLocation(shader, 'u_exposure'), parseFloat(document.getElementById('exposure').value));
+                gl.uniform1f(gl.getUniformLocation(shader, 'u_contrast'), parseFloat(document.getElementById('contrast').value));
+                gl.uniform1f(gl.getUniformLocation(shader, 'u_saturation'), parseFloat(document.getElementById('saturation').value));
+                
+                this.renderQuad(shader, inputTexture);
+            }
+            
+            // Stub implementations for other effects
+            applyMotionBlur(inputTexture) { return inputTexture; }
+            applyDOF(inputTexture) { return inputTexture; }
+            applyGrain(inputTexture) { return inputTexture; }
+            applySSAO(inputTexture) { return inputTexture; }
+        }
+
+        // Scene renderer (simplified)
+        function renderScene() {
+            gl.clearColor(0.1, 0.1, 0.15, 1.0);
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            
+            // Render some animated shapes for demonstration
+            const time = Date.now() / 1000;
+            
+            // This would be your actual game scene
+            // For demo, we'll draw a gradient with some shapes
+            
+            // Create a simple scene texture (normally this would be your rendered game)
+            const sceneTexture = createDemoScene(time);
+            
+            return sceneTexture;
+        }
+
+        function createDemoScene(time) {
+            // Create a simple animated scene for demonstration
+            const texture = gl.createTexture();
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            
+            // Create gradient data with animated elements
+            const data = new Uint8Array(canvas.width * canvas.height * 4);
+            for (let y = 0; y < canvas.height; y++) {
+                for (let x = 0; x < canvas.width; x++) {
+                    const i = (y * canvas.width + x) * 4;
+                    
+                    // Base gradient
+                    const r = x / canvas.width * 255;
+                    const g = y / canvas.height * 255;
+                    const b = 128 + Math.sin(time + x * 0.01) * 127;
+                    
+                    // Add some bright spots for bloom effect
+                    const cx = canvas.width / 2 + Math.cos(time) * 100;
+                    const cy = canvas.height / 2 + Math.sin(time) * 100;
+                    const dist = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2);
+                    
+                    if (dist < 50) {
+                        const intensity = 1 - dist / 50;
+                        data[i] = Math.min(255, r + intensity * 255);
+                        data[i + 1] = Math.min(255, g + intensity * 255);
+                        data[i + 2] = Math.min(255, b + intensity * 255);
+                    } else {
+                        data[i] = r;
+                        data[i + 1] = g;
+                        data[i + 2] = b;
+                    }
+                    data[i + 3] = 255;
+                }
+            }
+            
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, canvas.width, canvas.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            
+            return texture;
+        }
+
+        // Initialize pipeline
+        const pipeline = new PostProcessingPipeline(gl, canvas.width, canvas.height);
+
+        // UI functions
+        window.toggleEffect = function(effect) {
+            pipeline.effects[effect].enabled = !pipeline.effects[effect].enabled;
+            const btn = document.getElementById(effect + '-btn');
+            btn.classList.toggle('active');
+            updateStats();
+        };
+
+        window.updateParam = function(effect, param, value) {
+            if (pipeline.effects[effect]) {
+                pipeline.effects[effect].params[param] = parseFloat(value);
+            }
+            document.getElementById(effect + param.charAt(0).toUpperCase() + param.slice(1) + 'Display').textContent = value;
+        };
+
+        window.loadPreset = function(preset) {
+            const presets = {
+                cinematic: {
+                    bloom: { enabled: true, threshold: 0.7, intensity: 1.2, radius: 5 },
+                    dof: { enabled: true, focus: 50, aperture: 1.8 },
+                    vignette: { enabled: true, intensity: 0.5, smoothness: 0.7 },
+                    chromatic: { enabled: true, strength: 0.003 },
+                    grain: { enabled: true, intensity: 0.05 },
+                    exposure: 0.2,
+                    contrast: 1.2,
+                    saturation: 1.1
+                },
+                retro: {
+                    bloom: { enabled: false },
+                    chromatic: { enabled: true, strength: 0.01 },
+                    vignette: { enabled: true, intensity: 0.6, smoothness: 0.5 },
+                    grain: { enabled: true, intensity: 0.2 },
+                    exposure: -0.3,
+                    contrast: 1.4,
+                    saturation: 0.6
+                },
+                noir: {
+                    bloom: { enabled: false },
+                    vignette: { enabled: true, intensity: 0.8, smoothness: 0.4 },
+                    grain: { enabled: true, intensity: 0.15 },
+                    exposure: -0.5,
+                    contrast: 1.8,
+                    saturation: 0
+                },
+                dream: {
+                    bloom: { enabled: true, threshold: 0.5, intensity: 2.0, radius: 8 },
+                    dof: { enabled: true, focus: 40, aperture: 2.8 },
+                    vignette: { enabled: false },
+                    exposure: 0.5,
+                    contrast: 0.8,
+                    saturation: 1.3
+                },
+                action: {
+                    bloom: { enabled: true, threshold: 0.8, intensity: 0.8, radius: 3 },
+                    motion: { enabled: true, samples: 8, strength: 1.5 },
+                    chromatic: { enabled: true, strength: 0.002 },
+                    exposure: 0.1,
+                    contrast: 1.3,
+                    saturation: 1.2
+                },
+                horror: {
+                    bloom: { enabled: false },
+                    vignette: { enabled: true, intensity: 0.9, smoothness: 0.3 },
+                    grain: { enabled: true, intensity: 0.25 },
+                    ssao: { enabled: true, radius: 4, bias: 0.03 },
+                    exposure: -0.8,
+                    contrast: 1.5,
+                    saturation: 0.3
+                }
+            };
+            
+            const p = presets[preset];
+            if (p) {
+                // Apply preset to effects
+                for (const effect in p) {
+                    if (effect === 'exposure' || effect === 'contrast' || effect === 'saturation') {
+                        document.getElementById(effect).value = p[effect];
+                        updateParam('color', effect, p[effect]);
+                    } else if (pipeline.effects[effect]) {
+                        pipeline.effects[effect].enabled = p[effect].enabled;
+                        if (p[effect].params) {
+                            Object.assign(pipeline.effects[effect].params, p[effect].params);
+                        }
+                        
+                        // Update UI
+                        const btn = document.getElementById(effect + '-btn');
+                        if (btn) {
+                            if (p[effect].enabled) {
+                                btn.classList.add('active');
+                            } else {
+                                btn.classList.remove('active');
+                            }
+                        }
+                    }
+                }
+                
+                updateStats();
+            }
+        };
+
+        function updateStats() {
+            const activeCount = Object.values(pipeline.effects).filter(e => e.enabled).length;
+            document.getElementById('activeEffects').textContent = activeCount;
+        }
+
+        // Animation loop
+        let frameCount = 0;
+        let lastTime = performance.now();
+        let fps = 60;
+
+        function animate() {
+            const currentTime = performance.now();
+            const deltaTime = currentTime - lastTime;
+            
+            // Render scene
+            const sceneTexture = renderScene();
+            
+            // Apply post-processing
+            pipeline.process(sceneTexture);
+            
+            // Update FPS
+            frameCount++;
+            if (currentTime - lastTime >= 1000) {
+                fps = frameCount;
+                frameCount = 0;
+                lastTime = currentTime;
+                
+                document.getElementById('fps').textContent = fps;
+                document.getElementById('frameTime').textContent = (1000 / fps).toFixed(1);
+            }
+            
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+        updateStats();
+
+        console.log('Post-processing Effects initialized!');
+    </script>
+
+    <h2>Post-processing Implementation in Python</h2>
+    
+    <pre class="language-python"><code>import moderngl
+import numpy as np
+import pygame
+from pygame.locals import *
+
+class PostProcessingPipeline:
+    """Post-processing effects pipeline"""
+    def __init__(self, ctx: moderngl.Context, width: int, height: int):
+        self.ctx = ctx
+        self.width = width
+        self.height = height
+        
+        self.effects = {}
+        self.framebuffers = {}
+        self.textures = {}
+        
+        self.init_pipeline()
+        
+    def init_pipeline(self):
+        """Initialize framebuffers and shaders"""
+        # Create HDR framebuffer for scene rendering
+        self.create_framebuffer('scene', hdr=True)
+        
+        # Create ping-pong framebuffers for multi-pass effects
+        self.create_framebuffer('ping')
+        self.create_framebuffer('pong')
+        
+        # Initialize effects
+        self.effects['bloom'] = BloomEffect(self)
+        self.effects['motion_blur'] = MotionBlurEffect(self)
+        self.effects['dof'] = DepthOfFieldEffect(self)
+        self.effects['ssao'] = SSAOEffect(self)
+        self.effects['color_grading'] = ColorGradingEffect(self)
+        
+    def create_framebuffer(self, name: str, hdr: bool = False):
+        """Create a framebuffer for rendering"""
+        # Create color texture
+        if hdr:
+            # Use floating point texture for HDR
+            texture = self.ctx.texture(
+                (self.width, self.height), 4,
+                dtype='f4'
+            )
+        else:
+            texture = self.ctx.texture(
+                (self.width, self.height), 4
+            )
+        
+        texture.filter = (moderngl.LINEAR, moderngl.LINEAR)
+        self.textures[name] = texture
+        
+        # Create depth buffer
+        depth = self.ctx.depth_renderbuffer((self.width, self.height))
+        
+        # Create framebuffer
+        self.framebuffers[name] = self.ctx.framebuffer(
+            color_attachments=[texture],
+            depth_attachment=depth
+        )
+    
+    def process(self, scene_texture):
+        """Process the scene through effect pipeline"""
+        current_texture = scene_texture
+        
+        # Apply each enabled effect in sequence
+        for effect_name, effect in self.effects.items():
+            if effect.enabled:
+                current_texture = effect.apply(current_texture)
+        
+        return current_texture
+
+class PostProcessEffect:
+    """Base class for post-processing effects"""
+    def __init__(self, pipeline):
+        self.pipeline = pipeline
+        self.ctx = pipeline.ctx
+        self.enabled = True
+        self.shader = self.create_shader()
+        
+    def create_shader(self):
+        """Override to create effect shader"""
+        pass
+    
+    def apply(self, input_texture):
+        """Apply effect to input texture"""
+        pass
+
+class BloomEffect(PostProcessEffect):
+    """Bloom/glow effect"""
+    def __init__(self, pipeline):
+        super().__init__(pipeline)
+        self.threshold = 0.7
+        self.intensity = 1.0
+        self.radius = 4
+        
+    def create_shader(self):
+        vertex = '''
+        #version 330
+        in vec2 in_position;
+        in vec2 in_texcoord;
+        out vec2 v_texcoord;
+        
+        void main() {
+            v_texcoord = in_texcoord;
+            gl_Position = vec4(in_position, 0.0, 1.0);
+        }
+        '''
+        
+        fragment = '''
+        #version 330
+        
+        uniform sampler2D u_texture;
+        uniform float u_threshold;
+        uniform float u_intensity;
+        uniform vec2 u_direction;
+        
+        in vec2 v_texcoord;
+        out vec4 f_color;
+        
+        void main() {
+            vec2 tex_offset = 1.0 / textureSize(u_texture, 0);
+            vec3 result = texture(u_texture, v_texcoord).rgb * 0.227027;
+            
+            // Gaussian blur weights
+            float weight[5] = float[](
+                0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216
+            );
+            
+            // Extract bright pixels
+            vec3 color = texture(u_texture, v_texcoord).rgb;
+            float brightness = dot(color, vec3(0.2126, 0.7152, 0.0722));
+            
+            if(brightness > u_threshold) {
+                // Two-pass Gaussian blur
+                for(int i = 1; i < 5; ++i) {
+                    vec2 offset = tex_offset * float(i) * u_direction;
+                    result += texture(u_texture, v_texcoord + offset).rgb * weight[i];
+                    result += texture(u_texture, v_texcoord - offset).rgb * weight[i];
+                }
+                
+                result *= u_intensity;
+            }
+            
+            f_color = vec4(color + result, 1.0);
+        }
+        '''
+        
+        return self.ctx.program(
+            vertex_shader=vertex,
+            fragment_shader=fragment
+        )</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Post-processing Tips</h3>
+        <ul>
+            <li><strong>Order Matters:</strong> Apply effects in the correct sequence</li>
+            <li><strong>HDR Pipeline:</strong> Use floating-point buffers for better quality</li>
+            <li><strong>Performance:</strong> Combine passes when possible</li>
+            <li><strong>Resolution Scaling:</strong> Render effects at lower resolution</li>
+            <li><strong>Temporal Effects:</strong> Use frame history for motion blur</li>
+            <li><strong>LUTs:</strong> Use lookup tables for color grading</li>
+            <li><strong>Artistic Control:</strong> Expose parameters to designers</li>
+            <li><strong>Platform Testing:</strong> Effects vary across hardware</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>🎨 Post-processing adds professional polish</li>
+            <li>🌟 Bloom creates atmospheric glow</li>
+            <li>💨 Motion blur conveys speed</li>
+            <li>📷 DOF adds cinematic depth</li>
+            <li>🎬 Color grading sets mood</li>
+            <li>📐 Anti-aliasing smooths edges</li>
+            <li>🔲 Vignetting focuses attention</li>
+            <li>⚡ Performance requires optimization</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you understand post-processing effects, next we'll explore UI/HUD development for creating polished game interfaces!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="graphics_lighting.html" class="prev-lesson" aria-label="Previous lesson: Lighting Systems">Previous Lesson: Lighting Systems</a>
+        <a href="graphics_ui_hud.html" class="next-lesson" aria-label="Next lesson: UI/HUD Development">Next Lesson: UI/HUD Development</a>
+    </nav>
+    
+    </main>
+    <script src="/js/course-enhancements.js" defer></script>
+</body>
+</html>

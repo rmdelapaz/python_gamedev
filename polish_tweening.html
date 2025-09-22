@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master tweening and juice techniques. Learn easing functions, animation curves, and juicy feedback that makes games feel responsive and satisfying.">
+    <title>Tweening and Juice - Game Polish & Feel</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Tweening and Juice</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Advanced Module - Section 2: Game Polish & Feel - Lesson 2</span>
+    </nav>
+
+    <h2>Making Everything Feel Alive</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Transform static games into living, breathing experiences! Master tweening, easing functions, squash & stretch, and juicy feedback that makes every interaction feel amazing! 🎯🎪🌟</p>
+    </div>
+
+    <h2>Understanding Juice</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎪 The Cartoon Physics Analogy</h3>
+        <p>Think of juice like cartoon animation principles:</p>
+        <ul>
+            <li><strong>Anticipation:</strong> Wind-up before the action</li>
+            <li><strong>Squash & Stretch:</strong> Deformation shows force and energy</li>
+            <li><strong>Overshoot:</strong> Going past the target then settling</li>
+            <li><strong>Bounce:</strong> Natural elastic motion</li>
+            <li><strong>Secondary Motion:</strong> Trailing elements follow through</li>
+            <li><strong>Exaggeration:</strong> Amplify for clarity and feel</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph LR
+        A["Static Motion"] --> B["Add Easing"]
+        B --> C["Add Anticipation"]
+        C --> D["Add Overshoot"]
+        D --> E["Add Squash/Stretch"]
+        E --> F["Add Particles"]
+        F --> G["Juicy Motion!"]
+        
+        H["Easing Functions"] --> I["Linear"]
+        H --> J["Ease In/Out"]
+        H --> K["Bounce"]
+        H --> L["Elastic"]
+        H --> M["Back"]
+    </div>
+
+    <h2>Interactive Tweening Playground</h2>
+    
+    <div class="canvas-wrapper" style="text-align: center;">
+        <canvas id="tweenCanvas" width="800" height="600" style="border: 1px solid #333; display: inline-block;"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+        <p>Click anywhere to see tweening in action! Watch how different easing functions create different feels!</p>
+        
+        <!-- Easing Function Selection -->
+        <div style="margin: 10px auto; padding: 10px; background-color: rgba(0,0,0,0.3); border-radius: 5px; max-width: 800px;">
+            <p style="color: white; margin: 5px;">Easing Functions:</p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 5px;">
+                <button onclick="setEasing('linear')" class="easing-btn" id="linear-btn">📈 Linear</button>
+                <button onclick="setEasing('easeInQuad')" class="easing-btn" id="easeInQuad-btn">⤴️ Ease In Quad</button>
+                <button onclick="setEasing('easeOutQuad')" class="easing-btn active" id="easeOutQuad-btn">⤵️ Ease Out Quad</button>
+                <button onclick="setEasing('easeInOutQuad')" class="easing-btn" id="easeInOutQuad-btn">↔️ In-Out Quad</button>
+                <button onclick="setEasing('easeInCubic')" class="easing-btn" id="easeInCubic-btn">🚀 Ease In Cubic</button>
+                <button onclick="setEasing('easeOutCubic')" class="easing-btn" id="easeOutCubic-btn">🛬 Ease Out Cubic</button>
+                <button onclick="setEasing('easeInElastic')" class="easing-btn" id="easeInElastic-btn">🎯 Elastic In</button>
+                <button onclick="setEasing('easeOutElastic')" class="easing-btn" id="easeOutElastic-btn">🏹 Elastic Out</button>
+                <button onclick="setEasing('easeOutBounce')" class="easing-btn" id="easeOutBounce-btn">⚽ Bounce</button>
+                <button onclick="setEasing('easeInBack')" class="easing-btn" id="easeInBack-btn">↩️ Back In</button>
+                <button onclick="setEasing('easeOutBack')" class="easing-btn" id="easeOutBack-btn">↪️ Back Out</button>
+                <button onclick="setEasing('easeInExpo')" class="easing-btn" id="easeInExpo-btn">📊 Expo</button>
+            </div>
+        </div>
+        
+        <!-- Animation Properties -->
+        <div style="margin-top: 10px;">
+            <label>Duration: <input type="range" id="duration" min="200" max="2000" step="100" value="500" onchange="updateProperty('duration', this.value)"> <span id="durationDisplay">500</span>ms</label>
+            <label>Delay: <input type="range" id="delay" min="0" max="500" step="50" value="0" onchange="updateProperty('delay', this.value)"> <span id="delayDisplay">0</span>ms</label>
+            <label>Stagger: <input type="range" id="stagger" min="0" max="100" step="10" value="20" onchange="updateProperty('stagger', this.value)"> <span id="staggerDisplay">20</span>ms</label>
+        </div>
+        
+        <!-- Juice Effects -->
+        <div style="margin-top: 10px;">
+            <label><input type="checkbox" id="squashStretch" checked> Squash & Stretch</label>
+            <label><input type="checkbox" id="anticipation" checked> Anticipation</label>
+            <label><input type="checkbox" id="overshoot" checked> Overshoot</label>
+            <label><input type="checkbox" id="trails" checked> Motion Trails</label>
+            <label><input type="checkbox" id="particles" checked> Particles</label>
+            <label><input type="checkbox" id="wobble"> Wobble</label>
+            <label><input type="checkbox" id="pulse" checked> Pulse</label>
+            <label><input type="checkbox" id="rotation"> Rotation</label>
+        </div>
+        
+        <!-- Demo Scenarios -->
+        <div style="margin-top: 10px;">
+            <button onclick="demoScenario('button')">🔘 Button Press</button>
+            <button onclick="demoScenario('collect')">⭐ Item Collect</button>
+            <button onclick="demoScenario('jump')">🦘 Character Jump</button>
+            <button onclick="demoScenario('menu')">📋 Menu Slide</button>
+            <button onclick="demoScenario('damage')">💔 Take Damage</button>
+            <button onclick="demoScenario('powerup')">⚡ Power Up</button>
+            <button onclick="demoScenario('coin')">🪙 Coin Flip</button>
+            <button onclick="demoScenario('card')">🃏 Card Reveal</button>
+        </div>
+        
+        <!-- Visualization -->
+        <div style="margin-top: 10px;">
+            <label><input type="checkbox" id="showGraph" checked> Show Easing Graph</label>
+            <label><input type="checkbox" id="showTrajectory"> Show Trajectory</label>
+            <label><input type="checkbox" id="showDebug"> Debug Info</label>
+        </div>
+        
+        <!-- Stats -->
+        <div style="margin-top: 10px; background-color: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;">
+            <p style="margin: 5px; color: white;">
+                Active Tweens: <span id="activeTweens">0</span> | 
+                Particles: <span id="particleCount">0</span> | 
+                FPS: <span id="fps">60</span> | 
+                Frame Time: <span id="frameTime">16.7</span>ms
+            </p>
+        </div>
+    </div>
+
+    <style>
+        .easing-btn {
+            padding: 8px;
+            border: 2px solid transparent;
+            background-color: #555;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s;
+            font-size: 11px;
+        }
+        .easing-btn:hover {
+            background-color: #666;
+            border-color: #888;
+        }
+        .easing-btn.active {
+            background-color: #4CAF50;
+            border-color: #66BB6A;
+        }
+    </style>
+
+    <script>
+        console.log('Tweening and Juice Demo starting...');
+
+        const canvas = document.getElementById('tweenCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Easing functions
+        const easingFunctions = {
+            linear: t => t,
+            easeInQuad: t => t * t,
+            easeOutQuad: t => t * (2 - t),
+            easeInOutQuad: t => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t,
+            easeInCubic: t => t * t * t,
+            easeOutCubic: t => (--t) * t * t + 1,
+            easeInOutCubic: t => t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1,
+            easeInQuart: t => t * t * t * t,
+            easeOutQuart: t => 1 - (--t) * t * t * t,
+            easeInOutQuart: t => t < 0.5 ? 8 * t * t * t * t : 1 - 8 * (--t) * t * t * t,
+            easeInElastic: t => {
+                if (t === 0) return 0;
+                if (t === 1) return 1;
+                return -Math.pow(2, 10 * (t - 1)) * Math.sin((t - 1.1) * 5 * Math.PI);
+            },
+            easeOutElastic: t => {
+                if (t === 0) return 0;
+                if (t === 1) return 1;
+                return Math.pow(2, -10 * t) * Math.sin((t - 0.1) * 5 * Math.PI) + 1;
+            },
+            easeOutBounce: t => {
+                if (t < 1/2.75) {
+                    return 7.5625 * t * t;
+                } else if (t < 2/2.75) {
+                    return 7.5625 * (t -= 1.5/2.75) * t + 0.75;
+                } else if (t < 2.5/2.75) {
+                    return 7.5625 * (t -= 2.25/2.75) * t + 0.9375;
+                } else {
+                    return 7.5625 * (t -= 2.625/2.75) * t + 0.984375;
+                }
+            },
+            easeInBack: t => {
+                const c1 = 1.70158;
+                const c3 = c1 + 1;
+                return c3 * t * t * t - c1 * t * t;
+            },
+            easeOutBack: t => {
+                const c1 = 1.70158;
+                const c3 = c1 + 1;
+                return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+            },
+            easeInExpo: t => t === 0 ? 0 : Math.pow(2, 10 * t - 10)
+        };
+
+        // Tween system
+        class TweenSystem {
+            constructor() {
+                this.tweens = [];
+                this.particles = [];
+                this.trails = [];
+                this.currentEasing = 'easeOutQuad';
+                
+                this.properties = {
+                    duration: 500,
+                    delay: 0,
+                    stagger: 20
+                };
+                
+                this.juiceOptions = {
+                    squashStretch: true,
+                    anticipation: true,
+                    overshoot: true,
+                    trails: true,
+                    particles: true,
+                    wobble: false,
+                    pulse: true,
+                    rotation: false
+                };
+                
+                this.visualOptions = {
+                    showGraph: true,
+                    showTrajectory: false,
+                    showDebug: false
+                };
+                
+                this.gameObjects = [];
+                this.initObjects();
+            }
+            
+            initObjects() {
+                // Create demo objects
+                for (let i = 0; i < 5; i++) {
+                    this.gameObjects.push({
+                        id: i,
+                        x: 100 + i * 150,
+                        y: 300,
+                        targetX: 100 + i * 150,
+                        targetY: 300,
+                        size: 30,
+                        baseSize: 30,
+                        scaleX: 1,
+                        scaleY: 1,
+                        rotation: 0,
+                        color: `hsl(${i * 72}, 70%, 50%)`,
+                        pulse: 0,
+                        wobble: 0
+                    });
+                }
+            }
+            
+            createTween(target, properties, options = {}) {
+                const tween = {
+                    target: target,
+                    startValues: {},
+                    endValues: properties,
+                    duration: options.duration || this.properties.duration,
+                    delay: options.delay || this.properties.delay,
+                    easing: options.easing || this.currentEasing,
+                    elapsed: -options.delay || 0,
+                    onComplete: options.onComplete,
+                    onUpdate: options.onUpdate
+                };
+                
+                // Store start values
+                for (const key in properties) {
+                    tween.startValues[key] = target[key];
+                }
+                
+                // Add anticipation if enabled
+                if (this.juiceOptions.anticipation && !options.noAnticipation) {
+                    this.addAnticipation(target, properties);
+                }
+                
+                this.tweens.push(tween);
+                return tween;
+            }
+            
+            addAnticipation(target, properties) {
+                // Move slightly in opposite direction first
+                const anticipationTween = {
+                    target: target,
+                    startValues: {},
+                    endValues: {},
+                    duration: 100,
+                    elapsed: 0,
+                    easing: 'easeOutQuad'
+                };
+                
+                for (const key in properties) {
+                    anticipationTween.startValues[key] = target[key];
+                    const diff = properties[key] - target[key];
+                    anticipationTween.endValues[key] = target[key] - diff * 0.1;
+                }
+                
+                this.tweens.unshift(anticipationTween);
+            }
+            
+            update(dt) {
+                // Update tweens
+                this.tweens = this.tweens.filter(tween => {
+                    tween.elapsed += dt;
+                    
+                    if (tween.elapsed < 0) {
+                        return true; // Still in delay
+                    }
+                    
+                    let progress = Math.min(tween.elapsed / tween.duration, 1);
+                    
+                    // Apply easing
+                    const easedProgress = easingFunctions[tween.easing](progress);
+                    
+                    // Update properties
+                    for (const key in tween.endValues) {
+                        const start = tween.startValues[key];
+                        const end = tween.endValues[key];
+                        const current = start + (end - start) * easedProgress;
+                        
+                        // Apply overshoot for certain properties
+                        if (this.juiceOptions.overshoot && (key === 'x' || key === 'y')) {
+                            const overshoot = Math.sin(easedProgress * Math.PI) * 10;
+                            tween.target[key] = current + overshoot * (1 - progress);
+                        } else {
+                            tween.target[key] = current;
+                        }
+                    }
+                    
+                    // Apply squash and stretch
+                    if (this.juiceOptions.squashStretch && tween.target.scaleX !== undefined) {
+                        const velocity = Math.abs(easedProgress - (tween.elapsed - dt) / tween.duration);
+                        tween.target.scaleX = 1 + velocity * 0.3;
+                        tween.target.scaleY = 1 - velocity * 0.3;
+                    }
+                    
+                    // Add motion trail
+                    if (this.juiceOptions.trails && progress > 0 && progress < 1) {
+                        this.trails.push({
+                            x: tween.target.x,
+                            y: tween.target.y,
+                            size: tween.target.size,
+                            alpha: 0.5,
+                            color: tween.target.color
+                        });
+                    }
+                    
+                    if (tween.onUpdate) {
+                        tween.onUpdate(easedProgress);
+                    }
+                    
+                    if (progress >= 1) {
+                        if (tween.onComplete) {
+                            tween.onComplete();
+                        }
+                        return false;
+                    }
+                    
+                    return true;
+                });
+                
+                // Update trails
+                this.trails = this.trails.filter(trail => {
+                    trail.alpha -= dt * 0.003;
+                    trail.size *= 0.98;
+                    return trail.alpha > 0;
+                });
+                
+                // Update particles
+                this.particles = this.particles.filter(particle => {
+                    particle.x += particle.vx * dt * 0.001;
+                    particle.y += particle.vy * dt * 0.001;
+                    particle.vy += 500 * dt * 0.001;
+                    particle.life -= dt * 0.002;
+                    particle.size = particle.baseSize * particle.life;
+                    
+                    return particle.life > 0;
+                });
+                
+                // Update pulse effect
+                if (this.juiceOptions.pulse) {
+                    for (const obj of this.gameObjects) {
+                        obj.pulse = Math.sin(Date.now() * 0.005 + obj.id) * 0.05;
+                    }
+                }
+                
+                // Update wobble effect
+                if (this.juiceOptions.wobble) {
+                    for (const obj of this.gameObjects) {
+                        obj.wobble = Math.sin(Date.now() * 0.01 + obj.id * 2) * 5;
+                    }
+                }
+                
+                // Update rotation
+                if (this.juiceOptions.rotation) {
+                    for (const obj of this.gameObjects) {
+                        obj.rotation += dt * 0.001;
+                    }
+                }
+                
+                // Update stats
+                document.getElementById('activeTweens').textContent = this.tweens.length;
+                document.getElementById('particleCount').textContent = this.particles.length;
+            }
+            
+            render() {
+                // Clear canvas
+                ctx.fillStyle = '#1a1a2e';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw grid
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+                ctx.lineWidth = 1;
+                for (let x = 0; x < canvas.width; x += 50) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, canvas.height);
+                    ctx.stroke();
+                }
+                for (let y = 0; y < canvas.height; y += 50) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(canvas.width, y);
+                    ctx.stroke();
+                }
+                
+                // Draw easing graph
+                if (this.visualOptions.showGraph) {
+                    this.drawEasingGraph();
+                }
+                
+                // Draw trails
+                for (const trail of this.trails) {
+                    ctx.globalAlpha = trail.alpha;
+                    ctx.fillStyle = trail.color;
+                    ctx.beginPath();
+                    ctx.arc(trail.x, trail.y, trail.size * 0.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.globalAlpha = 1;
+                
+                // Draw game objects
+                for (const obj of this.gameObjects) {
+                    ctx.save();
+                    ctx.translate(obj.x + obj.wobble, obj.y);
+                    ctx.rotate(obj.rotation);
+                    ctx.scale(obj.scaleX * (1 + obj.pulse), obj.scaleY * (1 + obj.pulse));
+                    
+                    // Shadow
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                    ctx.fillRect(-obj.size/2 + 3, -obj.size/2 + 3, obj.size, obj.size);
+                    
+                    // Main shape
+                    ctx.fillStyle = obj.color;
+                    ctx.fillRect(-obj.size/2, -obj.size/2, obj.size, obj.size);
+                    
+                    // Highlight
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                    ctx.fillRect(-obj.size/2, -obj.size/2, obj.size * 0.3, obj.size * 0.3);
+                    
+                    ctx.restore();
+                    
+                    // Debug info
+                    if (this.visualOptions.showDebug) {
+                        ctx.fillStyle = 'white';
+                        ctx.font = '10px Arial';
+                        ctx.fillText(`(${Math.round(obj.x)}, ${Math.round(obj.y)})`, obj.x - 20, obj.y + 30);
+                    }
+                }
+                
+                // Draw particles
+                for (const particle of this.particles) {
+                    ctx.globalAlpha = particle.life;
+                    ctx.fillStyle = particle.color;
+                    ctx.beginPath();
+                    ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.globalAlpha = 1;
+            }
+            
+            drawEasingGraph() {
+                const graphX = 20;
+                const graphY = 20;
+                const graphWidth = 150;
+                const graphHeight = 100;
+                
+                // Background
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(graphX, graphY, graphWidth, graphHeight);
+                
+                // Border
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.strokeRect(graphX, graphY, graphWidth, graphHeight);
+                
+                // Draw easing curve
+                ctx.strokeStyle = '#4CAF50';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                
+                for (let i = 0; i <= 100; i++) {
+                    const t = i / 100;
+                    const value = easingFunctions[this.currentEasing](t);
+                    const x = graphX + t * graphWidth;
+                    const y = graphY + graphHeight - value * graphHeight;
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                ctx.stroke();
+                
+                // Label
+                ctx.fillStyle = 'white';
+                ctx.font = '12px Arial';
+                ctx.fillText(this.currentEasing, graphX + 5, graphY + graphHeight - 5);
+            }
+            
+            addParticles(x, y, count, color) {
+                if (!this.juiceOptions.particles) return;
+                
+                for (let i = 0; i < count; i++) {
+                    const angle = (Math.PI * 2 / count) * i + Math.random() * 0.5;
+                    this.particles.push({
+                        x: x,
+                        y: y,
+                        vx: Math.cos(angle) * (50 + Math.random() * 100),
+                        vy: Math.sin(angle) * (50 + Math.random() * 100) - 100,
+                        life: 1,
+                        baseSize: 2 + Math.random() * 4,
+                        size: 2 + Math.random() * 4,
+                        color: color || '#FFD700'
+                    });
+                }
+            }
+            
+            // Demo scenarios
+            buttonPress(obj) {
+                // Scale down then bounce back
+                this.createTween(obj, {
+                    scaleX: 0.8,
+                    scaleY: 0.8
+                }, {
+                    duration: 100,
+                    easing: 'easeOutQuad'
+                }).onComplete = () => {
+                    this.createTween(obj, {
+                        scaleX: 1.2,
+                        scaleY: 1.2
+                    }, {
+                        duration: 150,
+                        easing: 'easeOutElastic',
+                        noAnticipation: true
+                    }).onComplete = () => {
+                        this.createTween(obj, {
+                            scaleX: 1,
+                            scaleY: 1
+                        }, {
+                            duration: 100,
+                            easing: 'easeOutQuad',
+                            noAnticipation: true
+                        });
+                    };
+                };
+                
+                this.addParticles(obj.x, obj.y, 10, obj.color);
+            }
+            
+            collectItem(obj) {
+                // Spiral up and fade
+                const centerX = canvas.width / 2;
+                const centerY = 100;
+                
+                let angle = 0;
+                this.createTween(obj, {
+                    x: centerX,
+                    y: centerY,
+                    size: 0
+                }, {
+                    duration: 1000,
+                    easing: 'easeInQuad',
+                    onUpdate: (progress) => {
+                        angle += 0.2;
+                        obj.x = obj.targetX + Math.cos(angle) * 50 * (1 - progress);
+                        obj.y = obj.targetY - progress * 200 + Math.sin(angle) * 50 * (1 - progress);
+                        obj.rotation = angle;
+                    }
+                });
+                
+                this.addParticles(obj.x, obj.y, 20, '#FFD700');
+            }
+            
+            characterJump(obj) {
+                // Anticipation, jump, and land
+                this.createTween(obj, {
+                    scaleX: 1.3,
+                    scaleY: 0.7,
+                    y: obj.y + 20
+                }, {
+                    duration: 200,
+                    easing: 'easeOutQuad'
+                }).onComplete = () => {
+                    this.createTween(obj, {
+                        scaleX: 0.9,
+                        scaleY: 1.4,
+                        y: obj.y - 150
+                    }, {
+                        duration: 300,
+                        easing: 'easeOutCubic',
+                        noAnticipation: true
+                    }).onComplete = () => {
+                        this.createTween(obj, {
+                            scaleX: 0.9,
+                            scaleY: 1.4,
+                            y: 300
+                        }, {
+                            duration: 300,
+                            easing: 'easeInCubic',
+                            noAnticipation: true
+                        }).onComplete = () => {
+                            // Landing squash
+                            this.createTween(obj, {
+                                scaleX: 1.4,
+                                scaleY: 0.6
+                            }, {
+                                duration: 100,
+                                easing: 'easeOutQuad',
+                                noAnticipation: true
+                            }).onComplete = () => {
+                                this.createTween(obj, {
+                                    scaleX: 1,
+                                    scaleY: 1
+                                }, {
+                                    duration: 200,
+                                    easing: 'easeOutElastic',
+                                    noAnticipation: true
+                                });
+                            };
+                        };
+                    };
+                };
+            }
+            
+            menuSlide(obj, index) {
+                const targetX = 400;
+                const delay = index * this.properties.stagger;
+                
+                this.createTween(obj, {
+                    x: targetX,
+                    rotation: Math.PI * 2
+                }, {
+                    duration: 600,
+                    delay: delay,
+                    easing: 'easeOutBack'
+                });
+            }
+            
+            takeDamage(obj) {
+                // Flash red and shake
+                const originalX = obj.x;
+                const originalColor = obj.color;
+                
+                obj.color = '#FF0000';
+                
+                let shakeCount = 0;
+                const shake = () => {
+                    if (shakeCount < 6) {
+                        this.createTween(obj, {
+                            x: originalX + (shakeCount % 2 === 0 ? -10 : 10)
+                        }, {
+                            duration: 50,
+                            easing: 'linear',
+                            noAnticipation: true
+                        }).onComplete = shake;
+                        shakeCount++;
+                    } else {
+                        obj.color = originalColor;
+                        this.createTween(obj, {
+                            x: originalX
+                        }, {
+                            duration: 100,
+                            easing: 'easeOutQuad',
+                            noAnticipation: true
+                        });
+                    }
+                };
+                shake();
+                
+                this.addParticles(obj.x, obj.y, 15, '#FF0000');
+            }
+            
+            powerUp(obj) {
+                // Grow, glow, and pulse
+                this.createTween(obj, {
+                    size: 50
+                }, {
+                    duration: 500,
+                    easing: 'easeOutElastic'
+                });
+                
+                // Continuous pulse
+                let pulseCount = 0;
+                const pulse = () => {
+                    if (pulseCount < 3) {
+                        this.createTween(obj, {
+                            scaleX: 1.2,
+                            scaleY: 1.2
+                        }, {
+                            duration: 200,
+                            easing: 'easeInOutQuad',
+                            noAnticipation: true
+                        }).onComplete = () => {
+                            this.createTween(obj, {
+                                scaleX: 1,
+                                scaleY: 1
+                            }, {
+                                duration: 200,
+                                easing: 'easeInOutQuad',
+                                noAnticipation: true
+                            }).onComplete = pulse;
+                        };
+                        pulseCount++;
+                    } else {
+                        this.createTween(obj, {
+                            size: 30
+                        }, {
+                            duration: 300,
+                            easing: 'easeOutQuad',
+                            noAnticipation: true
+                        });
+                    }
+                };
+                pulse();
+                
+                this.addParticles(obj.x, obj.y, 30, '#FFD700');
+            }
+            
+            coinFlip(obj) {
+                // 3D flip effect
+                let flips = 0;
+                const flip = () => {
+                    if (flips < 3) {
+                        this.createTween(obj, {
+                            scaleX: 0
+                        }, {
+                            duration: 150,
+                            easing: 'easeInQuad',
+                            noAnticipation: true
+                        }).onComplete = () => {
+                            this.createTween(obj, {
+                                scaleX: 1
+                            }, {
+                                duration: 150,
+                                easing: 'easeOutQuad',
+                                noAnticipation: true
+                            }).onComplete = flip;
+                        };
+                        flips++;
+                    }
+                };
+                
+                this.createTween(obj, {
+                    y: obj.y - 100
+                }, {
+                    duration: 450,
+                    easing: 'easeOutCubic'
+                }).onComplete = () => {
+                    this.createTween(obj, {
+                        y: 300
+                    }, {
+                        duration: 450,
+                        easing: 'easeInCubic',
+                        noAnticipation: true
+                    });
+                };
+                
+                flip();
+            }
+            
+            cardReveal(obj, index) {
+                // Staggered card flip
+                const delay = index * 100;
+                
+                this.createTween(obj, {
+                    scaleX: 0,
+                    rotation: Math.PI
+                }, {
+                    duration: 200,
+                    delay: delay,
+                    easing: 'easeInQuad'
+                }).onComplete = () => {
+                    obj.color = '#' + Math.floor(Math.random()*16777215).toString(16);
+                    this.createTween(obj, {
+                        scaleX: 1,
+                        rotation: Math.PI * 2
+                    }, {
+                        duration: 200,
+                        easing: 'easeOutQuad',
+                        noAnticipation: true
+                    });
+                };
+            }
+        }
+
+        // Initialize tween system
+        const tweenSystem = new TweenSystem();
+
+        // Mouse click handler
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Move all objects to click position
+            tweenSystem.gameObjects.forEach((obj, index) => {
+                const delay = index * tweenSystem.properties.stagger;
+                
+                tweenSystem.createTween(obj, {
+                    x: x,
+                    y: y
+                }, {
+                    delay: delay
+                });
+            });
+            
+            tweenSystem.addParticles(x, y, 20, '#FFD700');
+        });
+
+        // UI Functions
+        window.setEasing = function(easing) {
+            document.querySelectorAll('.easing-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(easing + '-btn').classList.add('active');
+            tweenSystem.currentEasing = easing;
+        };
+
+        window.updateProperty = function(property, value) {
+            document.getElementById(property + 'Display').textContent = value;
+            tweenSystem.properties[property] = parseInt(value);
+        };
+
+        window.demoScenario = function(scenario) {
+            tweenSystem.gameObjects.forEach((obj, index) => {
+                switch(scenario) {
+                    case 'button':
+                        tweenSystem.buttonPress(obj);
+                        break;
+                    case 'collect':
+                        tweenSystem.collectItem(obj);
+                        break;
+                    case 'jump':
+                        setTimeout(() => tweenSystem.characterJump(obj), index * 100);
+                        break;
+                    case 'menu':
+                        tweenSystem.menuSlide(obj, index);
+                        break;
+                    case 'damage':
+                        tweenSystem.takeDamage(obj);
+                        break;
+                    case 'powerup':
+                        tweenSystem.powerUp(obj);
+                        break;
+                    case 'coin':
+                        setTimeout(() => tweenSystem.coinFlip(obj), index * 50);
+                        break;
+                    case 'card':
+                        tweenSystem.cardReveal(obj, index);
+                        break;
+                }
+            });
+        };
+
+        // Update juice options
+        ['squashStretch', 'anticipation', 'overshoot', 'trails', 'particles', 'wobble', 'pulse', 'rotation'].forEach(option => {
+            document.getElementById(option).addEventListener('change', (e) => {
+                tweenSystem.juiceOptions[option] = e.target.checked;
+            });
+        });
+
+        // Update visual options
+        ['showGraph', 'showTrajectory', 'showDebug'].forEach(option => {
+            document.getElementById(option).addEventListener('change', (e) => {
+                tweenSystem.visualOptions[option] = e.target.checked;
+            });
+        });
+
+        // Animation loop
+        let lastTime = performance.now();
+        let frameCount = 0;
+        let fpsTime = 0;
+        
+        function animate() {
+            const currentTime = performance.now();
+            const deltaTime = currentTime - lastTime;
+            lastTime = currentTime;
+            
+            tweenSystem.update(deltaTime);
+            tweenSystem.render();
+            
+            // Update FPS
+            frameCount++;
+            fpsTime += deltaTime;
+            
+            if (fpsTime >= 1000) {
+                document.getElementById('fps').textContent = frameCount;
+                document.getElementById('frameTime').textContent = (1000 / frameCount).toFixed(1);
+                frameCount = 0;
+                fpsTime = 0;
+            }
+            
+            requestAnimationFrame(animate);
+        }
+        
+        animate();
+        console.log('Tweening and Juice System initialized!');
+    </script>
+
+    <h2>Tweening Implementation in Python</h2>
+    
+    <pre class="language-python"><code>import pygame
+import math
+from typing import Dict, Any, Callable, Optional, List
+from dataclasses import dataclass
+from enum import Enum
+
+class EasingType(Enum):
+    LINEAR = "linear"
+    EASE_IN_QUAD = "ease_in_quad"
+    EASE_OUT_QUAD = "ease_out_quad"
+    EASE_IN_OUT_QUAD = "ease_in_out_quad"
+    EASE_IN_CUBIC = "ease_in_cubic"
+    EASE_OUT_CUBIC = "ease_out_cubic"
+    EASE_IN_OUT_CUBIC = "ease_in_out_cubic"
+    EASE_IN_ELASTIC = "ease_in_elastic"
+    EASE_OUT_ELASTIC = "ease_out_elastic"
+    EASE_OUT_BOUNCE = "ease_out_bounce"
+    EASE_IN_BACK = "ease_in_back"
+    EASE_OUT_BACK = "ease_out_back"
+
+class Easing:
+    """Collection of easing functions"""
+    
+    @staticmethod
+    def linear(t: float) -> float:
+        return t
+    
+    @staticmethod
+    def ease_in_quad(t: float) -> float:
+        return t * t
+    
+    @staticmethod
+    def ease_out_quad(t: float) -> float:
+        return t * (2 - t)
+    
+    @staticmethod
+    def ease_in_out_quad(t: float) -> float:
+        if t < 0.5:
+            return 2 * t * t
+        return -1 + (4 - 2 * t) * t
+    
+    @staticmethod
+    def ease_in_cubic(t: float) -> float:
+        return t * t * t
+    
+    @staticmethod
+    def ease_out_cubic(t: float) -> float:
+        t -= 1
+        return t * t * t + 1
+    
+    @staticmethod
+    def ease_in_out_cubic(t: float) -> float:
+        if t < 0.5:
+            return 4 * t * t * t
+        t -= 1
+        return 1 + 4 * t * t * t
+    
+    @staticmethod
+    def ease_in_elastic(t: float) -> float:
+        if t == 0:
+            return 0
+        if t == 1:
+            return 1
+        return -math.pow(2, 10 * (t - 1)) * math.sin((t - 1.1) * 5 * math.pi)
+    
+    @staticmethod
+    def ease_out_elastic(t: float) -> float:
+        if t == 0:
+            return 0
+        if t == 1:
+            return 1
+        return math.pow(2, -10 * t) * math.sin((t - 0.1) * 5 * math.pi) + 1
+    
+    @staticmethod
+    def ease_out_bounce(t: float) -> float:
+        if t < 1/2.75:
+            return 7.5625 * t * t
+        elif t < 2/2.75:
+            t -= 1.5/2.75
+            return 7.5625 * t * t + 0.75
+        elif t < 2.5/2.75:
+            t -= 2.25/2.75
+            return 7.5625 * t * t + 0.9375
+        else:
+            t -= 2.625/2.75
+            return 7.5625 * t * t + 0.984375
+    
+    @staticmethod
+    def ease_in_back(t: float) -> float:
+        c1 = 1.70158
+        c3 = c1 + 1
+        return c3 * t * t * t - c1 * t * t
+    
+    @staticmethod
+    def ease_out_back(t: float) -> float:
+        c1 = 1.70158
+        c3 = c1 + 1
+        t -= 1
+        return 1 + c3 * t * t * t + c1 * t * t
+
+@dataclass
+class Tween:
+    """Individual tween instance"""
+    target: Any
+    properties: Dict[str, float]
+    duration: float
+    easing: Callable[[float], float]
+    delay: float = 0
+    elapsed: float = 0
+    start_values: Dict[str, float] = None
+    on_complete: Optional[Callable] = None
+    on_update: Optional[Callable] = None
+    yoyo: bool = False
+    repeat: int = 0
+    repeat_count: int = 0
+    
+    def __post_init__(self):
+        if self.start_values is None:
+            self.start_values = {}
+            for prop in self.properties:
+                if hasattr(self.target, prop):
+                    self.start_values[prop] = getattr(self.target, prop)
+
+class TweenManager:
+    """Manages all active tweens"""
+    
+    def __init__(self):
+        self.tweens: List[Tween] = []
+        self.time_scale = 1.0
+    
+    def create(self, target: Any, properties: Dict[str, float], 
+              duration: float, easing: EasingType = EasingType.EASE_OUT_QUAD,
+              **kwargs) -> Tween:
+        """Create and add a new tween"""
+        
+        # Get the easing function
+        easing_func = getattr(Easing, easing.value)
+        
+        tween = Tween(
+            target=target,
+            properties=properties,
+            duration=duration,
+            easing=easing_func,
+            **kwargs
+        )
+        
+        self.tweens.append(tween)
+        return tween
+    
+    def update(self, dt: float):
+        """Update all active tweens"""
+        dt *= self.time_scale
+        
+        self.tweens = [t for t in self.tweens if self.update_tween(t, dt)]
+    
+    def update_tween(self, tween: Tween, dt: float) -> bool:
+        """Update individual tween, return False when complete"""
+        tween.elapsed += dt
+        
+        # Handle delay
+        if tween.elapsed < tween.delay:
+            return True
+        
+        # Calculate progress
+        progress = min((tween.elapsed - tween.delay) / tween.duration, 1.0)
+        
+        # Apply easing
+        eased_progress = tween.easing(progress)
+        
+        # Handle yoyo
+        if tween.yoyo and tween.repeat_count % 2 == 1:
+            eased_progress = 1 - eased_progress
+        
+        # Update properties
+        for prop, end_value in tween.properties.items():
+            if prop in tween.start_values:
+                start_value = tween.start_values[prop]
+                current_value = start_value + (end_value - start_value) * eased_progress
+                setattr(tween.target, prop, current_value)
+        
+        # Call update callback
+        if tween.on_update:
+            tween.on_update(eased_progress)
+        
+        # Check completion
+        if progress >= 1:
+            # Handle repeat
+            if tween.repeat > 0 or tween.repeat == -1:
+                tween.elapsed = tween.delay
+                tween.repeat_count += 1
+                
+                if tween.yoyo:
+                    # Swap start and end values for yoyo
+                    tween.start_values, tween.properties = tween.properties, tween.start_values
+                
+                if tween.repeat != -1:
+                    tween.repeat -= 1
+                
+                return True
+            
+            # Call completion callback
+            if tween.on_complete:
+                tween.on_complete()
+            
+            return False
+        
+        return True
+    
+    def remove(self, tween: Tween):
+        """Remove a specific tween"""
+        if tween in self.tweens:
+            self.tweens.remove(tween)
+    
+    def remove_all(self):
+        """Remove all tweens"""
+        self.tweens.clear()
+    
+    def pause_all(self):
+        """Pause all tweens"""
+        self.time_scale = 0
+    
+    def resume_all(self):
+        """Resume all tweens"""
+        self.time_scale = 1
+
+class JuiceEffects:
+    """Collection of juicy animation effects"""
+    
+    def __init__(self, tween_manager: TweenManager):
+        self.tween_manager = tween_manager
+    
+    def bounce_scale(self, target: Any, scale: float = 1.2, duration: float = 300):
+        """Bouncy scale effect"""
+        original_scale = getattr(target, 'scale', 1.0)
+        
+        # Scale up
+        self.tween_manager.create(
+            target,
+            {'scale': scale},
+            duration * 0.3,
+            EasingType.EASE_OUT_QUAD
+        ).on_complete = lambda: self.tween_manager.create(
+            target,
+            {'scale': original_scale},
+            duration * 0.7,
+            EasingType.EASE_OUT_ELASTIC
+        )
+    
+    def shake(self, target: Any, intensity: float = 10, duration: float = 500):
+        """Shake effect"""
+        original_x = target.x
+        shake_count = 10
+        shake_duration = duration / shake_count
+        
+        def create_shake(i):
+            if i < shake_count:
+                offset = intensity * (1 - i / shake_count) * (1 if i % 2 == 0 else -1)
+                self.tween_manager.create(
+                    target,
+                    {'x': original_x + offset},
+                    shake_duration,
+                    EasingType.LINEAR
+                ).on_complete = lambda: create_shake(i + 1)
+            else:
+                self.tween_manager.create(
+                    target,
+                    {'x': original_x},
+                    shake_duration,
+                    EasingType.EASE_OUT_QUAD
+                )
+        
+        create_shake(0)
+    
+    def pulse(self, target: Any, scale: float = 1.1, duration: float = 1000):
+        """Continuous pulse effect"""
+        self.tween_manager.create(
+            target,
+            {'scale': scale},
+            duration / 2,
+            EasingType.EASE_IN_OUT_QUAD,
+            yoyo=True,
+            repeat=-1  # Infinite repeat
+        )
+    
+    def squash_and_stretch(self, target: Any, squash: float = 0.8, stretch: float = 1.2):
+        """Squash and stretch animation"""
+        # Anticipation (squash)
+        self.tween_manager.create(
+            target,
+            {'scale_x': stretch, 'scale_y': squash},
+            100,
+            EasingType.EASE_OUT_QUAD
+        ).on_complete = lambda: self.tween_manager.create(
+            target,
+            {'scale_x': squash, 'scale_y': stretch},
+            150,
+            EasingType.EASE_IN_QUAD
+        ).on_complete = lambda: self.tween_manager.create(
+            target,
+            {'scale_x': 1, 'scale_y': 1},
+            200,
+            EasingType.EASE_OUT_ELASTIC
+        )
+    
+    def collect_animation(self, target: Any, destination: tuple, on_complete: Callable = None):
+        """Item collection animation with spiral"""
+        import random
+        
+        # Create spiral motion
+        start_x, start_y = target.x, target.y
+        dest_x, dest_y = destination
+        
+        angle = 0
+        radius = 50
+        
+        def update_spiral(progress):
+            nonlocal angle
+            angle += 0.2
+            
+            # Interpolate position
+            base_x = start_x + (dest_x - start_x) * progress
+            base_y = start_y + (dest_y - start_y) * progress
+            
+            # Add spiral offset
+            spiral_factor = 1 - progress
+            target.x = base_x + math.cos(angle) * radius * spiral_factor
+            target.y = base_y + math.sin(angle) * radius * spiral_factor
+            
+            # Scale down
+            target.scale = 1 - progress * 0.5
+            
+            # Rotation
+            target.rotation = angle
+        
+        self.tween_manager.create(
+            target,
+            {'dummy': 1},  # Dummy property for timing
+            1000,
+            EasingType.EASE_IN_QUAD,
+            on_update=update_spiral,
+            on_complete=on_complete
+        )</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Tweening & Juice Tips</h3>
+        <ul>
+            <li><strong>Easing Choice:</strong> Out easing feels responsive, In easing builds anticipation</li>
+            <li><strong>Duration:</strong> Keep it snappy - 200-500ms for most UI</li>
+            <li><strong>Overshoot:</strong> A little bounce makes things feel alive</li>
+            <li><strong>Stagger:</strong> Sequential animations feel more natural</li>
+            <li><strong>Consistency:</strong> Use the same easing for similar actions</li>
+            <li><strong>Performance:</strong> Pool tween objects to reduce allocation</li>
+            <li><strong>Interruption:</strong> Handle overlapping tweens gracefully</li>
+            <li><strong>Testing:</strong> Try different easings to find the right feel</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>🎯 Easing functions create natural motion</li>
+            <li>🎪 Squash & stretch adds life and energy</li>
+            <li>⏱️ Timing is crucial for game feel</li>
+            <li>🎨 Anticipation prepares players for action</li>
+            <li>🏀 Overshoot and bounce feel playful</li>
+            <li>✨ Particles and trails enhance motion</li>
+            <li>🔄 Yoyo and repeat create continuous effects</li>
+            <li>📊 Different curves suit different moods</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you've mastered tweening and juice, next we'll explore sound design to add the audio layer that completes the sensory experience!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="polish_screenshake.html" class="prev-lesson" aria-label="Previous lesson: Screen Shake and Effects">Previous Lesson: Screen Shake and Effects</a>
+        <a href="polish_sound.html" class="next-lesson" aria-label="Next lesson: Sound Design">Next Lesson: Sound Design</a>
+    </nav>
+    
+    </main>
+    <script src="/js/course-enhancements.js" defer></script>
+</body>
+</html>

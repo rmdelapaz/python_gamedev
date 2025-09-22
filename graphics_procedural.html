@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master procedural generation for games. Learn noise functions, terrain generation, dungeon algorithms, and infinite world creation.">
+    <title>Procedural Generation - Advanced Graphics</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Procedural Generation</h1>
+        <div class="reading-time" aria-label="Estimated reading time"></div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Advanced Module - Section 1: Advanced Graphics - Lesson 5</span>
+    </nav>
+
+    <h2>Creating Infinite Worlds</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Generate infinite, unique game content algorithmically! Master Perlin noise, terrain generation, dungeon algorithms, procedural textures, and create endless worlds that feel handcrafted! 🌍🏰🌲</p>
+    </div>
+
+    <h2>Understanding Procedural Generation</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎲 The Recipe Analogy</h3>
+        <p>Think of procedural generation like cooking with a recipe:</p>
+        <ul>
+            <li><strong>Seed:</strong> Starting ingredients (random but reproducible)</li>
+            <li><strong>Noise:</strong> Adding variation (salt and pepper)</li>
+            <li><strong>Rules:</strong> Cooking instructions (how to combine)</li>
+            <li><strong>Constraints:</strong> Dietary restrictions (what's valid)</li>
+            <li><strong>Layers:</strong> Multiple courses (terrain + vegetation + structures)</li>
+            <li><strong>Deterministic:</strong> Same recipe = same result</li>
+        </ul>
+    </div>
+
+    <h2>Procedural Generation Implementation in Python</h2>
+    
+    <pre class="language-python"><code>import numpy as np
+import random
+from noise import pnoise2, snoise2
+from typing import List, Tuple, Dict
+from dataclasses import dataclass
+from enum import Enum
+
+class BiomeType(Enum):
+    OCEAN = 0
+    BEACH = 1
+    GRASSLAND = 2  
+    FOREST = 3
+    DESERT = 4
+    MOUNTAIN = 5
+    SNOW = 6
+
+@dataclass
+class TerrainConfig:
+    """Configuration for terrain generation"""
+    width: int = 256
+    height: int = 256
+    scale: float = 50.0
+    octaves: int = 4
+    persistence: float = 0.5
+    lacunarity: float = 2.0
+    seed: int = 0
+    
+    water_level: float = 0.3
+    mountain_level: float = 0.7
+
+class TerrainGenerator:
+    """Generates procedural terrain using Perlin noise"""
+    
+    def __init__(self, config: TerrainConfig):
+        self.config = config
+        self.height_map = None
+        self.moisture_map = None
+        self.temperature_map = None
+        self.biome_map = None
+        
+        # Set random seed
+        random.seed(config.seed)
+        np.random.seed(config.seed)
+    
+    def generate_noise_map(self, offset_x: float = 0, offset_y: float = 0) -> np.ndarray:
+        """Generate a noise map using Perlin noise"""
+        noise_map = np.zeros((self.config.height, self.config.width))
+        
+        for y in range(self.config.height):
+            for x in range(self.config.width):
+                amplitude = 1
+                frequency = 1
+                noise_value = 0
+                
+                for _ in range(self.config.octaves):
+                    sample_x = (x + offset_x) / self.config.scale * frequency
+                    sample_y = (y + offset_y) / self.config.scale * frequency
+                    
+                    perlin_value = pnoise2(sample_x, sample_y, 
+                                          repeatx=self.config.width, 
+                                          repeaty=self.config.height)
+                    noise_value += perlin_value * amplitude
+                    
+                    amplitude *= self.config.persistence
+                    frequency *= self.config.lacunarity
+                
+                noise_map[y][x] = noise_value
+        
+        # Normalize to 0-1
+        noise_map = (noise_map - noise_map.min()) / (noise_map.max() - noise_map.min())
+        return noise_map
+    
+    def apply_island_mask(self, height_map: np.ndarray) -> np.ndarray:
+        """Apply circular gradient to create island"""
+        center_x = self.config.width / 2
+        center_y = self.config.height / 2
+        max_distance = min(center_x, center_y)
+        
+        for y in range(self.config.height):
+            for x in range(self.config.width):
+                distance = np.sqrt((x - center_x)**2 + (y - center_y)**2)
+                gradient = max(0, 1 - distance / max_distance)
+                height_map[y][x] *= gradient
+        
+        return height_map
+    
+    def generate_terrain(self, island: bool = False) -> np.ndarray:
+        """Generate complete terrain"""
+        # Generate height map
+        self.height_map = self.generate_noise_map()
+        
+        if island:
+            self.height_map = self.apply_island_mask(self.height_map)
+        
+        # Generate moisture map
+        self.moisture_map = self.generate_noise_map(1000, 1000)
+        
+        # Generate temperature map (decreases with altitude)
+        self.temperature_map = 1 - self.height_map * 0.5
+        
+        # Add latitude-based temperature variation
+        for y in range(self.config.height):
+            latitude_temp = 1 - abs(y - self.config.height/2) / (self.config.height/2)
+            self.temperature_map[y] *= latitude_temp
+        
+        # Generate biomes
+        self.biome_map = self.generate_biomes()
+        
+        return self.height_map
+    
+    def generate_biomes(self) -> np.ndarray:
+        """Determine biome based on height, moisture, and temperature"""
+        biome_map = np.zeros((self.config.height, self.config.width), dtype=int)
+        
+        for y in range(self.config.height):
+            for x in range(self.config.width):
+                height = self.height_map[y][x]
+                moisture = self.moisture_map[y][x]
+                temperature = self.temperature_map[y][x]
+                
+                biome = self.get_biome(height, moisture, temperature)
+                biome_map[y][x] = biome.value
+        
+        return biome_map
+    
+    def get_biome(self, height: float, moisture: float, temperature: float) -> BiomeType:
+        """Determine biome type based on parameters"""
+        if height < self.config.water_level:
+            return BiomeType.OCEAN
+        elif height < self.config.water_level + 0.05:
+            return BiomeType.BEACH
+        elif height > self.config.mountain_level:
+            if temperature < 0.3:
+                return BiomeType.SNOW
+            return BiomeType.MOUNTAIN
+        else:
+            # Lowland biomes based on moisture and temperature
+            if temperature < 0.3:
+                return BiomeType.SNOW
+            elif moisture < 0.3:
+                return BiomeType.DESERT
+            elif moisture < 0.6:
+                return BiomeType.GRASSLAND
+            else:
+                return BiomeType.FOREST
+
+class DungeonGenerator:
+    """Generates procedural dungeons using BSP"""
+    
+    def __init__(self, width: int, height: int, min_room_size: int = 6):
+        self.width = width
+        self.height = height
+        self.min_room_size = min_room_size
+        self.rooms = []
+        self.corridors = []
+        self.dungeon_map = None
+    
+    def generate(self) -> np.ndarray:
+        """Generate dungeon layout"""
+        self.dungeon_map = np.ones((self.height, self.width), dtype=int)
+        
+        # Create BSP tree
+        root = BSPNode(2, 2, self.width - 4, self.height - 4)
+        self.split_node(root, 5)
+        
+        # Create rooms in leaf nodes
+        self.create_rooms(root)
+        
+        # Connect rooms
+        self.connect_rooms(root)
+        
+        # Carve out rooms and corridors
+        for room in self.rooms:
+            for y in range(room.y, room.y + room.height):
+                for x in range(room.x, room.x + room.width):
+                    if 0 <= x < self.width and 0 <= y < self.height:
+                        self.dungeon_map[y][x] = 0
+        
+        for corridor in self.corridors:
+            for point in corridor:
+                if 0 <= point[0] < self.width and 0 <= point[1] < self.height:
+                    self.dungeon_map[point[1]][point[0]] = 0
+        
+        return self.dungeon_map</code></pre>
+
+    <h2>Cave Generation Using Cellular Automata</h2>
+    
+    <pre class="language-python"><code>class CaveGenerator:
+    """Generates caves using cellular automata"""
+    
+    def __init__(self, width: int, height: int, fill_prob: float = 0.45):
+        self.width = width
+        self.height = height
+        self.fill_prob = fill_prob
+        self.cave_map = None
+    
+    def generate(self, iterations: int = 5) -> np.ndarray:
+        """Generate cave system"""
+        # Initialize random map
+        self.cave_map = np.random.random((self.height, self.width)) < self.fill_prob
+        self.cave_map = self.cave_map.astype(int)
+        
+        # Apply cellular automata
+        for _ in range(iterations):
+            self.apply_rules()
+        
+        # Clean up small caves
+        self.remove_small_caves(50)
+        
+        return self.cave_map
+    
+    def apply_rules(self):
+        """Apply cellular automata rules"""
+        new_map = np.zeros_like(self.cave_map)
+        
+        for y in range(self.height):
+            for x in range(self.width):
+                neighbors = self.count_neighbors(x, y)
+                
+                if neighbors > 4:
+                    new_map[y][x] = 1
+                elif neighbors < 4:
+                    new_map[y][x] = 0
+                else:
+                    new_map[y][x] = self.cave_map[y][x]
+        
+        self.cave_map = new_map
+    
+    def count_neighbors(self, x: int, y: int) -> int:
+        """Count wall neighbors"""
+        count = 0
+        
+        for dy in range(-1, 2):
+            for dx in range(-1, 2):
+                if dx == 0 and dy == 0:
+                    continue
+                
+                nx, ny = x + dx, y + dy
+                
+                # Out of bounds counts as wall
+                if nx < 0 or nx >= self.width or ny < 0 or ny >= self.height:
+                    count += 1
+                elif self.cave_map[ny][nx] == 1:
+                    count += 1
+        
+        return count</code></pre>
+
+    <h2>Advanced Techniques</h2>
+    
+    <pre class="language-python"><code># Wave Function Collapse for pattern-based generation
+class WaveFunctionCollapse:
+    """Generate content based on pattern constraints"""
+    
+    def __init__(self, tile_rules: Dict):
+        self.tile_rules = tile_rules
+        self.wave = None
+        
+    def generate(self, width: int, height: int) -> np.ndarray:
+        """Generate tilemap using WFC"""
+        # Initialize with all possibilities
+        self.wave = [[set(self.tile_rules.keys()) 
+                     for _ in range(width)] 
+                     for _ in range(height)]
+        
+        while not self.is_collapsed():
+            # Find minimum entropy cell
+            x, y = self.find_min_entropy()
+            
+            # Collapse to single state
+            if x is not None:
+                self.collapse_cell(x, y)
+                self.propagate(x, y)
+        
+        return self.to_tilemap()
+
+# L-Systems for vegetation
+class LSystem:
+    """Generate plants using L-Systems"""
+    
+    def __init__(self, axiom: str, rules: Dict[str, str]):
+        self.axiom = axiom
+        self.rules = rules
+    
+    def generate(self, iterations: int) -> str:
+        """Generate L-System string"""
+        result = self.axiom
+        
+        for _ in range(iterations):
+            new_result = ""
+            for char in result:
+                new_result += self.rules.get(char, char)
+            result = new_result
+        
+        return result
+
+# Example tree L-System
+tree_rules = {
+    'F': 'FF+[+F-F-F]-[-F+F+F]',
+    'X': 'F[+X][-X]FX'
+}</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Procedural Generation Tips</h3>
+        <ul>
+            <li><strong>Seed Control:</strong> Always use seeds for reproducibility</li>
+            <li><strong>Layered Generation:</strong> Build complexity from simple layers</li>
+            <li><strong>Constraint Satisfaction:</strong> Ensure generated content is playable</li>
+            <li><strong>Performance:</strong> Cache and chunk for large worlds</li>
+            <li><strong>Variation:</strong> Add controlled randomness within rules</li>
+            <li><strong>Post-Processing:</strong> Smooth and refine generated content</li>
+            <li><strong>Templates:</strong> Combine procedural with hand-crafted elements</li>
+            <li><strong>Testing:</strong> Validate many seeds for edge cases</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>🎲 Procedural generation creates infinite unique content</li>
+            <li>🌊 Noise functions provide natural-looking randomness</li>
+            <li>🏰 Different algorithms suit different content types</li>
+            <li>🌱 Layers combine to create complex worlds</li>
+            <li>⚙️ Seeds ensure reproducible results</li>
+            <li>📏 Constraints ensure playable content</li>
+            <li>🔄 Iteration and refinement improve quality</li>
+            <li>💾 Chunking enables infinite worlds</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Congratulations on completing the Advanced Graphics section! You've mastered shaders, lighting, post-processing, UI development, and procedural generation. Continue your journey in game development!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="graphics_ui_hud.html" class="prev-lesson" aria-label="Previous lesson: UI/HUD Development">Previous Lesson: UI/HUD Development</a>
+        <a href="index.html" class="next-lesson" aria-label="Back to course home">Back to Course Home</a>
+    </nav>
+    
+    </main>
+    <script src="/js/course-enhancements.js" defer></script>
+</body>
+</html>

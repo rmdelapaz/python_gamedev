@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Create puzzle game mechanics. Learn match-3 systems, physics puzzles, logic gates, pattern recognition, and procedural puzzle generation.">
     <title>Puzzle Game Logic - Different Game Genres</title>
-    <link rel="stylesheet" href="/styles/main.css">
-    <link rel="stylesheet" href="/styles/enhanced.css">
-    <link rel="icon" href="/favicon.png">
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/enhanced.css">
+    <link rel="icon" href="favicon.png">
     <script type="module">
       import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
       mermaid.initialize({ startOnLoad: true });
@@ -167,49 +167,62 @@
     </style>
 
     <script>
-        console.log('Puzzle Game Demo starting...');
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing Puzzle Game Demo...');
 
-        const canvas = document.getElementById('puzzleCanvas');
-        const ctx = canvas.getContext('2d');
-
-        // Game state
-        let currentPuzzleType = 'match3';
-        let score = 0;
-        let moves = 0;
-        let combo = 1;
-        let startTime = Date.now();
-        let moveHistory = [];
-        let animationQueue = [];
-
-        // Input handling
-        const mouse = { x: 0, y: 0, down: false, dragStart: null };
-        
-        canvas.addEventListener('mousemove', e => {
-            const rect = canvas.getBoundingClientRect();
-            mouse.x = e.clientX - rect.left;
-            mouse.y = e.clientY - rect.top;
+            const canvas = document.getElementById('puzzleCanvas');
+            if (!canvas) {
+                console.error('Canvas element not found!');
+                return;
+            }
             
-            if (mouse.down && mouse.dragStart) {
-                puzzles[currentPuzzleType].handleDrag(mouse.x, mouse.y);
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                console.error('Could not get 2D context!');
+                return;
             }
-        });
-        
-        canvas.addEventListener('mousedown', e => {
-            mouse.down = true;
-            mouse.dragStart = { x: mouse.x, y: mouse.y };
-            puzzles[currentPuzzleType].handleMouseDown(mouse.x, mouse.y);
-        });
-        
-        canvas.addEventListener('mouseup', e => {
-            if (mouse.dragStart) {
-                puzzles[currentPuzzleType].handleMouseUp(mouse.x, mouse.y);
-            }
-            mouse.down = false;
-            mouse.dragStart = null;
-        });
+            
+            console.log('Canvas initialized:', canvas.width, 'x', canvas.height);
 
-        // Match-3 Puzzle
-        class Match3Puzzle {
+            // Game state
+            let currentPuzzleType = 'match3';
+            let score = 0;
+            let moves = 0;
+            let combo = 1;
+            let startTime = Date.now();
+            let moveHistory = [];
+            let animationQueue = [];
+
+            // Input handling
+            const mouse = { x: 0, y: 0, down: false, dragStart: null };
+            
+            canvas.addEventListener('mousemove', e => {
+                const rect = canvas.getBoundingClientRect();
+                mouse.x = e.clientX - rect.left;
+                mouse.y = e.clientY - rect.top;
+                
+                if (mouse.down && mouse.dragStart) {
+                    puzzles[currentPuzzleType].handleDrag(mouse.x, mouse.y);
+                }
+            });
+            
+            canvas.addEventListener('mousedown', e => {
+                mouse.down = true;
+                mouse.dragStart = { x: mouse.x, y: mouse.y };
+                puzzles[currentPuzzleType].handleMouseDown(mouse.x, mouse.y);
+            });
+            
+            canvas.addEventListener('mouseup', e => {
+                if (mouse.dragStart) {
+                    puzzles[currentPuzzleType].handleMouseUp(mouse.x, mouse.y);
+                }
+                mouse.down = false;
+                mouse.dragStart = null;
+            });
+
+            // Match-3 Puzzle
+            class Match3Puzzle {
             constructor() {
                 this.gridSize = 8;
                 this.gemSize = 60;
@@ -1511,17 +1524,17 @@
             }
         }
 
-        // Initialize puzzles
-        const puzzles = {
-            match3: new Match3Puzzle(),
-            sliding: new SlidingPuzzle(),
-            physics: new PhysicsPuzzle(),
-            pattern: new PatternPuzzle(),
-            logic: new LogicPuzzle()
-        };
+            // Initialize puzzles
+            const puzzles = {
+                match3: new Match3Puzzle(),
+                sliding: new SlidingPuzzle(),
+                physics: new PhysicsPuzzle(),
+                pattern: new PatternPuzzle(),
+                logic: new LogicPuzzle()
+            };
 
-        // UI Functions
-        window.switchPuzzle = function(type) {
+            // UI Functions
+            window.switchPuzzle = function(type) {
             currentPuzzleType = type;
             
             // Update button states
@@ -1548,41 +1561,41 @@
             resetPuzzle();
         };
 
-        window.resetPuzzle = function() {
-            puzzles[currentPuzzleType].initialize();
-            score = 0;
-            moves = 0;
-            combo = 1;
-            startTime = Date.now();
-            moveHistory = [];
-        };
+            window.resetPuzzle = function() {
+                puzzles[currentPuzzleType].initialize();
+                score = 0;
+                moves = 0;
+                combo = 1;
+                startTime = Date.now();
+                moveHistory = [];
+            };
 
-        window.getHint = function() {
-            puzzles[currentPuzzleType].getHint();
-        };
+            window.getHint = function() {
+                puzzles[currentPuzzleType].getHint();
+            };
 
-        window.shuffleBoard = function() {
-            puzzles[currentPuzzleType].shuffle();
-        };
+            window.shuffleBoard = function() {
+                puzzles[currentPuzzleType].shuffle();
+            };
 
-        window.undoMove = function() {
-            if (moveHistory.length > 0) {
-                const lastMove = moveHistory.pop();
-                // Implement undo for each puzzle type
-                moves = Math.max(0, moves - 1);
-            }
-        };
+            window.undoMove = function() {
+                if (moveHistory.length > 0) {
+                    const lastMove = moveHistory.pop();
+                    // Implement undo for each puzzle type
+                    moves = Math.max(0, moves - 1);
+                }
+            };
 
-        window.autoSolve = function() {
-            // Implement auto-solve for applicable puzzles
-            if (currentPuzzleType === 'sliding') {
-                // A* solver implementation
-                console.log('Auto-solving sliding puzzle...');
-            }
-        };
+            window.autoSolve = function() {
+                // Implement auto-solve for applicable puzzles
+                if (currentPuzzleType === 'sliding') {
+                    // A* solver implementation
+                    console.log('Auto-solving sliding puzzle...');
+                }
+            };
 
-        // Update UI
-        function updateUI() {
+            // Update UI
+            function updateUI() {
             document.getElementById('score').textContent = score;
             document.getElementById('moves').textContent = moves;
             document.getElementById('combo').textContent = combo + 'x';
@@ -1598,10 +1611,10 @@
             document.getElementById('progressBar').style.width = progress + '%';
         }
 
-        // Game loop
-        let lastTime = performance.now();
-        
-        function gameLoop() {
+            // Game loop
+            let lastTime = performance.now();
+            
+            function gameLoop() {
             const currentTime = performance.now();
             const deltaTime = currentTime - lastTime;
             lastTime = currentTime;
@@ -1620,11 +1633,12 @@
             requestAnimationFrame(gameLoop);
         }
         
-        // Start with Match-3 selected
-        document.getElementById('btn-match3').classList.add('active');
-        gameLoop();
-        
-        console.log('Puzzle Game System initialized!');
+            // Start with Match-3 selected
+            document.getElementById('btn-match3').classList.add('active');
+            gameLoop();
+            
+            console.log('Puzzle Game System initialized!');
+        }); // End of DOMContentLoaded
     </script>
 
     <h2>Puzzle Game Implementation in Python</h2>

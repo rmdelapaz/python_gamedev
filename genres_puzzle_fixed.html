@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puzzle Game Logic - Interactive Demo</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .canvas-wrapper {
+            text-align: center;
+            margin: 20px auto;
+        }
+        
+        canvas {
+            border: 2px solid #fff;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            background: #2c3e50;
+        }
+        
+        .controls {
+            text-align: center;
+            margin: 20px auto;
+            padding: 15px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            max-width: 800px;
+        }
+        
+        button {
+            margin: 5px;
+            padding: 10px 15px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+        
+        button.active {
+            background: #2196F3;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin: 20px auto;
+            padding: 15px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 10px;
+            max-width: 800px;
+        }
+        
+        .stat-item {
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 5px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧩 Puzzle Game Mechanics Demo</h1>
+    
+    <div class="canvas-wrapper">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+    </div>
+    
+    <div class="controls">
+        <h3>Select Puzzle Type:</h3>
+        <button id="btn-match3" onclick="switchPuzzle('match3')" class="active">💎 Match-3</button>
+        <button id="btn-sliding" onclick="switchPuzzle('sliding')">🔢 Sliding</button>
+        <button id="btn-physics" onclick="switchPuzzle('physics')">🎯 Physics</button>
+        <button id="btn-pattern" onclick="switchPuzzle('pattern')">🎨 Pattern</button>
+        <button id="btn-logic" onclick="switchPuzzle('logic')">⚡ Logic</button>
+    </div>
+    
+    <div class="controls">
+        <h3>Game Controls:</h3>
+        <p id="instructions">Match-3: Click to select gem, click adjacent to swap</p>
+        <button onclick="resetGame()">🔄 Reset</button>
+        <button onclick="showHint()">💡 Hint</button>
+        <button onclick="shufflePuzzle()">🔀 Shuffle</button>
+    </div>
+    
+    <div class="stats">
+        <div class="stat-item">
+            🏆 Score: <span id="score">0</span>
+        </div>
+        <div class="stat-item">
+            🎯 Moves: <span id="moves">0</span>
+        </div>
+        <div class="stat-item">
+            ⏱️ Time: <span id="timer">0:00</span>
+        </div>
+        <div class="stat-item">
+            ⚡ Combo: <span id="combo">1x</span>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let currentPuzzle = 'match3';
+        let score = 0;
+        let moves = 0;
+        let combo = 1;
+        let startTime = Date.now();
+        
+        // Simple Match-3 implementation
+        class Match3Game {
+            constructor() {
+                this.grid = [];
+                this.gridSize = 8;
+                this.tileSize = 60;
+                this.colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96E6A1', '#FFEAA7', '#DDA0DD'];
+                this.selected = null;
+                this.init();
+            }
+            
+            init() {
+                this.grid = [];
+                for (let y = 0; y < this.gridSize; y++) {
+                    this.grid[y] = [];
+                    for (let x = 0; x < this.gridSize; x++) {
+                        this.grid[y][x] = Math.floor(Math.random() * 6);
+                    }
+                }
+            }
+            
+            handleClick(mx, my) {
+                const gridX = Math.floor((mx - 100) / this.tileSize);
+                const gridY = Math.floor((my - 50) / this.tileSize);
+                
+                if (gridX >= 0 && gridX < this.gridSize && gridY >= 0 && gridY < this.gridSize) {
+                    if (this.selected) {
+                        // Try to swap
+                        const dx = Math.abs(gridX - this.selected.x);
+                        const dy = Math.abs(gridY - this.selected.y);
+                        
+                        if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
+                            // Adjacent - swap them
+                            const temp = this.grid[gridY][gridX];
+                            this.grid[gridY][gridX] = this.grid[this.selected.y][this.selected.x];
+                            this.grid[this.selected.y][this.selected.x] = temp;
+                            moves++;
+                            score += 10;
+                        }
+                        this.selected = null;
+                    } else {
+                        this.selected = { x: gridX, y: gridY };
+                    }
+                }
+            }
+            
+            render() {
+                // Draw grid background
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                ctx.fillRect(95, 45, this.gridSize * this.tileSize + 10, this.gridSize * this.tileSize + 10);
+                
+                // Draw gems
+                for (let y = 0; y < this.gridSize; y++) {
+                    for (let x = 0; x < this.gridSize; x++) {
+                        const px = 100 + x * this.tileSize;
+                        const py = 50 + y * this.tileSize;
+                        
+                        // Draw gem
+                        ctx.fillStyle = this.colors[this.grid[y][x]];
+                        ctx.beginPath();
+                        ctx.arc(px + this.tileSize/2, py + this.tileSize/2, this.tileSize/2 - 5, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // Draw highlight
+                        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                        ctx.beginPath();
+                        ctx.arc(px + this.tileSize/3, py + this.tileSize/3, this.tileSize/4, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // Draw selection
+                        if (this.selected && this.selected.x === x && this.selected.y === y) {
+                            ctx.strokeStyle = '#FFD700';
+                            ctx.lineWidth = 3;
+                            ctx.strokeRect(px, py, this.tileSize, this.tileSize);
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Simple Sliding Puzzle
+        class SlidingGame {
+            constructor() {
+                this.size = 4;
+                this.tileSize = 80;
+                this.grid = [];
+                this.emptyPos = { x: 3, y: 3 };
+                this.init();
+            }
+            
+            init() {
+                // Create solved puzzle first
+                this.grid = [];
+                let num = 1;
+                for (let y = 0; y < this.size; y++) {
+                    this.grid[y] = [];
+                    for (let x = 0; x < this.size; x++) {
+                        if (y === this.size - 1 && x === this.size - 1) {
+                            this.grid[y][x] = 0; // Empty space
+                        } else {
+                            this.grid[y][x] = num++;
+                        }
+                    }
+                }
+                
+                // Set initial empty position
+                this.emptyPos = { x: this.size - 1, y: this.size - 1 };
+                
+                // Debug: Verify all tiles are present before shuffle
+                const tilesBeforeShuffle = [];
+                for (let y = 0; y < this.size; y++) {
+                    for (let x = 0; x < this.size; x++) {
+                        tilesBeforeShuffle.push(this.grid[y][x]);
+                    }
+                }
+                console.log('Tiles before shuffle:', tilesBeforeShuffle.sort((a, b) => a - b));
+                
+                // Shuffle with valid moves (maintaining all tiles)
+                for (let i = 0; i < 150; i++) {
+                    const dirs = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+                    const dir = dirs[Math.floor(Math.random() * 4)];
+                    const newX = this.emptyPos.x + dir[0];
+                    const newY = this.emptyPos.y + dir[1];
+                    
+                    if (newX >= 0 && newX < this.size && newY >= 0 && newY < this.size) {
+                        // Swap the empty space with the adjacent tile
+                        this.grid[this.emptyPos.y][this.emptyPos.x] = this.grid[newY][newX];
+                        this.grid[newY][newX] = 0;
+                        this.emptyPos = { x: newX, y: newY };
+                    }
+                }
+                
+                // Debug: Verify all tiles are present after shuffle
+                const tilesAfterShuffle = [];
+                for (let y = 0; y < this.size; y++) {
+                    for (let x = 0; x < this.size; x++) {
+                        tilesAfterShuffle.push(this.grid[y][x]);
+                    }
+                }
+                console.log('Tiles after shuffle:', tilesAfterShuffle.sort((a, b) => a - b));
+            }
+            
+            handleClick(mx, my) {
+                const gridX = Math.floor((mx - 250) / this.tileSize);
+                const gridY = Math.floor((my - 150) / this.tileSize);
+                
+                if (gridX >= 0 && gridX < this.size && gridY >= 0 && gridY < this.size) {
+                    // Check if adjacent to empty
+                    const dx = Math.abs(gridX - this.emptyPos.x);
+                    const dy = Math.abs(gridY - this.emptyPos.y);
+                    
+                    if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
+                        // Swap with empty
+                        this.grid[this.emptyPos.y][this.emptyPos.x] = this.grid[gridY][gridX];
+                        this.grid[gridY][gridX] = 0;
+                        this.emptyPos = { x: gridX, y: gridY };
+                        moves++;
+                        
+                        // Check if solved
+                        if (this.checkWin()) {
+                            score += 100;
+                        }
+                    }
+                }
+            }
+            
+            checkWin() {
+                let expected = 1;
+                for (let y = 0; y < this.size; y++) {
+                    for (let x = 0; x < this.size; x++) {
+                        if (y === this.size - 1 && x === this.size - 1) {
+                            if (this.grid[y][x] !== 0) return false;
+                        } else {
+                            if (this.grid[y][x] !== expected++) return false;
+                        }
+                    }
+                }
+                return true;
+            }
+            
+            render() {
+                const offsetX = 250;
+                const offsetY = 150;
+                
+                // Draw background
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                ctx.fillRect(offsetX - 5, offsetY - 5, this.size * this.tileSize + 10, this.size * this.tileSize + 10);
+                
+                // Draw tiles
+                for (let y = 0; y < this.size; y++) {
+                    for (let x = 0; x < this.size; x++) {
+                        const value = this.grid[y][x];
+                        
+                        if (value !== 0) {
+                            const tileX = offsetX + x * this.tileSize;
+                            const tileY = offsetY + y * this.tileSize;
+                            
+                            // Tile background
+                            ctx.fillStyle = this.checkWin() ? '#4CAF50' : '#2196F3';
+                            ctx.fillRect(tileX + 2, tileY + 2, this.tileSize - 4, this.tileSize - 4);
+                            
+                            // Tile border for better visibility
+                            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                            ctx.lineWidth = 2;
+                            ctx.strokeRect(tileX + 2, tileY + 2, this.tileSize - 4, this.tileSize - 4);
+                            
+                            // Tile number with shadow for better readability
+                            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                            ctx.font = 'bold 36px Arial';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText(value.toString(), tileX + this.tileSize/2 + 2, tileY + this.tileSize/2 + 2);
+                            
+                            // Number in white
+                            ctx.fillStyle = 'white';
+                            ctx.fillText(value.toString(), tileX + this.tileSize/2, tileY + this.tileSize/2);
+                        }
+                    }
+                }
+                
+                if (this.checkWin()) {
+                    ctx.fillStyle = '#4CAF50';
+                    ctx.font = 'bold 48px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('SOLVED!', canvas.width/2, 100);
+                }
+            }
+        }
+        
+        // Simple Physics Puzzle
+        class PhysicsGame {
+            constructor() {
+                this.projectile = { x: 100, y: 400, vx: 0, vy: 0, launched: false };
+                this.targets = [];
+                this.power = 0;
+                this.angle = -Math.PI/4;
+                this.init();
+            }
+            
+            init() {
+                this.projectile = { x: 100, y: 400, vx: 0, vy: 0, launched: false };
+                this.targets = [];
+                for (let i = 0; i < 3; i++) {
+                    this.targets.push({
+                        x: 500 + Math.random() * 200,
+                        y: 200 + Math.random() * 200,
+                        hit: false
+                    });
+                }
+            }
+            
+            handleClick(mx, my) {
+                if (!this.projectile.launched) {
+                    // Calculate angle and power
+                    const dx = mx - this.projectile.x;
+                    const dy = my - this.projectile.y;
+                    this.angle = Math.atan2(dy, dx);
+                    this.power = Math.min(20, Math.sqrt(dx*dx + dy*dy) / 10);
+                    
+                    // Launch
+                    this.projectile.vx = Math.cos(this.angle) * this.power;
+                    this.projectile.vy = Math.sin(this.angle) * this.power;
+                    this.projectile.launched = true;
+                    moves++;
+                }
+            }
+            
+            update() {
+                if (this.projectile.launched) {
+                    this.projectile.x += this.projectile.vx;
+                    this.projectile.y += this.projectile.vy;
+                    this.projectile.vy += 0.5; // gravity
+                    
+                    // Check target hits
+                    for (const target of this.targets) {
+                        if (!target.hit) {
+                            const dx = this.projectile.x - target.x;
+                            const dy = this.projectile.y - target.y;
+                            if (Math.sqrt(dx*dx + dy*dy) < 30) {
+                                target.hit = true;
+                                score += 50;
+                            }
+                        }
+                    }
+                    
+                    // Reset if off screen
+                    if (this.projectile.y > canvas.height) {
+                        this.projectile = { x: 100, y: 400, vx: 0, vy: 0, launched: false };
+                    }
+                }
+            }
+            
+            render() {
+                // Ground
+                ctx.fillStyle = '#654321';
+                ctx.fillRect(0, 450, canvas.width, 150);
+                
+                // Targets
+                for (const target of this.targets) {
+                    if (!target.hit) {
+                        ctx.fillStyle = '#4ECDC4';
+                        ctx.beginPath();
+                        ctx.arc(target.x, target.y, 20, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+                
+                // Projectile
+                ctx.fillStyle = '#FF6B6B';
+                ctx.beginPath();
+                ctx.arc(this.projectile.x, this.projectile.y, 10, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        // Simple Pattern Game
+        class PatternGame {
+            constructor() {
+                this.sequence = [];
+                this.playerSequence = [];
+                this.showing = false;
+                this.colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96E6A1'];
+                this.init();
+            }
+            
+            init() {
+                this.sequence = [Math.floor(Math.random() * 4)];
+                this.playerSequence = [];
+                this.showSequence();
+            }
+            
+            showSequence() {
+                this.showing = true;
+                setTimeout(() => {
+                    this.showing = false;
+                }, 1000);
+            }
+            
+            handleClick(mx, my) {
+                if (!this.showing) {
+                    // Check which button was clicked
+                    const buttonSize = 100;
+                    const startX = 300;
+                    const startY = 200;
+                    
+                    for (let i = 0; i < 4; i++) {
+                        const row = Math.floor(i / 2);
+                        const col = i % 2;
+                        const bx = startX + col * (buttonSize + 20);
+                        const by = startY + row * (buttonSize + 20);
+                        
+                        if (mx >= bx && mx <= bx + buttonSize && my >= by && my <= by + buttonSize) {
+                            this.playerSequence.push(i);
+                            moves++;
+                            
+                            // Check if correct
+                            const idx = this.playerSequence.length - 1;
+                            if (this.playerSequence[idx] === this.sequence[idx]) {
+                                if (this.playerSequence.length === this.sequence.length) {
+                                    // Success!
+                                    score += 25 * this.sequence.length;
+                                    this.sequence.push(Math.floor(Math.random() * 4));
+                                    this.playerSequence = [];
+                                    setTimeout(() => this.showSequence(), 500);
+                                }
+                            } else {
+                                // Wrong!
+                                this.init();
+                            }
+                        }
+                    }
+                }
+            }
+            
+            render() {
+                const buttonSize = 100;
+                const startX = 300;
+                const startY = 200;
+                
+                // Draw buttons
+                for (let i = 0; i < 4; i++) {
+                    const row = Math.floor(i / 2);
+                    const col = i % 2;
+                    const bx = startX + col * (buttonSize + 20);
+                    const by = startY + row * (buttonSize + 20);
+                    
+                    // Highlight if showing sequence
+                    if (this.showing && this.sequence[0] === i) {
+                        ctx.fillStyle = this.colors[i];
+                    } else {
+                        ctx.fillStyle = this.colors[i] + '80';
+                    }
+                    
+                    ctx.fillRect(bx, by, buttonSize, buttonSize);
+                    ctx.strokeStyle = 'white';
+                    ctx.strokeRect(bx, by, buttonSize, buttonSize);
+                }
+                
+                // Status
+                ctx.fillStyle = 'white';
+                ctx.font = '24px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(this.showing ? 'WATCH!' : 'REPEAT!', canvas.width/2, 150);
+                ctx.fillText(`Level: ${this.sequence.length}`, canvas.width/2, 400);
+            }
+        }
+        
+        // Simple Logic Game
+        class LogicGame {
+            constructor() {
+                this.inputs = [false, false, false];
+                this.target = true;
+                this.init();
+            }
+            
+            init() {
+                this.inputs = [false, false, false];
+            }
+            
+            handleClick(mx, my) {
+                // Toggle inputs
+                for (let i = 0; i < 3; i++) {
+                    const ix = 150;
+                    const iy = 200 + i * 80;
+                    
+                    if (Math.abs(mx - ix) < 30 && Math.abs(my - iy) < 30) {
+                        this.inputs[i] = !this.inputs[i];
+                        moves++;
+                        
+                        // Check win (simple AND gate)
+                        if (this.inputs[0] && this.inputs[1]) {
+                            score += 50;
+                        }
+                    }
+                }
+            }
+            
+            render() {
+                // Draw inputs
+                for (let i = 0; i < 3; i++) {
+                    const ix = 150;
+                    const iy = 200 + i * 80;
+                    
+                    ctx.fillStyle = this.inputs[i] ? '#4CAF50' : '#333';
+                    ctx.beginPath();
+                    ctx.arc(ix, iy, 20, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = 'white';
+                    ctx.font = '16px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(['A', 'B', 'C'][i], ix, iy + 5);
+                }
+                
+                // Draw gate
+                ctx.fillStyle = '#2196F3';
+                ctx.fillRect(300, 250, 80, 60);
+                ctx.fillStyle = 'white';
+                ctx.font = '20px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('AND', 340, 285);
+                
+                // Draw output
+                const output = this.inputs[0] && this.inputs[1];
+                ctx.fillStyle = output ? '#4CAF50' : '#333';
+                ctx.beginPath();
+                ctx.arc(500, 280, 25, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Instructions
+                ctx.fillStyle = 'white';
+                ctx.font = '20px Arial';
+                ctx.fillText('Make the output GREEN!', canvas.width/2, 100);
+            }
+        }
+        
+        // Initialize games
+        const games = {
+            match3: new Match3Game(),
+            sliding: new SlidingGame(),
+            physics: new PhysicsGame(),
+            pattern: new PatternGame(),
+            logic: new LogicGame()
+        };
+        
+        // Mouse handling
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mx = e.clientX - rect.left;
+            const my = e.clientY - rect.top;
+            games[currentPuzzle].handleClick(mx, my);
+        });
+        
+        // UI Functions
+        window.switchPuzzle = function(type) {
+            currentPuzzle = type;
+            games[type].init();
+            score = 0;
+            moves = 0;
+            combo = 1;
+            startTime = Date.now();
+            
+            // Update buttons
+            document.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`btn-${type}`).classList.add('active');
+            
+            // Update instructions
+            const instructions = {
+                match3: 'Match-3: Click to select gem, click adjacent to swap',
+                sliding: 'Sliding: Click tiles next to empty space to move',
+                physics: 'Physics: Click to launch projectile at targets',
+                pattern: 'Pattern: Watch the sequence, then repeat it',
+                logic: 'Logic: Toggle inputs to make output green'
+            };
+            document.getElementById('instructions').textContent = instructions[type];
+        };
+        
+        window.resetGame = function() {
+            games[currentPuzzle].init();
+            moves = 0;
+        };
+        
+        window.showHint = function() {
+            // Simple hint: just flash a message
+            const hint = document.getElementById('instructions');
+            hint.style.color = '#FFD700';
+            setTimeout(() => hint.style.color = 'white', 1000);
+        };
+        
+        window.shufflePuzzle = function() {
+            games[currentPuzzle].init();
+        };
+        
+        // Update UI
+        function updateUI() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('moves').textContent = moves;
+            document.getElementById('combo').textContent = combo + 'x';
+            
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
+            document.getElementById('timer').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        // Game loop
+        function gameLoop() {
+            // Clear canvas
+            ctx.fillStyle = '#2c3e50';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Update and render current game
+            if (games[currentPuzzle].update) {
+                games[currentPuzzle].update();
+            }
+            games[currentPuzzle].render();
+            
+            // Update UI
+            updateUI();
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Start game
+        gameLoop();
+    </script>
+</body>
+</html>

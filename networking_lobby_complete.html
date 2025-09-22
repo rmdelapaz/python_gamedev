@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Create lobby and matchmaking systems for multiplayer games. Learn room management, player matching, and session handling.">
+    <title>Lobby Systems (continued) - Multiplayer & Networking</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+</head>
+<body>
+    <main id="main-content">
+    <header role="banner">
+        <h1>Lobby Systems Implementation (continued)</h1>
+    </header>
+
+    <pre class="language-python"><code>        # Join room
+        room.players.append(player_id)
+        player.room_id = room_id
+        player.status = PlayerStatus.IN_ROOM
+        
+        # Notify player
+        await self.send_to_player(player_id, {
+            'type': 'room_joined',
+            'room': self.room_to_dict(room)
+        })
+        
+        # Notify room members
+        await self.send_to_room(room_id, {
+            'type': 'player_joined_room',
+            'player': {
+                'id': player_id,
+                'name': player.name
+            }
+        }, exclude=player_id)
+        
+        # Update room list
+        await self.broadcast_room_update()
+    
+    async def leave_room(self, player_id: str, room_id: str):
+        """Leave a room"""
+        player = self.players.get(player_id)
+        room = self.rooms.get(room_id)
+        
+        if not player or not room:
+            return
+        
+        # Remove player from room
+        if player_id in room.players:
+            room.players.remove(player_id)
+        
+        player.room_id = None
+        player.status = PlayerStatus.LOBBY
+        
+        # Notify player
+        await self.send_to_player(player_id, {
+            'type': 'room_left'
+        })
+        
+        # Check if room is empty
+        if len(room.players) == 0:
+            # Delete room
+            del self.rooms[room_id]
+        else:
+            # Assign new host if needed
+            if room.host_id == player_id:
+                room.host_id = room.players[0]
+                await self.send_to_room(room_id, {
+                    'type': 'host_changed',
+                    'new_host_id': room.host_id
+                })
+            
+            # Notify remaining players
+            await self.send_to_room(room_id, {
+                'type': 'player_left_room',
+                'player_id': player_id
+            })
+        
+        # Update room list
+        await self.broadcast_room_update()
+    
+    async def start_game(self, player_id: str):
+        """Start game for a room"""
+        player = self.players[player_id]
+        room = self.rooms.get(player.room_id) if player.room_id else None
+        
+        if not room:
+            await self.send_to_player(player_id, {
+                'type': 'error',
+                'message': 'Not in a room'
+            })
+            return
+        
+        if room.host_id != player_id:
+            await self.send_to_player(player_id, {
+                'type': 'error',
+                'message': 'Only host can start the game'
+            })
+            return
+        
+        if len(room.players) < 2:
+            await self.send_to_player(player_id, {
+                'type': 'error',
+                'message': 'Need at least 2 players to start'
+            })
+            return
+        
+        # Update room status
+        room.status = RoomStatus.IN_GAME
+        
+        # Update player statuses
+        for pid in room.players:
+            if pid in self.players:
+                self.players[pid].status = PlayerStatus.IN_GAME
+        
+        # Notify all players
+        await self.send_to_room(room.room_id, {
+            'type': 'game_starting',
+            'room': self.room_to_dict(room)
+        })
+        
+        # Update room list
+        await self.broadcast_room_update()
+    
+    async def join_matchmaking(self, player_id: str, preferences: Dict):
+        """Join matchmaking queue"""
+        player = self.players[player_id]
+        
+        # Leave room if in one
+        if player.room_id:
+            await self.leave_room(player_id, player.room_id)
+        
+        # Add to queue
+        self.matchmaking_queue.add_player(player_id, preferences)
+        player.status = PlayerStatus.IN_QUEUE
+        
+        await self.send_to_player(player_id, {
+            'type': 'matchmaking_joined',
+            'queue_size': len(self.matchmaking_queue.queue)
+        })
+        
+        # Try to find matches
+        await self.process_matchmaking()
+    
+    async def leave_matchmaking(self, player_id: str):
+        """Leave matchmaking queue"""
+        player = self.players.get(player_id)
+        if not player:
+            return
+        
+        self.matchmaking_queue.remove_player(player_id)
+        player.status = PlayerStatus.LOBBY
+        
+        await self.send_to_player(player_id, {
+            'type': 'matchmaking_left'
+        })
+    
+    async def process_matchmaking(self):
+        """Process matchmaking queue"""
+        matches = self.matchmaking_queue.find_matches(self.players)
+        
+        for match_players in matches:
+            # Create room for match
+            room_id = str(uuid.uuid4())[:8].upper()
+            
+            room = Room(
+                id=room_id,
+                name=f"Match {room_id}",
+                host_id=match_players[0],
+                game_mode='deathmatch',
+                map_name='random',
+                max_players=len(match_players),
+                players=match_players
+            )
+            
+            self.rooms[room_id] = room
+            
+            # Update players
+            for player_id in match_players:
+                if player_id in self.players:
+                    player = self.players[player_id]
+                    player.room_id = room_id
+                    player.status = PlayerStatus.IN_ROOM
+                    
+                    # Remove from queue
+                    self.matchmaking_queue.remove_player(player_id)
+                    
+                    # Notify player
+                    await self.send_to_player(player_id, {
+                        'type': 'match_found',
+                        'room': self.room_to_dict(room)
+                    })
+            
+            # Auto-start after delay
+            await asyncio.sleep(5)
+            await self.start_game(room.host_id)
+    
+    async def handle_chat(self, player_id: str, message: str, channel: str):
+        """Handle chat message"""
+        player = self.players[player_id]
+        
+        chat_msg = {
+            'type': 'chat_message',
+            'sender': player.name,
+            'sender_id': player_id,
+            'message': message,
+            'channel': channel,
+            'timestamp': time.time()
+        }
+        
+        # Store in history
+        self.chat_history.append(chat_msg)
+        if len(self.chat_history) > self.max_chat_history:
+            self.chat_history.pop(0)
+        
+        # Send to appropriate channel
+        if channel == 'lobby':
+            # Send to all players in lobby
+            for pid, p in self.players.items():
+                if p.status == PlayerStatus.LOBBY:
+                    await self.send_to_player(pid, chat_msg)
+                    
+        elif channel == 'room' and player.room_id:
+            # Send to room members
+            await self.send_to_room(player.room_id, chat_msg)
+    
+    async def send_room_list(self, player_id: str):
+        """Send list of available rooms"""
+        rooms_data = []
+        
+        for room in self.rooms.values():
+            if room.status == RoomStatus.WAITING and not room.is_private:
+                rooms_data.append(self.room_to_dict(room))
+        
+        await self.send_to_player(player_id, {
+            'type': 'room_list',
+            'rooms': rooms_data
+        })
+    
+    async def update_room_settings(self, player_id: str, settings: Dict):
+        """Update room settings"""
+        player = self.players[player_id]
+        room = self.rooms.get(player.room_id) if player.room_id else None
+        
+        if not room:
+            return
+        
+        if room.host_id != player_id:
+            await self.send_to_player(player_id, {
+                'type': 'error',
+                'message': 'Only host can update settings'
+            })
+            return
+        
+        # Update settings
+        room.game_mode = settings.get('game_mode', room.game_mode)
+        room.map_name = settings.get('map', room.map_name)
+        room.max_players = settings.get('max_players', room.max_players)
+        room.settings.update(settings)
+        
+        # Notify room members
+        await self.send_to_room(room.room_id, {
+            'type': 'room_settings_updated',
+            'settings': settings
+        })
+    
+    async def send_to_player(self, player_id: str, data: Dict):
+        """Send message to specific player"""
+        player = self.players.get(player_id)
+        if player:
+            try:
+                await player.websocket.send(json.dumps(data))
+            except:
+                pass
+    
+    async def send_to_room(self, room_id: str, data: Dict, exclude: str = None):
+        """Send message to all players in room"""
+        room = self.rooms.get(room_id)
+        if not room:
+            return
+        
+        for player_id in room.players:
+            if player_id != exclude:
+                await self.send_to_player(player_id, data)
+    
+    async def broadcast(self, data: Dict, exclude: str = None):
+        """Broadcast message to all players"""
+        for player_id in list(self.players.keys()):
+            if player_id != exclude:
+                await self.send_to_player(player_id, data)
+    
+    async def broadcast_room_update(self):
+        """Broadcast room list update"""
+        await self.broadcast({
+            'type': 'room_list_updated',
+            'room_count': len(self.rooms)
+        })
+    
+    def room_to_dict(self, room: Room) -> Dict:
+        """Convert room to dictionary"""
+        return {
+            'id': room.id,
+            'name': room.name,
+            'host_id': room.host_id,
+            'game_mode': room.game_mode,
+            'map': room.map_name,
+            'players': room.players,
+            'max_players': room.max_players,
+            'status': room.status.value,
+            'is_private': room.is_private
+        }
+    
+    def get_lobby_state(self) -> Dict:
+        """Get current lobby state"""
+        return {
+            'online_players': len(self.players),
+            'active_rooms': len(self.rooms),
+            'players_in_queue': len(self.matchmaking_queue.queue),
+            'recent_chat': self.chat_history[-20:]
+        }
+    
+    async def start_server(self):
+        """Start the lobby server"""
+        print(f"Starting lobby server on {self.host}:{self.port}")
+        
+        # Start matchmaking processor
+        asyncio.create_task(self.matchmaking_loop())
+        
+        # Start WebSocket server
+        async with websockets.serve(self.register_player, self.host, self.port):
+            await asyncio.Future()  # Run forever
+    
+    async def matchmaking_loop(self):
+        """Continuous matchmaking processing"""
+        while True:
+            await asyncio.sleep(5)  # Check every 5 seconds
+            await self.process_matchmaking()
+
+# Client implementation
+class LobbyClient:
+    """Lobby client"""
+    
+    def __init__(self):
+        self.websocket = None
+        self.player_id = None
+        self.player_name = "Player"
+        self.current_room = None
+        self.connected = False
+    
+    async def connect(self, uri: str, player_name: str):
+        """Connect to lobby server"""
+        self.player_name = player_name
+        
+        try:
+            self.websocket = await websockets.connect(uri)
+            self.connected = True
+            
+            # Send player info
+            await self.websocket.send(json.dumps({
+                'name': player_name,
+                'elo': 1000
+            }))
+            
+            # Start receive loop
+            asyncio.create_task(self.receive_loop())
+            
+            print(f"Connected to lobby as {player_name}")
+            
+        except Exception as e:
+            print(f"Connection failed: {e}")
+            self.connected = False
+    
+    async def receive_loop(self):
+        """Receive messages from server"""
+        async for message in self.websocket:
+            data = json.loads(message)
+            await self.handle_message(data)
+    
+    async def handle_message(self, data: Dict):
+        """Handle server message"""
+        msg_type = data.get('type')
+        
+        if msg_type == 'welcome':
+            self.player_id = data['player_id']
+            print(f"Welcome! Your ID: {self.player_id}")
+            print(f"Lobby state: {data['lobby_state']}")
+            
+        elif msg_type == 'room_created':
+            self.current_room = data['room']
+            print(f"Room created: {self.current_room['id']}")
+            
+        elif msg_type == 'room_joined':
+            self.current_room = data['room']
+            print(f"Joined room: {self.current_room['id']}")
+            
+        elif msg_type == 'match_found':
+            self.current_room = data['room']
+            print(f"Match found! Room: {self.current_room['id']}")
+            
+        elif msg_type == 'game_starting':
+            print("Game is starting!")
+            
+        elif msg_type == 'chat_message':
+            print(f"[{data['channel']}] {data['sender']}: {data['message']}")
+            
+        elif msg_type == 'error':
+            print(f"Error: {data['message']}")
+    
+    async def create_room(self, room_name: str, game_mode: str = 'deathmatch'):
+        """Create a new room"""
+        await self.websocket.send(json.dumps({
+            'type': 'create_room',
+            'name': room_name,
+            'game_mode': game_mode,
+            'max_players': 8
+        }))
+    
+    async def join_room(self, room_id: str):
+        """Join a room"""
+        await self.websocket.send(json.dumps({
+            'type': 'join_room',
+            'room_id': room_id
+        }))
+    
+    async def quick_match(self):
+        """Join matchmaking"""
+        await self.websocket.send(json.dumps({
+            'type': 'quick_match',
+            'preferences': {
+                'game_mode': 'deathmatch',
+                'region': 'auto'
+            }
+        }))
+    
+    async def send_chat(self, message: str, channel: str = 'lobby'):
+        """Send chat message"""
+        await self.websocket.send(json.dumps({
+            'type': 'chat',
+            'message': message,
+            'channel': channel
+        }))
+    
+    async def disconnect(self):
+        """Disconnect from server"""
+        if self.websocket:
+            await self.websocket.close()
+            self.connected = False
+
+# Main execution
+async def main():
+    # Start server
+    server = LobbyServer()
+    server_task = asyncio.create_task(server.start_server())
+    
+    # Wait for server to start
+    await asyncio.sleep(1)
+    
+    # Create test clients
+    client1 = LobbyClient()
+    await client1.connect("ws://localhost:8765", "Alice")
+    
+    client2 = LobbyClient()
+    await client2.connect("ws://localhost:8765", "Bob")
+    
+    # Test lobby functionality
+    await asyncio.sleep(1)
+    await client1.create_room("Alice's Room")
+    
+    await asyncio.sleep(1)
+    await client1.send_chat("Hello everyone!", "lobby")
+    
+    # Keep running
+    await server_task
+
+if __name__ == "__main__":
+    asyncio.run(main())</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Lobby System Best Practices</h3>
+        <ul>
+            <li><strong>Scalability:</strong> Design for growth from day one</li>
+            <li><strong>Regional Servers:</strong> Minimize latency with geographic distribution</li>
+            <li><strong>Skill Matching:</strong> Use ELO or similar ranking systems</li>
+            <li><strong>Queue Times:</strong> Balance speed vs match quality</li>
+            <li><strong>Social Features:</strong> Friends lists and party systems</li>
+            <li><strong>Moderation:</strong> Implement reporting and filtering</li>
+            <li><strong>Persistence:</strong> Save player preferences and stats</li>
+            <li><strong>Fallback:</strong> Handle server failures gracefully</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>🏠 Lobbies are social hubs for players</li>
+            <li>🎯 Good matchmaking keeps players engaged</li>
+            <li>⚡ Quick match reduces friction</li>
+            <li>🔐 Private rooms enable friend play</li>
+            <li>💬 Chat builds community</li>
+            <li>📊 Stats motivate improvement</li>
+            <li>🌍 Regional matching reduces lag</li>
+            <li>⚖️ Balance wait time vs match quality</li>
+        </ul>
+    </div>
+
+    <h2>Congratulations!</h2>
+    
+    <div style="background-color: #e8f5e9; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎉 You've Completed the Advanced Module!</h3>
+        <p>You've mastered advanced game development concepts including graphics, polish, and multiplayer networking!</p>
+        
+        <h4>Advanced Module Summary:</h4>
+        <ul>
+            <li>✅ Section 1: Advanced Graphics (5 lessons)</li>
+            <li>✅ Section 2: Game Polish & Feel (5 lessons)</li>
+            <li>✅ Section 3: Multiplayer & Networking (3 lessons)</li>
+        </ul>
+        
+        <p><strong>Total Course Progress: 53 comprehensive lessons completed!</strong></p>
+        
+        <p>You're now ready to create professional-quality games with Python!</p>
+    </div>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="networking_multiplayer.html" class="prev-lesson">Previous: Multiplayer Implementation</a>
+        <a href="index.html" class="next-lesson">Back to Course Home</a>
+    </nav>
+    
+    </main>
+</body>
+</html>

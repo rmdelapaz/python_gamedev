@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Build a complete multiplayer game. Learn state synchronization, lag compensation, client prediction, and create smooth online gameplay.">
+    <title>Multiplayer Implementation - Multiplayer & Networking</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/enhanced.css">
+    <link rel="icon" href="/favicon.png">
+</head>
+<body>
+    <main id="main-content">
+    <header role="banner">
+        <h1>Multiplayer Implementation (continued)</h1>
+    </header>
+
+    <h2>Additional Implementation Details</h2>
+
+    <pre class="language-python"><code>    def interpolate_entities(self, dt: float):
+        """Interpolate remote entities"""
+        # Simple linear interpolation
+        lerp_speed = 5.0
+        
+        for player_id, player in self.players.items():
+            if player_id == self.player_id:
+                continue  # Skip local player
+            
+            # Find latest state from buffer
+            if self.state_buffer:
+                latest_state = self.state_buffer[-1]
+                for player_data in latest_state['players']:
+                    if player_data['id'] == player_id:
+                        # Interpolate position
+                        target_x = player_data['x']
+                        target_y = player_data['y']
+                        
+                        player.x += (target_x - player.x) * lerp_speed * dt
+                        player.y += (target_y - player.y) * lerp_speed * dt
+                        break
+    
+    async def send_ping(self):
+        """Send ping to server"""
+        if self.websocket and self.connected:
+            await self.websocket.send(json.dumps({
+                'type': 'ping',
+                'time': time.time()
+            }))
+    
+    def render(self):
+        """Render game"""
+        self.screen.fill((20, 20, 40))
+        
+        # Draw grid
+        for x in range(0, 800, 50):
+            pygame.draw.line(self.screen, (30, 30, 50), (x, 0), (x, 600))
+        for y in range(0, 600, 50):
+            pygame.draw.line(self.screen, (30, 30, 50), (0, y), (800, y))
+        
+        # Draw projectiles
+        for projectile in self.projectiles:
+            color = (255, 100, 100) if projectile.team == 'red' else (100, 100, 255)
+            pygame.draw.circle(self.screen, color,
+                             (int(projectile.x), int(projectile.y)),
+                             int(projectile.radius))
+        
+        # Draw players
+        for player in self.players.values():
+            # Player color
+            if player.id == self.player_id:
+                color = (100, 255, 100)  # Green for local player
+            elif player.team == 'red':
+                color = (255, 100, 100)
+            else:
+                color = (100, 100, 255)
+            
+            # Draw player
+            pygame.draw.circle(self.screen, color,
+                             (int(player.x), int(player.y)),
+                             int(player.radius))
+            
+            # Draw health bar
+            bar_width = 40
+            bar_height = 4
+            bar_x = player.x - bar_width // 2
+            bar_y = player.y - player.radius - 10
+            
+            pygame.draw.rect(self.screen, (50, 50, 50),
+                           (bar_x, bar_y, bar_width, bar_height))
+            
+            health_width = bar_width * (player.health / player.max_health)
+            health_color = (100, 255, 100) if player.health > 50 else (255, 100, 100)
+            pygame.draw.rect(self.screen, health_color,
+                           (bar_x, bar_y, health_width, bar_height))
+            
+            # Draw name
+            font = pygame.font.Font(None, 12)
+            name_text = font.render(player.id[:8], True, (255, 255, 255))
+            name_rect = name_text.get_rect(center=(player.x, player.y - player.radius - 15))
+            self.screen.blit(name_text, name_rect)
+        
+        # Draw UI
+        self.draw_ui()
+        
+        pygame.display.flip()
+    
+    def draw_ui(self):
+        """Draw UI elements"""
+        font = pygame.font.Font(None, 24)
+        
+        # Connection status
+        status = "Connected" if self.connected else "Disconnected"
+        color = (100, 255, 100) if self.connected else (255, 100, 100)
+        text = font.render(f"Status: {status}", True, color)
+        self.screen.blit(text, (10, 10))
+        
+        # Ping
+        text = font.render(f"Ping: {int(self.ping)}ms", True, (255, 255, 255))
+        self.screen.blit(text, (10, 40))
+        
+        # Score
+        if self.local_player:
+            text = font.render(f"Score: {self.local_player.score}", True, (255, 255, 255))
+            self.screen.blit(text, (10, 70))
+            
+            text = font.render(f"Health: {self.local_player.health}", True, (255, 255, 255))
+            self.screen.blit(text, (10, 100))
+
+# Main execution
+async def main():
+    # Start server
+    server = GameServer()
+    server_task = asyncio.create_task(server.start())
+    
+    # Wait a bit for server to start
+    await asyncio.sleep(1)
+    
+    # Start client
+    client = GameClient()
+    await client.connect("ws://localhost:8765")
+    await client.game_loop()
+
+if __name__ == "__main__":
+    asyncio.run(main())</code></pre>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Multiplayer Best Practices</h3>
+        <ul>
+            <li><strong>Server Authority:</strong> Never trust the client</li>
+            <li><strong>Client Prediction:</strong> Hide latency with local simulation</li>
+            <li><strong>Interpolation:</strong> Smooth visual updates between snapshots</li>
+            <li><strong>State Compression:</strong> Send only what changes</li>
+            <li><strong>Input Validation:</strong> Prevent cheating and exploits</li>
+            <li><strong>Graceful Degradation:</strong> Handle poor connections</li>
+            <li><strong>Regional Servers:</strong> Minimize latency</li>
+            <li><strong>Rollback:</strong> Correct prediction errors smoothly</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>🖥️ Server is the source of truth</li>
+            <li>🔮 Prediction hides latency</li>
+            <li>🔄 Reconciliation corrects errors</li>
+            <li>📊 Interpolation smooths movement</li>
+            <li>⏱️ Lag compensation improves fairness</li>
+            <li>📦 State snapshots enable time travel</li>
+            <li>🎯 Input buffering handles jitter</li>
+            <li>🛡️ Validation prevents cheating</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you've built a multiplayer game, next we'll learn about lobby systems and matchmaking!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="networking_basics.html" class="prev-lesson">Previous: Networking Basics</a>
+        <a href="networking_lobby.html" class="next-lesson">Next: Lobby Systems</a>
+    </nav>
+    
+    </main>
+</body>
+</html>

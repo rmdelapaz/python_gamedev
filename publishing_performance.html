@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Master game performance optimization. Learn profiling, bottleneck identification, memory management, rendering optimization, and asset optimization techniques.">
+    <title>Performance Optimization - Publishing Your Game</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/enhanced.css">
+    <link rel="icon" href="favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Performance Optimization</h1>
+        <div class="reading-time" aria-label="Estimated reading time">20 minute read</div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Advanced Module - Section 4: Publishing Your Game - Lesson 1</span>
+    </nav>
+
+    <h2>Optimizing Your Game for Maximum Performance</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Transform your game from prototype to polished product! Learn profiling techniques, identify bottlenecks, optimize rendering, manage memory efficiently, and deliver smooth gameplay! 🚀⚡🎮</p>
+    </div>
+
+    <h2>Understanding Performance</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎯 Performance Metrics</h3>
+        <p>Key metrics to monitor and optimize:</p>
+        <ul>
+            <li><strong>Frame Rate (FPS):</strong> Target 60 FPS for smooth gameplay</li>
+            <li><strong>Frame Time:</strong> Time to render one frame (16.67ms for 60 FPS)</li>
+            <li><strong>Memory Usage:</strong> RAM consumption and allocation patterns</li>
+            <li><strong>CPU Usage:</strong> Processing load and bottlenecks</li>
+            <li><strong>GPU Usage:</strong> Graphics rendering efficiency</li>
+            <li><strong>Load Times:</strong> Asset loading and level transitions</li>
+            <li><strong>Battery Life:</strong> Power consumption on mobile devices</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Performance Optimization"] --> B["Profiling"]
+        A --> C["Code Optimization"]
+        A --> D["Asset Optimization"]
+        A --> E["Rendering"]
+        
+        B --> F["CPU Profiling"]
+        B --> G["Memory Profiling"]
+        B --> H["GPU Profiling"]
+        
+        C --> I["Algorithm Complexity"]
+        C --> J["Data Structures"]
+        C --> K["Caching"]
+        
+        D --> L["Texture Compression"]
+        D --> M["Audio Optimization"]
+        D --> N["Model LOD"]
+        
+        E --> O["Batching"]
+        E --> P["Culling"]
+        E --> Q["Shader Optimization"]
+    </div>
+
+    <h2>Profiling Your Game</h2>
+    
+    <div style="background-color: #f9f9f9; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>📊 Python Profiling Tools</h3>
+        <pre><code class="language-python">
+import cProfile
+import pstats
+import pygame
+import time
+from memory_profiler import profile
+import tracemalloc
+
+# Basic FPS counter
+class FPSCounter:
+    def __init__(self):
+        self.clock = pygame.time.Clock()
+        self.fps_history = []
+        self.frame_times = []
+        
+    def tick(self, target_fps=60):
+        dt = self.clock.tick(target_fps)
+        current_fps = self.clock.get_fps()
+        self.fps_history.append(current_fps)
+        self.frame_times.append(dt)
+        
+        # Keep only last 60 frames
+        if len(self.fps_history) > 60:
+            self.fps_history.pop(0)
+            self.frame_times.pop(0)
+        
+        return dt / 1000.0  # Return delta time in seconds
+    
+    def get_average_fps(self):
+        if self.fps_history:
+            return sum(self.fps_history) / len(self.fps_history)
+        return 0
+    
+    def get_frame_time_stats(self):
+        if not self.frame_times:
+            return {}
+        
+        return {
+            'min': min(self.frame_times),
+            'max': max(self.frame_times),
+            'avg': sum(self.frame_times) / len(self.frame_times)
+        }
+
+# CPU Profiling
+def profile_game_loop():
+    profiler = cProfile.Profile()
+    profiler.enable()
+    
+    # Run your game loop here
+    for _ in range(1000):
+        update_game()
+        render_game()
+    
+    profiler.disable()
+    stats = pstats.Stats(profiler)
+    stats.sort_stats('cumulative')
+    stats.print_stats(20)  # Print top 20 functions
+
+# Memory profiling decorator
+@profile
+def memory_intensive_function():
+    large_list = [i for i in range(1000000)]
+    return large_list
+
+# Memory tracking
+def track_memory_usage():
+    tracemalloc.start()
+    
+    # Your code here
+    snapshot1 = tracemalloc.take_snapshot()
+    
+    # More code
+    snapshot2 = tracemalloc.take_snapshot()
+    
+    top_stats = snapshot2.compare_to(snapshot1, 'lineno')
+    for stat in top_stats[:10]:
+        print(stat)
+        </code></pre>
+    </div>
+
+    <h2>Code Optimization Techniques</h2>
+    
+    <div style="background-color: #f0fff0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Algorithm Optimization</h3>
+        <pre><code class="language-python">
+# Bad: O(n²) collision detection
+def check_collisions_naive(objects):
+    collisions = []
+    for i, obj1 in enumerate(objects):
+        for j, obj2 in enumerate(objects[i+1:], i+1):
+            if obj1.collides_with(obj2):
+                collisions.append((obj1, obj2))
+    return collisions
+
+# Good: Spatial hashing O(n)
+class SpatialHash:
+    def __init__(self, cell_size):
+        self.cell_size = cell_size
+        self.buckets = {}
+    
+    def clear(self):
+        self.buckets.clear()
+    
+    def add(self, obj):
+        bucket_key = self._get_bucket_key(obj.x, obj.y)
+        if bucket_key not in self.buckets:
+            self.buckets[bucket_key] = []
+        self.buckets[bucket_key].append(obj)
+    
+    def _get_bucket_key(self, x, y):
+        return (int(x // self.cell_size), int(y // self.cell_size))
+    
+    def get_nearby(self, obj, radius=1):
+        nearby = []
+        cx, cy = self._get_bucket_key(obj.x, obj.y)
+        
+        for dx in range(-radius, radius + 1):
+            for dy in range(-radius, radius + 1):
+                bucket_key = (cx + dx, cy + dy)
+                if bucket_key in self.buckets:
+                    nearby.extend(self.buckets[bucket_key])
+        
+        return nearby
+    
+    def check_collisions(self, objects):
+        self.clear()
+        for obj in objects:
+            self.add(obj)
+        
+        collisions = set()
+        for obj in objects:
+            nearby = self.get_nearby(obj)
+            for other in nearby:
+                if obj != other and obj.collides_with(other):
+                    # Use frozenset to avoid duplicate pairs
+                    collisions.add(frozenset([obj, other]))
+        
+        return list(collisions)
+
+# Object pooling to reduce allocations
+class ObjectPool:
+    def __init__(self, object_class, size=100):
+        self.object_class = object_class
+        self.available = [object_class() for _ in range(size)]
+        self.active = []
+    
+    def acquire(self):
+        if self.available:
+            obj = self.available.pop()
+            self.active.append(obj)
+            return obj
+        else:
+            # Pool exhausted, create new object
+            obj = self.object_class()
+            self.active.append(obj)
+            return obj
+    
+    def release(self, obj):
+        if obj in self.active:
+            self.active.remove(obj)
+            self.available.append(obj)
+            obj.reset()  # Reset object state
+
+# Cache expensive calculations
+class MemoizedFunction:
+    def __init__(self, func):
+        self.func = func
+        self.cache = {}
+    
+    def __call__(self, *args):
+        if args not in self.cache:
+            self.cache[args] = self.func(*args)
+        return self.cache[args]
+
+@MemoizedFunction
+def expensive_calculation(x, y):
+    # Simulate expensive operation
+    import math
+    return math.sqrt(x**2 + y**2) * math.sin(x) * math.cos(y)
+        </code></pre>
+    </div>
+
+    <h2>Rendering Optimization</h2>
+    
+    <div style="background-color: #fff9e6; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎨 Graphics Performance</h3>
+        <pre><code class="language-python">
+import pygame
+
+class RenderOptimizer:
+    def __init__(self, screen):
+        self.screen = screen
+        self.dirty_rects = []
+        self.static_background = None
+        
+    def create_static_background(self, render_func):
+        """Pre-render static elements"""
+        self.static_background = pygame.Surface(self.screen.get_size())
+        render_func(self.static_background)
+    
+    def add_dirty_rect(self, rect):
+        """Mark area for redraw"""
+        self.dirty_rects.append(rect)
+    
+    def optimize_dirty_rects(self):
+        """Merge overlapping rectangles"""
+        if not self.dirty_rects:
+            return []
+        
+        # Sort by position
+        self.dirty_rects.sort(key=lambda r: (r.x, r.y))
+        
+        optimized = []
+        current = self.dirty_rects[0]
+        
+        for rect in self.dirty_rects[1:]:
+            if current.colliderect(rect):
+                # Merge rectangles
+                current = current.union(rect)
+            else:
+                optimized.append(current)
+                current = rect
+        
+        optimized.append(current)
+        self.dirty_rects = []
+        return optimized
+    
+    def render_frame(self, dynamic_objects):
+        """Optimized rendering with dirty rectangles"""
+        # Clear only dirty areas
+        for rect in self.dirty_rects:
+            if self.static_background:
+                self.screen.blit(self.static_background, rect, rect)
+            else:
+                pygame.draw.rect(self.screen, (0, 0, 0), rect)
+        
+        # Draw only visible objects
+        screen_rect = self.screen.get_rect()
+        for obj in dynamic_objects:
+            if screen_rect.colliderect(obj.rect):
+                obj.draw(self.screen)
+                self.add_dirty_rect(obj.rect)
+        
+        # Update only changed areas
+        dirty_rects = self.optimize_dirty_rects()
+        pygame.display.update(dirty_rects)
+
+# Sprite batching
+class SpriteBatch:
+    def __init__(self):
+        self.sprites = {}
+    
+    def add(self, texture_path, positions):
+        """Group sprites by texture"""
+        if texture_path not in self.sprites:
+            self.sprites[texture_path] = {
+                'texture': pygame.image.load(texture_path).convert_alpha(),
+                'positions': []
+            }
+        self.sprites[texture_path]['positions'].extend(positions)
+    
+    def draw(self, screen):
+        """Draw all sprites grouped by texture"""
+        for texture_data in self.sprites.values():
+            texture = texture_data['texture']
+            for pos in texture_data['positions']:
+                screen.blit(texture, pos)
+    
+    def clear(self):
+        """Clear batch for next frame"""
+        for texture_data in self.sprites.values():
+            texture_data['positions'].clear()
+
+# Level of Detail (LOD) system
+class LODSprite(pygame.sprite.Sprite):
+    def __init__(self, textures_by_distance):
+        super().__init__()
+        self.textures = textures_by_distance  # {distance: texture}
+        self.distances = sorted(textures_by_distance.keys())
+        self.current_texture = None
+        self.rect = None
+    
+    def update_lod(self, camera_pos):
+        """Switch texture based on distance"""
+        distance = self.get_distance_to(camera_pos)
+        
+        for max_dist in self.distances:
+            if distance <= max_dist:
+                new_texture = self.textures[max_dist]
+                if new_texture != self.current_texture:
+                    self.current_texture = new_texture
+                    self.image = new_texture
+                    if self.rect:
+                        self.rect = self.image.get_rect(center=self.rect.center)
+                break
+    
+    def get_distance_to(self, pos):
+        if self.rect:
+            return ((self.rect.centerx - pos[0])**2 + 
+                   (self.rect.centery - pos[1])**2)**0.5
+        return 0
+
+# Frustum culling
+class FrustumCuller:
+    def __init__(self, screen_rect):
+        self.screen_rect = screen_rect
+        self.margin = 50  # Extra margin for smooth transitions
+    
+    def is_visible(self, obj_rect):
+        """Check if object is in view frustum"""
+        expanded_rect = self.screen_rect.inflate(self.margin * 2, self.margin * 2)
+        return expanded_rect.colliderect(obj_rect)
+    
+    def cull_objects(self, objects):
+        """Return only visible objects"""
+        return [obj for obj in objects if self.is_visible(obj.rect)]
+        </code></pre>
+    </div>
+
+    <h2>Asset Optimization</h2>
+    
+    <div style="background-color: #f3e5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>📦 Optimizing Game Assets</h3>
+        <pre><code class="language-python">
+import pygame
+import os
+from PIL import Image
+import numpy as np
+
+class AssetOptimizer:
+    def __init__(self):
+        self.texture_cache = {}
+        self.sound_cache = {}
+        
+    def optimize_image(self, path, max_size=(1024, 1024), quality=85):
+        """Optimize image file size and dimensions"""
+        img = Image.open(path)
+        
+        # Resize if too large
+        if img.size[0] > max_size[0] or img.size[1] > max_size[1]:
+            img.thumbnail(max_size, Image.Resampling.LANCZOS)
+        
+        # Convert to RGB if RGBA not needed
+        if img.mode == 'RGBA':
+            # Check if alpha channel is used
+            alpha = np.array(img.split()[-1])
+            if np.all(alpha == 255):
+                img = img.convert('RGB')
+        
+        # Save optimized version
+        optimized_path = path.replace('.png', '_opt.png')
+        img.save(optimized_path, optimize=True, quality=quality)
+        return optimized_path
+    
+    def create_texture_atlas(self, image_paths, atlas_size=(2048, 2048)):
+        """Combine multiple textures into one atlas"""
+        atlas = Image.new('RGBA', atlas_size, (0, 0, 0, 0))
+        positions = {}
+        
+        current_x = 0
+        current_y = 0
+        row_height = 0
+        
+        for path in image_paths:
+            img = Image.open(path)
+            
+            # Check if image fits in current row
+            if current_x + img.width > atlas_size[0]:
+                current_x = 0
+                current_y += row_height
+                row_height = 0
+            
+            # Check if image fits in atlas
+            if current_y + img.height <= atlas_size[1]:
+                atlas.paste(img, (current_x, current_y))
+                positions[path] = (current_x, current_y, img.width, img.height)
+                
+                current_x += img.width
+                row_height = max(row_height, img.height)
+        
+        return atlas, positions
+    
+    def load_texture_cached(self, path, convert_alpha=True):
+        """Load texture with caching"""
+        if path not in self.texture_cache:
+            texture = pygame.image.load(path)
+            if convert_alpha:
+                texture = texture.convert_alpha()
+            else:
+                texture = texture.convert()
+            self.texture_cache[path] = texture
+        
+        return self.texture_cache[path]
+    
+    def preload_assets(self, asset_list):
+        """Preload all assets during loading screen"""
+        for asset_path in asset_list:
+            if asset_path.endswith(('.png', '.jpg', '.jpeg')):
+                self.load_texture_cached(asset_path)
+            elif asset_path.endswith(('.wav', '.ogg', '.mp3')):
+                self.load_sound_cached(asset_path)
+    
+    def load_sound_cached(self, path):
+        """Load sound with caching"""
+        if path not in self.sound_cache:
+            self.sound_cache[path] = pygame.mixer.Sound(path)
+        return self.sound_cache[path]
+    
+    def compress_save_data(self, data):
+        """Compress save game data"""
+        import zlib
+        import pickle
+        
+        serialized = pickle.dumps(data)
+        compressed = zlib.compress(serialized, level=9)
+        
+        # Calculate compression ratio
+        ratio = len(compressed) / len(serialized)
+        print(f"Compression ratio: {ratio:.2%}")
+        
+        return compressed
+    
+    def decompress_save_data(self, compressed_data):
+        """Decompress save game data"""
+        import zlib
+        import pickle
+        
+        decompressed = zlib.decompress(compressed_data)
+        return pickle.loads(decompressed)
+
+# Lazy loading for large assets
+class LazyLoader:
+    def __init__(self):
+        self.pending = {}
+        self.loaded = {}
+    
+    def queue_load(self, key, loader_func, *args):
+        """Queue asset for loading"""
+        self.pending[key] = (loader_func, args)
+    
+    def load_next(self):
+        """Load one asset from queue"""
+        if self.pending:
+            key, (loader_func, args) = self.pending.popitem()
+            self.loaded[key] = loader_func(*args)
+            return key
+        return None
+    
+    def get(self, key):
+        """Get loaded asset or None"""
+        return self.loaded.get(key)
+    
+    def is_loaded(self, key):
+        """Check if asset is loaded"""
+        return key in self.loaded
+        </code></pre>
+    </div>
+
+    <h2>Interactive Performance Monitor</h2>
+    
+    <div class="canvas-wrapper" style="text-align: center;">
+        <canvas id="performanceCanvas" width="800" height="400" style="border: 2px solid #333; display: inline-block; background: #1a1a1a;"></canvas>
+    </div>
+    
+    <div style="text-align: center; margin-top: 10px;">
+        <button onclick="startSimulation()">🎮 Start Simulation</button>
+        <button onclick="addObjects(100)">➕ Add 100 Objects</button>
+        <button onclick="toggleOptimization()">⚡ Toggle Optimization</button>
+        <button onclick="clearObjects()">🗑️ Clear Objects</button>
+    </div>
+    
+    <div style="text-align: center; margin-top: 10px; background-color: rgba(0,0,0,0.6); padding: 10px; border-radius: 5px;">
+        <div style="display: inline-block; margin: 0 20px; color: white;">
+            FPS: <span id="fps" style="color: #4CAF50; font-weight: bold;">60</span>
+        </div>
+        <div style="display: inline-block; margin: 0 20px; color: white;">
+            Objects: <span id="objectCount" style="color: #2196F3; font-weight: bold;">0</span>
+        </div>
+        <div style="display: inline-block; margin: 0 20px; color: white;">
+            Frame Time: <span id="frameTime" style="color: #FF9800; font-weight: bold;">0ms</span>
+        </div>
+        <div style="display: inline-block; margin: 0 20px; color: white;">
+            Optimization: <span id="optimStatus" style="color: #9C27B0; font-weight: bold;">ON</span>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('performanceCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let objects = [];
+        let optimizationEnabled = true;
+        let running = false;
+        let lastTime = performance.now();
+        let frameCount = 0;
+        let fps = 60;
+        let frameTime = 0;
+        let spatialHash = new Map();
+        
+        // Performance history for graph
+        let fpsHistory = new Array(100).fill(60);
+        let frameTimeHistory = new Array(100).fill(16.67);
+        
+        class GameObject {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 4;
+                this.vy = (Math.random() - 0.5) * 4;
+                this.radius = 5 + Math.random() * 10;
+                this.color = `hsl(${Math.random() * 360}, 70%, 50%)`;
+            }
+            
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                
+                // Bounce off walls
+                if (this.x - this.radius < 0 || this.x + this.radius > canvas.width) {
+                    this.vx *= -1;
+                    this.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.x));
+                }
+                if (this.y - this.radius < 0 || this.y + this.radius > canvas.height) {
+                    this.vy *= -1;
+                    this.y = Math.max(this.radius, Math.min(canvas.height - this.radius, this.y));
+                }
+            }
+            
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            checkCollision(other) {
+                const dx = this.x - other.x;
+                const dy = this.y - other.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                return distance < this.radius + other.radius;
+            }
+        }
+        
+        function updateSpatialHash() {
+            spatialHash.clear();
+            const cellSize = 50;
+            
+            for (let obj of objects) {
+                const cellX = Math.floor(obj.x / cellSize);
+                const cellY = Math.floor(obj.y / cellSize);
+                const key = `${cellX},${cellY}`;
+                
+                if (!spatialHash.has(key)) {
+                    spatialHash.set(key, []);
+                }
+                spatialHash.get(key).push(obj);
+            }
+        }
+        
+        function checkCollisionsNaive() {
+            for (let i = 0; i < objects.length; i++) {
+                for (let j = i + 1; j < objects.length; j++) {
+                    if (objects[i].checkCollision(objects[j])) {
+                        // Swap velocities on collision
+                        const tempVx = objects[i].vx;
+                        const tempVy = objects[i].vy;
+                        objects[i].vx = objects[j].vx * 0.9;
+                        objects[i].vy = objects[j].vy * 0.9;
+                        objects[j].vx = tempVx * 0.9;
+                        objects[j].vy = tempVy * 0.9;
+                    }
+                }
+            }
+        }
+        
+        function checkCollisionsOptimized() {
+            updateSpatialHash();
+            const cellSize = 50;
+            
+            for (let obj of objects) {
+                const cellX = Math.floor(obj.x / cellSize);
+                const cellY = Math.floor(obj.y / cellSize);
+                
+                // Check neighboring cells
+                for (let dx = -1; dx <= 1; dx++) {
+                    for (let dy = -1; dy <= 1; dy++) {
+                        const key = `${cellX + dx},${cellY + dy}`;
+                        const nearbyObjects = spatialHash.get(key) || [];
+                        
+                        for (let other of nearbyObjects) {
+                            if (obj !== other && obj.checkCollision(other)) {
+                                // Swap velocities on collision
+                                const tempVx = obj.vx;
+                                const tempVy = obj.vy;
+                                obj.vx = other.vx * 0.9;
+                                obj.vy = other.vy * 0.9;
+                                other.vx = tempVx * 0.9;
+                                other.vy = tempVy * 0.9;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        function update() {
+            // Update objects
+            for (let obj of objects) {
+                obj.update();
+            }
+            
+            // Check collisions
+            if (optimizationEnabled) {
+                checkCollisionsOptimized();
+            } else {
+                checkCollisionsNaive();
+            }
+        }
+        
+        function drawPerformanceGraph() {
+            // Draw FPS graph
+            ctx.strokeStyle = '#4CAF50';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for (let i = 0; i < fpsHistory.length; i++) {
+                const x = i * (canvas.width / fpsHistory.length);
+                const y = canvas.height - (fpsHistory[i] / 60) * 100;
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            ctx.stroke();
+            
+            // Draw frame time graph
+            ctx.strokeStyle = '#FF9800';
+            ctx.beginPath();
+            for (let i = 0; i < frameTimeHistory.length; i++) {
+                const x = i * (canvas.width / frameTimeHistory.length);
+                const y = canvas.height - (16.67 / Math.max(frameTimeHistory[i], 1)) * 100;
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            ctx.stroke();
+            
+            // Draw labels
+            ctx.fillStyle = '#4CAF50';
+            ctx.font = '12px monospace';
+            ctx.fillText('FPS', 10, 20);
+            
+            ctx.fillStyle = '#FF9800';
+            ctx.fillText('Frame Time', 10, 40);
+            
+            // Draw grid lines
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 6; i++) {
+                const y = canvas.height - (i / 6) * canvas.height;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+                
+                // Label
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.fillText(`${Math.round(i * 10)}fps`, canvas.width - 40, y - 2);
+            }
+        }
+        
+        function render() {
+            // Clear canvas
+            ctx.fillStyle = 'rgba(26, 26, 26, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw performance graph
+            drawPerformanceGraph();
+            
+            // Draw objects
+            for (let obj of objects) {
+                obj.draw();
+            }
+            
+            // Draw stats
+            ctx.fillStyle = 'white';
+            ctx.font = '14px monospace';
+            ctx.fillText(`Objects: ${objects.length}`, 10, canvas.height - 40);
+            ctx.fillText(`Optimization: ${optimizationEnabled ? 'ON' : 'OFF'}`, 10, canvas.height - 20);
+            
+            // Color code FPS
+            if (fps >= 55) {
+                ctx.fillStyle = '#4CAF50';
+            } else if (fps >= 30) {
+                ctx.fillStyle = '#FF9800';
+            } else {
+                ctx.fillStyle = '#F44336';
+            }
+            ctx.font = 'bold 18px monospace';
+            ctx.fillText(`${Math.round(fps)} FPS`, 10, canvas.height - 60);
+        }
+        
+        function gameLoop() {
+            if (!running) return;
+            
+            const currentTime = performance.now();
+            frameTime = currentTime - lastTime;
+            lastTime = currentTime;
+            
+            // Calculate FPS
+            frameCount++;
+            if (frameCount >= 10) {
+                fps = 1000 / frameTime;
+                frameCount = 0;
+                
+                // Update history
+                fpsHistory.shift();
+                fpsHistory.push(fps);
+                frameTimeHistory.shift();
+                frameTimeHistory.push(frameTime);
+            }
+            
+            update();
+            render();
+            
+            // Update UI
+            document.getElementById('fps').textContent = Math.round(fps);
+            document.getElementById('objectCount').textContent = objects.length;
+            document.getElementById('frameTime').textContent = frameTime.toFixed(2) + 'ms';
+            document.getElementById('optimStatus').textContent = optimizationEnabled ? 'ON' : 'OFF';
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        function startSimulation() {
+            if (!running) {
+                running = true;
+                if (objects.length === 0) {
+                    addObjects(50);
+                }
+                gameLoop();
+            }
+        }
+        
+        function addObjects(count) {
+            for (let i = 0; i < count; i++) {
+                objects.push(new GameObject(
+                    Math.random() * canvas.width,
+                    Math.random() * canvas.height
+                ));
+            }
+        }
+        
+        function clearObjects() {
+            objects = [];
+        }
+        
+        function toggleOptimization() {
+            optimizationEnabled = !optimizationEnabled;
+        }
+        
+        // Auto-start
+        startSimulation();
+    </script>
+
+    <h2>Memory Management</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>💾 Memory Optimization Strategies</h3>
+        <ul>
+            <li><strong>Object Pooling:</strong> Reuse objects instead of creating new ones</li>
+            <li><strong>Lazy Loading:</strong> Load assets only when needed</li>
+            <li><strong>Texture Atlases:</strong> Combine small textures into larger ones</li>
+            <li><strong>Asset Streaming:</strong> Load/unload assets based on proximity</li>
+            <li><strong>Reference Counting:</strong> Track and clean up unused resources</li>
+            <li><strong>Garbage Collection:</strong> Minimize allocations in hot paths</li>
+        </ul>
+    </div>
+
+    <h2>Platform-Specific Optimizations</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎯 Target Platform Considerations</h3>
+        
+        <h4>Desktop (Windows/Mac/Linux)</h4>
+        <ul>
+            <li>Higher memory limits (2-4GB typical)</li>
+            <li>Multi-core CPU utilization</li>
+            <li>Dedicated GPU support</li>
+            <li>Higher resolution textures</li>
+        </ul>
+        
+        <h4>Mobile (iOS/Android)</h4>
+        <ul>
+            <li>Limited memory (1-2GB)</li>
+            <li>Battery optimization critical</li>
+            <li>Touch input latency</li>
+            <li>Thermal throttling</li>
+        </ul>
+        
+        <h4>Web (Browser)</h4>
+        <ul>
+            <li>JavaScript performance constraints</li>
+            <li>Download size optimization</li>
+            <li>Progressive loading</li>
+            <li>WebGL limitations</li>
+        </ul>
+    </div>
+
+    <h2>Performance Testing Checklist</h2>
+    
+    <div style="background-color: #e8f5e9; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>✅ Testing Your Optimizations</h3>
+        <ul>
+            <li>☐ Profile on minimum spec hardware</li>
+            <li>☐ Test with maximum entities/effects</li>
+            <li>☐ Monitor memory usage over time</li>
+            <li>☐ Check for memory leaks</li>
+            <li>☐ Verify stable frame rate</li>
+            <li>☐ Test loading times</li>
+            <li>☐ Validate asset compression</li>
+            <li>☐ Profile network usage (multiplayer)</li>
+            <li>☐ Test on all target platforms</li>
+            <li>☐ Stress test with automated bots</li>
+        </ul>
+    </div>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #f5f5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🌟 Performance Best Practices</h3>
+        <ul>
+            <li><strong>Profile First:</strong> Always measure before optimizing</li>
+            <li><strong>Optimize Hotspots:</strong> Focus on the 20% of code that uses 80% of time</li>
+            <li><strong>Cache Everything:</strong> Avoid repeated calculations</li>
+            <li><strong>Batch Operations:</strong> Group similar operations together</li>
+            <li><strong>Use Appropriate Data Structures:</strong> Choose the right tool for the job</li>
+            <li><strong>Minimize Draw Calls:</strong> Batch rendering operations</li>
+            <li><strong>Reduce Texture Switches:</strong> Use texture atlases</li>
+            <li><strong>Cull Aggressively:</strong> Don't process what isn't visible</li>
+            <li><strong>LOD Systems:</strong> Use simpler assets for distant objects</li>
+            <li><strong>Async Loading:</strong> Never block the main thread</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>📊 Always profile before optimizing</li>
+            <li>⚡ Focus on algorithmic improvements first</li>
+            <li>💾 Manage memory carefully to avoid leaks</li>
+            <li>🎨 Optimize rendering with batching and culling</li>
+            <li>📦 Compress and optimize assets appropriately</li>
+            <li>🎯 Target platform capabilities matter</li>
+            <li>🔄 Use object pooling for frequently created objects</li>
+            <li>📈 Monitor performance metrics continuously</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that your game runs smoothly, let's learn how to package it for distribution!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="genres_tower_defense.html" class="prev-lesson">Previous: Tower Defense Patterns</a>
+        <a href="publishing_executables.html" class="next-lesson">Next: Building Executables</a>
+    </nav>
+    
+    </main>
+</body>
+</html>

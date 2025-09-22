@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Complete Python Game Development Course - Learn to create games from scratch using Python and Pygame">
+    <title>Python Game Development Course</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/enhanced.css">
+    <link rel="icon" href="favicon.png">
+    <style>
+        .course-hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 20px;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .course-hero h1 {
+            font-size: 3em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .course-hero p {
+            font-size: 1.3em;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .module-section {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin: 20px auto;
+            max-width: 1200px;
+            padding: 30px;
+        }
+        .module-header {
+            background: linear-gradient(90deg, #4a5568 0%, #2d3748 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px 10px 0 0;
+            margin: -30px -30px 20px -30px;
+        }
+        .module-header h2 {
+            margin: 0;
+            font-size: 2em;
+        }
+        .module-header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+        }
+        .section-group {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .section-group h3 {
+            color: #2d3748;
+            margin-top: 0;
+            font-size: 1.5em;
+        }
+        .lesson-list {
+            list-style: none;
+            padding: 0;
+        }
+        .lesson-list li {
+            background: white;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s;
+        }
+        .lesson-list li:hover {
+            transform: translateX(5px);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+        .lesson-list a {
+            color: #2d3748;
+            text-decoration: none;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+        }
+        .lesson-list a:hover {
+            color: #667eea;
+        }
+        .lesson-number {
+            background: #667eea;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin-right: 15px;
+            font-size: 0.9em;
+        }
+        .progress-tracker {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px auto;
+            max-width: 1200px;
+            text-align: center;
+        }
+        .progress-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .stat-label {
+            color: #718096;
+            margin-top: 5px;
+        }
+        .quick-links {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin: 40px auto;
+            max-width: 1200px;
+            text-align: center;
+        }
+        .quick-links h3 {
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+        .link-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .link-buttons a {
+            background: white;
+            color: #38a169;
+            padding: 12px 24px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .link-buttons a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: #718096;
+            background: #f7fafc;
+            margin-top: 60px;
+        }
+        .completion-badge {
+            display: inline-block;
+            background: #48bb78;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+        @media (max-width: 768px) {
+            .course-hero h1 {
+                font-size: 2em;
+            }
+            .module-header h2 {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="course-hero">
+        <h1>🎮 Python Game Development Course</h1>
+        <p>Master game development from the ground up with Python and Pygame. Build everything from simple arcade games to complex multiplayer experiences!</p>
+    </div>
+
+    <div class="progress-tracker">
+        <h2>📊 Course Overview</h2>
+        <div class="progress-stats">
+            <div class="stat-card">
+                <div class="stat-number">3</div>
+                <div class="stat-label">Modules</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">12</div>
+                <div class="stat-label">Sections</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">60</div>
+                <div class="stat-label">Lessons</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">100+</div>
+                <div class="stat-label">Hours of Content</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BASIC MODULE -->
+    <div class="module-section">
+        <div class="module-header">
+            <h2>📚 Basic Module</h2>
+            <p>Foundation skills for game development with Python</p>
+        </div>
+
+        <!-- Pygame Basics -->
+        <div class="section-group">
+            <h3>1. Pygame Basics</h3>
+            <ul class="lesson-list">
+                <li>
+                    <a href="pygame_basics_game_loop.html">
+                        <span class="lesson-number">1.1</span>
+                        Game Loop Concept
+                    </a>
+                </li>
+                <li>
+                    <a href="pygame_basics_drawing.html">
+                        <span class="lesson-number">1.2</span>
+                        Drawing Shapes and Sprites
+                    </a>
+                </li>
+                <li>
+                    <a href="pygame_basics_input.html">
+                        <span class="lesson-number">1.3</span>
+                        Handling Keyboard/Mouse Input
+                    </a>
+                </li>
+                <li>
+                    <a href="pygame_basics_collision.html">
+                        <span class="lesson-number">1.4</span>
+                        Basic Collision Detection
+                    </a>
+                </li>
+                <li>
+                    <a href="pygame_basics_sound.html">
+                        <span class="lesson-number">1.5</span>
+                        Sound and Music
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Game Mathematics -->
+        <div class="section-group">
+            <h3>2. Game Mathematics</h3>
+            <ul class="lesson-list">
+                <li>
+                    <a href="game_mathematics_coordinates.html">
+                        <span class="lesson-number">2.1</span>
+                        2D Coordinate Systems
+                    </a>
+                </li>
+                <li>
+                    <a href="game_mathematics_vectors.html">
+                        <span class="lesson-number">2.2</span>
+                        Vector Operations
+                    </a>
+                </li>
+                <li>
+                    <a href="game_mathematics_trigonometry.html">
+                        <span class="lesson-number">2.3</span>
+                        Basic Trigonometry for Games
+                    </a>
+                </li>
+                <li>
+                    <a href="game_mathematics_interpolation.html">
+                        <span class="lesson-number">2.4</span>
+                        Interpolation and Easing
+                    </a>
+                </li>
+                <li>
+                    <a href="game_mathematics_random.html">
+                        <span class="lesson-number">2.5</span>
+                        Random Generation for Games
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Sprite Management -->
+        <div class="section-group">
+            <h3>3. Sprite Management</h3>
+            <ul class="lesson-list">
+                <li>
+                    <a href="sprite_loading_images.html">
+                        <span class="lesson-number">3.1</span>
+                        Loading and Displaying Images
+                    </a>
+                </li>
+                <li>
+                    <a href="sprite_animation.html">
+                        <span class="lesson-number">3.2</span>
+                        Sprite Animation
+                    </a>
+                </li>
+                <li>
+                    <a href="sprite_sheets.html">
+                        <span class="lesson-number">3.3</span>
+                        Sprite Sheets
+                    </a>
+                </li>
+                <li>
+                    <a href="sprite_groups_layers.html">
+                        <span class="lesson-number">3.4</span>
+                        Sprite Groups and Layers
+                    </a>
+                </li>
+                <li>
+                    <a href="particle_effects.html">
+                        <span class="lesson-number">3.5</span>
+                        Particle Effects
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Game Physics -->
+        <div class="section-group">
+            <h3>4. Game Physics</h3>
+            <ul class="lesson-list">
+                <li>
+                    <a href="physics_velocity_acceleration.html">
+                        <span class="lesson-number">4.1</span>
+                        Velocity and Acceleration
+                    </a>
+                </li>
+                <li>
+                    <a href="physics_gravity.html">
+                        <span class="lesson-number">4.2</span>
+                        Gravity Simulation
+                    </a>
+                </li>
+                <li>
+                    <a href="physics_bounce_friction.html">
+                        <span class="lesson-number">4.3</span>
+                        Bounce and Friction
+                    </a>
+                </li>
+                <li>
+                    <a href="physics_collision_response.html">
+                        <span class="lesson-number">4.4</span>
+                        Collision Response
+                    </a>
+                </li>
+                <li>
+                    <a href="physics_engine.html">
+                        <span class="lesson-number">4.5</span>
+                        Simple Physics Engine
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- INTERMEDIATE MODULE -->
+    <div class="module-section">
+        <div class="module-header">
+            <h2>🚀 Intermediate Module</h2>
+            <p>Advanced concepts and practical game development</p>
+        </div>
+
+        <!-- Game Architecture -->
+        <div class="section-group">
+            <h3>1. Game Architecture</h3>
+            <ul class="lesson-list">
+                <li>
+                    <a href="architecture_state_machines.html">
+                        <span class="lesson-number">1.1</span>
+                        State Machines
+                    </a>
+                </li>
+                <li>
+                    <a href="architecture_scene_management.html">
+                        <span class="lesson-number">1.2</span>
+                        Scene Management
+                    </a>
+                </li>
+                <li>
+                    <a href="architecture_component_systems.html">
+                        <span class="lesson-number">1.3</span>
+                        Component Systems
+                    </a>
+                </li>
+                <li>
+                    <a href="architecture_event_systems.html">
+                        <span class="lesson-number">1.4</span>
+                        Event Systems
+                    </a>
+                </li>
+                <li>
+                    <a href="architecture_save_load.html">
+                        <span class="lesson-number">1.5</span>
+                        Save/Load Game State
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- 2D Platformer Development -->
+        <div class="section-group">
+            <h3>2. 2D Platformer Development</h3>
+            <ul class="lesson-list">
+                <li>
+                    <a href="platformer_tilemap.html">
+                        <span class="lesson-number">2.1</span>
+                        Tile-based Maps
+                    </a>
+                </li>
+                <li>
+                    <a href="platformer_camera.html">
+                        <span class="lesson-number">2.2</span>
+                        Camera/Viewport
+                    </a>
+                </li>
+                <li>
+                    <a href="platformer_character_controller.html">
+                        <span class="lesson-number">2.3</span>
+                        Character Controllers
+                    </a>
+                </li>
+                <li>
+                    <a href="platformer_level_design.html">
+                        <span class="lesson-number">2.4</span>
+                        Level Design Tools
+                    </a>
+                </li>
+                <li>
+                    <a href="platformer_parallax.html">
+                        <span class="lesson-number">2.5</span>
+                        Parallax Scrolling
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- AI for Games -->
+        <div class="section-group">
+            <h3>3. AI for Games</h3>
+            <ul class="lesson-list">
+                <li>
+                    <a href="ai_pathfinding.html">
+                        <span class="lesson-number">3.1</span>
+                        Pathfinding (A* Algorithm)
+                    </a>
+                </li>
+                <li>
+                    <a href="ai_state_machines.html">
+                        <span class="lesson-number">3.2</span>
+                        State Machines for NPCs
+                    </a>
+                </li>
+                <li>
+                    <a href="ai_behavior_trees.html">
+                        <span class="lesson-number">3.3</span>
+                        Behavior Trees
+                    </a>
+                </li>
+                <li>
+                    <a href="ai_flocking.html">
+                        <span class="lesson-number">3.4</span>
+                        Flocking/Swarm Behavior
+                    </a>
+                </li>
+                <li>
+                    <a href="ai_decision_making.html">
+                        <span class="lesson-number">3.5</span>
+                        Simple Decision Making
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Multiplayer Basics -->
+        <div class="section-group">
+            <h3>4. Multiplayer Basics</h3>
+            <ul class="lesson-list">
+                <li>
+                    <a href="networking_basics.html">
+                        <span class="lesson-number">4.1</span>
+                        Network Fundamentals
+                    </a>
+                </li>
+                <li>
+                    <a href="networking_client_server.html">
+                        <span class="lesson-number">4.2</span>
+                        Client-Server Architecture
+                    </a>
+                </li>
+                <li>
+                    <a href="networking_sockets.html">
+                        <span class="lesson-number">4.3</span>
+                        Socket Programming
+                    
+                    </a>
+                </li>
+                <li>
+                    <a href="networking_lag_compensation.html">
+                        <span class="lesson-number">4.4</span>
+                        Handling Lag/Latency
+                    </a>
+                </li>
+                <li>
+                    <a href="networking_lobby.html">
+                        <span class="lesson-number">4.5</span>
+                        Simple Lobby System
+                       
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ADVANCED MODULE -->
+    <div class="module-section">
+        <div class="module-header">
+            <h2>🎯 Advanced Module</h2>
+            <p>Professional game development techniques</p>
+        </div>
+
+        <!-- Advanced Graphics -->
+        <div class="section-group">
+            <h3>1. Advanced Graphics</h3>
+            <ul class="lesson-list">
+                <li>
+                    <a href="graphics_shaders.html">
+                        <span class="lesson-number">1.1</span>
+                        Shaders and Effects
+                    </a>
+                </li>
+                <li>
+                    <a href="graphics_lighting.html">
+                        <span class="lesson-number">1.2</span>
+                        Lighting Systems
+                    </a>
+                </li>
+                <li>
+                    <a href="graphics_postprocessing.html">
+                        <span class="lesson-number">1.3</span>
+                        Post-processing Effects
+                    </a>
+                </li>
+                <li>
+                    <a href="graphics_ui_hud.html">
+                        <span class="lesson-number">1.4</span>
+                        UI/HUD Development
+                    </a>
+                </li>
+                <li>
+                    <a href="graphics_procedural.html">
+                        <span class="lesson-number">1.5</span>
+                        Procedural Generation
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Game Polish & Feel -->
+        <div class="section-group">
+            <h3>2. Game Polish & Feel</h3>
+            <ul class="lesson-list">
+                <li>
+                    <a href="polish_screenshake.html">
+                        <span class="lesson-number">2.1</span>
+                        Screen Shake and Effects
+                    </a>
+                </li>
+                <li>
+                    <a href="polish_tweening.html">
+                        <span class="lesson-number">2.2</span>
+                        Tweening and Juice
+                    </a>
+                </li>
+                <li>
+                    <a href="polish_sound.html">
+                        <span class="lesson-number">2.3</span>
+                        Sound Design
+                    </a>
+                </li>
+                <li>
+                    <a href="polish_difficulty.html">
+                        <span class="lesson-number">2.4</span>
+                        Difficulty Balancing
+                    </a>
+                </li>
+                <li>
+                    <a href="polish_playtesting.html">
+                        <span class="lesson-number">2.5</span>
+                        Playtesting Methods
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Different Game Genres -->
+        <div class="section-group">
+            <h3>3. Different Game Genres</h3>
+            <ul class="lesson-list">
+                <li>
+                    <a href="genres_rpg.html">
+                        <span class="lesson-number">3.1</span>
+                        RPG Systems (Inventory, Stats)
+                    </a>
+                </li>
+                <li>
+                    <a href="genres_strategy.html">
+                        <span class="lesson-number">3.2</span>
+                        Strategy Game Mechanics
+                    </a>
+                </li>
+                <li>
+                    <a href="genres_puzzle.html">
+                        <span class="lesson-number">3.3</span>
+                        Puzzle Game Logic
+                    </a>
+                </li>
+                <li>
+                    <a href="genres_racing.html">
+                        <span class="lesson-number">3.4</span>
+                        Racing Game Physics
+                    </a>
+                </li>
+                <li>
+                    <a href="genres_tower_defense.html">
+                        <span class="lesson-number">3.5</span>
+                        Tower Defense Patterns
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Publishing Your Game -->
+        <div class="section-group">
+            <h3>4. Publishing Your Game</h3>
+            <ul class="lesson-list">
+                <li>
+                    <a href="publishing_performance.html">
+                        <span class="lesson-number">4.1</span>
+                        Performance Optimization
+                    </a>
+                </li>
+                <li>
+                    <a href="publishing_executables.html">
+                        <span class="lesson-number">4.2</span>
+                        Building Executables
+                    </a>
+                </li>
+                <li>
+                    <a href="publishing_platforms.html">
+                        <span class="lesson-number">4.3</span>
+                        Distribution Platforms
+                    </a>
+                </li>
+                <li>
+                    <a href="publishing_marketing.html">
+                        <span class="lesson-number">4.4</span>
+                        Marketing Basics
+                    </a>
+                </li>
+                <li>
+                    <a href="publishing_updates.html">
+                        <span class="lesson-number">4.5</span>
+                        Post-launch Updates
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="quick-links">
+        <h3>🚀 Quick Start</h3>
+        <div class="link-buttons">
+            <a href="pygame_basics_game_loop.html">Start Learning</a>
+            <a href="genres_tower_defense.html">See Example Game</a>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>🎮 Python Game Development Course</p>
+        <p>Build amazing games with Python and Pygame!</p>
+        <p style="margin-top: 20px; font-size: 0.9em;">
+            This comprehensive course covers everything from basic game loops to advanced multiplayer systems.
+        </p>
+    </div>
+
+    <script>
+        // Add smooth scrolling
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Add lesson completion tracking (localStorage)
+        function initProgressTracking() {
+            const lessons = document.querySelectorAll('.lesson-list a');
+            const completed = JSON.parse(localStorage.getItem('completedLessons') || '[]');
+            
+            lessons.forEach(lesson => {
+                const href = lesson.getAttribute('href');
+                if (completed.includes(href)) {
+                    lesson.parentElement.style.opacity = '0.7';
+                    lesson.parentElement.style.background = '#e6ffed';
+                }
+            });
+        }
+        
+        initProgressTracking();
+    </script>
+</body>
+</html>

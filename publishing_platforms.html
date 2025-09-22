@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Learn about game distribution platforms. Master Steam, itch.io, Epic Games Store, mobile app stores, and web distribution strategies.">
+    <title>Distribution Platforms - Publishing Your Game</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/enhanced.css">
+    <link rel="icon" href="favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Distribution Platforms</h1>
+        <div class="reading-time" aria-label="Estimated reading time">20 minute read</div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Advanced Module - Section 4: Publishing Your Game - Lesson 3</span>
+    </nav>
+
+    <h2>Getting Your Game to Players</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Navigate the world of game distribution! Learn about Steam, itch.io, Epic Games Store, mobile app stores, and choose the right platform for your game! 🎮🚀🌍</p>
+    </div>
+
+    <h2>Platform Overview</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎯 Major Distribution Platforms</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr style="background-color: #333; color: white;">
+                <th style="padding: 10px; border: 1px solid #ddd;">Platform</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Revenue Split</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Entry Cost</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Audience</th>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Steam</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">70/30</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">$100</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">132M+ active</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>itch.io</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">Pay what you want</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">Free</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">Indie focused</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Epic Games Store</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">88/12</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">Curated</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">68M+ active</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>GOG</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">70/30</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">Curated</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">DRM-free focus</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Google Play</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">70/30 (85/15 after $1M)</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">$25 one-time</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">2.5B+ Android</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Apple App Store</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">70/30 (85/15 for small)</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">$99/year</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">1.5B+ iOS</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Your Game"] --> B{Platform Choice}
+        B --> C["PC/Desktop"]
+        B --> D["Mobile"]
+        B --> E["Web"]
+        B --> F["Console"]
+        
+        C --> G["Steam"]
+        C --> H["itch.io"]
+        C --> I["Epic Games"]
+        C --> J["GOG"]
+        
+        D --> K["Google Play"]
+        D --> L["App Store"]
+        D --> M["Amazon"]
+        
+        E --> N["Web Hosting"]
+        E --> O["Game Portals"]
+        E --> P["Facebook"]
+        
+        F --> Q["PlayStation"]
+        F --> R["Xbox"]
+        F --> S["Nintendo"]
+    </div>
+
+    <h2>Steam - The Giant</h2>
+    
+    <div style="background-color: #f9f9f9; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎮 Publishing on Steam</h3>
+        
+        <h4>Steamworks Integration</h4>
+        <pre><code class="language-python">
+# steamworks.py - Steam API integration example
+import sys
+import os
+
+# Steamworks API wrapper (using steamworks-py or similar)
+try:
+    import steamworks
+except ImportError:
+    print("Steamworks API not available")
+    steamworks = None
+
+class SteamIntegration:
+    def __init__(self, app_id):
+        self.app_id = app_id
+        self.initialized = False
+        self.client = None
+        
+    def initialize(self):
+        """Initialize Steam API"""
+        if not steamworks:
+            print("Running without Steam")
+            return False
+        
+        try:
+            # Set Steam App ID
+            os.environ['SteamAppId'] = str(self.app_id)
+            
+            # Initialize client
+            self.client = steamworks.STEAMWORKS()
+            self.client.initialize()
+            self.initialized = True
+            
+            print(f"Steam initialized for App ID: {self.app_id}")
+            return True
+        except Exception as e:
+            print(f"Failed to initialize Steam: {e}")
+            return False
+    
+    def get_user_info(self):
+        """Get current user information"""
+        if not self.initialized:
+            return None
+        
+        user = self.client.Users.GetLocalPlayer()
+        return {
+            'id': user.steam_id,
+            'name': user.name,
+            'level': user.level
+        }
+    
+    def unlock_achievement(self, achievement_name):
+        """Unlock a Steam achievement"""
+        if not self.initialized:
+            return False
+        
+        try:
+            self.client.UserStats.SetAchievement(achievement_name)
+            self.client.UserStats.StoreStats()
+            print(f"Achievement unlocked: {achievement_name}")
+            return True
+        except Exception as e:
+            print(f"Failed to unlock achievement: {e}")
+            return False
+    
+    def set_rich_presence(self, key, value):
+        """Set Steam Rich Presence"""
+        if not self.initialized:
+            return False
+        
+        try:
+            self.client.Friends.SetRichPresence(key, value)
+            return True
+        except:
+            return False
+    
+    def get_leaderboard(self, leaderboard_name, num_entries=10):
+        """Get leaderboard entries"""
+        if not self.initialized:
+            return []
+        
+        try:
+            leaderboard = self.client.UserStats.FindLeaderboard(leaderboard_name)
+            entries = leaderboard.GetEntries(
+                steamworks.LeaderboardDataRequest.Global,
+                1, num_entries
+            )
+            
+            return [{
+                'rank': entry.rank,
+                'score': entry.score,
+                'user': entry.user_name
+            } for entry in entries]
+        except:
+            return []
+    
+    def submit_score(self, leaderboard_name, score):
+        """Submit score to leaderboard"""
+        if not self.initialized:
+            return False
+        
+        try:
+            leaderboard = self.client.UserStats.FindLeaderboard(leaderboard_name)
+            leaderboard.UploadScore(
+                steamworks.LeaderboardUploadScoreMethod.KeepBest,
+                score
+            )
+            return True
+        except:
+            return False
+    
+    def shutdown(self):
+        """Shutdown Steam API"""
+        if self.initialized and self.client:
+            self.client.shutdown()
+            self.initialized = False
+
+# Steam App ID configuration
+STEAM_APP_ID = 480  # Use 480 for testing (Spacewar)
+
+# Usage in game
+steam = SteamIntegration(STEAM_APP_ID)
+
+if steam.initialize():
+    # Get user info
+    user = steam.get_user_info()
+    if user:
+        print(f"Welcome, {user['name']}!")
+    
+    # Set rich presence
+    steam.set_rich_presence("status", "In Main Menu")
+    
+    # Unlock achievement
+    steam.unlock_achievement("FIRST_LAUNCH")
+    
+    # Submit score
+    steam.submit_score("HIGH_SCORES", 1000)
+
+# Steamworks configuration file - steam_appid.txt
+# Place in same directory as executable
+# Contains only the App ID number: 480
+        </code></pre>
+        
+        <h4>Steam Store Page Requirements</h4>
+        <ul>
+            <li>📝 Game description (short and detailed)</li>
+            <li>🖼️ Capsule images (multiple sizes)</li>
+            <li>📸 At least 5 screenshots</li>
+            <li>🎬 Gameplay trailer (highly recommended)</li>
+            <li>🏷️ Tags and categories</li>
+            <li>💰 Pricing and regional settings</li>
+            <li>📅 Release date planning</li>
+            <li>🔞 Age rating (ESRB, PEGI, etc.)</li>
+        </ul>
+    </div>
+
+    <h2>itch.io - Indie Paradise</h2>
+    
+    <div style="background-color: #f0fff0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎨 Publishing on itch.io</h3>
+        
+        <h4>Butler - Command Line Tool</h4>
+        <pre><code class="language-bash">
+# Install Butler
+# Download from: https://itch.io/docs/butler/
+
+# Login to itch.io
+butler login
+
+# Push your game build
+butler push mygame-windows.zip username/game-name:windows
+
+# Push with version number
+butler push mygame-windows.zip username/game-name:windows --userversion 1.0.0
+
+# Different platforms
+butler push mygame-linux.tar.gz username/game-name:linux
+butler push mygame-mac.zip username/game-name:mac
+
+# Web build (HTML5)
+butler push webgame/ username/game-name:html5
+
+# Check status
+butler status username/game-name
+        </code></pre>
+        
+        <h4>itch.io API Integration</h4>
+        <pre><code class="language-python">
+import requests
+import json
+
+class ItchIOAPI:
+    def __init__(self, api_key):
+        self.api_key = api_key
+        self.base_url = "https://itch.io/api/1"
+        self.headers = {
+            "Authorization": f"Bearer {api_key}"
+        }
+    
+    def get_my_games(self):
+        """Get list of your games"""
+        response = requests.get(
+            f"{self.base_url}/{self.api_key}/my-games",
+            headers=self.headers
+        )
+        return response.json()
+    
+    def get_game_stats(self, game_id):
+        """Get game statistics"""
+        response = requests.get(
+            f"{self.base_url}/game/{game_id}/stats",
+            headers=self.headers
+        )
+        return response.json()
+    
+    def post_devlog(self, game_id, title, body, status="published"):
+        """Post a devlog update"""
+        data = {
+            "title": title,
+            "body": body,
+            "status": status
+        }
+        response = requests.post(
+            f"{self.base_url}/game/{game_id}/devlog",
+            headers=self.headers,
+            json=data
+        )
+        return response.json()
+
+# Web embed for itch.io
+HTML_TEMPLATE = '''
+<iframe src="https://itch.io/embed/{game_id}?dark=true" 
+        width="552" height="167" 
+        frameborder="0">
+    <a href="https://{username}.itch.io/{game_name}">
+        {game_title} by {username}
+    </a>
+</iframe>
+'''
+        </code></pre>
+    </div>
+
+    <h2>Mobile Distribution</h2>
+    
+    <div style="background-color: #fff9e6; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>📱 Google Play & App Store</h3>
+        
+        <h4>Preparing for Mobile</h4>
+        <pre><code class="language-python">
+# mobile_build.py - Mobile-specific configurations
+import json
+import os
+
+class MobileBuildConfig:
+    def __init__(self):
+        self.config = {
+            "android": {
+                "package_name": "com.yourcompany.gamename",
+                "version_code": 1,
+                "version_name": "1.0.0",
+                "min_sdk": 21,
+                "target_sdk": 33,
+                "permissions": [
+                    "INTERNET",
+                    "ACCESS_NETWORK_STATE"
+                ],
+                "features": [],
+                "signing": {
+                    "keystore": "release.keystore",
+                    "key_alias": "release_key",
+                    "store_password": os.environ.get("KEYSTORE_PASSWORD"),
+                    "key_password": os.environ.get("KEY_PASSWORD")
+                }
+            },
+            "ios": {
+                "bundle_id": "com.yourcompany.gamename",
+                "version": "1.0.0",
+                "build": "1",
+                "min_ios": "12.0",
+                "device_capabilities": ["armv7"],
+                "orientations": ["portrait", "landscape"],
+                "info_plist": {
+                    "CFBundleDisplayName": "Game Name",
+                    "ITSAppUsesNonExemptEncryption": False,
+                    "NSUserTrackingUsageDescription": "This app needs tracking for analytics"
+                }
+            }
+        }
+    
+    def generate_android_manifest(self):
+        """Generate AndroidManifest.xml content"""
+        android = self.config["android"]
+        
+        manifest = f'''<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="{android['package_name']}"
+    android:versionCode="{android['version_code']}"
+    android:versionName="{android['version_name']}">
+    
+    <uses-sdk
+        android:minSdkVersion="{android['min_sdk']}"
+        android:targetSdkVersion="{android['target_sdk']}" />
+    '''
+        
+        for permission in android['permissions']:
+            manifest += f'\n    <uses-permission android:name="android.permission.{permission}" />'
+        
+        manifest += '''
+    
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme">
+        
+        <activity
+            android:name=".MainActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:screenOrientation="landscape">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>'''
+        
+        return manifest
+    
+    def generate_info_plist(self):
+        """Generate Info.plist for iOS"""
+        import plistlib
+        
+        ios = self.config["ios"]
+        plist = {
+            "CFBundleIdentifier": ios["bundle_id"],
+            "CFBundleVersion": ios["build"],
+            "CFBundleShortVersionString": ios["version"],
+            "MinimumOSVersion": ios["min_ios"],
+            "UIRequiredDeviceCapabilities": ios["device_capabilities"],
+            "UISupportedInterfaceOrientations": ios["orientations"],
+            **ios["info_plist"]
+        }
+        
+        return plistlib.dumps(plist)
+
+# App Store Connect API
+class AppStoreConnect:
+    def __init__(self, key_id, issuer_id, private_key_path):
+        self.key_id = key_id
+        self.issuer_id = issuer_id
+        self.private_key = self.load_private_key(private_key_path)
+        
+    def create_jwt_token(self):
+        """Create JWT for App Store Connect API"""
+        import jwt
+        import time
+        
+        header = {
+            "alg": "ES256",
+            "kid": self.key_id,
+            "typ": "JWT"
+        }
+        
+        payload = {
+            "iss": self.issuer_id,
+            "exp": int(time.time()) + 1200,  # 20 minutes
+            "aud": "appstoreconnect-v1"
+        }
+        
+        token = jwt.encode(payload, self.private_key, 
+                          algorithm="ES256", headers=header)
+        return token
+    
+    def upload_build(self, ipa_path):
+        """Upload IPA to App Store Connect"""
+        # Use altool or Transporter
+        import subprocess
+        
+        cmd = [
+            "xcrun", "altool",
+            "--upload-app",
+            "--type", "ios",
+            "--file", ipa_path,
+            "--apiKey", self.key_id,
+            "--apiIssuer", self.issuer_id
+        ]
+        
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        return result.returncode == 0
+        </code></pre>
+    </div>
+
+    <h2>Web Distribution</h2>
+    
+    <div style="background-color: #f3e5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🌐 Web-Based Games</h3>
+        
+        <h4>Hosting Options</h4>
+        <ul>
+            <li><strong>GitHub Pages:</strong> Free, static hosting</li>
+            <li><strong>Netlify:</strong> Free tier with CI/CD</li>
+            <li><strong>Vercel:</strong> Optimized for web apps</li>
+            <li><strong>itch.io:</strong> Built-in web game support</li>
+            <li><strong>Game Portals:</strong> Kongregate, Newgrounds, Armor Games</li>
+            <li><strong>Your Own Server:</strong> Full control</li>
+        </ul>
+        
+        <h4>Web Monetization</h4>
+        <pre><code class="language-javascript">
+// Web Monetization API
+if (document.monetization) {
+    document.monetization.addEventListener('monetizationstart', () => {
+        console.log('Payment started');
+        // Unlock premium features
+        unlockPremiumContent();
+    });
+}
+
+// Ad Integration (example with AdSense)
+function showAd() {
+    const adContainer = document.getElementById('ad-container');
+    adContainer.innerHTML = `
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js">
+        </script>
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-YOUR_ID"
+             data-ad-slot="YOUR_SLOT"
+             data-ad-format="auto">
+        </ins>
+        <script>
+            (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+    `;
+}
+
+// In-App Purchases with Stripe
+async function purchaseItem(itemId, price) {
+    const response = await fetch('/api/create-payment-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itemId, price })
+    });
+    
+    const { clientSecret } = await response.json();
+    
+    // Use Stripe.js to complete payment
+    const result = await stripe.confirmCardPayment(clientSecret);
+    
+    if (result.error) {
+        console.error(result.error);
+    } else {
+        // Payment successful
+        unlockItem(itemId);
+    }
+}
+        </code></pre>
+    </div>
+
+    <h2>Platform Comparison</h2>
+    
+    <div style="background-color: #e8f5e9; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>📊 Choosing the Right Platform</h3>
+        
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr style="background-color: #333; color: white;">
+                <th style="padding: 10px;">Criteria</th>
+                <th style="padding: 10px;">Steam</th>
+                <th style="padding: 10px;">itch.io</th>
+                <th style="padding: 10px;">Epic</th>
+                <th style="padding: 10px;">Mobile</th>
+            </tr>
+            <tr>
+                <td style="padding: 10px;"><strong>Best For</strong></td>
+                <td style="padding: 10px;">Commercial PC games</td>
+                <td style="padding: 10px;">Indie/experimental</td>
+                <td style="padding: 10px;">AAA/exclusive deals</td>
+                <td style="padding: 10px;">Casual/F2P</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px;"><strong>Discovery</strong></td>
+                <td style="padding: 10px;">Algorithm-driven</td>
+                <td style="padding: 10px;">Community-driven</td>
+                <td style="padding: 10px;">Curated</td>
+                <td style="padding: 10px;">ASO/Featured</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px;"><strong>Competition</strong></td>
+                <td style="padding: 10px;">Very high</td>
+                <td style="padding: 10px;">Moderate</td>
+                <td style="padding: 10px;">Lower</td>
+                <td style="padding: 10px;">Extreme</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px;"><strong>Features</strong></td>
+                <td style="padding: 10px;">Workshop, Cloud, etc.</td>
+                <td style="padding: 10px;">Flexible pricing</td>
+                <td style="padding: 10px;">Free games program</td>
+                <td style="padding: 10px;">IAP, Ads</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px;"><strong>Marketing</strong></td>
+                <td style="padding: 10px;">Wishlist system</td>
+                <td style="padding: 10px;">Direct to fans</td>
+                <td style="padding: 10px;">Epic support</td>
+                <td style="padding: 10px;">ASO critical</td>
+            </tr>
+        </table>
+    </div>
+
+    <h2>Multi-Platform Strategy</h2>
+    
+    <div style="background-color: #fff0f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎯 Release Strategy Timeline</h3>
+        
+        <div class="mermaid">
+        gantt
+            title Game Release Timeline
+            dateFormat YYYY-MM-DD
+            
+            section Pre-Launch
+            Beta Testing       :2024-01-01, 30d
+            Press Kit          :2024-01-15, 14d
+            Store Pages        :2024-01-20, 7d
+            
+            section Launch
+            itch.io Early Access  :2024-02-01, 1d
+            Steam Release         :2024-03-01, 1d
+            Epic Games           :2024-03-01, 1d
+            
+            section Post-Launch
+            Mobile Port          :2024-04-01, 30d
+            Console Port         :2024-06-01, 60d
+            DLC/Updates          :2024-04-01, 180d
+        </div>
+        
+        <h4>Platform Release Order</h4>
+        <ol>
+            <li><strong>itch.io Alpha/Beta:</strong> Test with early adopters</li>
+            <li><strong>Steam Early Access:</strong> Gather feedback, build wishlist</li>
+            <li><strong>Full Steam/Epic Release:</strong> Main launch</li>
+            <li><strong>Mobile Ports:</strong> Expand audience</li>
+            <li><strong>Console Ports:</strong> If successful on PC</li>
+        </ol>
+    </div>
+
+    <h2>Platform-Specific Features</h2>
+    
+    <div style="background-color: #f5f5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🔧 Integration Checklist</h3>
+        
+        <h4>Steam Features</h4>
+        <ul>
+            <li>☑️ Achievements</li>
+            <li>☑️ Trading Cards</li>
+            <li>☑️ Cloud Saves</li>
+            <li>☑️ Workshop (mods)</li>
+            <li>☑️ Leaderboards</li>
+            <li>☑️ Rich Presence</li>
+            <li>☑️ Remote Play</li>
+            <li>☑️ Steam Deck verified</li>
+        </ul>
+        
+        <h4>Mobile Features</h4>
+        <ul>
+            <li>☑️ Push Notifications</li>
+            <li>☑️ In-App Purchases</li>
+            <li>☑️ Ad Monetization</li>
+            <li>☑️ Game Center/Google Play Games</li>
+            <li>☑️ Cloud Save</li>
+            <li>☑️ Social Sharing</li>
+            <li>☑️ Analytics</li>
+            <li>☑️ Crash Reporting</li>
+        </ul>
+    </div>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>✨ Distribution Best Practices</h3>
+        <ul>
+            <li><strong>Start Early:</strong> Set up store pages months before launch</li>
+            <li><strong>Cross-Promote:</strong> Use each platform to promote others</li>
+            <li><strong>Platform Features:</strong> Implement platform-specific features</li>
+            <li><strong>Regional Pricing:</strong> Research and set appropriate prices</li>
+            <li><strong>Localization:</strong> Translate store pages at minimum</li>
+            <li><strong>Reviews:</strong> Respond professionally to feedback</li>
+            <li><strong>Updates:</strong> Regular updates keep games visible</li>
+            <li><strong>Analytics:</strong> Track metrics across all platforms</li>
+            <li><strong>Community:</strong> Build platform-specific communities</li>
+            <li><strong>Compliance:</strong> Follow each platform's guidelines</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>🎮 Each platform has unique strengths and audiences</li>
+            <li>💰 Revenue splits vary significantly (12-30% platform cut)</li>
+            <li>🚀 itch.io is perfect for testing and building community</li>
+            <li>📊 Steam dominates PC gaming but has high competition</li>
+            <li>📱 Mobile requires different monetization strategies</li>
+            <li>🌐 Web games have lowest barrier to entry</li>
+            <li>🎯 Multi-platform releases maximize reach</li>
+            <li>🔧 Platform-specific features increase visibility</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Now that you know where to distribute, let's learn how to market your game effectively!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="publishing_executables.html" class="prev-lesson">Previous: Building Executables</a>
+        <a href="publishing_marketing.html" class="next-lesson">Next: Marketing Basics</a>
+    </nav>
+    
+    </main>
+</body>
+</html>

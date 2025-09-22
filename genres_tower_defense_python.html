@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Complete Python tower defense implementation with Pygame. Multiple tower types, enemy waves, upgrades, and special abilities.">
+    <title>Tower Defense Python Implementation - Game Development with Python</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/enhanced.css">
+    <link rel="icon" href="favicon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Tower Defense Python Implementation</h1>
+        <div class="reading-time" aria-label="Estimated reading time">15 minute read</div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <a href="genres_tower_defense.html">Tower Defense Patterns</a>
+        <span class="separator">›</span>
+        <span class="current">Python Implementation</span>
+    </nav>
+
+    <h2>Complete Tower Defense in Python</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>A full tower defense implementation featuring multiple tower types, enemy waves, upgrade systems, pathfinding, and special abilities.</p>
+    </div>
+
+    <h2>Full Implementation</h2>
+    
+    <pre><code class="language-python">"""
+Tower Defense Game Implementation
+A complete tower defense game with multiple tower types, enemy waves, and upgrade systems
+"""
+
+import pygame
+import math
+import random
+from typing import List, Tuple, Dict, Optional
+from dataclasses import dataclass
+from enum import Enum
+import json
+
+# Initialize Pygame
+pygame.init()
+
+# Constants
+SCREEN_WIDTH = 1024
+SCREEN_HEIGHT = 768
+FPS = 60
+GRID_SIZE = 32
+
+# Colors
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
+YELLOW = (255, 255, 0)
+BROWN = (139, 69, 19)
+GRAY = (128, 128, 128)
+DARK_GREEN = (0, 100, 0)
+GOLD = (255, 215, 0)
+PURPLE = (128, 0, 128)
+CYAN = (0, 255, 255)
+LIGHT_BROWN = (205, 133, 63)
+
+class TowerType(Enum):
+    """Tower types enumeration"""
+    BASIC = "basic"
+    CANNON = "cannon"
+    LASER = "laser"
+    SLOW = "slow"
+    MONEY = "money"
+
+class EnemyType(Enum):
+    """Enemy types enumeration"""
+    BASIC = "basic"
+    FAST = "fast"
+    TANK = "tank"
+    FLYING = "flying"
+    BOSS = "boss"
+
+@dataclass
+class TowerStats:
+    """Tower statistics"""
+    name: str
+    cost: int
+    damage: int
+    range: int
+    fire_rate: float
+    projectile_speed: int
+    color: Tuple[int, int, int]
+    splash_radius: int = 0
+    slow_effect: float = 0
+    slow_duration: float = 0
+    gold_generation: int = 0
+    can_target_flying: bool = True
+
+@dataclass
+class EnemyStats:
+    """Enemy statistics"""
+    name: str
+    health: int
+    speed: int
+    armor: int
+    value: int
+    color: Tuple[int, int, int]
+    size: int
+    flying: bool = False
+
+# Tower definitions
+TOWER_STATS = {
+    TowerType.BASIC: TowerStats(
+        "Basic Tower", 100, 20, 120, 1.5, 300, BROWN
+    ),
+    TowerType.CANNON: TowerStats(
+        "Cannon Tower", 200, 50, 100, 0.5, 200, GRAY, splash_radius=50
+    ),
+    TowerType.LASER: TowerStats(
+        "Laser Tower", 300, 10, 150, 5.0, 1000, CYAN, can_target_flying=True
+    ),
+    TowerType.SLOW: TowerStats(
+        "Slow Tower", 150, 5, 100, 2.0, 250, BLUE, 
+        slow_effect=0.5, slow_duration=2.0
+    ),
+    TowerType.MONEY: TowerStats(
+        "Money Tower", 250, 0, 0, 0.1, 0, GOLD, gold_generation=10
+    )
+}
+
+# Enemy definitions
+ENEMY_STATS = {
+    EnemyType.BASIC: EnemyStats(
+        "Basic", 100, 50, 0, 10, GREEN, 10
+    ),
+    EnemyType.FAST: EnemyStats(
+        "Fast", 75, 100, 0, 15, YELLOW, 8
+    ),
+    EnemyType.TANK: EnemyStats(
+        "Tank", 300, 30, 5, 30, DARK_GREEN, 15
+    ),
+    EnemyType.FLYING: EnemyStats(
+        "Flying", 150, 60, 2, 20, BLUE, 12, flying=True
+    ),
+    EnemyType.BOSS: EnemyStats(
+        "Boss", 1000, 25, 10, 100, PURPLE, 20
+    )
+}
+
+class Tower:
+    """Tower class"""
+    def __init__(self, x: int, y: int, tower_type: TowerType):
+        self.x = x
+        self.y = y
+        self.type = tower_type
+        self.stats = TOWER_STATS[tower_type]
+        self.level = 1
+        self.last_fire_time = 0
+        self.target = None
+        self.angle = 0
+        self.kills = 0
+        self.damage_dealt = 0
+        self.last_generation_time = 0
+        
+    def update(self, enemies: List['Enemy'], current_time: float) -> Optional[int]:
+        """Update tower and return gold generated if any"""
+        # Money tower generates gold
+        if self.type == TowerType.MONEY:
+            if current_time - self.last_generation_time > 1000 / self.stats.fire_rate:
+                self.last_generation_time = current_time
+                return self.stats.gold_generation * self.level
+            return None
+            
+        # Find and track target
+        self.find_target(enemies)
+        
+        # Fire at target if ready
+        if self.target and not self.target.is_dead:
+            dx = self.target.x - self.x
+            dy = self.target.y - self.y
+            self.angle = math.atan2(dy, dx)
+            
+            if current_time - self.last_fire_time > 1000 / self.stats.fire_rate:
+                self.last_fire_time = current_time
+                return self.create_projectile()
+        
+        return None
+    
+    def find_target(self, enemies: List['Enemy']):
+        """Find the best target within range"""
+        # Clear dead or out-of-range target
+        if self.target:
+            if self.target.is_dead or not self.is_in_range(self.target):
+                self.target = None
+        
+        # Find new target if needed
+        if not self.target:
+            valid_targets = []
+            for enemy in enemies:
+                if (not enemy.is_dead and 
+                    self.is_in_range(enemy) and
+                    (not enemy.stats.flying or self.stats.can_target_flying)):
+                    valid_targets.append(enemy)
+            
+            # Target enemy closest to exit (highest progress)
+            if valid_targets:
+                self.target = max(valid_targets, key=lambda e: e.path_progress)
+    
+    def is_in_range(self, enemy: 'Enemy') -> bool:
+        """Check if enemy is within tower's range"""
+        distance = math.sqrt((enemy.x - self.x) ** 2 + (enemy.y - self.y) ** 2)
+        return distance <= self.stats.range
+    
+    def create_projectile(self) -> 'Projectile':
+        """Create a projectile targeting current enemy"""
+        return Projectile(
+            self.x, self.y,
+            self.target,
+            self.stats.damage * self.level,
+            self.stats.projectile_speed,
+            self
+        )
+    
+    def upgrade(self) -> int:
+        """Upgrade tower and return cost"""
+        cost = self.get_upgrade_cost()
+        self.level += 1
+        return cost
+    
+    def get_upgrade_cost(self) -> int:
+        """Get cost to upgrade tower"""
+        return self.stats.cost * self.level
+    
+    def get_sell_value(self) -> int:
+        """Get sell value of tower"""
+        total_value = sum(self.stats.cost * i for i in range(1, self.level + 1))
+        return int(total_value * 0.7)
+    
+    def draw(self, screen: pygame.Surface, selected: bool = False):
+        """Draw the tower"""
+        # Draw range if selected
+        if selected:
+            pygame.draw.circle(screen, (255, 255, 255, 30), 
+                             (self.x, self.y), self.stats.range, 1)
+        
+        # Draw tower base
+        tower_rect = pygame.Rect(self.x - 16, self.y - 16, 32, 32)
+        pygame.draw.rect(screen, self.stats.color, tower_rect)
+        pygame.draw.rect(screen, BLACK, tower_rect, 2)
+        
+        # Draw level indicators
+        for i in range(self.level):
+            level_rect = pygame.Rect(self.x - 16 + i * 6, self.y - 22, 4, 4)
+            pygame.draw.rect(screen, GOLD, level_rect)
+        
+        # Draw turret (except for money tower)
+        if self.type != TowerType.MONEY:
+            turret_end_x = self.x + math.cos(self.angle) * 20
+            turret_end_y = self.y + math.sin(self.angle) * 20
+            pygame.draw.line(screen, BLACK, (self.x, self.y), 
+                           (turret_end_x, turret_end_y), 4)
+
+class Enemy:
+    """Enemy class"""
+    def __init__(self, enemy_type: EnemyType, path: List[Tuple[int, int]], wave_number: int):
+        self.type = enemy_type
+        self.stats = ENEMY_STATS[enemy_type]
+        self.path = path
+        self.path_index = 0
+        self.path_progress = 0.0
+        
+        # Scale health with wave number
+        self.max_health = self.stats.health * (1 + wave_number * 0.1)
+        self.health = self.max_health
+        
+        # Position at start of path
+        self.x = path[0][0]
+        self.y = path[0][1]
+        
+        # Movement
+        self.speed = self.stats.speed
+        self.is_slowed = False
+        self.slow_end_time = 0
+        
+        # Status
+        self.is_dead = False
+        self.reached_end = False
+    
+    def update(self, dt: float, current_time: float):
+        """Update enemy position"""
+        if self.is_dead or self.reached_end:
+            return
+        
+        # Check slow effect
+        if self.is_slowed and current_time > self.slow_end_time:
+            self.is_slowed = False
+            self.speed = self.stats.speed
+        
+        # Move along path
+        if self.path_index < len(self.path) - 1:
+            target = self.path[self.path_index + 1]
+            dx = target[0] - self.x
+            dy = target[1] - self.y
+            distance = math.sqrt(dx * dx + dy * dy)
+            
+            if distance < 5:
+                # Reached waypoint
+                self.path_index += 1
+                if self.path_index >= len(self.path) - 1:
+                    self.reached_end = True
+            else:
+                # Move towards waypoint
+                move_distance = self.speed * dt * (0.5 if self.is_slowed else 1)
+                self.x += (dx / distance) * move_distance
+                self.y += (dy / distance) * move_distance
+                
+                # Update progress for targeting
+                total_segments = len(self.path) - 1
+                segment_progress = 1 - (distance / 100)  # Approximate
+                self.path_progress = (self.path_index + segment_progress) / total_segments
+    
+    def take_damage(self, damage: float):
+        """Take damage, accounting for armor"""
+        actual_damage = max(1, damage - self.stats.armor)
+        self.health -= actual_damage
+        
+        if self.health <= 0:
+            self.is_dead = True
+            return self.stats.value
+        return 0
+    
+    def apply_slow(self, slow_factor: float, duration: float, current_time: float):
+        """Apply slow effect"""
+        self.is_slowed = True
+        self.speed = self.stats.speed * slow_factor
+        self.slow_end_time = current_time + duration * 1000
+    
+    def draw(self, screen: pygame.Surface):
+        """Draw the enemy"""
+        if self.is_dead:
+            return
+        
+        # Draw shadow
+        shadow_pos = (int(self.x + 2), int(self.y + 2))
+        pygame.draw.circle(screen, (0, 0, 0, 50), shadow_pos, self.stats.size)
+        
+        # Draw enemy
+        color = (100, 100, 255) if self.is_slowed else self.stats.color
+        pygame.draw.circle(screen, color, (int(self.x), int(self.y)), self.stats.size)
+        pygame.draw.circle(screen, BLACK, (int(self.x), int(self.y)), self.stats.size, 2)
+        
+        # Draw health bar
+        if self.health < self.max_health:
+            bar_width = self.stats.size * 2
+            bar_height = 4
+            bar_y = self.y - self.stats.size - 10
+            
+            # Background
+            bar_rect = pygame.Rect(self.x - bar_width // 2, bar_y, bar_width, bar_height)
+            pygame.draw.rect(screen, RED, bar_rect)
+            
+            # Health
+            health_width = int(bar_width * (self.health / self.max_health))
+            health_rect = pygame.Rect(self.x - bar_width // 2, bar_y, health_width, bar_height)
+            pygame.draw.rect(screen, GREEN, health_rect)
+        
+        # Draw flying indicator
+        if self.stats.flying:
+            font = pygame.font.Font(None, 16)
+            text = font.render("✈", True, WHITE)
+            screen.blit(text, (self.x - 8, self.y - 8))
+
+class Projectile:
+    """Projectile class"""
+    def __init__(self, x: float, y: float, target: Enemy, damage: float, 
+                 speed: float, tower: Tower):
+        self.x = x
+        self.y = y
+        self.target = target
+        self.damage = damage
+        self.speed = speed
+        self.tower = tower
+        self.is_dead = False
+        
+        # Calculate lead position for moving target
+        if target and not target.is_dead:
+            distance = math.sqrt((target.x - x) ** 2 + (target.y - y) ** 2)
+            time_to_impact = distance / speed
+            
+            # Predict where enemy will be
+            self.target_x = target.x
+            self.target_y = target.y
+            
+            if target.path_index < len(target.path) - 1:
+                next_point = target.path[target.path_index + 1]
+                dx = next_point[0] - target.x
+                dy = next_point[1] - target.y
+                dist = math.sqrt(dx * dx + dy * dy)
+                if dist > 0:
+                    predict_distance = target.speed * time_to_impact
+                    self.target_x += (dx / dist) * predict_distance
+                    self.target_y += (dy / dist) * predict_distance
+    
+    def update(self, dt: float, enemies: List[Enemy]) -> Optional[Tuple[Enemy, float]]:
+        """Update projectile, return hit enemy and damage if hit"""
+        if self.is_dead:
+            return None
+        
+        # Check if target died
+        if self.target and self.target.is_dead:
+            self.is_dead = True
+            return None
+        
+        # Move towards predicted position
+        dx = self.target_x - self.x
+        dy = self.target_y - self.y
+        distance = math.sqrt(dx * dx + dy * dy)
+        
+        if distance < 5:
+            # Hit target
+            self.is_dead = True
+            
+            # Handle splash damage
+            if self.tower.stats.splash_radius > 0:
+                hit_enemies = []
+                for enemy in enemies:
+                    if not enemy.is_dead:
+                        enemy_dist = math.sqrt((enemy.x - self.x) ** 2 + 
+                                             (enemy.y - self.y) ** 2)
+                        if enemy_dist <= self.tower.stats.splash_radius:
+                            splash_damage = self.damage * (1 - enemy_dist / self.tower.stats.splash_radius)
+                            hit_enemies.append((enemy, splash_damage))
+                return hit_enemies
+            else:
+                # Single target
+                if self.target and not self.target.is_dead:
+                    return [(self.target, self.damage)]
+        else:
+            # Move projectile
+            move_distance = self.speed * dt
+            self.x += (dx / distance) * move_distance
+            self.y += (dy / distance) * move_distance
+            
+            # Check direct hit on actual target position
+            if self.target and not self.target.is_dead:
+                actual_dist = math.sqrt((self.target.x - self.x) ** 2 + 
+                                      (self.target.y - self.y) ** 2)
+                if actual_dist < self.target.stats.size:
+                    self.is_dead = True
+                    return [(self.target, self.damage)]
+        
+        return None
+    
+    def draw(self, screen: pygame.Surface):
+        """Draw the projectile"""
+        if self.is_dead:
+            return
+        
+        # Different projectile types
+        if self.tower.type == TowerType.LASER:
+            # Instant laser beam
+            if self.target and not self.target.is_dead:
+                pygame.draw.line(screen, CYAN, 
+                               (self.tower.x, self.tower.y),
+                               (self.target.x, self.target.y), 2)
+                # Glow effect
+                pygame.draw.line(screen, (150, 255, 255, 128),
+                               (self.tower.x, self.tower.y),
+                               (self.target.x, self.target.y), 6)
+        elif self.tower.type == TowerType.CANNON:
+            # Cannonball
+            pygame.draw.circle(screen, BLACK, (int(self.x), int(self.y)), 5)
+            pygame.draw.circle(screen, GRAY, (int(self.x), int(self.y)), 3)
+        else:
+            # Regular projectile
+            pygame.draw.circle(screen, YELLOW, (int(self.x), int(self.y)), 3)
+
+class Wave:
+    """Wave manager class"""
+    def __init__(self, wave_number: int):
+        self.wave_number = wave_number
+        self.enemies_to_spawn = []
+        self.spawn_timer = 0
+        self.spawn_delay = 1000  # milliseconds
+        self.is_complete = False
+        
+        # Generate wave composition
+        self.generate_wave()
+    
+    def generate_wave(self):
+        """Generate enemies for this wave"""
+        # Base wave patterns
+        if self.wave_number <= 3:
+            # Early waves - mostly basic enemies
+            enemy_count = 5 + self.wave_number * 2
+            for _ in range(enemy_count):
+                self.enemies_to_spawn.append(EnemyType.BASIC)
+        
+        elif self.wave_number <= 6:
+            # Introduce fast enemies
+            basic_count = 10
+            fast_count = self.wave_number - 3
+            
+            for _ in range(basic_count):
+                self.enemies_to_spawn.append(EnemyType.BASIC)
+            for _ in range(fast_count):
+                self.enemies_to_spawn.append(EnemyType.FAST)
+        
+        elif self.wave_number <= 10:
+            # Add tanks
+            basic_count = 10
+            fast_count = 5
+            tank_count = self.wave_number - 6
+            
+            for _ in range(basic_count):
+                self.enemies_to_spawn.append(EnemyType.BASIC)
+            for _ in range(fast_count):
+                self.enemies_to_spawn.append(EnemyType.FAST)
+            for _ in range(tank_count):
+                self.enemies_to_spawn.append(EnemyType.TANK)
+        
+        elif self.wave_number <= 15:
+            # Flying enemies appear
+            basic_count = 15
+            fast_count = 8
+            tank_count = 3
+            flying_count = self.wave_number - 10
+            
+            for _ in range(basic_count):
+                self.enemies_to_spawn.append(EnemyType.BASIC)
+            for _ in range(fast_count):
+                self.enemies_to_spawn.append(EnemyType.FAST)
+            for _ in range(tank_count):
+                self.enemies_to_spawn.append(EnemyType.TANK)
+            for _ in range(flying_count):
+                self.enemies_to_spawn.append(EnemyType.FLYING)
+        
+        else:
+            # Boss waves every 5 waves after 15
+            if self.wave_number % 5 == 0:
+                self.enemies_to_spawn.append(EnemyType.BOSS)
+            
+            # Scale other enemies
+            scale = self.wave_number / 10
+            basic_count = int(10 * scale)
+            fast_count = int(8 * scale)
+            tank_count = int(5 * scale)
+            flying_count = int(3 * scale)
+            
+            for _ in range(basic_count):
+                self.enemies_to_spawn.append(EnemyType.BASIC)
+            for _ in range(fast_count):
+                self.enemies_to_spawn.append(EnemyType.FAST)
+            for _ in range(tank_count):
+                self.enemies_to_spawn.append(EnemyType.TANK)
+            for _ in range(flying_count):
+                self.enemies_to_spawn.append(EnemyType.FLYING)
+        
+        # Randomize spawn order
+        random.shuffle(self.enemies_to_spawn)
+    
+    def update(self, current_time: float, path: List[Tuple[int, int]]) -> Optional[Enemy]:
+        """Update wave spawning, return new enemy if spawned"""
+        if self.is_complete:
+            return None
+        
+        if current_time - self.spawn_timer > self.spawn_delay:
+            if self.enemies_to_spawn:
+                enemy_type = self.enemies_to_spawn.pop(0)
+                self.spawn_timer = current_time
+                
+                # Decrease spawn delay as wave progresses
+                self.spawn_delay = max(500, 1000 - self.wave_number * 20)
+                
+                return Enemy(enemy_type, path, self.wave_number)
+            else:
+                self.is_complete = True
+        
+        return None
+
+class Particle:
+    """Visual effects particle"""
+    def __init__(self, x: float, y: float, color: Tuple[int, int, int], 
+                 lifetime: float = 1000):
+        self.x = x
+        self.y = y
+        self.color = color
+        self.lifetime = lifetime
+        self.age = 0
+        self.vy = -50
+        self.vx = random.uniform(-20, 20)
+    
+    def update(self, dt: float) -> bool:
+        """Update particle, return False if dead"""
+        self.age += dt * 1000
+        self.x += self.vx * dt
+        self.y += self.vy * dt
+        self.vy += 200 * dt  # Gravity
+        
+        return self.age < self.lifetime
+    
+    def draw(self, screen: pygame.Surface):
+        """Draw particle"""
+        alpha = 1 - (self.age / self.lifetime)
+        color = (*self.color, int(255 * alpha))
+        pygame.draw.circle(screen, color, (int(self.x), int(self.y)), 2)
+
+class Game:
+    """Main game class"""
+    def __init__(self):
+        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+        pygame.display.set_caption("Tower Defense")
+        self.clock = pygame.time.Clock()
+        self.running = True
+        
+        # Game state
+        self.gold = 500
+        self.lives = 20
+        self.wave_number = 0
+        self.score = 0
+        self.game_speed = 1
+        self.paused = False
+        self.game_over = False
+        
+        # Path waypoints
+        self.path = [
+            (0, 400),
+            (200, 400),
+            (200, 200),
+            (500, 200),
+            (500, 500),
+            (700, 500),
+            (700, 300),
+            (SCREEN_WIDTH, 300)
+        ]
+        
+        # Game objects
+        self.towers = []
+        self.enemies = []
+        self.projectiles = []
+        self.particles = []
+        self.wave_manager = None
+        
+        # Selection
+        self.selected_tower_type = TowerType.BASIC
+        self.selected_tower = None
+        self.show_preview = False
+        self.preview_pos = (0, 0)
+        
+        # Fonts
+        self.font = pygame.font.Font(None, 36)
+        self.small_font = pygame.font.Font(None, 24)
+    
+    def handle_events(self):
+        """Handle input events"""
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.running = False
+            
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    self.running = False
+                elif event.key == pygame.K_SPACE:
+                    self.paused = not self.paused
+                elif event.key == pygame.K_w:
+                    self.start_wave()
+                elif event.key == pygame.K_1:
+                    self.selected_tower_type = TowerType.BASIC
+                elif event.key == pygame.K_2:
+                    self.selected_tower_type = TowerType.CANNON
+                elif event.key == pygame.K_3:
+                    self.selected_tower_type = TowerType.LASER
+                elif event.key == pygame.K_4:
+                    self.selected_tower_type = TowerType.SLOW
+                elif event.key == pygame.K_5:
+                    self.selected_tower_type = TowerType.MONEY
+                elif event.key == pygame.K_s:
+                    self.game_speed = 2 if self.game_speed == 1 else 1
+                elif event.key == pygame.K_u and self.selected_tower:
+                    self.upgrade_tower()
+                elif event.key == pygame.K_DELETE and self.selected_tower:
+                    self.sell_tower()
+            
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:  # Left click
+                    mouse_x, mouse_y = pygame.mouse.get_pos()
+                    self.handle_click(mouse_x, mouse_y)
+            
+            elif event.type == pygame.MOUSEMOTION:
+                self.preview_pos = pygame.mouse.get_pos()
+                self.show_preview = True
+    
+    def handle_click(self, x: int, y: int):
+        """Handle mouse click"""
+        # Snap to grid
+        grid_x = (x // GRID_SIZE) * GRID_SIZE + GRID_SIZE // 2
+        grid_y = (y // GRID_SIZE) * GRID_SIZE + GRID_SIZE // 2
+        
+        # Check if clicking on existing tower
+        for tower in self.towers:
+            if abs(tower.x - grid_x) < GRID_SIZE // 2 and abs(tower.y - grid_y) < GRID_SIZE // 2:
+                self.selected_tower = tower
+                return
+        
+        # Try to place new tower
+        if self.can_place_tower(grid_x, grid_y):
+            tower_stats = TOWER_STATS[self.selected_tower_type]
+            if self.gold >= tower_stats.cost:
+                self.gold -= tower_stats.cost
+                new_tower = Tower(grid_x, grid_y, self.selected_tower_type)
+                self.towers.append(new_tower)
+                self.selected_tower = new_tower
+                
+                # Placement effect
+                for _ in range(10):
+                    self.particles.append(Particle(grid_x, grid_y, GOLD))
+    
+    def can_place_tower(self, x: int, y: int) -> bool:
+        """Check if tower can be placed at position"""
+        # Check if on path
+        for i in range(len(self.path) - 1):
+            p1 = self.path[i]
+            p2 = self.path[i + 1]
+            
+            # Simple rectangle check along path
+            min_x = min(p1[0], p2[0]) - 40
+            max_x = max(p1[0], p2[0]) + 40
+            min_y = min(p1[1], p2[1]) - 40
+            max_y = max(p1[1], p2[1]) + 40
+            
+            if min_x <= x <= max_x and min_y <= y <= max_y:
+                return False
+        
+        # Check if tower already exists
+        for tower in self.towers:
+            if abs(tower.x - x) < GRID_SIZE and abs(tower.y - y) < GRID_SIZE:
+                return False
+        
+        return True
+    
+    def start_wave(self):
+        """Start next wave"""
+        if self.wave_manager and not self.wave_manager.is_complete:
+            return
+        
+        self.wave_number += 1
+        self.wave_manager = Wave(self.wave_number)
+        
+        # Wave start bonus
+        bonus = 50 + self.wave_number * 5
+        self.gold += bonus
+    
+    def upgrade_tower(self):
+        """Upgrade selected tower"""
+        if self.selected_tower:
+            cost = self.selected_tower.get_upgrade_cost()
+            if self.gold >= cost:
+                self.gold -= cost
+                self.selected_tower.upgrade()
+                
+                # Upgrade effect
+                for _ in range(15):
+                    angle = random.uniform(0, math.pi * 2)
+                    distance = random.uniform(10, 30)
+                    x = self.selected_tower.x + math.cos(angle) * distance
+                    y = self.selected_tower.y + math.sin(angle) * distance
+                    self.particles.append(Particle(x, y, YELLOW))
+    
+    def sell_tower(self):
+        """Sell selected tower"""
+        if self.selected_tower:
+            self.gold += self.selected_tower.get_sell_value()
+            self.towers.remove(self.selected_tower)
+            
+            # Sell effect
+            for _ in range(10):
+                self.particles.append(
+                    Particle(self.selected_tower.x, self.selected_tower.y, GOLD)
+                )
+            
+            self.selected_tower = None
+    
+    def update(self, dt: float):
+        """Update game state"""
+        if self.paused or self.game_over:
+            return
+        
+        current_time = pygame.time.get_ticks()
+        dt = dt * self.game_speed
+        
+        # Update wave spawning
+        if self.wave_manager:
+            new_enemy = self.wave_manager.update(current_time, self.path)
+            if new_enemy:
+                self.enemies.append(new_enemy)
+        
+        # Update towers
+        for tower in self.towers:
+            result = tower.update(self.enemies, current_time)
+            
+            if tower.type == TowerType.MONEY and result:
+                # Gold generated
+                self.gold += result
+                self.particles.append(
+                    Particle(tower.x, tower.y - 20, GOLD)
+                )
+            elif tower.type == TowerType.LASER and tower.target:
+                # Instant laser damage
+                if not tower.target.is_dead:
+                    gold_earned = tower.target.take_damage(
+                        tower.stats.damage * tower.level
+                    )
+                    if gold_earned:
+                        self.gold += gold_earned
+                        self.score += gold_earned * 10
+                        tower.kills += 1
+                    
+                    # Apply slow effect
+                    if tower.stats.slow_effect > 0:
+                        tower.target.apply_slow(
+                            tower.stats.slow_effect,
+                            tower.stats.slow_duration,
+                            current_time
+                        )
+            elif result:
+                # Regular projectile created
+                self.projectiles.append(result)
+        
+        # Update projectiles
+        new_projectiles = []
+        for projectile in self.projectiles:
+            hit_result = projectile.update(dt, self.enemies)
+            
+            if hit_result:
+                # Handle hits
+                if isinstance(hit_result, list):
+                    # Multiple enemies (splash damage)
+                    for enemy, damage in hit_result:
+                        gold_earned = enemy.take_damage(damage)
+                        if gold_earned:
+                            self.gold += gold_earned
+                            self.score += gold_earned * 10
+                            projectile.tower.kills += 1
+                        
+                        # Apply slow effect
+                        if projectile.tower.stats.slow_effect > 0:
+                            enemy.apply_slow(
+                                projectile.tower.stats.slow_effect,
+                                projectile.tower.stats.slow_duration,
+                                current_time
+                            )
+                        
+                        # Hit particles
+                        for _ in range(5):
+                            self.particles.append(
+                                Particle(enemy.x, enemy.y, enemy.stats.color)
+                            )
+            
+            if not projectile.is_dead:
+                new_projectiles.append(projectile)
+        
+        self.projectiles = new_projectiles
+        
+        # Update enemies
+        alive_enemies = []
+        for enemy in self.enemies:
+            enemy.update(dt, current_time)
+            
+            if enemy.reached_end:
+                self.lives -= 1
+                if self.lives <= 0:
+                    self.game_over = True
+            elif not enemy.is_dead:
+                alive_enemies.append(enemy)
+            else:
+                # Death particles
+                for _ in range(8):
+                    self.particles.append(
+                        Particle(enemy.x, enemy.y, enemy.stats.color)
+                    )
+        
+        self.enemies = alive_enemies
+        
+        # Update particles
+        self.particles = [p for p in self.particles if p.update(dt)]
+        
+        # Check wave completion
+        if (self.wave_manager and self.wave_manager.is_complete and 
+            len(self.enemies) == 0):
+            # Wave complete bonus
+            bonus = 100 + self.wave_number * 10
+            self.gold += bonus
+            self.score += bonus * 5
+    
+    def draw(self):
+        """Draw everything"""
+        self.screen.fill(DARK_GREEN)
+        
+        # Draw grid
+        for x in range(0, SCREEN_WIDTH, GRID_SIZE):
+            pygame.draw.line(self.screen, (0, 50, 0), (x, 0), (x, SCREEN_HEIGHT))
+        for y in range(0, SCREEN_HEIGHT, GRID_SIZE):
+            pygame.draw.line(self.screen, (0, 50, 0), (0, y), (SCREEN_WIDTH, y))
+        
+        # Draw path
+        for i in range(len(self.path) - 1):
+            pygame.draw.line(self.screen, LIGHT_BROWN, 
+                           self.path[i], self.path[i + 1], 40)
+        
+        # Draw path borders
+        for i in range(len(self.path) - 1):
+            pygame.draw.line(self.screen, BROWN, 
+                           self.path[i], self.path[i + 1], 44)
+        
+        # Draw placement preview
+        if self.show_preview:
+            grid_x = (self.preview_pos[0] // GRID_SIZE) * GRID_SIZE + GRID_SIZE // 2
+            grid_y = (self.preview_pos[1] // GRID_SIZE) * GRID_SIZE + GRID_SIZE // 2
+            
+            if self.can_place_tower(grid_x, grid_y):
+                color = (0, 255, 0, 50)
+            else:
+                color = (255, 0, 0, 50)
+            
+            preview_rect = pygame.Rect(
+                grid_x - GRID_SIZE // 2,
+                grid_y - GRID_SIZE // 2,
+                GRID_SIZE,
+                GRID_SIZE
+            )
+            pygame.draw.rect(self.screen, color, preview_rect)
+            
+            # Show range
+            tower_stats = TOWER_STATS[self.selected_tower_type]
+            pygame.draw.circle(self.screen, (255, 255, 255, 30),
+                             (grid_x, grid_y), tower_stats.range, 1)
+        
+        # Draw towers
+        for tower in self.towers:
+            tower.draw(self.screen, tower == self.selected_tower)
+        
+        # Draw enemies
+        for enemy in self.enemies:
+            enemy.draw(self.screen)
+        
+        # Draw projectiles
+        for projectile in self.projectiles:
+            projectile.draw(self.screen)
+        
+        # Draw particles
+        for particle in self.particles:
+            particle.draw(self.screen)
+        
+        # Draw UI background
+        ui_rect = pygame.Rect(0, SCREEN_HEIGHT - 100, SCREEN_WIDTH, 100)
+        pygame.draw.rect(self.screen, BLACK, ui_rect)
+        pygame.draw.rect(self.screen, WHITE, ui_rect, 2)
+        
+        # Draw UI text
+        gold_text = self.font.render(f"Gold: {self.gold}", True, GOLD)
+        self.screen.blit(gold_text, (20, SCREEN_HEIGHT - 80))
+        
+        lives_text = self.font.render(f"Lives: {self.lives}", True, RED)
+        self.screen.blit(lives_text, (20, SCREEN_HEIGHT - 40))
+        
+        wave_text = self.font.render(f"Wave: {self.wave_number}", True, WHITE)
+        self.screen.blit(wave_text, (200, SCREEN_HEIGHT - 80))
+        
+        score_text = self.font.render(f"Score: {self.score}", True, WHITE)
+        self.screen.blit(score_text, (200, SCREEN_HEIGHT - 40))
+        
+        # Draw tower buttons
+        button_x = 400
+        for i, tower_type in enumerate(TowerType):
+            tower_stats = TOWER_STATS[tower_type]
+            
+            button_rect = pygame.Rect(button_x + i * 100, SCREEN_HEIGHT - 90, 80, 80)
+            
+            if tower_type == self.selected_tower_type:
+                pygame.draw.rect(self.screen, GREEN, button_rect, 3)
+            else:
+                pygame.draw.rect(self.screen, WHITE, button_rect, 1)
+            
+            # Tower icon
+            icon_rect = pygame.Rect(button_x + i * 100 + 25, SCREEN_HEIGHT - 75, 30, 30)
+            pygame.draw.rect(self.screen, tower_stats.color, icon_rect)
+            
+            # Tower name and cost
+            name_text = self.small_font.render(tower_stats.name[:6], True, WHITE)
+            self.screen.blit(name_text, (button_x + i * 100 + 5, SCREEN_HEIGHT - 35))
+            
+            cost_text = self.small_font.render(f"${tower_stats.cost}", True, GOLD)
+            self.screen.blit(cost_text, (button_x + i * 100 + 20, SCREEN_HEIGHT - 15))
+        
+        # Draw selected tower info
+        if self.selected_tower:
+            info_rect = pygame.Rect(SCREEN_WIDTH - 250, 10, 240, 150)
+            pygame.draw.rect(self.screen, BLACK, info_rect)
+            pygame.draw.rect(self.screen, WHITE, info_rect, 2)
+            
+            tower = self.selected_tower
+            info_lines = [
+                f"{tower.stats.name}",
+                f"Level: {tower.level}",
+                f"Damage: {tower.stats.damage * tower.level}",
+                f"Range: {tower.stats.range}",
+                f"Kills: {tower.kills}",
+                f"Upgrade: ${tower.get_upgrade_cost()}",
+                f"Sell: ${tower.get_sell_value()}"
+            ]
+            
+            for i, line in enumerate(info_lines):
+                text = self.small_font.render(line, True, WHITE)
+                self.screen.blit(text, (SCREEN_WIDTH - 240, 20 + i * 20))
+        
+        # Draw controls
+        controls = [
+            "1-5: Select Tower",
+            "W: Start Wave",
+            "U: Upgrade Tower",
+            "Del: Sell Tower",
+            "Space: Pause",
+            "S: Speed x2"
+        ]
+        
+        for i, control in enumerate(controls):
+            text = self.small_font.render(control, True, WHITE)
+            self.screen.blit(text, (SCREEN_WIDTH - 150, 200 + i * 25))
+        
+        # Draw game over screen
+        if self.game_over:
+            overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+            overlay.set_alpha(200)
+            overlay.fill(BLACK)
+            self.screen.blit(overlay, (0, 0))
+            
+            game_over_text = self.font.render("GAME OVER", True, RED)
+            text_rect = game_over_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 50))
+            self.screen.blit(game_over_text, text_rect)
+            
+            score_text = self.font.render(f"Final Score: {self.score}", True, WHITE)
+            text_rect = score_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 20))
+            self.screen.blit(score_text, text_rect)
+            
+            wave_text = self.font.render(f"Waves Survived: {self.wave_number}", True, WHITE)
+            text_rect = wave_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 60))
+            self.screen.blit(wave_text, text_rect)
+        
+        # Draw paused
+        if self.paused:
+            pause_text = self.font.render("PAUSED", True, WHITE)
+            text_rect = pause_text.get_rect(center=(SCREEN_WIDTH // 2, 50))
+            self.screen.blit(pause_text, text_rect)
+        
+        pygame.display.flip()
+    
+    def run(self):
+        """Main game loop"""
+        while self.running:
+            dt = self.clock.tick(FPS) / 1000.0
+            
+            self.handle_events()
+            self.update(dt)
+            self.draw()
+        
+        pygame.quit()
+
+def main():
+    """Main function"""
+    game = Game()
+    game.run()
+
+if __name__ == "__main__":
+    main()
+</code></pre>
+
+    <h2>Key Features Implemented</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>✅ <strong>Multiple Tower Types:</strong> Basic, Cannon, Laser, Slow, and Money towers</li>
+            <li>✅ <strong>Enemy Variety:</strong> Basic, Fast, Tank, Flying, and Boss enemies</li>
+            <li>✅ <strong>Wave System:</strong> Progressive difficulty with dynamic composition</li>
+            <li>✅ <strong>Upgrade System:</strong> Level up towers for increased effectiveness</li>
+            <li>✅ <strong>Economy:</strong> Gold generation, tower costs, and sell values</li>
+            <li>✅ <strong>Targeting AI:</strong> Smart targeting of enemies closest to exit</li>
+            <li>✅ <strong>Projectile Physics:</strong> Lead targeting for moving enemies</li>
+            <li>✅ <strong>Special Effects:</strong> Splash damage, slow effects, instant lasers</li>
+            <li>✅ <strong>Visual Feedback:</strong> Particles, health bars, range indicators</li>
+            <li>✅ <strong>Grid System:</strong> Snap-to-grid tower placement</li>
+        </ul>
+    </div>
+
+    <h2>How to Run</h2>
+    
+    <ol>
+        <li>Save the code to a file named <code>tower_defense.py</code></li>
+        <li>Install Pygame: <code>pip install pygame</code></li>
+        <li>Run the game: <code>python tower_defense.py</code></li>
+    </ol>
+
+    <h2>Game Controls</h2>
+    
+    <div style="background-color: #f5f5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li><strong>1-5:</strong> Select tower type</li>
+            <li><strong>Left Click:</strong> Place tower or select existing tower</li>
+            <li><strong>W:</strong> Start next wave</li>
+            <li><strong>U:</strong> Upgrade selected tower</li>
+            <li><strong>Delete:</strong> Sell selected tower</li>
+            <li><strong>Space:</strong> Pause/Resume game</li>
+            <li><strong>S:</strong> Toggle 2x speed</li>
+            <li><strong>Escape:</strong> Exit game</li>
+        </ul>
+    </div>
+
+    <h2>Enhancement Ideas</h2>
+    
+    <div style="background-color: #fff9e6; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🚀 Take It Further</h3>
+        <ul>
+            <li><strong>Special Abilities:</strong> Add active abilities like airstrikes or freeze</li>
+            <li><strong>Tower Research:</strong> Unlock new tower types through progression</li>
+            <li><strong>Boss Mechanics:</strong> Special boss abilities and phases</li>
+            <li><strong>Map Editor:</strong> Create custom paths and levels</li>
+            <li><strong>Tower Combinations:</strong> Synergy bonuses for tower placement</li>
+            <li><strong>Resource Types:</strong> Multiple resources (gold, mana, power)</li>
+            <li><strong>Enemy Abilities:</strong> Shield generators, healers, spawners</li>
+            <li><strong>Environmental Effects:</strong> Weather, terrain bonuses</li>
+            <li><strong>Campaign Mode:</strong> Story progression with unique maps</li>
+            <li><strong>Endless Mode:</strong> Survive as long as possible</li>
+        </ul>
+    </div>
+
+    <h2>Performance Optimization</h2>
+    
+    <div style="background-color: #f0fff0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Optimization Tips</h3>
+        <pre><code class="language-python">
+# Use sprite groups for batch operations
+all_sprites = pygame.sprite.Group()
+enemy_sprites = pygame.sprite.Group()
+tower_sprites = pygame.sprite.Group()
+
+# Spatial hashing for collision detection
+class SpatialHash:
+    def __init__(self, cell_size):
+        self.cell_size = cell_size
+        self.hash = {}
+    
+    def add(self, obj, x, y):
+        cell_x = int(x // self.cell_size)
+        cell_y = int(y // self.cell_size)
+        key = (cell_x, cell_y)
+        
+        if key not in self.hash:
+            self.hash[key] = []
+        self.hash[key].append(obj)
+    
+    def get_nearby(self, x, y, radius):
+        nearby = []
+        cells_to_check = int(radius // self.cell_size) + 1
+        
+        center_x = int(x // self.cell_size)
+        center_y = int(y // self.cell_size)
+        
+        for dx in range(-cells_to_check, cells_to_check + 1):
+            for dy in range(-cells_to_check, cells_to_check + 1):
+                key = (center_x + dx, center_y + dy)
+                if key in self.hash:
+                    nearby.extend(self.hash[key])
+        
+        return nearby
+
+# Object pooling for projectiles
+class ProjectilePool:
+    def __init__(self, size=100):
+        self.pool = [Projectile() for _ in range(size)]
+        self.active = []
+    
+    def get(self):
+        if self.pool:
+            proj = self.pool.pop()
+            self.active.append(proj)
+            return proj
+        return None
+    
+    def return_to_pool(self, proj):
+        if proj in self.active:
+            self.active.remove(proj)
+            self.pool.append(proj)
+        </code></pre>
+    </div>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="genres_tower_defense.html" class="prev-lesson">Back to Tower Defense Patterns</a>
+        <a href="index.html" class="next-lesson">Back to Course Home</a>
+    </nav>
+    
+    </main>
+</body>
+</html>

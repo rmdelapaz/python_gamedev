@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Learn game marketing fundamentals. Master social media, press kits, influencer outreach, community building, and launch strategies for indie games.">
+    <title>Marketing Basics - Publishing Your Game</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/enhanced.css">
+    <link rel="icon" href="favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Marketing Basics</h1>
+        <div class="reading-time" aria-label="Estimated reading time">22 minute read</div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Advanced Module - Section 4: Publishing Your Game - Lesson 4</span>
+    </nav>
+
+    <h2>Getting Your Game Noticed</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Master indie game marketing! Build communities, create compelling content, reach influencers, optimize store pages, and launch successfully! 📢🎮🚀</p>
+    </div>
+
+    <h2>Marketing Timeline</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>📅 When to Start Marketing</h3>
+        <p><strong>The answer: As soon as possible!</strong></p>
+        
+        <div class="mermaid">
+        gantt
+            title Marketing Timeline
+            dateFormat YYYY-MM-DD
+            
+            section Development
+            Concept Art      :2024-01-01, 30d
+            Prototype        :2024-01-15, 45d
+            Alpha           :2024-03-01, 60d
+            Beta            :2024-05-01, 30d
+            
+            section Marketing
+            Social Media Start    :2024-01-01, 180d
+            Dev Blog             :2024-01-15, 165d
+            Press Kit            :2024-03-01, 90d
+            Trailer              :2024-04-01, 30d
+            Influencer Outreach  :2024-04-15, 45d
+            Launch Campaign      :2024-05-15, 15d
+        </div>
+    </div>
+
+    <h2>Building Your Brand</h2>
+    
+    <div style="background-color: #f9f9f9; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎨 Game Identity</h3>
+        
+        <h4>Essential Brand Elements</h4>
+        <ul>
+            <li><strong>Game Name:</strong> Memorable, searchable, available domain</li>
+            <li><strong>Logo:</strong> Scalable, recognizable, works in monochrome</li>
+            <li><strong>Color Palette:</strong> 3-5 consistent colors</li>
+            <li><strong>Art Style:</strong> Consistent visual identity</li>
+            <li><strong>Tagline:</strong> One sentence hook</li>
+            <li><strong>Elevator Pitch:</strong> 30-second description</li>
+        </ul>
+        
+        <h4>Creating Your Elevator Pitch</h4>
+        <pre><code class="language-python">
+# pitch_generator.py - Help create compelling game pitches
+class PitchGenerator:
+    def __init__(self):
+        self.templates = [
+            "{game_name} is a {genre} game where you {core_mechanic} to {goal}.",
+            "Imagine {reference1} meets {reference2} - that's {game_name}.",
+            "In {game_name}, you play as {protagonist} who must {challenge} using {unique_feature}.",
+            "{game_name}: {adjective1}, {adjective2} {genre} with {unique_selling_point}."
+        ]
+    
+    def generate_pitch(self, game_info):
+        """Generate different pitch variations"""
+        pitches = []
+        
+        # Format: Game X meets Game Y
+        if 'references' in game_info:
+            ref_pitch = f"{game_info['references'][0]} meets {game_info['references'][1]}"
+            pitches.append(ref_pitch)
+        
+        # Format: Genre + USP
+        genre_pitch = f"A {game_info['genre']} game with {game_info['usp']}"
+        pitches.append(genre_pitch)
+        
+        # Format: Problem + Solution
+        problem_pitch = f"Ever wanted to {game_info['fantasy']}? Now you can in {game_info['name']}!"
+        pitches.append(problem_pitch)
+        
+        return pitches
+    
+    def create_steam_description(self, game_info):
+        """Create formatted Steam store description"""
+        description = f"""
+[h1]About {game_info['name']}[/h1]
+{game_info['elevator_pitch']}
+
+[h2]Key Features[/h2]
+[list]
+{"".join(f"[*]{feature}\n" for feature in game_info['features'])}
+[/list]
+
+[h2]Gameplay[/h2]
+{game_info['gameplay_description']}
+
+[h2]Story[/h2]
+{game_info['story']}
+"""
+        return description
+
+# Example usage
+game = {
+    'name': 'Pixel Dungeons',
+    'genre': 'roguelike platformer',
+    'usp': 'time manipulation mechanics',
+    'fantasy': 'explore endless dungeons without dying',
+    'references': ['Spelunky', 'Braid'],
+    'elevator_pitch': 'A challenging roguelike where every death teaches you something new.',
+    'features': [
+        'Procedurally generated levels',
+        'Time rewind mechanic',
+        '100+ unique items',
+        'Local co-op mode',
+        'Daily challenges'
+    ],
+    'gameplay_description': 'Navigate through procedurally generated dungeons...',
+    'story': 'You are the last Time Keeper...'
+}
+
+pitch_gen = PitchGenerator()
+pitches = pitch_gen.generate_pitch(game)
+        </code></pre>
+    </div>
+
+    <h2>Social Media Strategy</h2>
+    
+    <div style="background-color: #f0fff0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>📱 Platform-Specific Strategies</h3>
+        
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr style="background-color: #333; color: white;">
+                <th style="padding: 10px;">Platform</th>
+                <th style="padding: 10px;">Best For</th>
+                <th style="padding: 10px;">Content Type</th>
+                <th style="padding: 10px;">Frequency</th>
+            </tr>
+            <tr>
+                <td style="padding: 10px;"><strong>Twitter/X</strong></td>
+                <td style="padding: 10px;">Quick updates, GIFs</td>
+                <td style="padding: 10px;">#gamedev, #screenshotsaturday</td>
+                <td style="padding: 10px;">Daily</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px;"><strong>TikTok</strong></td>
+                <td style="padding: 10px;">Viral potential</td>
+                <td style="padding: 10px;">Behind-scenes, funny bugs</td>
+                <td style="padding: 10px;">3-4/week</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px;"><strong>YouTube</strong></td>
+                <td style="padding: 10px;">Devlogs, trailers</td>
+                <td style="padding: 10px;">Long-form content</td>
+                <td style="padding: 10px;">Weekly/Monthly</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px;"><strong>Reddit</strong></td>
+                <td style="padding: 10px;">Community feedback</td>
+                <td style="padding: 10px;">Progress posts</td>
+                <td style="padding: 10px;">Weekly</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px;"><strong>Discord</strong></td>
+                <td style="padding: 10px;">Community building</td>
+                <td style="padding: 10px;">Direct engagement</td>
+                <td style="padding: 10px;">Always on</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px;"><strong>Instagram</strong></td>
+                <td style="padding: 10px;">Visual showcase</td>
+                <td style="padding: 10px;">Art, screenshots</td>
+                <td style="padding: 10px;">2-3/week</td>
+            </tr>
+        </table>
+        
+        <h4>Content Calendar Tool</h4>
+        <pre><code class="language-python">
+import datetime
+import json
+from typing import List, Dict
+
+class ContentCalendar:
+    def __init__(self):
+        self.calendar = {}
+        self.hashtags = {
+            'monday': ['#MadeWithUnity', '#IndieDevMonday'],
+            'tuesday': ['#TuesdayThoughts', '#GameDev'],
+            'wednesday': ['#WIPWednesday', '#IndieGame'],
+            'thursday': ['#ThrowbackThursday', '#GameArt'],
+            'friday': ['#FollowFriday', '#IndieDevs'],
+            'saturday': ['#ScreenshotSaturday', '#SaturdayVibes'],
+            'sunday': ['#SilentSunday', '#GameDesign']
+        }
+    
+    def generate_week_content(self, week_start: datetime.date):
+        """Generate content ideas for a week"""
+        week_content = {}
+        
+        for i in range(7):
+            date = week_start + datetime.timedelta(days=i)
+            day_name = date.strftime('%A').lower()
+            
+            week_content[str(date)] = {
+                'primary_hashtags': self.hashtags[day_name],
+                'content_ideas': self.get_content_ideas(day_name),
+                'platforms': self.get_best_platforms(day_name)
+            }
+        
+        return week_content
+    
+    def get_content_ideas(self, day_name: str) -> List[str]:
+        """Get content ideas based on day"""
+        ideas = {
+            'monday': [
+                'Share development goals for the week',
+                'Post about tools/tech you\'re using',
+                'Tutorial or tip for other devs'
+            ],
+            'tuesday': [
+                'Game design philosophy post',
+                'Character spotlight',
+                'Lore snippet'
+            ],
+            'wednesday': [
+                'Work in progress GIF',
+                'Before/after comparison',
+                'Bug turned feature'
+            ],
+            'thursday': [
+                'Throwback to early prototype',
+                'Evolution of game art',
+                'Old vs new mechanics'
+            ],
+            'friday': [
+                'Shoutout to community members',
+                'Recommend other indie games',
+                'Team member spotlight'
+            ],
+            'saturday': [
+                'Polish screenshot/GIF',
+                'New feature showcase',
+                'Visual effects demonstration'
+            ],
+            'sunday': [
+                'Reflection on development',
+                'Community question',
+                'Upcoming week preview'
+            ]
+        }
+        return ideas.get(day_name, ['General game update'])
+    
+    def get_best_platforms(self, day_name: str) -> List[str]:
+        """Suggest best platforms for each day"""
+        platform_schedule = {
+            'monday': ['Twitter', 'LinkedIn'],
+            'tuesday': ['Reddit', 'Twitter'],
+            'wednesday': ['Twitter', 'Instagram'],
+            'thursday': ['TikTok', 'Twitter'],
+            'friday': ['Twitter', 'Discord'],
+            'saturday': ['Twitter', 'Instagram', 'Reddit'],
+            'sunday': ['YouTube', 'Discord']
+        }
+        return platform_schedule.get(day_name, ['Twitter'])
+    
+    def create_post_template(self, post_type: str) -> str:
+        """Create template for different post types"""
+        templates = {
+            'screenshot': """
+🎮 {game_name} - {feature_name}
+
+{description}
+
+{call_to_action}
+
+{hashtags}
+""",
+            'devlog': """
+📝 Dev Update #{number}
+
+This week's progress:
+✅ {achievement1}
+✅ {achievement2}
+🔄 {in_progress}
+📅 {next_week}
+
+{link}
+{hashtags}
+""",
+            'question': """
+🤔 Quick question for the community:
+
+{question}
+
+Let me know in the comments! 💭
+
+{hashtags}
+""",
+            'milestone': """
+🎉 HUGE MILESTONE! 
+
+{achievement}
+
+Thank you all for the support! ❤️
+
+{stats}
+
+{hashtags}
+"""
+        }
+        return templates.get(post_type, '{content}\n\n{hashtags}')
+
+# Automated posting
+class SocialMediaAutomation:
+    def __init__(self, api_keys: Dict[str, str]):
+        self.api_keys = api_keys
+        self.platforms = {}
+        
+    def schedule_post(self, platform: str, content: str, 
+                     media_path: str = None, schedule_time: datetime = None):
+        """Schedule a post across platforms"""
+        if platform == 'twitter':
+            return self.post_to_twitter(content, media_path, schedule_time)
+        elif platform == 'reddit':
+            return self.post_to_reddit(content, media_path, schedule_time)
+        # Add more platforms...
+    
+    def cross_post(self, content: Dict[str, str], media_path: str = None):
+        """Post to multiple platforms with platform-specific content"""
+        results = {}
+        for platform, platform_content in content.items():
+            try:
+                results[platform] = self.schedule_post(
+                    platform, platform_content, media_path
+                )
+            except Exception as e:
+                results[platform] = f"Error: {e}"
+        return results
+        </code></pre>
+    </div>
+
+    <h2>Press Kit Creation</h2>
+    
+    <div style="background-color: #fff9e6; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>📰 Professional Press Kit</h3>
+        
+        <h4>Press Kit Structure</h4>
+        <pre><code class="language-html">
+&lt;!-- presskit.html - Basic press kit template --&gt;
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;Game Name - Press Kit&lt;/title&gt;
+    &lt;style&gt;
+        body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px; }
+        .section { padding: 20px; margin: 20px 0; }
+        .gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .download-btn { background: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;div class="header"&gt;
+        &lt;h1&gt;Game Name&lt;/h1&gt;
+        &lt;p&gt;Tagline goes here&lt;/p&gt;
+    &lt;/div&gt;
+    
+    &lt;div class="section"&gt;
+        &lt;h2&gt;Fact Sheet&lt;/h2&gt;
+        &lt;ul&gt;
+            &lt;li&gt;&lt;strong&gt;Developer:&lt;/strong&gt; Your Studio&lt;/li&gt;
+            &lt;li&gt;&lt;strong&gt;Release Date:&lt;/strong&gt; Q2 2024&lt;/li&gt;
+            &lt;li&gt;&lt;strong&gt;Platforms:&lt;/strong&gt; PC, Mac, Linux&lt;/li&gt;
+            &lt;li&gt;&lt;strong&gt;Price:&lt;/strong&gt; $14.99 USD&lt;/li&gt;
+            &lt;li&gt;&lt;strong&gt;Genre:&lt;/strong&gt; Action Platformer&lt;/li&gt;
+            &lt;li&gt;&lt;strong&gt;Players:&lt;/strong&gt; 1-4 (local co-op)&lt;/li&gt;
+        &lt;/ul&gt;
+    &lt;/div&gt;
+    
+    &lt;div class="section"&gt;
+        &lt;h2&gt;Description&lt;/h2&gt;
+        &lt;p&gt;Elevator pitch here.&lt;/p&gt;
+        &lt;p&gt;Detailed description...&lt;/p&gt;
+    &lt;/div&gt;
+    
+    &lt;div class="section"&gt;
+        &lt;h2&gt;Features&lt;/h2&gt;
+        &lt;ul&gt;
+            &lt;li&gt;Feature 1&lt;/li&gt;
+            &lt;li&gt;Feature 2&lt;/li&gt;
+            &lt;li&gt;Feature 3&lt;/li&gt;
+        &lt;/ul&gt;
+    &lt;/div&gt;
+    
+    &lt;div class="section"&gt;
+        &lt;h2&gt;Media&lt;/h2&gt;
+        &lt;h3&gt;Trailer&lt;/h3&gt;
+        &lt;iframe width="560" height="315" src="https://youtube.com/embed/VIDEO_ID"&gt;&lt;/iframe&gt;
+        
+        &lt;h3&gt;Screenshots&lt;/h3&gt;
+        &lt;div class="gallery"&gt;
+            &lt;img src="screenshot1.jpg" alt="Screenshot 1"&gt;
+            &lt;img src="screenshot2.jpg" alt="Screenshot 2"&gt;
+            &lt;img src="screenshot3.jpg" alt="Screenshot 3"&gt;
+        &lt;/div&gt;
+        
+        &lt;h3&gt;Logos & Icons&lt;/h3&gt;
+        &lt;a href="assets.zip" class="download-btn"&gt;Download Press Assets&lt;/a&gt;
+    &lt;/div&gt;
+    
+    &lt;div class="section"&gt;
+        &lt;h2&gt;About the Developer&lt;/h2&gt;
+        &lt;p&gt;Studio history and background...&lt;/p&gt;
+    &lt;/div&gt;
+    
+    &lt;div class="section"&gt;
+        &lt;h2&gt;Contact&lt;/h2&gt;
+        &lt;ul&gt;
+            &lt;li&gt;&lt;strong&gt;Email:&lt;/strong&gt; press@yourgame.com&lt;/li&gt;
+            &lt;li&gt;&lt;strong&gt;Twitter:&lt;/strong&gt; @yourgame&lt;/li&gt;
+            &lt;li&gt;&lt;strong&gt;Website:&lt;/strong&gt; www.yourgame.com&lt;/li&gt;
+            &lt;li&gt;&lt;strong&gt;Discord:&lt;/strong&gt; discord.gg/yourgame&lt;/li&gt;
+        &lt;/ul&gt;
+    &lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+        </code></pre>
+        
+        <h4>Press Kit Checklist</h4>
+        <ul>
+            <li>☑️ Game logo (PNG with transparency)</li>
+            <li>☑️ Key art (1920x1080 minimum)</li>
+            <li>☑️ 5-10 screenshots (1920x1080)</li>
+            <li>☑️ Gameplay trailer (60-90 seconds)</li>
+            <li>☑️ GIFs showing key features</li>
+            <li>☑️ Developer photos/logos</li>
+            <li>☑️ Fact sheet</li>
+            <li>☑️ Press release template</li>
+            <li>☑️ Review guide</li>
+            <li>☑️ Award nominations/wins</li>
+        </ul>
+    </div>
+
+    <h2>Influencer Outreach</h2>
+    
+    <div style="background-color: #f3e5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎥 Reaching Content Creators</h3>
+        
+        <h4>Influencer Database Tool</h4>
+        <pre><code class="language-python">
+import csv
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from datetime import datetime
+
+class InfluencerOutreach:
+    def __init__(self):
+        self.influencers = []
+        self.email_templates = {}
+        
+    def load_influencer_database(self, csv_path):
+        """Load influencer information from CSV"""
+        with open(csv_path, 'r') as file:
+            reader = csv.DictReader(file)
+            self.influencers = list(reader)
+    
+    def filter_influencers(self, min_subscribers=1000, 
+                          genres=None, platforms=None):
+        """Filter influencers based on criteria"""
+        filtered = self.influencers
+        
+        if min_subscribers:
+            filtered = [i for i in filtered 
+                       if int(i.get('subscribers', 0)) >= min_subscribers]
+        
+        if genres:
+            filtered = [i for i in filtered 
+                       if any(g in i.get('genres', '') for g in genres)]
+        
+        if platforms:
+            filtered = [i for i in filtered 
+                       if i.get('platform') in platforms]
+        
+        return filtered
+    
+    def create_email_template(self, influencer_tier='standard'):
+        """Create personalized email templates"""
+        templates = {
+            'micro': """
+Hi {name}!
+
+I've been following your channel and love your content on {genre} games!
+
+I'm developing {game_name}, a {game_genre} game that I think your audience would enjoy.
+{game_pitch}
+
+Would you be interested in checking it out? I can provide a Steam key right away.
+
+Best,
+{your_name}
+""",
+            'standard': """
+Hi {name},
+
+I hope this email finds you well! I'm {your_name}, developer of {game_name}.
+
+I've been watching your videos, especially your recent one on {recent_video}, 
+and I think {game_name} would be a great fit for your channel.
+
+{game_name} is a {game_genre} game where {game_pitch}
+
+Key features your audience might enjoy:
+{features}
+
+I'd love to send you a key if you're interested. The game launches on {launch_date}, 
+but you're welcome to cover it whenever works best for your schedule.
+
+Press kit: {press_kit_url}
+Trailer: {trailer_url}
+
+Thanks for your time!
+{your_name}
+""",
+            'large': """
+Dear {name},
+
+I'm {your_name} from {studio_name}. We're launching {game_name} on {launch_date} 
+and would be honored to have you cover it.
+
+About {game_name}:
+{game_pitch}
+
+We can offer:
+- Early access key
+- Developer interview opportunity
+- Exclusive content/footage
+- Review embargo date: {embargo_date}
+
+Our press kit with all assets: {press_kit_url}
+
+We're also happy to provide any additional materials or answer any questions.
+
+Best regards,
+{your_name}
+{studio_name}
+"""
+        }
+        return templates.get(influencer_tier, templates['standard'])
+    
+    def track_outreach(self, influencer_id, status='sent'):
+        """Track outreach status"""
+        # Status: sent, opened, responded, covered, declined
+        outreach_log = {
+            'influencer_id': influencer_id,
+            'date': datetime.now().isoformat(),
+            'status': status
+        }
+        
+        # Save to database or CSV
+        with open('outreach_log.csv', 'a', newline='') as file:
+            writer = csv.DictWriter(file, fieldnames=outreach_log.keys())
+            writer.writerow(outreach_log)
+    
+    def calculate_influencer_value(self, influencer):
+        """Estimate influencer marketing value"""
+        subscribers = int(influencer.get('subscribers', 0))
+        avg_views = int(influencer.get('avg_views', subscribers * 0.1))
+        engagement_rate = float(influencer.get('engagement_rate', 0.02))
+        
+        # Simple value calculation
+        estimated_reach = avg_views
+        estimated_clicks = estimated_reach * engagement_rate
+        estimated_conversions = estimated_clicks * 0.02  # 2% conversion
+        
+        return {
+            'reach': estimated_reach,
+            'clicks': estimated_clicks,
+            'conversions': estimated_conversions,
+            'value_score': (subscribers * 0.3 + avg_views * 0.5 + 
+                           engagement_rate * 100000 * 0.2)
+        }
+
+# Key distribution system
+class KeyDistribution:
+    def __init__(self, steam_keys_file):
+        self.available_keys = []
+        self.distributed_keys = {}
+        self.load_keys(steam_keys_file)
+    
+    def load_keys(self, filepath):
+        """Load Steam keys from file"""
+        with open(filepath, 'r') as file:
+            self.available_keys = [line.strip() for line in file]
+    
+    def distribute_key(self, recipient_email, recipient_name, platform='Steam'):
+        """Distribute a key and track it"""
+        if not self.available_keys:
+            return None
+        
+        key = self.available_keys.pop(0)
+        self.distributed_keys[key] = {
+            'recipient_email': recipient_email,
+            'recipient_name': recipient_name,
+            'platform': platform,
+            'date': datetime.now().isoformat(),
+            'activated': False
+        }
+        
+        # Log distribution
+        with open('key_distribution.json', 'w') as file:
+            json.dump(self.distributed_keys, file, indent=2)
+        
+        return key
+        </code></pre>
+    </div>
+
+    <h2>Community Building</h2>
+    
+    <div style="background-color: #e8f5e9; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>👥 Building Your Community</h3>
+        
+        <div class="mermaid">
+        graph TD
+            A["Community Building"] --> B["Discord Server"]
+            A --> C["Steam Community"]
+            A --> D["Reddit Presence"]
+            A --> E["Newsletter"]
+            
+            B --> F["Welcome Channel"]
+            B --> G["Dev Updates"]
+            B --> H["Bug Reports"]
+            B --> I["Fan Art"]
+            
+            C --> J["Forums"]
+            C --> K["Announcements"]
+            C --> L["Guides"]
+            
+            D --> M["r/gamedev"]
+            D --> N["r/indiegames"]
+            D --> O["Genre Subreddits"]
+            
+            E --> P["Monthly Updates"]
+            E --> Q["Exclusive Content"]
+            E --> R["Beta Access"]
+        </div>
+        
+        <h4>Discord Bot for Community</h4>
+        <pre><code class="language-python">
+# discord_bot.py - Community management bot
+import discord
+from discord.ext import commands, tasks
+import json
+import random
+
+class GameCommunityBot(commands.Bot):
+    def __init__(self):
+        intents = discord.Intents.default()
+        intents.message_content = True
+        super().__init__(command_prefix='!', intents=intents)
+        
+        self.dev_updates = []
+        self.bug_reports = {}
+        self.feature_requests = {}
+        
+    async def on_ready(self):
+        print(f'{self.user} is online!')
+        self.status_update.start()
+    
+    @tasks.loop(hours=1)
+    async def status_update(self):
+        """Rotate bot status"""
+        statuses = [
+            "In Development",
+            "!help for commands",
+            f"{len(self.guilds)} servers",
+            "Launching Soon!"
+        ]
+        await self.change_presence(
+            activity=discord.Game(random.choice(statuses))
+        )
+    
+    @commands.command()
+    async def roadmap(self, ctx):
+        """Show development roadmap"""
+        embed = discord.Embed(
+            title="Development Roadmap",
+            color=0x00ff00
+        )
+        embed.add_field(
+            name="✅ Completed",
+            value="- Core gameplay\n- Level 1-5",
+            inline=False
+        )
+        embed.add_field(
+            name="🔄 In Progress",
+            value="- Multiplayer\n- Level 6-10",
+            inline=False
+        )
+        embed.add_field(
+            name="📅 Planned",
+            value="- Level editor\n- Steam Workshop",
+            inline=False
+        )
+        await ctx.send(embed=embed)
+    
+    @commands.command()
+    async def bug(self, ctx, *, description):
+        """Report a bug"""
+        bug_id = len(self.bug_reports) + 1
+        self.bug_reports[bug_id] = {
+            'user': str(ctx.author),
+            'description': description,
+            'status': 'open'
+        }
+        
+        embed = discord.Embed(
+            title=f"Bug Report #{bug_id}",
+            description=description,
+            color=0xff0000
+        )
+        embed.set_footer(text=f"Reported by {ctx.author}")
+        
+        # Send to bug reports channel
+        bug_channel = ctx.guild.get_channel(BUG_CHANNEL_ID)
+        await bug_channel.send(embed=embed)
+        await ctx.send(f"Thanks! Bug #{bug_id} has been reported.")
+    
+    @commands.command()
+    async def beta(self, ctx):
+        """Sign up for beta testing"""
+        beta_role = discord.utils.get(ctx.guild.roles, name="Beta Tester")
+        if beta_role in ctx.author.roles:
+            await ctx.send("You're already a beta tester!")
+        else:
+            await ctx.author.add_roles(beta_role)
+            await ctx.send("Welcome to the beta! Check #beta-access for your key.")
+    
+    @commands.command()
+    @commands.has_role("Developer")
+    async def announce(self, ctx, *, message):
+        """Make an announcement (dev only)"""
+        announcement_channel = ctx.guild.get_channel(ANNOUNCE_CHANNEL_ID)
+        
+        embed = discord.Embed(
+            title="📢 Developer Update",
+            description=message,
+            color=0x00ff00,
+            timestamp=datetime.utcnow()
+        )
+        embed.set_footer(text="From the dev team")
+        
+        await announcement_channel.send("@everyone", embed=embed)
+
+# Run bot
+bot = GameCommunityBot()
+bot.run('YOUR_BOT_TOKEN')
+        </code></pre>
+    </div>
+
+    <h2>Launch Strategy</h2>
+    
+    <div style="background-color: #fff0f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🚀 Launch Day Checklist</h3>
+        
+        <h4>Pre-Launch (1 Week Before)</h4>
+        <ul>
+            <li>☐ Final build uploaded to all platforms</li>
+            <li>☐ Press embargo lifted</li>
+            <li>☐ Launch trailer published</li>
+            <li>☐ Press kits sent to media</li>
+            <li>☐ Keys sent to influencers</li>
+            <li>☐ Social media scheduled</li>
+            <li>☐ Discord announcement prepared</li>
+            <li>☐ Email newsletter drafted</li>
+        </ul>
+        
+        <h4>Launch Day</h4>
+        <ul>
+            <li>☐ 12:00 AM - Game goes live</li>
+            <li>☐ 12:01 AM - Tweet announcement</li>
+            <li>☐ 6:00 AM - Reddit posts</li>
+            <li>☐ 9:00 AM - Email newsletter</li>
+            <li>☐ 10:00 AM - Discord event</li>
+            <li>☐ 12:00 PM - Streamer goes live</li>
+            <li>☐ 3:00 PM - Second social push</li>
+            <li>☐ 6:00 PM - Thank you message</li>
+            <li>☐ Monitor and respond all day!</li>
+        </ul>
+        
+        <h4>Post-Launch (First Week)</h4>
+        <ul>
+            <li>☐ Daily social media updates</li>
+            <li>☐ Respond to reviews</li>
+            <li>☐ Bug fix patches</li>
+            <li>☐ Thank influencers who covered</li>
+            <li>☐ Analyze metrics</li>
+            <li>☐ Plan first content update</li>
+        </ul>
+    </div>
+
+    <h2>Marketing Metrics</h2>
+    
+    <div style="background-color: #f5f5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>📊 Tracking Success</h3>
+        
+        <pre><code class="language-python">
+# analytics.py - Marketing analytics tracker
+import pandas as pd
+import matplotlib.pyplot as plt
+from datetime import datetime, timedelta
+
+class MarketingAnalytics:
+    def __init__(self):
+        self.metrics = {
+            'steam_wishlists': [],
+            'twitter_followers': [],
+            'discord_members': [],
+            'youtube_views': [],
+            'website_visits': [],
+            'newsletter_subs': []
+        }
+    
+    def track_metric(self, metric_name, value, date=None):
+        """Track a marketing metric"""
+        if date is None:
+            date = datetime.now()
+        
+        self.metrics[metric_name].append({
+            'date': date,
+            'value': value
+        })
+    
+    def calculate_growth_rate(self, metric_name, days=7):
+        """Calculate growth rate over period"""
+        if len(self.metrics[metric_name]) < 2:
+            return 0
+        
+        current = self.metrics[metric_name][-1]['value']
+        past = self.metrics[metric_name][-days]['value'] if len(self.metrics[metric_name]) > days else self.metrics[metric_name][0]['value']
+        
+        if past == 0:
+            return 100
+        
+        return ((current - past) / past) * 100
+    
+    def get_conversion_funnel(self):
+        """Calculate marketing funnel conversion"""
+        funnel = {
+            'Awareness': self.get_latest('website_visits'),
+            'Interest': self.get_latest('steam_wishlists'),
+            'Consideration': self.get_latest('discord_members'),
+            'Purchase': 0,  # Add sales data
+            'Retention': 0   # Add retention data
+        }
+        
+        conversions = {}
+        stages = list(funnel.keys())
+        
+        for i in range(len(stages) - 1):
+            if funnel[stages[i]] > 0:
+                conversions[f"{stages[i]} → {stages[i+1]}"] = \
+                    (funnel[stages[i+1]] / funnel[stages[i]]) * 100
+        
+        return funnel, conversions
+    
+    def generate_report(self):
+        """Generate marketing report"""
+        report = {
+            'total_reach': sum([
+                self.get_latest('twitter_followers'),
+                self.get_latest('discord_members'),
+                self.get_latest('newsletter_subs')
+            ]),
+            'wishlist_conversion': self.get_latest('steam_wishlists') / 
+                                  max(self.get_latest('website_visits'), 1) * 100,
+            'community_growth': {
+                metric: self.calculate_growth_rate(metric)
+                for metric in self.metrics.keys()
+            },
+            'top_channel': max(self.metrics.items(), 
+                             key=lambda x: self.calculate_growth_rate(x[0]))[0]
+        }
+        
+        return report
+    
+    def plot_metrics(self):
+        """Visualize marketing metrics"""
+        fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+        
+        for idx, (metric_name, data) in enumerate(self.metrics.items()):
+            if idx >= 6:
+                break
+            
+            ax = axes[idx // 3, idx % 3]
+            
+            if data:
+                dates = [d['date'] for d in data]
+                values = [d['value'] for d in data]
+                
+                ax.plot(dates, values, marker='o')
+                ax.set_title(metric_name.replace('_', ' ').title())
+                ax.set_xlabel('Date')
+                ax.set_ylabel('Count')
+                ax.grid(True)
+        
+        plt.tight_layout()
+        plt.savefig('marketing_metrics.png')
+        plt.show()
+    
+    def get_latest(self, metric_name):
+        """Get latest value for metric"""
+        if self.metrics[metric_name]:
+            return self.metrics[metric_name][-1]['value']
+        return 0
+
+# Usage
+analytics = MarketingAnalytics()
+analytics.track_metric('steam_wishlists', 1500)
+analytics.track_metric('twitter_followers', 850)
+analytics.track_metric('discord_members', 320)
+
+report = analytics.generate_report()
+print(f"Total Reach: {report['total_reach']}")
+print(f"Top Growing Channel: {report['top_channel']}")
+        </code></pre>
+    </div>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>✨ Marketing Best Practices</h3>
+        <ul>
+            <li><strong>Start Early:</strong> Begin marketing when you have your first GIF</li>
+            <li><strong>Be Consistent:</strong> Regular updates build anticipation</li>
+            <li><strong>Show Progress:</strong> Before/after comparisons perform well</li>
+            <li><strong>Engage Genuinely:</strong> Don't just promote, participate</li>
+            <li><strong>Quality > Quantity:</strong> One great GIF beats ten screenshots</li>
+            <li><strong>Tell Your Story:</strong> People connect with developers</li>
+            <li><strong>Use Analytics:</strong> Track what works and double down</li>
+            <li><strong>Build Relationships:</strong> Network with other developers</li>
+            <li><strong>Plan for Failure:</strong> Most marketing attempts will fail, that's normal</li>
+            <li><strong>Stay Authentic:</strong> Don't try to be something you're not</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>🚀 Start marketing as early as possible</li>
+            <li>📱 Each social platform has its own culture and best practices</li>
+            <li>📰 A professional press kit is essential</li>
+            <li>🎥 Influencers can provide massive visibility</li>
+            <li>👥 Community is your most valuable asset</li>
+            <li>📊 Track metrics to understand what works</li>
+            <li>🎯 Consistency beats intensity in marketing</li>
+            <li>💡 Show, don't just tell - use GIFs and videos</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Your game is launched and marketed! Now let's learn how to maintain and update it post-launch.</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="publishing_platforms.html" class="prev-lesson">Previous: Distribution Platforms</a>
+        <a href="publishing_updates.html" class="next-lesson">Next: Post-Launch Updates</a>
+    </nav>
+    
+    </main>
+</body>
+</html>

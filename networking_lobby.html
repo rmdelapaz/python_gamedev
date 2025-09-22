@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Build a simple lobby system for multiplayer games. Learn matchmaking, room management, and player synchronization.">
+    <title>Simple Lobby System - Multiplayer Basics</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/enhanced.css">
+    <link rel="icon" href="favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Simple Lobby System</h1>
+        <div class="reading-time" aria-label="Estimated reading time">25 minute read</div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Intermediate Module - Section 4: Multiplayer Basics - Lesson 5</span>
+    </nav>
+
+    <h2>Creating Game Lobbies and Matchmaking</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Build a complete lobby system for your multiplayer games! Learn room creation, player matchmaking, ready states, game launching, and session management! 🎮🚪👥</p>
+    </div>
+
+    <h2>Understanding Lobby Systems</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🏛️ What is a Game Lobby?</h3>
+        <p>A lobby is a virtual waiting room where players gather before starting a game session. Think of it as the multiplayer equivalent of a main menu!</p>
+        
+        <h4>Core Features:</h4>
+        <ul>
+            <li><strong>Room Creation:</strong> Players can create new game rooms</li>
+            <li><strong>Room Discovery:</strong> Browse and join existing rooms</li>
+            <li><strong>Player Management:</strong> Track who's in each room</li>
+            <li><strong>Ready System:</strong> Ensure all players are prepared</li>
+            <li><strong>Game Launch:</strong> Start when conditions are met</li>
+            <li><strong>Chat System:</strong> Pre-game communication</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Player Connects"] --> B["Main Lobby"]
+        B --> C{"Action?"}
+        C -->|"Create Room"| D["New Room Created"]
+        C -->|"Join Room"| E["Enter Existing Room"]
+        C -->|"Quick Match"| F["Auto-Match Players"]
+        
+        D --> G["Game Room"]
+        E --> G
+        F --> G
+        
+        G --> H{"All Ready?"}
+        H -->|"Yes"| I["Launch Game"]
+        H -->|"No"| J["Wait for Players"]
+        
+        J --> G
+        
+        style B fill:#e1f5fe
+        style G fill:#fff3e0
+        style I fill:#c8e6c9
+    </div>
+
+    <h2>Complete Lobby Server Implementation</h2>
+    
+    <div style="background-color: #f9f9f9; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🖥️ Lobby Server with Rooms</h3>
+        
+        <pre><code class="language-python">
+import socket
+import threading
+import json
+import time
+import random
+import string
+from enum import Enum
+from typing import Dict, List, Optional
+
+class PlayerState(Enum):
+    LOBBY = "lobby"
+    IN_ROOM = "in_room"
+    READY = "ready"
+    IN_GAME = "in_game"
+
+class RoomState(Enum):
+    WAITING = "waiting"
+    STARTING = "starting"
+    IN_PROGRESS = "in_progress"
+    FINISHED = "finished"
+
+class Player:
+    def __init__(self, socket, address, player_id):
+        self.socket = socket
+        self.address = address
+        self.id = player_id
+        self.name = f"Player_{player_id}"
+        self.state = PlayerState.LOBBY
+        self.room_id = None
+        self.is_ready = False
+        self.is_host = False
+        self.stats = {
+            'wins': 0,
+            'losses': 0,
+            'games_played': 0,
+            'rating': 1000
+        }
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'state': self.state.value,
+            'is_ready': self.is_ready,
+            'is_host': self.is_host,
+            'stats': self.stats
+        }
+
+class GameRoom:
+    def __init__(self, room_id, host_id, settings=None):
+        self.id = room_id
+        self.host_id = host_id
+        self.players = {}  # {player_id: Player}
+        self.state = RoomState.WAITING
+        self.settings = settings or self.default_settings()
+        self.created_at = time.time()
+        self.game_data = {}
+        
+    def default_settings(self):
+        return {
+            'name': f"Room {self.id}",
+            'max_players': 4,
+            'min_players': 2,
+            'game_mode': 'classic',
+            'map': 'default',
+            'time_limit': 300,  # 5 minutes
+            'is_private': False,
+            'password': None
+        }
+    
+    def add_player(self, player):
+        """Add player to room"""
+        if len(self.players) >= self.settings['max_players']:
+            return False
+        
+        self.players[player.id] = player
+        player.room_id = self.id
+        player.state = PlayerState.IN_ROOM
+        player.is_ready = False
+        
+        # First player becomes host
+        if len(self.players) == 1:
+            player.is_host = True
+            self.host_id = player.id
+        
+        return True
+    
+    def remove_player(self, player_id):
+        """Remove player from room"""
+        if player_id in self.players:
+            player = self.players[player_id]
+            del self.players[player_id]
+            
+            # Transfer host if needed
+            if player.is_host and self.players:
+                new_host = next(iter(self.players.values()))
+                new_host.is_host = True
+                self.host_id = new_host.id
+            
+            # Reset player state
+            player.room_id = None
+            player.state = PlayerState.LOBBY
+            player.is_ready = False
+            player.is_host = False
+            
+            return True
+        return False
+    
+    def set_player_ready(self, player_id, ready):
+        """Set player ready state"""
+        if player_id in self.players:
+            self.players[player_id].is_ready = ready
+            return True
+        return False
+    
+    def can_start(self):
+        """Check if game can start"""
+        if len(self.players) < self.settings['min_players']:
+            return False
+        
+        # All non-host players must be ready
+        for player in self.players.values():
+            if not player.is_host and not player.is_ready:
+                return False
+        
+        return True
+    
+    def start_game(self):
+        """Start the game"""
+        self.state = RoomState.STARTING
+        for player in self.players.values():
+            player.state = PlayerState.IN_GAME
+        
+        # Initialize game data
+        self.game_data = {
+            'start_time': time.time(),
+            'players': list(self.players.keys()),
+            'scores': {pid: 0 for pid in self.players.keys()}
+        }
+        
+        # After a delay, mark as in progress
+        threading.Timer(3.0, self._set_in_progress).start()
+    
+    def _set_in_progress(self):
+        self.state = RoomState.IN_PROGRESS
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'host_id': self.host_id,
+            'state': self.state.value,
+            'players': [p.to_dict() for p in self.players.values()],
+            'settings': self.settings,
+            'player_count': len(self.players),
+            'can_start': self.can_start()
+        }
+
+class LobbyServer:
+    def __init__(self, host='0.0.0.0', port=5555):
+        self.host = host
+        self.port = port
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.running = False
+        
+        # Data structures
+        self.players = {}  # {socket: Player}
+        self.rooms = {}    # {room_id: GameRoom}
+        self.player_id_counter = 0
+        
+        # Matchmaking queue
+        self.matchmaking_queue = []
+        
+    def start(self):
+        """Start the lobby server"""
+        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.socket.bind((self.host, self.port))
+        self.socket.listen(10)
+        self.running = True
+        
+        print(f"Lobby Server started on {self.host}:{self.port}")
+        
+        # Start matchmaking thread
+        matchmaking_thread = threading.Thread(target=self.matchmaking_loop)
+        matchmaking_thread.daemon = True
+        matchmaking_thread.start()
+        
+        # Accept connections
+        while self.running:
+            try:
+                client_socket, address = self.socket.accept()
+                print(f"New connection from {address}")
+                
+                # Create player
+                self.player_id_counter += 1
+                player = Player(client_socket, address, self.player_id_counter)
+                self.players[client_socket] = player
+                
+                # Handle in new thread
+                client_thread = threading.Thread(
+                    target=self.handle_client,
+                    args=(player,)
+                )
+                client_thread.daemon = True
+                client_thread.start()
+                
+                # Send welcome message
+                self.send_to_player(player, {
+                    'type': 'welcome',
+                    'player_id': player.id,
+                    'message': 'Welcome to the lobby!'
+                })
+                
+            except Exception as e:
+                print(f"Error accepting connection: {e}")
+    
+    def handle_client(self, player):
+        """Handle individual client messages"""
+        while self.running:
+            try:
+                data = player.socket.recv(4096).decode('utf-8')
+                if not data:
+                    break
+                
+                # Parse and process message
+                message = json.loads(data)
+                self.process_message(player, message)
+                
+            except ConnectionResetError:
+                print(f"Player {player.id} disconnected")
+                break
+            except json.JSONDecodeError:
+                print(f"Invalid JSON from player {player.id}")
+            except Exception as e:
+                print(f"Error handling player {player.id}: {e}")
+                break
+        
+        # Clean up on disconnect
+        self.remove_player(player)
+    
+    def process_message(self, player, message):
+        """Process player message"""
+        msg_type = message.get('type')
+        
+        if msg_type == 'set_name':
+            self.handle_set_name(player, message)
+            
+        elif msg_type == 'get_rooms':
+            self.handle_get_rooms(player)
+            
+        elif msg_type == 'create_room':
+            self.handle_create_room(player, message)
+            
+        elif msg_type == 'join_room':
+            self.handle_join_room(player, message)
+            
+        elif msg_type == 'leave_room':
+            self.handle_leave_room(player)
+            
+        elif msg_type == 'set_ready':
+            self.handle_set_ready(player, message)
+            
+        elif msg_type == 'start_game':
+            self.handle_start_game(player)
+            
+        elif msg_type == 'room_chat':
+            self.handle_room_chat(player, message)
+            
+        elif msg_type == 'quick_match':
+            self.handle_quick_match(player)
+            
+        elif msg_type == 'update_room_settings':
+            self.handle_update_room_settings(player, message)
+    
+    def handle_set_name(self, player, message):
+        """Handle name change"""
+        name = message.get('name', '').strip()[:20]  # Max 20 chars
+        if name:
+            player.name = name
+            self.send_to_player(player, {
+                'type': 'name_changed',
+                'name': name
+            })
+            
+            # Notify room if in one
+            if player.room_id:
+                self.broadcast_room_update(player.room_id)
+    
+    def handle_get_rooms(self, player):
+        """Send list of available rooms"""
+        room_list = []
+        for room in self.rooms.values():
+            if room.state == RoomState.WAITING and not room.settings['is_private']:
+                room_list.append({
+                    'id': room.id,
+                    'name': room.settings['name'],
+                    'players': len(room.players),
+                    'max_players': room.settings['max_players'],
+                    'game_mode': room.settings['game_mode'],
+                    'host_name': self.get_player_by_id(room.host_id).name
+                })
+        
+        self.send_to_player(player, {
+            'type': 'room_list',
+            'rooms': room_list
+        })
+    
+    def handle_create_room(self, player, message):
+        """Handle room creation"""
+        if player.room_id:
+            self.send_error(player, "Already in a room")
+            return
+        
+        # Generate room ID
+        room_id = self.generate_room_id()
+        
+        # Get settings
+        settings = message.get('settings', {})
+        
+        # Create room
+        room = GameRoom(room_id, player.id, settings)
+        room.add_player(player)
+        self.rooms[room_id] = room
+        
+        # Send confirmation
+        self.send_to_player(player, {
+            'type': 'room_created',
+            'room': room.to_dict()
+        })
+        
+        print(f"Room {room_id} created by player {player.id}")
+    
+    def handle_join_room(self, player, message):
+        """Handle joining a room"""
+        if player.room_id:
+            self.send_error(player, "Already in a room")
+            return
+        
+        room_id = message.get('room_id')
+        password = message.get('password')
+        
+        if room_id not in self.rooms:
+            self.send_error(player, "Room not found")
+            return
+        
+        room = self.rooms[room_id]
+        
+        # Check password if private
+        if room.settings['is_private'] and room.settings['password'] != password:
+            self.send_error(player, "Invalid password")
+            return
+        
+        # Try to add player
+        if room.add_player(player):
+            # Notify all players in room
+            self.broadcast_room_update(room_id)
+            
+            # Send room info to joining player
+            self.send_to_player(player, {
+                'type': 'room_joined',
+                'room': room.to_dict()
+            })
+            
+            # Notify others
+            self.broadcast_to_room(room_id, {
+                'type': 'player_joined',
+                'player': player.to_dict()
+            }, exclude=player)
+            
+            print(f"Player {player.id} joined room {room_id}")
+        else:
+            self.send_error(player, "Room is full")
+    
+    def handle_leave_room(self, player):
+        """Handle leaving a room"""
+        if not player.room_id:
+            self.send_error(player, "Not in a room")
+            return
+        
+        room_id = player.room_id
+        room = self.rooms.get(room_id)
+        
+        if room:
+            # Notify others before removing
+            self.broadcast_to_room(room_id, {
+                'type': 'player_left',
+                'player_id': player.id
+            }, exclude=player)
+            
+            # Remove player
+            room.remove_player(player.id)
+            
+            # Delete room if empty
+            if len(room.players) == 0:
+                del self.rooms[room_id]
+                print(f"Room {room_id} deleted (empty)")
+            else:
+                # Update remaining players
+                self.broadcast_room_update(room_id)
+            
+            # Confirm to player
+            self.send_to_player(player, {
+                'type': 'room_left'
+            })
+    
+    def handle_set_ready(self, player, message):
+        """Handle ready state change"""
+        if not player.room_id:
+            self.send_error(player, "Not in a room")
+            return
+        
+        room = self.rooms.get(player.room_id)
+        if room:
+            ready = message.get('ready', False)
+            room.set_player_ready(player.id, ready)
+            
+            # Notify all players
+            self.broadcast_room_update(player.room_id)
+    
+    def handle_start_game(self, player):
+        """Handle game start request"""
+        if not player.room_id or not player.is_host:
+            self.send_error(player, "Not authorized to start game")
+            return
+        
+        room = self.rooms.get(player.room_id)
+        if room and room.can_start():
+            room.start_game()
+            
+            # Notify all players
+            self.broadcast_to_room(player.room_id, {
+                'type': 'game_starting',
+                'countdown': 3,
+                'game_data': room.game_data
+            })
+            
+            print(f"Game starting in room {room.id}")
+        else:
+            self.send_error(player, "Cannot start game (check player count and ready states)")
+    
+    def handle_room_chat(self, player, message):
+        """Handle room chat message"""
+        if not player.room_id:
+            return
+        
+        chat_message = message.get('message', '').strip()[:200]  # Max 200 chars
+        if chat_message:
+            self.broadcast_to_room(player.room_id, {
+                'type': 'room_chat',
+                'player_id': player.id,
+                'player_name': player.name,
+                'message': chat_message,
+                'timestamp': time.time()
+            })
+    
+    def handle_quick_match(self, player):
+        """Add player to matchmaking queue"""
+        if player.room_id:
+            self.send_error(player, "Already in a room")
+            return
+        
+        if player not in self.matchmaking_queue:
+            self.matchmaking_queue.append(player)
+            self.send_to_player(player, {
+                'type': 'matchmaking_started',
+                'queue_position': len(self.matchmaking_queue)
+            })
+            print(f"Player {player.id} entered matchmaking")
+    
+    def handle_update_room_settings(self, player, message):
+        """Update room settings (host only)"""
+        if not player.room_id or not player.is_host:
+            self.send_error(player, "Not authorized")
+            return
+        
+        room = self.rooms.get(player.room_id)
+        if room:
+            new_settings = message.get('settings', {})
+            
+            # Update allowed settings
+            allowed_keys = ['name', 'max_players', 'game_mode', 'map', 'time_limit']
+            for key in allowed_keys:
+                if key in new_settings:
+                    room.settings[key] = new_settings[key]
+            
+            # Notify all players
+            self.broadcast_room_update(player.room_id)
+    
+    def matchmaking_loop(self):
+        """Background thread for matchmaking"""
+        while self.running:
+            time.sleep(2)  # Check every 2 seconds
+            
+            if len(self.matchmaking_queue) >= 2:
+                # Create match with first 2-4 players
+                match_size = min(4, len(self.matchmaking_queue))
+                players_to_match = self.matchmaking_queue[:match_size]
+                self.matchmaking_queue = self.matchmaking_queue[match_size:]
+                
+                # Create room
+                room_id = self.generate_room_id()
+                host = players_to_match[0]
+                
+                settings = {
+                    'name': f"Quick Match {room_id}",
+                    'max_players': 4,
+                    'min_players': 2,
+                    'game_mode': 'quick_match',
+                    'map': 'random'
+                }
+                
+                room = GameRoom(room_id, host.id, settings)
+                
+                # Add all players
+                for player in players_to_match:
+                    room.add_player(player)
+                
+                self.rooms[room_id] = room
+                
+                # Notify all matched players
+                for player in players_to_match:
+                    self.send_to_player(player, {
+                        'type': 'match_found',
+                        'room': room.to_dict()
+                    })
+                
+                print(f"Quick match created: Room {room_id} with {match_size} players")
+    
+    def broadcast_room_update(self, room_id):
+        """Send room update to all players in room"""
+        room = self.rooms.get(room_id)
+        if room:
+            self.broadcast_to_room(room_id, {
+                'type': 'room_update',
+                'room': room.to_dict()
+            })
+    
+    def broadcast_to_room(self, room_id, message, exclude=None):
+        """Broadcast message to all players in a room"""
+        room = self.rooms.get(room_id)
+        if room:
+            for player in room.players.values():
+                if player != exclude:
+                    self.send_to_player(player, message)
+    
+    def send_to_player(self, player, message):
+        """Send message to specific player"""
+        try:
+            json_msg = json.dumps(message)
+            player.socket.send(json_msg.encode('utf-8'))
+        except Exception as e:
+            print(f"Error sending to player {player.id}: {e}")
+    
+    def send_error(self, player, error_message):
+        """Send error message to player"""
+        self.send_to_player(player, {
+            'type': 'error',
+            'message': error_message
+        })
+    
+    def get_player_by_id(self, player_id):
+        """Get player object by ID"""
+        for player in self.players.values():
+            if player.id == player_id:
+                return player
+        return None
+    
+    def generate_room_id(self):
+        """Generate unique room ID"""
+        while True:
+            room_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+            if room_id not in self.rooms:
+                return room_id
+    
+    def remove_player(self, player):
+        """Remove player from server"""
+        # Leave room if in one
+        if player.room_id:
+            self.handle_leave_room(player)
+        
+        # Remove from matchmaking
+        if player in self.matchmaking_queue:
+            self.matchmaking_queue.remove(player)
+        
+        # Remove from players list
+        if player.socket in self.players:
+            del self.players[player.socket]
+        
+        # Close socket
+        try:
+            player.socket.close()
+        except:
+            pass
+        
+        print(f"Player {player.id} removed from server")
+    
+    def stop(self):
+        """Stop the server"""
+        self.running = False
+        self.socket.close()
+
+# Run server
+if __name__ == "__main__":
+    server = LobbyServer()
+    try:
+        server.start()
+    except KeyboardInterrupt:
+        print("\nShutting down server...")
+        server.stop()
+        </code></pre>
+    </div>
+
+    <h2>Lobby Client Implementation</h2>
+    
+    <div style="background-color: #f0fff0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎮 Game Client with Lobby UI</h3>
+        
+        <pre><code class="language-python">
+import pygame
+import socket
+import threading
+import json
+import time
+
+class LobbyClient:
+    def __init__(self):
+        pygame.init()
+        self.screen = pygame.display.set_mode((1024, 768))
+        pygame.display.set_caption("Game Lobby")
+        self.clock = pygame.time.Clock()
+        self.font = pygame.font.Font(None, 24)
+        self.title_font = pygame.font.Font(None, 48)
+        
+        # Network
+        self.socket = None
+        self.connected = False
+        self.player_id = None
+        self.player_name = "Player"
+        
+        # State
+        self.current_screen = "main_menu"  # main_menu, lobby, room, game
+        self.current_room = None
+        self.room_list = []
+        self.chat_messages = []
+        self.is_ready = False
+        
+        # UI Elements
+        self.buttons = {}
+        self.input_fields = {}
+        self.selected_room = None
+        
+        self.setup_ui()
+    
+    def setup_ui(self):
+        """Initialize UI elements"""
+        # Main Menu buttons
+        self.buttons['connect'] = pygame.Rect(400, 300, 200, 50)
+        self.buttons['quit'] = pygame.Rect(400, 400, 200, 50)
+        
+        # Lobby buttons
+        self.buttons['create_room'] = pygame.Rect(50, 100, 150, 40)
+        self.buttons['join_room'] = pygame.Rect(220, 100, 150, 40)
+        self.buttons['quick_match'] = pygame.Rect(390, 100, 150, 40)
+        self.buttons['refresh'] = pygame.Rect(560, 100, 150, 40)
+        
+        # Room buttons
+        self.buttons['ready'] = pygame.Rect(50, 600, 150, 50)
+        self.buttons['start_game'] = pygame.Rect(220, 600, 150, 50)
+        self.buttons['leave_room'] = pygame.Rect(390, 600, 150, 50)
+        
+        # Input fields
+        self.input_fields['player_name'] = {
+            'rect': pygame.Rect(400, 200, 200, 30),
+            'text': self.player_name,
+            'active': False
+        }
+        self.input_fields['chat'] = {
+            'rect': pygame.Rect(50, 550, 400, 30),
+            'text': '',
+            'active': False
+        }
+    
+    def connect_to_server(self, host='localhost', port=5555):
+        """Connect to lobby server"""
+        try:
+            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket.connect((host, port))
+            self.connected = True
+            
+            # Start receive thread
+            receive_thread = threading.Thread(target=self.receive_loop)
+            receive_thread.daemon = True
+            receive_thread.start()
+            
+            # Set player name
+            self.send_message({
+                'type': 'set_name',
+                'name': self.player_name
+            })
+            
+            self.current_screen = "lobby"
+            return True
+            
+        except Exception as e:
+            print(f"Failed to connect: {e}")
+            return False
+    
+    def receive_loop(self):
+        """Receive messages from server"""
+        while self.connected:
+            try:
+                data = self.socket.recv(4096).decode('utf-8')
+                if not data:
+                    break
+                
+                message = json.loads(data)
+                self.handle_server_message(message)
+                
+            except Exception as e:
+                print(f"Receive error: {e}")
+                break
+        
+        self.disconnect()
+    
+    def handle_server_message(self, message):
+        """Process server messages"""
+        msg_type = message.get('type')
+        
+        if msg_type == 'welcome':
+            self.player_id = message.get('player_id')
+            print(f"Connected as Player {self.player_id}")
+            
+        elif msg_type == 'room_list':
+            self.room_list = message.get('rooms', [])
+            
+        elif msg_type == 'room_created' or msg_type == 'room_joined':
+            self.current_room = message.get('room')
+            self.current_screen = "room"
+            self.chat_messages = []
+            
+        elif msg_type == 'room_update':
+            self.current_room = message.get('room')
+            
+        elif msg_type == 'room_left':
+            self.current_room = None
+            self.current_screen = "lobby"
+            self.is_ready = False
+            self.request_room_list()
+            
+        elif msg_type == 'room_chat':
+            chat_msg = f"[{message.get('player_name')}]: {message.get('message')}"
+            self.chat_messages.append(chat_msg)
+            if len(self.chat_messages) > 10:
+                self.chat_messages.pop(0)
+            
+        elif msg_type == 'player_joined':
+            player = message.get('player')
+            self.chat_messages.append(f"{player['name']} joined the room")
+            
+        elif msg_type == 'player_left':
+            self.chat_messages.append(f"Player {message.get('player_id')} left")
+            
+        elif msg_type == 'game_starting':
+            self.current_screen = "game"
+            self.chat_messages.append("Game starting in 3 seconds!")
+            
+        elif msg_type == 'match_found':
+            self.current_room = message.get('room')
+            self.current_screen = "room"
+            self.chat_messages = ["Match found! Get ready!"]
+            
+        elif msg_type == 'error':
+            print(f"Error: {message.get('message')}")
+            self.chat_messages.append(f"Error: {message.get('message')}")
+    
+    def send_message(self, message):
+        """Send message to server"""
+        if self.connected and self.socket:
+            try:
+                json_msg = json.dumps(message)
+                self.socket.send(json_msg.encode('utf-8'))
+            except Exception as e:
+                print(f"Send error: {e}")
+    
+    def request_room_list(self):
+        """Request list of rooms"""
+        self.send_message({'type': 'get_rooms'})
+    
+    def create_room(self):
+        """Create a new room"""
+        self.send_message({
+            'type': 'create_room',
+            'settings': {
+                'name': f"{self.player_name}'s Room",
+                'max_players': 4,
+                'game_mode': 'classic'
+            }
+        })
+    
+    def join_room(self, room_id):
+        """Join a room"""
+        self.send_message({
+            'type': 'join_room',
+            'room_id': room_id
+        })
+    
+    def leave_room(self):
+        """Leave current room"""
+        self.send_message({'type': 'leave_room'})
+    
+    def toggle_ready(self):
+        """Toggle ready state"""
+        self.is_ready = not self.is_ready
+        self.send_message({
+            'type': 'set_ready',
+            'ready': self.is_ready
+        })
+    
+    def start_game(self):
+        """Request game start (host only)"""
+        self.send_message({'type': 'start_game'})
+    
+    def quick_match(self):
+        """Enter quick match queue"""
+        self.send_message({'type': 'quick_match'})
+        self.chat_messages.append("Searching for match...")
+    
+    def send_chat(self, message):
+        """Send chat message"""
+        if message.strip():
+            self.send_message({
+                'type': 'room_chat',
+                'message': message
+            })
+    
+    def disconnect(self):
+        """Disconnect from server"""
+        self.connected = False
+        if self.socket:
+            self.socket.close()
+        self.current_screen = "main_menu"
+    
+    def draw_main_menu(self):
+        """Draw main menu screen"""
+        self.screen.fill((30, 30, 40))
+        
+        # Title
+        title = self.title_font.render("Game Lobby", True, (255, 255, 255))
+        title_rect = title.get_rect(center=(512, 100))
+        self.screen.blit(title, title_rect)
+        
+        # Name input
+        self.draw_input_field('player_name', "Enter Name:")
+        
+        # Buttons
+        self.draw_button('connect', "Connect to Server", (0, 150, 255))
+        self.draw_button('quit', "Quit", (255, 50, 50))
+    
+    def draw_lobby(self):
+        """Draw lobby screen"""
+        self.screen.fill((40, 40, 50))
+        
+        # Title
+        title = self.font.render(f"Lobby - {self.player_name}", True, (255, 255, 255))
+        self.screen.blit(title, (50, 30))
+        
+        # Buttons
+        self.draw_button('create_room', "Create Room", (0, 200, 100))
+        self.draw_button('join_room', "Join Selected", (0, 150, 200))
+        self.draw_button('quick_match', "Quick Match", (200, 150, 0))
+        self.draw_button('refresh', "Refresh", (150, 150, 150))
+        
+        # Room list
+        y = 160
+        self.screen.blit(self.font.render("Available Rooms:", True, (255, 255, 255)), (50, y))
+        y += 30
+        
+        for i, room in enumerate(self.room_list):
+            color = (100, 200, 100) if room == self.selected_room else (200, 200, 200)
+            room_text = f"{room['name']} - {room['players']}/{room['max_players']} - Host: {room['host_name']}"
+            text = self.font.render(room_text, True, color)
+            
+            # Clickable area
+            text_rect = pygame.Rect(50, y, 700, 25)
+            if text_rect.collidepoint(pygame.mouse.get_pos()):
+                pygame.draw.rect(self.screen, (80, 80, 100), text_rect)
+            
+            self.screen.blit(text, (50, y))
+            y += 30
+    
+    def draw_room(self):
+        """Draw room screen"""
+        self.screen.fill((45, 45, 55))
+        
+        if not self.current_room:
+            return
+        
+        # Room title
+        room_name = self.current_room['settings']['name']
+        title = self.title_font.render(room_name, True, (255, 255, 255))
+        self.screen.blit(title, (50, 30))
+        
+        # Room info
+        info_text = f"Room ID: {self.current_room['id']} | Mode: {self.current_room['settings']['game_mode']}"
+        self.screen.blit(self.font.render(info_text, True, (200, 200, 200)), (50, 90))
+        
+        # Players
+        y = 140
+        self.screen.blit(self.font.render("Players:", True, (255, 255, 255)), (50, y))
+        y += 30
+        
+        for player in self.current_room['players']:
+            status = "🟢" if player['is_ready'] else "🔴"
+            host_tag = " [HOST]" if player['is_host'] else ""
+            player_text = f"{status} {player['name']}{host_tag}"
+            
+            color = (255, 215, 0) if player['id'] == self.player_id else (200, 200, 200)
+            self.screen.blit(self.font.render(player_text, True, color), (70, y))
+            y += 30
+        
+        # Chat area
+        chat_y = 350
+        pygame.draw.rect(self.screen, (30, 30, 40), (50, chat_y, 700, 180))
+        self.screen.blit(self.font.render("Chat:", True, (255, 255, 255)), (60, chat_y + 5))
+        
+        for i, msg in enumerate(self.chat_messages[-8:]):
+            self.screen.blit(self.font.render(msg, True, (200, 200, 200)), 
+                           (60, chat_y + 30 + i * 20))
+        
+        # Chat input
+        self.draw_input_field('chat', "Type message...")
+        
+        # Buttons
+        ready_text = "Not Ready" if self.is_ready else "Ready"
+        ready_color = (200, 100, 0) if self.is_ready else (0, 200, 100)
+        self.draw_button('ready', ready_text, ready_color)
+        
+        # Show start button only for host
+        for player in self.current_room['players']:
+            if player['id'] == self.player_id and player['is_host']:
+                can_start = self.current_room.get('can_start', False)
+                start_color = (0, 255, 0) if can_start else (100, 100, 100)
+                self.draw_button('start_game', "Start Game", start_color)
+                break
+        
+        self.draw_button('leave_room', "Leave Room", (200, 50, 50))
+    
+    def draw_game(self):
+        """Draw game screen (placeholder)"""
+        self.screen.fill((20, 50, 20))
+        
+        # Game starting message
+        text = self.title_font.render("Game Starting!", True, (255, 255, 255))
+        text_rect = text.get_rect(center=(512, 384))
+        self.screen.blit(text, text_rect)
+        
+        # This is where the actual game would start
+        # You would transition to your game scene here
+    
+    def draw_button(self, button_id, text, color):
+        """Draw a button"""
+        if button_id not in self.buttons:
+            return
+        
+        rect = self.buttons[button_id]
+        
+        # Hover effect
+        mouse_pos = pygame.mouse.get_pos()
+        if rect.collidepoint(mouse_pos):
+            color = tuple(min(255, c + 30) for c in color)
+        
+        pygame.draw.rect(self.screen, color, rect)
+        pygame.draw.rect(self.screen, (255, 255, 255), rect, 2)
+        
+        text_surface = self.font.render(text, True, (255, 255, 255))
+        text_rect = text_surface.get_rect(center=rect.center)
+        self.screen.blit(text_surface, text_rect)
+    
+    def draw_input_field(self, field_id, label):
+        """Draw an input field"""
+        if field_id not in self.input_fields:
+            return
+        
+        field = self.input_fields[field_id]
+        
+        # Label
+        label_y = field['rect'].y - 25
+        self.screen.blit(self.font.render(label, True, (200, 200, 200)), 
+                        (field['rect'].x, label_y))
+        
+        # Field background
+        color = (100, 100, 120) if field['active'] else (60, 60, 70)
+        pygame.draw.rect(self.screen, color, field['rect'])
+        pygame.draw.rect(self.screen, (200, 200, 200), field['rect'], 2)
+        
+        # Text
+        text_surface = self.font.render(field['text'], True, (255, 255, 255))
+        self.screen.blit(text_surface, (field['rect'].x + 5, field['rect'].y + 5))
+        
+        # Cursor
+        if field['active']:
+            cursor_x = field['rect'].x + 5 + text_surface.get_width()
+            pygame.draw.line(self.screen, (255, 255, 255),
+                           (cursor_x, field['rect'].y + 5),
+                           (cursor_x, field['rect'].y + 25), 2)
+    
+    def handle_click(self, pos):
+        """Handle mouse click"""
+        if self.current_screen == "main_menu":
+            if self.buttons['connect'].collidepoint(pos):
+                self.player_name = self.input_fields['player_name']['text']
+                self.connect_to_server()
+            elif self.buttons['quit'].collidepoint(pos):
+                return False
+            
+            # Check input field
+            for field_id, field in self.input_fields.items():
+                field['active'] = field['rect'].collidepoint(pos)
+        
+        elif self.current_screen == "lobby":
+            if self.buttons['create_room'].collidepoint(pos):
+                self.create_room()
+            elif self.buttons['join_room'].collidepoint(pos):
+                if self.selected_room:
+                    self.join_room(self.selected_room['id'])
+            elif self.buttons['quick_match'].collidepoint(pos):
+                self.quick_match()
+            elif self.buttons['refresh'].collidepoint(pos):
+                self.request_room_list()
+            
+            # Check room selection
+            y = 190
+            for room in self.room_list:
+                room_rect = pygame.Rect(50, y, 700, 25)
+                if room_rect.collidepoint(pos):
+                    self.selected_room = room
+                y += 30
+        
+        elif self.current_screen == "room":
+            if self.buttons['ready'].collidepoint(pos):
+                self.toggle_ready()
+            elif self.buttons['start_game'].collidepoint(pos):
+                self.start_game()
+            elif self.buttons['leave_room'].collidepoint(pos):
+                self.leave_room()
+            
+            # Check input field
+            for field_id, field in self.input_fields.items():
+                field['active'] = field['rect'].collidepoint(pos)
+        
+        return True
+    
+    def handle_key(self, event):
+        """Handle keyboard input"""
+        for field_id, field in self.input_fields.items():
+            if field['active']:
+                if event.key == pygame.K_RETURN:
+                    if field_id == 'chat' and self.current_screen == "room":
+                        self.send_chat(field['text'])
+                        field['text'] = ''
+                    field['active'] = False
+                elif event.key == pygame.K_BACKSPACE:
+                    field['text'] = field['text'][:-1]
+                else:
+                    field['text'] += event.unicode
+    
+    def run(self):
+        """Main game loop"""
+        running = True
+        
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if not self.handle_click(event.pos):
+                        running = False
+                elif event.type == pygame.KEYDOWN:
+                    self.handle_key(event)
+            
+            # Draw current screen
+            if self.current_screen == "main_menu":
+                self.draw_main_menu()
+            elif self.current_screen == "lobby":
+                self.draw_lobby()
+            elif self.current_screen == "room":
+                self.draw_room()
+            elif self.current_screen == "game":
+                self.draw_game()
+            
+            pygame.display.flip()
+            self.clock.tick(60)
+        
+        # Clean up
+        if self.connected:
+            self.disconnect()
+        pygame.quit()
+
+if __name__ == "__main__":
+    client = LobbyClient()
+    client.run()
+        </code></pre>
+    </div>
+
+    <h2>Room Management Features</h2>
+    
+    <div style="background-color: #fff9e6; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🚪 Advanced Room Features</h3>
+        
+        <pre><code class="language-python">
+# Additional features for room management
+
+class RoomManager:
+    """Extended room management features"""
+    
+    def __init__(self):
+        self.rooms = {}
+        self.room_templates = self.load_templates()
+    
+    def load_templates(self):
+        """Load predefined room templates"""
+        return {
+            'competitive': {
+                'max_players': 2,
+                'min_players': 2,
+                'game_mode': 'ranked',
+                'time_limit': 600,
+                'allow_spectators': True,
+                'skill_based_matchmaking': True
+            },
+            'casual': {
+                'max_players': 8,
+                'min_players': 2,
+                'game_mode': 'casual',
+                'time_limit': 300,
+                'allow_spectators': False,
+                'skill_based_matchmaking': False
+            },
+            'tournament': {
+                'max_players': 16,
+                'min_players': 16,
+                'game_mode': 'tournament',
+                'time_limit': 900,
+                'allow_spectators': True,
+                'bracket_type': 'single_elimination'
+            }
+        }
+    
+    def create_room_from_template(self, template_name, host_id):
+        """Create room using template"""
+        if template_name not in self.room_templates:
+            return None
+        
+        template = self.room_templates[template_name]
+        room_id = self.generate_room_id()
+        room = GameRoom(room_id, host_id, template.copy())
+        
+        return room
+    
+    def find_suitable_room(self, player, criteria):
+        """Find room matching criteria"""
+        suitable_rooms = []
+        
+        for room in self.rooms.values():
+            if room.state != RoomState.WAITING:
+                continue
+            
+            # Check criteria
+            if criteria.get('game_mode') and room.settings['game_mode'] != criteria['game_mode']:
+                continue
+            
+            if criteria.get('skill_range'):
+                avg_skill = self.calculate_room_skill(room)
+                if abs(avg_skill - player.stats['rating']) > criteria['skill_range']:
+                    continue
+            
+            if len(room.players) < room.settings['max_players']:
+                suitable_rooms.append(room)
+        
+        # Sort by best match (fullest rooms first)
+        suitable_rooms.sort(key=lambda r: len(r.players), reverse=True)
+        
+        return suitable_rooms[0] if suitable_rooms else None
+    
+    def calculate_room_skill(self, room):
+        """Calculate average skill rating in room"""
+        if not room.players:
+            return 1000
+        
+        total_rating = sum(p.stats['rating'] for p in room.players.values())
+        return total_rating / len(room.players)
+    
+    def balance_teams(self, room):
+        """Balance teams based on skill rating"""
+        players = list(room.players.values())
+        players.sort(key=lambda p: p.stats['rating'], reverse=True)
+        
+        team_a = []
+        team_b = []
+        
+        # Snake draft for balance
+        for i, player in enumerate(players):
+            if i % 4 in [0, 3]:
+                team_a.append(player)
+            else:
+                team_b.append(player)
+        
+        return {'team_a': team_a, 'team_b': team_b}
+
+class SpectatorSystem:
+    """Handle spectators in rooms"""
+    
+    def __init__(self, room):
+        self.room = room
+        self.spectators = {}
+        self.max_spectators = 10
+    
+    def add_spectator(self, player):
+        """Add spectator to room"""
+        if len(self.spectators) >= self.max_spectators:
+            return False
+        
+        self.spectators[player.id] = player
+        player.state = PlayerState.SPECTATING
+        return True
+    
+    def remove_spectator(self, player_id):
+        """Remove spectator"""
+        if player_id in self.spectators:
+            del self.spectators[player_id]
+            return True
+        return False
+    
+    def broadcast_to_spectators(self, message):
+        """Send message to all spectators"""
+        for spectator in self.spectators.values():
+            # Send message to spectator
+            pass
+        </code></pre>
+    </div>
+
+    <h2>Matchmaking Algorithms</h2>
+    
+    <div style="background-color: #f3e5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎯 Smart Matchmaking</h3>
+        
+        <pre><code class="language-python">
+class Matchmaker:
+    """Advanced matchmaking system"""
+    
+    def __init__(self):
+        self.queue = []
+        self.matches = []
+        
+    def add_to_queue(self, player):
+        """Add player to matchmaking queue"""
+        self.queue.append({
+            'player': player,
+            'queue_time': time.time(),
+            'search_range': 100  # Initial skill range
+        })
+    
+    def find_matches(self):
+        """Find suitable matches"""
+        while len(self.queue) >= 2:
+            # Sort by wait time (longest first)
+            self.queue.sort(key=lambda x: x['queue_time'])
+            
+            base_player = self.queue[0]
+            match_found = False
+            
+            # Expand search range over time
+            wait_time = time.time() - base_player['queue_time']
+            base_player['search_range'] = 100 + (wait_time * 10)  # +10 rating per second
+            
+            # Find compatible players
+            compatible = []
+            for other in self.queue[1:]:
+                if self.are_compatible(base_player, other):
+                    compatible.append(other)
+            
+            if compatible:
+                # Create match with best compatible players
+                match_size = min(4, len(compatible) + 1)
+                match_players = [base_player] + compatible[:match_size-1]
+                
+                # Remove from queue
+                for mp in match_players:
+                    self.queue.remove(mp)
+                
+                # Create match
+                self.create_match(match_players)
+                match_found = True
+            
+            if not match_found:
+                # No match found, wait
+                break
+    
+    def are_compatible(self, player1, player2):
+        """Check if two players are compatible"""
+        p1_rating = player1['player'].stats['rating']
+        p2_rating = player2['player'].stats['rating']
+        
+        # Check skill difference
+        skill_diff = abs(p1_rating - p2_rating)
+        max_diff = max(player1['search_range'], player2['search_range'])
+        
+        return skill_diff <= max_diff
+    
+    def create_match(self, players):
+        """Create a match from compatible players"""
+        match = {
+            'id': self.generate_match_id(),
+            'players': [p['player'] for p in players],
+            'avg_rating': sum(p['player'].stats['rating'] for p in players) / len(players),
+            'created_at': time.time()
+        }
+        
+        self.matches.append(match)
+        return match
+    
+    def generate_match_id(self):
+        """Generate unique match ID"""
+        return f"match_{int(time.time() * 1000)}"
+        </code></pre>
+    </div>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>✨ Lobby System Best Practices</h3>
+        <ul>
+            <li><strong>Room Codes:</strong> Use short, memorable codes for private rooms</li>
+            <li><strong>Ready System:</strong> Require explicit ready confirmation</li>
+            <li><strong>Host Migration:</strong> Automatically transfer host if they leave</li>
+            <li><strong>Idle Timeout:</strong> Remove inactive players</li>
+            <li><strong>Room Persistence:</strong> Keep rooms alive briefly after disconnect</li>
+            <li><strong>Skill Matching:</strong> Balance teams for fair games</li>
+            <li><strong>Queue Times:</strong> Expand search criteria over time</li>
+            <li><strong>Chat Moderation:</strong> Filter inappropriate content</li>
+            <li><strong>Spectator Mode:</strong> Allow watching ongoing games</li>
+            <li><strong>Rejoin System:</strong> Let players reconnect to games</li>
+        </ul>
+    </div>
+
+    <h2>Security Considerations</h2>
+    
+    <div style="background-color: #ffe6e6; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🔒 Lobby Security</h3>
+        <ul>
+            <li><strong>Room Passwords:</strong> Hash passwords, never store plain text</li>
+            <li><strong>Rate Limiting:</strong> Prevent spam room creation</li>
+            <li><strong>Input Validation:</strong> Sanitize all user input</li>
+            <li><strong>Permission Checks:</strong> Verify host privileges</li>
+            <li><strong>Anti-Cheat:</strong> Validate game results server-side</li>
+            <li><strong>Privacy:</strong> Don't expose player IPs</li>
+            <li><strong>Report System:</strong> Allow reporting bad behavior</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>🏛️ Lobbies are essential for multiplayer game organization</li>
+            <li>🚪 Room management includes creation, joining, and settings</li>
+            <li>✅ Ready systems ensure all players are prepared</li>
+            <li>👑 Host migration keeps games running smoothly</li>
+            <li>🎯 Matchmaking should balance skill and wait time</li>
+            <li>💬 Pre-game chat builds community</li>
+            <li>🔄 Handle disconnections gracefully</li>
+            <li>📊 Track player statistics for better matchmaking</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>Congratulations! You've completed the Multiplayer Basics section. You now have all the tools to create networked multiplayer games!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="networking_lag_compensation.html" class="prev-lesson">Previous: Handling Lag/Latency</a>
+        <a href="index.html" class="next-lesson">Back to Course Home</a>
+    </nav>
+    
+    </main>
+</body>
+</html>

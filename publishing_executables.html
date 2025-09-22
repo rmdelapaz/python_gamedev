@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Learn to build executable files from Python games. Master PyInstaller, cx_Freeze, packaging assets, creating installers, and cross-platform distribution.">
+    <title>Building Executables - Publishing Your Game</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/enhanced.css">
+    <link rel="icon" href="favicon.png">
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <!-- Progress indicator -->
+    <div class="progress-indicator" role="progressbar" aria-label="Page scroll progress">
+        <div class="progress-bar"></div>
+    </div>
+    
+    <main id="main-content">
+    <header role="banner">
+        <h1>Building Executables</h1>
+        <div class="reading-time" aria-label="Estimated reading time">18 minute read</div>
+    </header>
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Course Home</a>
+        <span class="separator">›</span>
+        <span class="current">Advanced Module - Section 4: Publishing Your Game - Lesson 2</span>
+    </nav>
+
+    <h2>Converting Python Games to Standalone Executables</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p>Package your Python game into standalone executables! Learn PyInstaller, cx_Freeze, Nuitka, create installers, handle dependencies, and deploy across platforms! 📦🚀💿</p>
+    </div>
+
+    <h2>Understanding Executable Building</h2>
+    
+    <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🎯 Why Build Executables?</h3>
+        <p>Benefits of standalone executables:</p>
+        <ul>
+            <li><strong>No Python Required:</strong> Users don't need Python installed</li>
+            <li><strong>Single File Distribution:</strong> Easy to share and install</li>
+            <li><strong>Protected Source:</strong> Code is compiled/bundled</li>
+            <li><strong>Professional Presentation:</strong> Looks like a "real" application</li>
+            <li><strong>Dependency Management:</strong> All libraries included</li>
+            <li><strong>Platform Integration:</strong> Native OS features</li>
+        </ul>
+    </div>
+
+    <div class="mermaid">
+    graph TD
+        A["Python Game"] --> B["Packaging Tool"]
+        B --> C["PyInstaller"]
+        B --> D["cx_Freeze"]
+        B --> E["Nuitka"]
+        B --> F["py2exe"]
+        
+        C --> G["Windows .exe"]
+        C --> H["macOS .app"]
+        C --> I["Linux binary"]
+        
+        G --> J["Installer"]
+        H --> K["DMG"]
+        I --> L["AppImage"]
+        
+        J --> M["Distribution"]
+        K --> M
+        L --> M
+    </div>
+
+    <h2>PyInstaller - The Most Popular Choice</h2>
+    
+    <div style="background-color: #f9f9f9; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>📦 Using PyInstaller</h3>
+        <pre><code class="language-bash">
+# Install PyInstaller
+pip install pyinstaller
+
+# Basic usage - creates a folder with executable
+pyinstaller your_game.py
+
+# Single file executable
+pyinstaller --onefile your_game.py
+
+# No console window (for GUI apps)
+pyinstaller --onefile --windowed your_game.py
+
+# With custom icon
+pyinstaller --onefile --windowed --icon=game_icon.ico your_game.py
+
+# Add data files
+pyinstaller --onefile --add-data "assets;assets" your_game.py
+
+# Linux/Mac syntax for data files
+pyinstaller --onefile --add-data "assets:assets" your_game.py
+        </code></pre>
+    </div>
+
+    <h2>PyInstaller Spec File</h2>
+    
+    <div style="background-color: #f0fff0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚙️ Advanced Configuration</h3>
+        <pre><code class="language-python">
+# game.spec - PyInstaller specification file
+# -*- mode: python ; coding: utf-8 -*-
+
+block_cipher = None
+
+# Analysis phase
+a = Analysis(
+    ['main.py'],
+    pathex=[],
+    binaries=[],
+    datas=[
+        ('assets', 'assets'),
+        ('levels', 'levels'),
+        ('sounds', 'sounds'),
+        ('config.json', '.'),
+    ],
+    hiddenimports=[
+        'pygame',
+        'numpy',
+        'PIL',
+    ],
+    hookspath=[],
+    hooksconfig={},
+    runtime_hooks=[],
+    excludes=[
+        'matplotlib',
+        'tkinter',
+        'test',
+    ],
+    win_no_prefer_redirects=False,
+    win_private_assemblies=False,
+    cipher=block_cipher,
+    noarchive=False,
+)
+
+# Remove unnecessary modules
+a.binaries = [x for x in a.binaries if not x[0].startswith('api-ms-win')]
+
+pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+
+exe = EXE(
+    pyz,
+    a.scripts,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
+    [],
+    name='MyAwesomeGame',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    runtime_tmpdir=None,
+    console=False,
+    disable_windowed_traceback=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+    version='version.txt',
+    icon='icon.ico',
+)
+
+# macOS specific
+app = BUNDLE(
+    exe,
+    name='MyAwesomeGame.app',
+    icon='icon.icns',
+    bundle_identifier='com.yourcompany.myawesomegame',
+    info_plist={
+        'NSHighResolutionCapable': 'True',
+        'CFBundleShortVersionString': '1.0.0',
+        'CFBundleVersion': '1.0.0',
+    },
+)
+        </code></pre>
+    </div>
+
+    <h2>Handling Resources and Assets</h2>
+    
+    <div style="background-color: #fff9e6; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>📁 Resource Management</h3>
+        <pre><code class="language-python">
+import os
+import sys
+
+def resource_path(relative_path):
+    """Get absolute path to resource, works for dev and PyInstaller"""
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    
+    return os.path.join(base_path, relative_path)
+
+# Usage in your game
+class AssetLoader:
+    def __init__(self):
+        self.base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+        
+    def get_path(self, relative_path):
+        return os.path.join(self.base_path, relative_path)
+    
+    def load_image(self, path):
+        full_path = self.get_path(path)
+        return pygame.image.load(full_path)
+    
+    def load_sound(self, path):
+        full_path = self.get_path(path)
+        return pygame.mixer.Sound(full_path)
+    
+    def load_font(self, path, size):
+        full_path = self.get_path(path)
+        return pygame.font.Font(full_path, size)
+
+# Example usage
+asset_loader = AssetLoader()
+player_image = asset_loader.load_image('assets/sprites/player.png')
+jump_sound = asset_loader.load_sound('assets/sounds/jump.wav')
+game_font = asset_loader.load_font('assets/fonts/game.ttf', 24)
+
+# Configuration file handling
+import json
+
+class ConfigManager:
+    def __init__(self):
+        # Use user's home directory for config in production
+        if hasattr(sys, '_MEIPASS'):
+            self.config_dir = os.path.expanduser('~/.mygame')
+            if not os.path.exists(self.config_dir):
+                os.makedirs(self.config_dir)
+            self.config_path = os.path.join(self.config_dir, 'config.json')
+        else:
+            self.config_path = 'config.json'
+    
+    def load_config(self):
+        if os.path.exists(self.config_path):
+            with open(self.config_path, 'r') as f:
+                return json.load(f)
+        return self.get_default_config()
+    
+    def save_config(self, config):
+        with open(self.config_path, 'w') as f:
+            json.dump(config, f, indent=2)
+    
+    def get_default_config(self):
+        return {
+            'resolution': [1280, 720],
+            'fullscreen': False,
+            'volume': 0.7,
+            'controls': {
+                'up': pygame.K_w,
+                'down': pygame.K_s,
+                'left': pygame.K_a,
+                'right': pygame.K_d,
+            }
+        }
+        </code></pre>
+    </div>
+
+    <h2>cx_Freeze Alternative</h2>
+    
+    <div style="background-color: #f3e5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🧊 Using cx_Freeze</h3>
+        <pre><code class="language-python">
+# setup.py for cx_Freeze
+import sys
+from cx_Freeze import setup, Executable
+
+# Dependencies
+build_exe_options = {
+    "packages": ["pygame", "numpy", "os"],
+    "excludes": ["tkinter", "matplotlib"],
+    "include_files": [
+        ("assets", "assets"),
+        ("levels", "levels"),
+        ("sounds", "sounds"),
+        ("icon.ico", "icon.ico"),
+    ],
+    "optimize": 2,
+}
+
+# Platform-specific options
+base = None
+if sys.platform == "win32":
+    base = "Win32GUI"  # No console window
+
+executables = [
+    Executable(
+        "main.py",
+        base=base,
+        target_name="MyGame",
+        icon="icon.ico",
+    )
+]
+
+setup(
+    name="My Awesome Game",
+    version="1.0.0",
+    author="Your Name",
+    description="An awesome game made with Python",
+    options={"build_exe": build_exe_options},
+    executables=executables,
+)
+
+# Build command:
+# python setup.py build
+# or for MSI installer on Windows:
+# python setup.py bdist_msi
+        </code></pre>
+    </div>
+
+    <h2>Nuitka for Performance</h2>
+    
+    <div style="background-color: #e8f5e9; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚡ Compiling with Nuitka</h3>
+        <pre><code class="language-bash">
+# Install Nuitka
+pip install nuitka
+
+# Basic compilation
+nuitka --standalone --onefile main.py
+
+# With optimizations
+nuitka --standalone --onefile --lto=yes --assume-yes-for-downloads main.py
+
+# Windows specific with icon
+nuitka --standalone --onefile --windows-disable-console \
+       --windows-icon-from-ico=icon.ico main.py
+
+# Include data files
+nuitka --standalone --onefile --include-data-dir=assets=assets \
+       --include-data-dir=levels=levels main.py
+
+# Maximum optimization
+nuitka --standalone --onefile --lto=yes --jobs=4 \
+       --enable-plugin=numpy --show-progress main.py
+        </code></pre>
+    </div>
+
+    <h2>Creating Installers</h2>
+    
+    <div style="background-color: #fff0f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>💿 Professional Installation</h3>
+        
+        <h4>Windows - Inno Setup Script</h4>
+        <pre><code class="language-ini">
+; installer.iss - Inno Setup script
+[Setup]
+AppName=My Awesome Game
+AppVersion=1.0.0
+AppPublisher=Your Company
+AppPublisherURL=https://yourwebsite.com
+DefaultDirName={autopf}\MyAwesomeGame
+DefaultGroupName=My Awesome Game
+UninstallDisplayIcon={app}\MyGame.exe
+Compression=lzma2
+SolidCompression=yes
+OutputDir=dist
+OutputBaseFilename=MyAwesomeGame_Setup
+
+[Files]
+Source: "dist\MyGame.exe"; DestDir: "{app}"
+Source: "dist\assets\*"; DestDir: "{app}\assets"; Flags: recursesubdirs
+Source: "README.txt"; DestDir: "{app}"; Flags: isreadme
+
+[Icons]
+Name: "{group}\My Awesome Game"; Filename: "{app}\MyGame.exe"
+Name: "{group}\Uninstall"; Filename: "{uninstallexe}"
+Name: "{commondesktop}\My Awesome Game"; Filename: "{app}\MyGame.exe"
+
+[Run]
+Filename: "{app}\MyGame.exe"; Description: "Launch My Awesome Game"; Flags: postinstall nowait skipifsilent
+
+[Registry]
+Root: HKCU; Subkey: "Software\YourCompany\MyAwesomeGame"; ValueType: string; ValueName: "InstallPath"; ValueData: "{app}"
+        </code></pre>
+        
+        <h4>macOS - Creating DMG</h4>
+        <pre><code class="language-bash">
+# Create app bundle first with PyInstaller
+pyinstaller --onefile --windowed --icon=icon.icns \
+            --osx-bundle-identifier com.yourcompany.game main.py
+
+# Create DMG using create-dmg
+brew install create-dmg
+
+create-dmg \
+  --volname "My Awesome Game" \
+  --volicon "icon.icns" \
+  --background "installer_background.png" \
+  --window-pos 200 120 \
+  --window-size 600 400 \
+  --icon-size 100 \
+  --icon "MyGame.app" 200 190 \
+  --hide-extension "MyGame.app" \
+  --app-drop-link 400 190 \
+  "MyGame.dmg" \
+  "dist/"
+        </code></pre>
+        
+        <h4>Linux - AppImage</h4>
+        <pre><code class="language-bash">
+# Create AppImage
+# First, create AppDir structure
+mkdir -p MyGame.AppDir/usr/bin
+mkdir -p MyGame.AppDir/usr/share/applications
+mkdir -p MyGame.AppDir/usr/share/icons/hicolor/256x256/apps
+
+# Copy executable and assets
+cp dist/mygame MyGame.AppDir/usr/bin/
+cp -r assets MyGame.AppDir/usr/bin/
+
+# Create desktop entry
+cat > MyGame.AppDir/mygame.desktop << 'EOF'
+[Desktop Entry]
+Type=Application
+Name=My Awesome Game
+Exec=mygame
+Icon=mygame
+Categories=Game;
+X-AppImage-Version=1.0.0
+EOF
+
+# Copy icon
+cp icon.png MyGame.AppDir/usr/share/icons/hicolor/256x256/apps/mygame.png
+
+# Create AppRun script
+cat > MyGame.AppDir/AppRun << 'EOF'
+#!/bin/bash
+HERE="$(dirname "$(readlink -f "${0}")")"
+exec "${HERE}/usr/bin/mygame" "$@"
+EOF
+chmod +x MyGame.AppDir/AppRun
+
+# Download appimagetool and create AppImage
+wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
+chmod +x appimagetool-x86_64.AppImage
+./appimagetool-x86_64.AppImage MyGame.AppDir MyGame-x86_64.AppImage
+        </code></pre>
+    </div>
+
+    <h2>Build Automation</h2>
+    
+    <div style="background-color: #f5f5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>🔧 Automated Build Script</h3>
+        <pre><code class="language-python">
+# build.py - Automated build script
+import os
+import sys
+import shutil
+import subprocess
+import zipfile
+from datetime import datetime
+
+class GameBuilder:
+    def __init__(self, game_name="MyGame", version="1.0.0"):
+        self.game_name = game_name
+        self.version = version
+        self.build_dir = "build"
+        self.dist_dir = "dist"
+        self.release_dir = "releases"
+        
+    def clean(self):
+        """Clean previous builds"""
+        print("Cleaning previous builds...")
+        for dir in [self.build_dir, self.dist_dir]:
+            if os.path.exists(dir):
+                shutil.rmtree(dir)
+    
+    def run_tests(self):
+        """Run unit tests"""
+        print("Running tests...")
+        result = subprocess.run([sys.executable, "-m", "pytest", "tests/"],
+                              capture_output=True, text=True)
+        if result.returncode != 0:
+            print("Tests failed!")
+            return False
+        print("All tests passed!")
+        return True
+    
+    def build_executable(self):
+        """Build executable with PyInstaller"""
+        print(f"Building {self.game_name} v{self.version}...")
+        
+        cmd = [
+            "pyinstaller",
+            "--onefile",
+            "--windowed",
+            "--name", self.game_name,
+            "--icon", "icon.ico",
+            "--add-data", f"assets{os.pathsep}assets",
+            "--add-data", f"sounds{os.pathsep}sounds",
+            "--add-data", f"levels{os.pathsep}levels",
+            "main.py"
+        ]
+        
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        
+        if result.returncode != 0:
+            print("Build failed!")
+            print(result.stderr)
+            return False
+        
+        print("Build successful!")
+        return True
+    
+    def create_release(self):
+        """Create release package"""
+        print("Creating release package...")
+        
+        if not os.path.exists(self.release_dir):
+            os.makedirs(self.release_dir)
+        
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        system = sys.platform
+        
+        if system == "win32":
+            archive_name = f"{self.game_name}_v{self.version}_Windows_{timestamp}.zip"
+        elif system == "darwin":
+            archive_name = f"{self.game_name}_v{self.version}_macOS_{timestamp}.zip"
+        else:
+            archive_name = f"{self.game_name}_v{self.version}_Linux_{timestamp}.tar.gz"
+        
+        archive_path = os.path.join(self.release_dir, archive_name)
+        
+        # Create archive
+        if system == "win32" or system == "darwin":
+            with zipfile.ZipFile(archive_path, 'w', zipfile.ZIP_DEFLATED) as zf:
+                for root, dirs, files in os.walk(self.dist_dir):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        arc_name = os.path.relpath(file_path, self.dist_dir)
+                        zf.write(file_path, arc_name)
+        else:
+            # Linux - use tar.gz
+            import tarfile
+            with tarfile.open(archive_path, 'w:gz') as tar:
+                tar.add(self.dist_dir, arcname=self.game_name)
+        
+        print(f"Release created: {archive_path}")
+        return True
+    
+    def build_all(self):
+        """Complete build process"""
+        print(f"Building {self.game_name} v{self.version}")
+        print("=" * 50)
+        
+        self.clean()
+        
+        if not self.run_tests():
+            print("Build aborted due to test failures")
+            return False
+        
+        if not self.build_executable():
+            print("Build aborted due to compilation errors")
+            return False
+        
+        if not self.create_release():
+            print("Warning: Release creation failed")
+        
+        print("\nBuild complete!")
+        return True
+
+# Usage
+if __name__ == "__main__":
+    builder = GameBuilder("MyAwesomeGame", "1.0.0")
+    builder.build_all()
+        </code></pre>
+    </div>
+
+    <h2>Common Issues and Solutions</h2>
+    
+    <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>⚠️ Troubleshooting</h3>
+        
+        <h4>Missing Modules</h4>
+        <pre><code class="language-python">
+# Add hidden imports in spec file
+hiddenimports=['pkg_resources.py2_warn', 'pygame._sdl2']
+
+# Or use command line
+pyinstaller --hidden-import=pygame._sdl2 main.py
+        </code></pre>
+        
+        <h4>Antivirus False Positives</h4>
+        <ul>
+            <li>Sign your executable with a code certificate</li>
+            <li>Submit to antivirus vendors for whitelisting</li>
+            <li>Use UPX compression carefully (or disable it)</li>
+            <li>Build on clean systems</li>
+        </ul>
+        
+        <h4>Large File Size</h4>
+        <ul>
+            <li>Exclude unnecessary modules</li>
+            <li>Use UPX compression</li>
+            <li>Optimize assets before packaging</li>
+            <li>Consider separate asset downloads</li>
+        </ul>
+        
+        <h4>Path Issues</h4>
+        <pre><code class="language-python">
+# Always use resource_path function
+def resource_path(relative_path):
+    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, relative_path)
+
+# Never use hardcoded paths
+# BAD: image = pygame.image.load("C:/game/assets/player.png")
+# GOOD: image = pygame.image.load(resource_path("assets/player.png"))
+        </code></pre>
+    </div>
+
+    <h2>Version Information</h2>
+    
+    <div style="background-color: #e8f5e9; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>📋 Adding Version Info (Windows)</h3>
+        <pre><code class="language-python">
+# version.txt file for PyInstaller
+VSVersionInfo(
+  ffi=FixedFileInfo(
+    filevers=(1, 0, 0, 0),
+    prodvers=(1, 0, 0, 0),
+    mask=0x3f,
+    flags=0x0,
+    OS=0x40004,
+    fileType=0x1,
+    subtype=0x0,
+    date=(0, 0)
+  ),
+  kids=[
+    StringFileInfo(
+      [
+      StringTable(
+        u'040904B0',
+        [StringStruct(u'CompanyName', u'Your Company'),
+        StringStruct(u'FileDescription', u'My Awesome Game'),
+        StringStruct(u'FileVersion', u'1.0.0.0'),
+        StringStruct(u'InternalName', u'mygame'),
+        StringStruct(u'LegalCopyright', u'Copyright (c) 2024 Your Company'),
+        StringStruct(u'OriginalFilename', u'MyGame.exe'),
+        StringStruct(u'ProductName', u'My Awesome Game'),
+        StringStruct(u'ProductVersion', u'1.0.0.0')])
+      ]), 
+    VarFileInfo([VarStruct(u'Translation', [1033, 1200])])
+  ]
+)
+        </code></pre>
+    </div>
+
+    <h2>Best Practices</h2>
+    
+    <div style="background-color: #f5f5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h3>✨ Executable Building Best Practices</h3>
+        <ul>
+            <li><strong>Test Early:</strong> Build executables regularly during development</li>
+            <li><strong>Clean Environment:</strong> Build on clean virtual environments</li>
+            <li><strong>Version Control:</strong> Track spec files and build scripts</li>
+            <li><strong>Automate:</strong> Create build scripts for consistency</li>
+            <li><strong>Test Thoroughly:</strong> Test on target platforms without dev tools</li>
+            <li><strong>Sign Code:</strong> Use code certificates for trust</li>
+            <li><strong>Document Requirements:</strong> List system requirements clearly</li>
+            <li><strong>Error Handling:</strong> Include error logging for debugging</li>
+            <li><strong>Update Mechanism:</strong> Plan for future updates</li>
+            <li><strong>Backup Builds:</strong> Keep previous versions available</li>
+        </ul>
+    </div>
+
+    <h2>Key Takeaways</h2>
+    
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <ul>
+            <li>📦 PyInstaller is the most versatile packaging tool</li>
+            <li>🎯 Always use resource_path for asset loading</li>
+            <li>💾 Test builds on clean systems without Python</li>
+            <li>🔧 Automate build process for consistency</li>
+            <li>📋 Include version information and metadata</li>
+            <li>🛡️ Sign executables to avoid antivirus issues</li>
+            <li>💿 Create proper installers for professional presentation</li>
+            <li>🔄 Plan for updates and patches from the start</li>
+        </ul>
+    </div>
+
+    <h2>What's Next?</h2>
+    
+    <p>With your game packaged, let's explore distribution platforms to reach your audience!</p>
+
+    <!-- Lesson Navigation -->
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+        <a href="publishing_performance.html" class="prev-lesson">Previous: Performance Optimization</a>
+        <a href="publishing_platforms.html" class="next-lesson">Next: Distribution Platforms</a>
+    </nav>
+    
+    </main>
+</body>
+</html>

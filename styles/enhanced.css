@@ -835,3 +835,168 @@ code, pre {
     .main-nav .nav-links.active { display: flex; }
     .main-nav .nav-divider { display: none; }
 }
+
+/* ===========================
+   Phase 3 — Dark Mode Polish (added 2026)
+   Overrides for hard-coded light backgrounds that don't flip with the theme:
+     - Inline-styled boxes: #f0f8ff (info), #fff5f5 (note), #f9f9f9 (neutral)
+     - Class-based: .canvas-wrapper, .svg-wrapper, .reading-time, .mobile-diagram-note
+     - Mermaid container/node/text overrides (main.css uses !important on text fills)
+   Each rule is duplicated under [data-theme="dark"] AND under
+   @media (prefers-color-scheme: dark) :root:not([data-theme="light"]) so the
+   styling holds during the brief pre-JS render on dark-OS systems and after
+   the user manually picks dark.
+   =========================== */
+
+/* ---- Inline-style info boxes (#f0f8ff) ---- */
+:root[data-theme="dark"] [style*="background-color: #f0f8ff" i],
+:root[data-theme="dark"] [style*="background-color:#f0f8ff" i],
+:root[data-theme="dark"] [style*="background: #f0f8ff" i],
+:root[data-theme="dark"] [style*="background:#f0f8ff" i] {
+    background-color: rgba(86, 156, 214, 0.15) !important;
+    color: #d4d4d4 !important;
+}
+
+/* ---- Inline-style note/analogy boxes (#fff5f5) ---- */
+:root[data-theme="dark"] [style*="background-color: #fff5f5" i],
+:root[data-theme="dark"] [style*="background-color:#fff5f5" i],
+:root[data-theme="dark"] [style*="background: #fff5f5" i],
+:root[data-theme="dark"] [style*="background:#fff5f5" i] {
+    background-color: rgba(239, 68, 68, 0.12) !important;
+    color: #d4d4d4 !important;
+}
+
+/* ---- Inline-style neutral boxes (#f9f9f9) ---- */
+:root[data-theme="dark"] [style*="background-color: #f9f9f9" i],
+:root[data-theme="dark"] [style*="background-color:#f9f9f9" i],
+:root[data-theme="dark"] [style*="background: #f9f9f9" i],
+:root[data-theme="dark"] [style*="background:#f9f9f9" i] {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    color: #d4d4d4 !important;
+}
+
+/* ---- Class-based light backgrounds ---- */
+:root[data-theme="dark"] .canvas-wrapper,
+:root[data-theme="dark"] .svg-wrapper {
+    background: #2d2d30;
+    border: 1px solid #3e3e42;
+}
+:root[data-theme="dark"] .reading-time {
+    background: rgba(86, 156, 214, 0.2);
+    color: #d4d4d4;
+}
+:root[data-theme="dark"] .mobile-diagram-note {
+    background: #2d2d30;
+    color: #d4d4d4;
+}
+
+/* ---- Mermaid container & node overrides ---- */
+:root[data-theme="dark"] .mermaid_container,
+:root[data-theme="dark"] .mermaid-diagram,
+:root[data-theme="dark"] .mermaid {
+    background-color: #2d2d30;
+    color: #d4d4d4;
+    border-color: #3e3e42;
+}
+:root[data-theme="dark"] .mermaid .node rect,
+:root[data-theme="dark"] .mermaid .node circle,
+:root[data-theme="dark"] .mermaid .node ellipse,
+:root[data-theme="dark"] .mermaid .node polygon,
+:root[data-theme="dark"] .mermaid .node path {
+    fill: #1e1e1e;
+    stroke: #569cd6;
+}
+:root[data-theme="dark"] .mermaid .edgePath .path {
+    stroke: #94a3b8;
+}
+:root[data-theme="dark"] .mermaid .cluster rect {
+    fill: #1e1e1e;
+    stroke: #569cd6;
+}
+/* main.css forces these to dark text via !important; need !important to win */
+:root[data-theme="dark"] .mermaid .label text,
+:root[data-theme="dark"] .mermaid text,
+:root[data-theme="dark"] .mermaid .flowchart-label text,
+:root[data-theme="dark"] .mermaid .mindmap-node text,
+:root[data-theme="dark"] .mermaid .mindmap-node .nodeText,
+:root[data-theme="dark"] .mermaid .nodeLabel {
+    fill: #d4d4d4 !important;
+    color: #d4d4d4 !important;
+}
+:root[data-theme="dark"] .mermaid .label {
+    color: #d4d4d4;
+    fill: #d4d4d4;
+}
+
+/* ---- Same overrides during pre-JS render on dark-OS systems ---- */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) [style*="background-color: #f0f8ff" i],
+    :root:not([data-theme="light"]) [style*="background-color:#f0f8ff" i],
+    :root:not([data-theme="light"]) [style*="background: #f0f8ff" i],
+    :root:not([data-theme="light"]) [style*="background:#f0f8ff" i] {
+        background-color: rgba(86, 156, 214, 0.15) !important;
+        color: #d4d4d4 !important;
+    }
+    :root:not([data-theme="light"]) [style*="background-color: #fff5f5" i],
+    :root:not([data-theme="light"]) [style*="background-color:#fff5f5" i],
+    :root:not([data-theme="light"]) [style*="background: #fff5f5" i],
+    :root:not([data-theme="light"]) [style*="background:#fff5f5" i] {
+        background-color: rgba(239, 68, 68, 0.12) !important;
+        color: #d4d4d4 !important;
+    }
+    :root:not([data-theme="light"]) [style*="background-color: #f9f9f9" i],
+    :root:not([data-theme="light"]) [style*="background-color:#f9f9f9" i],
+    :root:not([data-theme="light"]) [style*="background: #f9f9f9" i],
+    :root:not([data-theme="light"]) [style*="background:#f9f9f9" i] {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        color: #d4d4d4 !important;
+    }
+    :root:not([data-theme="light"]) .canvas-wrapper,
+    :root:not([data-theme="light"]) .svg-wrapper {
+        background: #2d2d30;
+        border: 1px solid #3e3e42;
+    }
+    :root:not([data-theme="light"]) .reading-time {
+        background: rgba(86, 156, 214, 0.2);
+        color: #d4d4d4;
+    }
+    :root:not([data-theme="light"]) .mobile-diagram-note {
+        background: #2d2d30;
+        color: #d4d4d4;
+    }
+    :root:not([data-theme="light"]) .mermaid_container,
+    :root:not([data-theme="light"]) .mermaid-diagram,
+    :root:not([data-theme="light"]) .mermaid {
+        background-color: #2d2d30;
+        color: #d4d4d4;
+        border-color: #3e3e42;
+    }
+    :root:not([data-theme="light"]) .mermaid .node rect,
+    :root:not([data-theme="light"]) .mermaid .node circle,
+    :root:not([data-theme="light"]) .mermaid .node ellipse,
+    :root:not([data-theme="light"]) .mermaid .node polygon,
+    :root:not([data-theme="light"]) .mermaid .node path {
+        fill: #1e1e1e;
+        stroke: #569cd6;
+    }
+    :root:not([data-theme="light"]) .mermaid .edgePath .path {
+        stroke: #94a3b8;
+    }
+    :root:not([data-theme="light"]) .mermaid .cluster rect {
+        fill: #1e1e1e;
+        stroke: #569cd6;
+    }
+    :root:not([data-theme="light"]) .mermaid .label text,
+    :root:not([data-theme="light"]) .mermaid text,
+    :root:not([data-theme="light"]) .mermaid .flowchart-label text,
+    :root:not([data-theme="light"]) .mermaid .mindmap-node text,
+    :root:not([data-theme="light"]) .mermaid .mindmap-node .nodeText,
+    :root:not([data-theme="light"]) .mermaid .nodeLabel {
+        fill: #d4d4d4 !important;
+        color: #d4d4d4 !important;
+    }
+    :root:not([data-theme="light"]) .mermaid .label {
+        color: #d4d4d4;
+        fill: #d4d4d4;
+    }
+}

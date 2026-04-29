@@ -575,38 +575,263 @@ code, pre {
 
 /* ===========================
    Dark Mode Support
+   Applies when the OS prefers dark AND the user has not manually picked light
+   via the data-theme attribute. The manual [data-theme="dark"] block below
+   mirrors these rules for explicit user choice.
    =========================== */
 
 @media (prefers-color-scheme: dark) {
-    body {
+    :root:not([data-theme="light"]) body {
         background-color: #1e1e1e;
         color: #d4d4d4;
     }
-    
-    h1, h2, h3, h4 {
+    :root:not([data-theme="light"]) h1,
+    :root:not([data-theme="light"]) h2,
+    :root:not([data-theme="light"]) h3,
+    :root:not([data-theme="light"]) h4 {
         background-color: #2d53a3;
     }
-    
-    pre, code {
+    :root:not([data-theme="light"]) pre,
+    :root:not([data-theme="light"]) code {
         background-color: #2d2d30 !important;
         color: #d4d4d4 !important;
         border-color: #3e3e42;
     }
-    
-    .lesson-nav,
-    .breadcrumb,
-    .exercise-header,
-    .exercise-actions {
+    :root:not([data-theme="light"]) .lesson-nav,
+    :root:not([data-theme="light"]) .breadcrumb,
+    :root:not([data-theme="light"]) .exercise-header,
+    :root:not([data-theme="light"]) .exercise-actions {
         background: #2d2d30;
         border-color: #3e3e42;
     }
-    
-    a {
+    :root:not([data-theme="light"]) a {
         color: #569cd6;
     }
-    
-    blockquote {
+    :root:not([data-theme="light"]) blockquote {
         background-color: #2d2d30;
         color: #d4d4d4;
     }
+}
+
+/* ===========================
+   Theme System (added 2026)
+   CSS variables + manual dark/light toggle via data-theme on <html>
+   - data-theme="dark"  → force dark (overrides OS preference)
+   - data-theme="light" → force light (overrides OS preference)
+   - no attribute       → fall through to @media (prefers-color-scheme: dark) above
+   =========================== */
+
+:root {
+    --bg-color: rgb(248, 250, 252);
+    --card-bg: #ffffff;
+    --nav-bg: #ffffff;
+    --text-color: rgb(51, 65, 85);
+    --text-light: #6a737d;
+    --border-color: #e1e4e8;
+    --primary-color: rgb(59, 130, 246);
+    --primary-hover: rgb(37, 99, 235);
+    --primary-light: rgba(59, 130, 246, 0.08);
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
+    color-scheme: light dark;
+}
+
+/* Variable overrides when OS prefers dark and user hasn't chosen light */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --bg-color: #1e1e1e;
+        --card-bg: #2d2d30;
+        --nav-bg: #2d2d30;
+        --text-color: #d4d4d4;
+        --text-light: #b0b0b0;
+        --border-color: #3e3e42;
+        --primary-color: #569cd6;
+        --primary-hover: #75b3d6;
+        --primary-light: rgba(86, 156, 214, 0.15);
+        --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+        --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.4), 0 2px 4px -2px rgba(0,0,0,0.3);
+    }
+}
+
+/* Variable overrides for explicit dark mode */
+:root[data-theme="dark"] {
+    --bg-color: #1e1e1e;
+    --card-bg: #2d2d30;
+    --nav-bg: #2d2d30;
+    --text-color: #d4d4d4;
+    --text-light: #b0b0b0;
+    --border-color: #3e3e42;
+    --primary-color: #569cd6;
+    --primary-hover: #75b3d6;
+    --primary-light: rgba(86, 156, 214, 0.15);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.4), 0 2px 4px -2px rgba(0,0,0,0.3);
+}
+
+/* Apply manual dark theme to existing content (mirror of @media block) */
+:root[data-theme="dark"] body {
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+}
+:root[data-theme="dark"] h1,
+:root[data-theme="dark"] h2,
+:root[data-theme="dark"] h3,
+:root[data-theme="dark"] h4 {
+    background-color: #2d53a3;
+}
+:root[data-theme="dark"] pre,
+:root[data-theme="dark"] code {
+    background-color: #2d2d30 !important;
+    color: #d4d4d4 !important;
+    border-color: #3e3e42;
+}
+:root[data-theme="dark"] .lesson-nav,
+:root[data-theme="dark"] .breadcrumb,
+:root[data-theme="dark"] .exercise-header,
+:root[data-theme="dark"] .exercise-actions {
+    background: #2d2d30;
+    border-color: #3e3e42;
+}
+:root[data-theme="dark"] a { color: #569cd6; }
+:root[data-theme="dark"] blockquote {
+    background-color: #2d2d30;
+    color: #d4d4d4;
+}
+
+/* ===========================
+   Sticky Top Navigation (added 2026)
+   Sits inside body's existing left/right margins (30–40px desktop, 10px mobile).
+   Uses negative margins to span the body's content area edge-to-edge so the
+   sticky header reads as a real bar.
+   =========================== */
+
+.main-nav {
+    background-color: var(--nav-bg);
+    border-bottom: 1px solid var(--border-color);
+    padding: var(--spacing-sm) var(--spacing-md);
+    position: sticky;
+    top: 0;
+    z-index: 200;
+    box-shadow: var(--shadow-sm);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+    margin: 0 -40px var(--spacing-md) -30px;
+}
+
+@media (max-width: 768px) {
+    .main-nav {
+        margin: 0 -10px var(--spacing-md) -10px;
+    }
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    padding: 0 var(--spacing-md);
+}
+
+.nav-logo {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    text-decoration: none;
+    white-space: nowrap;
+    background: none;
+    padding: 0;
+    margin: 0;
+}
+.nav-logo:hover { text-decoration: none; }
+
+.main-nav .nav-links {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.main-nav .nav-links a {
+    text-decoration: none;
+    color: var(--text-color);
+    font-weight: 500;
+    font-size: 0.92rem;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    transition: color 0.2s, background-color 0.2s;
+}
+.main-nav .nav-links a:hover {
+    color: var(--primary-color);
+    background-color: var(--primary-light);
+    text-decoration: none;
+}
+
+.main-nav .nav-divider {
+    width: 1px;
+    height: 1.2rem;
+    background-color: var(--border-color);
+    flex-shrink: 0;
+}
+
+#theme-toggle {
+    background: var(--primary-light);
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 0;
+    color: var(--text-color);
+    transition: background-color 0.2s, transform 0.2s;
+    line-height: 1;
+}
+#theme-toggle:hover {
+    transform: scale(1.1);
+    background-color: var(--primary-color);
+    color: #fff;
+}
+
+.mobile-menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--primary-color);
+    padding: var(--spacing-xs);
+    line-height: 1;
+}
+
+@media (max-width: 768px) {
+    .mobile-menu-toggle { display: block; }
+
+    .main-nav .nav-links {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--nav-bg);
+        border-top: 1px solid var(--border-color);
+        flex-direction: column;
+        padding: var(--spacing-md);
+        box-shadow: var(--shadow-md);
+        z-index: 300;
+    }
+    .main-nav .nav-links.active { display: flex; }
+    .main-nav .nav-divider { display: none; }
 }

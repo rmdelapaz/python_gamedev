@@ -9,14 +9,39 @@
     <link rel="stylesheet" href="/styles/enhanced.css">
     <link rel="icon" href="/favicon.png">
     <script type="module">
-      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-      mermaid.initialize({ startOnLoad: true });
-    </script>
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    window.__mermaid = mermaid;
+    const isDark = localStorage.getItem('theme') === 'dark' ||
+        (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    mermaid.initialize({
+        startOnLoad: true,
+        theme: isDark ? 'dark' : 'default',
+        themeVariables: isDark
+            ? { primaryColor: '#2d2d30', primaryTextColor: '#d4d4d4', primaryBorderColor: '#569cd6', lineColor: '#94a3b8', secondaryColor: '#1e1e1e', tertiaryColor: '#0f172a' }
+            : { primaryColor: '#f0f8ff', primaryTextColor: '#1e293b', primaryBorderColor: '#3b82f6', lineColor: '#64748b', secondaryColor: '#f8fafc', tertiaryColor: '#f1f5f9' }
+    });
+</script>
     <script src="/js/course-enhancements.js" defer></script>
     <script src="/js/clipboard.js" defer></script>
+    <script src="/js/nav-enhancements.js" defer></script>
 </head>
 <body>
-    <!-- Skip to main content for accessibility -->
+    
+    <!-- Main Navigation (auto-injected by inject_main_nav.py) -->
+    <nav class="main-nav" aria-label="Main navigation">
+        <div class="nav-container">
+            <a href="index.html" class="nav-logo">🎮 Python Game Dev</a>
+            <button id="mobile-menu-toggle" class="mobile-menu-toggle" aria-expanded="false" aria-controls="nav-links">☰</button>
+            <div class="nav-links" id="nav-links">
+                <a href="index.html">Home</a>
+                <span class="nav-divider"></span>
+                <a href="https://rays-home.netlify.app/">Ray's House of Fun</a>
+                <a href="https://rays-home.netlify.app/contact">Contact</a>
+                <button id="theme-toggle" aria-label="Toggle dark/light mode">🌙</button>
+            </div>
+        </div>
+    </nav>
+<!-- Skip to main content for accessibility -->
     <a href="#main-content" class="skip-to-main">Skip to main content</a>
     
     <!-- Progress indicator -->

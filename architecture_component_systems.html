@@ -60,16 +60,16 @@
         <span class="current">Intermediate Module - Section 1: Game Architecture - Lesson 3</span>
     </nav>
 
-    <h2>Building Flexible Game Objects with Components</h2>
+    <h2 id="building-flexible-game-objects-with-components">Building Flexible Game Objects with Components</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <p>Component systems revolutionize how we build game objects! Instead of rigid inheritance hierarchies, we compose objects from reusable components. This Entity-Component-System (ECS) pattern makes games more flexible, maintainable, and performant! 🧩🎮</p>
     </div>
 
-    <h2>Understanding Component Systems</h2>
+    <h2 id="understanding-component-systems">Understanding Component Systems</h2>
     
     <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🧱 The LEGO Analogy</h3>
+        <h3 id="the-lego-analogy">🧱 The LEGO Analogy</h3>
         <p>Think of components like LEGO blocks:</p>
         <ul>
             <li><strong>Entities:</strong> The base plate (just an ID/container)</li>
@@ -98,7 +98,7 @@
         D --> O["Physics System"]
     </div>
 
-    <h2>Interactive ECS Visualizer</h2>
+    <h2 id="interactive-ecs-visualizer">Interactive ECS Visualizer</h2>
     
     <div class="canvas-wrapper" style="text-align: center;">
         <canvas id="ecsCanvas" width="600" height="400" style="border: 1px solid #333; background-color: #1a1a1a; display: inline-block;"></canvas>
@@ -142,7 +142,7 @@
 
     <script src="architecture_component_systems.js"></script>
 
-    <h2>Basic Component System Implementation</h2>
+    <h2 id="basic-component-system-implementation">Basic Component System Implementation</h2>
     
     <pre class="language-python"><code>import pygame
 from typing import Dict, List, Type, Optional
@@ -258,7 +258,7 @@ class MovementSystem(System):
             transform.y += velocity.vy * dt
             transform.rotation += velocity.angular_velocity * dt</code></pre>
 
-    <h2>Advanced ECS Architecture</h2>
+    <h2 id="advanced-ecs-architecture">Advanced ECS Architecture</h2>
     
     <pre class="language-python"><code># World/Manager class
 class World:
@@ -336,10 +336,10 @@ class EntityFactory:
         
         return enemy</code></pre>
 
-    <h2>Best Practices</h2>
+    <h2 id="best-practices">Best Practices</h2>
     
     <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>⚡ Component System Tips</h3>
+        <h3 id="component-system-tips">⚡ Component System Tips</h3>
         <ul>
             <li><strong>Single Responsibility:</strong> Each component holds one type of data</li>
             <li><strong>No Logic in Components:</strong> Components are data, systems have logic</li>
@@ -352,7 +352,7 @@ class EntityFactory:
         </ul>
     </div>
 
-    <h2>Key Takeaways</h2>
+    <h2 id="key-takeaways">Key Takeaways</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <ul>
@@ -366,7 +366,7 @@ class EntityFactory:
         </ul>
     </div>
 
-    <h2>What's Next?</h2>
+    <h2 id="what-s-next">What's Next?</h2>
     
     <p>Now that you understand component systems, next we'll explore event systems - how to create decoupled communication between game systems!</p>
 

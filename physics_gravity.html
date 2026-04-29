@@ -62,16 +62,16 @@
         <span class="current">Section 4: Game Physics - Lesson 2</span>
     </nav>
 
-    <h2>The Universal Force in Games</h2>
+    <h2 id="the-universal-force-in-games">The Universal Force in Games</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <p>Gravity is one of the most fundamental forces in game physics! From simple platformer jumps to complex orbital mechanics, gravity creates the weight and feel that makes games believable. Let's explore how to implement various gravity systems! 🌍🚀</p>
     </div>
 
-    <h2>Understanding Gravity</h2>
+    <h2 id="understanding-gravity">Understanding Gravity</h2>
     
     <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🍎 The Falling Apple Analogy</h3>
+        <h3 id="the-falling-apple-analogy">🍎 The Falling Apple Analogy</h3>
         <p>Think of gravity in games like Newton's apple:</p>
         <ul>
             <li><strong>Constant Gravity:</strong> Earth-like, always pulling down (9.8 m/s²)</li>
@@ -98,7 +98,7 @@
         E --> M["Water Physics"]
     </div>
 
-    <h2>Interactive Gravity Simulator</h2>
+    <h2 id="interactive-gravity-simulator">Interactive Gravity Simulator</h2>
     
     <div class="canvas-wrapper">
         <canvas id="gravityCanvas" width="600" height="400"></canvas>
@@ -497,7 +497,7 @@
         animate(performance.now());
     </script>
 
-    <h2>Basic Gravity Implementation</h2>
+    <h2 id="basic-gravity-implementation">Basic Gravity Implementation</h2>
     
     <pre class="language-python"><code>import pygame
 import math
@@ -578,7 +578,7 @@ class PlatformerCharacter:
             # Cut jump short
             self.velocity.y *= 0.5</code></pre>
 
-    <h2>Planetary Gravity</h2>
+    <h2 id="planetary-gravity">Planetary Gravity</h2>
     
     <pre class="language-python"><code># Point gravity (planets, black holes)
 class CelestialBody:
@@ -654,7 +654,7 @@ class GravityField:
         
         return total_field</code></pre>
 
-    <h2>Advanced Gravity Effects</h2>
+    <h2 id="advanced-gravity-effects">Advanced Gravity Effects</h2>
     
     <pre class="language-python"><code># Gravity zones and special effects
 class GravityZone:
@@ -765,7 +765,7 @@ class RealisticJump:
         time_in_air = 2 * self.calculate_jump_time()
         return horizontal_velocity * time_in_air</code></pre>
 
-    <h2>Complete Gravity Demo Game</h2>
+    <h2 id="complete-gravity-demo-game">Complete Gravity Demo Game</h2>
     
     <pre class="language-python"><code>import pygame
 import math
@@ -1197,10 +1197,10 @@ if __name__ == "__main__":
     demo = GravityDemo()
     demo.run()</code></pre>
 
-    <h2>Best Practices</h2>
+    <h2 id="best-practices">Best Practices</h2>
     
     <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>⚡ Gravity Implementation Tips</h3>
+        <h3 id="gravity-implementation-tips">⚡ Gravity Implementation Tips</h3>
         <ul>
             <li><strong>Scale Appropriately:</strong> Use values that feel good (980 px/s² ≈ Earth)</li>
             <li><strong>Terminal Velocity:</strong> Cap fall speed for better control</li>
@@ -1212,10 +1212,10 @@ if __name__ == "__main__":
         </ul>
     </div>
 
-    <h2>Practice Exercises</h2>
+    <h2 id="practice-exercises">Practice Exercises</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🎯 Gravity Challenges!</h3>
+        <h3 id="gravity-challenges">🎯 Gravity Challenges!</h3>
         <ol>
             <li><strong>Moon Jumper:</strong> Platformer with different gravity on each level</li>
             <li><strong>Orbit Simulator:</strong> Launch satellites into stable orbits</li>
@@ -1226,7 +1226,7 @@ if __name__ == "__main__":
         </ol>
     </div>
 
-    <h2>Key Takeaways</h2>
+    <h2 id="key-takeaways">Key Takeaways</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <ul>
@@ -1240,7 +1240,7 @@ if __name__ == "__main__":
         </ul>
     </div>
 
-    <h2>What's Next?</h2>
+    <h2 id="what-s-next">What's Next?</h2>
     
     <p>Now that you've mastered gravity, next we'll explore bounce and friction to make objects interact realistically with surfaces!</p>
 

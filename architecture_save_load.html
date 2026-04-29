@@ -60,16 +60,16 @@
         <span class="current">Intermediate Module - Section 1: Game Architecture - Lesson 5</span>
     </nav>
 
-    <h2>Persisting and Restoring Game Progress</h2>
+    <h2 id="persisting-and-restoring-game-progress">Persisting and Restoring Game Progress</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <p>Save systems preserve player progress and game state! Learn how to serialize game data, manage save files, handle different save formats, and create robust save/load systems that never lose player data! 💾🎮</p>
     </div>
 
-    <h2>Understanding Save Systems</h2>
+    <h2 id="understanding-save-systems">Understanding Save Systems</h2>
     
     <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>📷 The Photo Album Analogy</h3>
+        <h3 id="the-photo-album-analogy">📷 The Photo Album Analogy</h3>
         <p>Think of save systems like organizing photo albums:</p>
         <ul>
             <li><strong>Save Data:</strong> Individual photos capturing moments</li>
@@ -105,7 +105,7 @@
         E --> Q["State Restoration"]
     </div>
 
-    <h2>Interactive Save/Load System Demo</h2>
+    <h2 id="interactive-save-load-system-demo">Interactive Save/Load System Demo</h2>
     
     <div class="canvas-wrapper" style="text-align: center;">
         <canvas id="saveCanvas" width="600" height="400" style="border: 1px solid #333; background-color: #1a1a1a; display: inline-block;"></canvas>
@@ -166,7 +166,7 @@
 
     <script src="architecture_save_load.js"></script>
 
-    <h2>Basic Save/Load Implementation</h2>
+    <h2 id="basic-save-load-implementation">Basic Save/Load Implementation</h2>
     
     <pre class="language-python"><code>import json
 import pickle
@@ -356,7 +356,7 @@ class SaveManager:
                 return False
         return False</code></pre>
 
-    <h2>Advanced Save Features</h2>
+    <h2 id="advanced-save-features">Advanced Save Features</h2>
     
     <pre class="language-python"><code># Binary save system with compression
 import zlib
@@ -589,7 +589,7 @@ class SaveMigration:
         save_data['version'] = "2.0.0"
         return save_data</code></pre>
 
-    <h2>Save System Integration</h2>
+    <h2 id="save-system-integration">Save System Integration</h2>
     
     <pre class="language-python"><code>import pygame
 
@@ -798,10 +798,10 @@ class Player:
         player.inventory = data['inventory']
         return player</code></pre>
 
-    <h2>Best Practices</h2>
+    <h2 id="best-practices">Best Practices</h2>
     
     <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>⚡ Save System Tips</h3>
+        <h3 id="save-system-tips">⚡ Save System Tips</h3>
         <ul>
             <li><strong>Atomic Saves:</strong> Write to temp file first, then rename</li>
             <li><strong>Backup Saves:</strong> Keep multiple backup copies</li>
@@ -814,7 +814,7 @@ class Player:
         </ul>
     </div>
 
-    <h2>Key Takeaways</h2>
+    <h2 id="key-takeaways">Key Takeaways</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <ul>
@@ -829,7 +829,7 @@ class Player:
         </ul>
     </div>
 
-    <h2>What's Next?</h2>
+    <h2 id="what-s-next">What's Next?</h2>
     
     <p>Congratulations! You've completed Section 1: Game Architecture! Next, we'll move on to Section 2: Networking and Multiplayer, where you'll learn to create connected gaming experiences!</p>
 

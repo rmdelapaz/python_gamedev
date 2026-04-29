@@ -62,16 +62,16 @@
         <span class="current">Section 2: Game Mathematics - Lesson 5</span>
     </nav>
 
-    <h2>Creating Variety and Surprise</h2>
+    <h2 id="creating-variety-and-surprise">Creating Variety and Surprise</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <p>Randomness is the spice of gaming! It creates variety, replayability, and surprise. From loot drops to procedural worlds, understanding controlled randomness is essential for creating engaging games. Let's explore how to harness chaos for fun! 🎲🌟</p>
     </div>
 
-    <h2>Understanding Randomness in Games</h2>
+    <h2 id="understanding-randomness-in-games">Understanding Randomness in Games</h2>
     
     <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🎰 The Casino Analogy</h3>
+        <h3 id="the-casino-analogy">🎰 The Casino Analogy</h3>
         <p>Think of randomness in games like a casino:</p>
         <ul>
             <li><strong>True Random:</strong> Like a perfectly fair dice - unpredictable</li>
@@ -98,7 +98,7 @@
         E --> M["Dungeons"]
     </div>
 
-    <h2>Interactive Random Visualizer</h2>
+    <h2 id="interactive-random-visualizer">Interactive Random Visualizer</h2>
     
     <div class="canvas-wrapper">
         <canvas id="randomCanvas" width="600" height="400"></canvas>
@@ -436,7 +436,7 @@
         regenerate();
     </script>
 
-    <h2>Basic Random Number Generation</h2>
+    <h2 id="basic-random-number-generation">Basic Random Number Generation</h2>
     
     <pre class="language-python"><code>import random
 
@@ -470,7 +470,7 @@ loot_table = [
 ]
 rarity = weighted_choice(loot_table)</code></pre>
 
-    <h2>Random Distributions</h2>
+    <h2 id="random-distributions">Random Distributions</h2>
     
     <pre class="language-python"><code>import random
 import math
@@ -537,7 +537,7 @@ def random_on_circle(radius):
     y = radius * math.sin(angle)
     return (x, y)</code></pre>
 
-    <h2>Controlled Randomness</h2>
+    <h2 id="controlled-randomness">Controlled Randomness</h2>
     
     <pre class="language-python"><code>class DiceRoller:
     """Dice with guaranteed distribution over time"""
@@ -597,7 +597,7 @@ class PitySystem:
             self.current_chance += self.increase
             return False</code></pre>
 
-    <h2>Noise Functions</h2>
+    <h2 id="noise-functions">Noise Functions</h2>
     
     <pre class="language-python"><code>import math
 import random
@@ -708,7 +708,7 @@ class ValueNoise2D:
             noise_map.append(row)
         return noise_map</code></pre>
 
-    <h2>Procedural Generation</h2>
+    <h2 id="procedural-generation">Procedural Generation</h2>
     
     <pre class="language-python"><code>class ProceduralDungeon:
     def __init__(self, width, height, seed=None):
@@ -827,7 +827,7 @@ class WaveFunction Collapse:
         
         return list(possible)</code></pre>
 
-    <h2>Random in Game Systems</h2>
+    <h2 id="random-in-game-systems">Random in Game Systems</h2>
     
     <pre class="language-python"><code>class CriticalHitSystem:
     """Critical hits with pseudo-random distribution"""
@@ -904,7 +904,7 @@ class RandomSpawner:
         
         return spawn</code></pre>
 
-    <h2>Complete Random Generation Demo</h2>
+    <h2 id="complete-random-generation-demo">Complete Random Generation Demo</h2>
     
     <pre class="language-python"><code>import pygame
 import random
@@ -1190,10 +1190,10 @@ if __name__ == "__main__":
     demo = RandomDemo()
     demo.run()</code></pre>
 
-    <h2>Best Practices</h2>
+    <h2 id="best-practices">Best Practices</h2>
     
     <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>⚡ Random Generation Tips</h3>
+        <h3 id="random-generation-tips">⚡ Random Generation Tips</h3>
         <ul>
             <li><strong>Always Use Seeds:</strong> For debugging and reproducibility</li>
             <li><strong>Avoid True Random:</strong> Use pseudo-random for consistency</li>
@@ -1204,10 +1204,10 @@ if __name__ == "__main__":
         </ul>
     </div>
 
-    <h2>Practice Exercises</h2>
+    <h2 id="practice-exercises">Practice Exercises</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🎯 Random Generation Challenges!</h3>
+        <h3 id="random-generation-challenges">🎯 Random Generation Challenges!</h3>
         <ol>
             <li><strong>Infinite Runner:</strong> Procedurally generate endless level</li>
             <li><strong>Loot System:</strong> Tiered drops with rarity and affixes</li>
@@ -1218,7 +1218,7 @@ if __name__ == "__main__":
         </ol>
     </div>
 
-    <h2>Key Takeaways</h2>
+    <h2 id="key-takeaways">Key Takeaways</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <ul>
@@ -1232,7 +1232,7 @@ if __name__ == "__main__":
         </ul>
     </div>
 
-    <h2>What's Next?</h2>
+    <h2 id="what-s-next">What's Next?</h2>
     
     <p>Congratulations! You've completed the Game Mathematics section! You now have the mathematical tools to create smooth movement, realistic physics, and infinite variety. Next, we'll move into the Intermediate Module where you'll learn about sprite animation, scrolling backgrounds, and more!</p>
 

@@ -60,16 +60,16 @@
         <span class="current">Intermediate Module - Section 2: 2D Platformer Development - Lesson 5</span>
     </nav>
 
-    <h2>Creating Depth with Parallax Scrolling</h2>
+    <h2 id="creating-depth-with-parallax-scrolling">Creating Depth with Parallax Scrolling</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <p>Parallax scrolling creates stunning depth and immersion in 2D games! Learn multi-layer backgrounds, scrolling speeds, infinite tiling, atmospheric effects, and how to build beautiful living worlds! 🌄🎨✨</p>
     </div>
 
-    <h2>Understanding Parallax</h2>
+    <h2 id="understanding-parallax">Understanding Parallax</h2>
     
     <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🚂 The Train Window Analogy</h3>
+        <h3 id="the-train-window-analogy">🚂 The Train Window Analogy</h3>
         <p>Think of parallax like looking out a train window:</p>
         <ul>
             <li><strong>Nearby Trees:</strong> Whiz by quickly (foreground)</li>
@@ -100,7 +100,7 @@
         D --> M["Dynamic Time"]
     </div>
 
-    <h2>Interactive Parallax Demo</h2>
+    <h2 id="interactive-parallax-demo">Interactive Parallax Demo</h2>
     
     <div class="canvas-wrapper" style="text-align: center;">
         <canvas id="parallaxCanvas" width="600" height="400" style="border: 1px solid #333; background-color: #1a1a2e; display: inline-block;"></canvas>
@@ -1144,7 +1144,7 @@
         console.log('Parallax Manager initialized!');
     </script>
 
-    <h2>Parallax Implementation</h2>
+    <h2 id="parallax-implementation">Parallax Implementation</h2>
     
     <pre class="language-python"><code>import pygame
 import math
@@ -1359,10 +1359,10 @@ class AnimatedParallaxLayer(ParallaxLayer):
             self.current_frame = (self.current_frame + 1) % len(self.frames)
             self.image = self.frames[self.current_frame]</code></pre>
 
-    <h2>Best Practices</h2>
+    <h2 id="best-practices">Best Practices</h2>
     
     <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>⚡ Parallax Tips</h3>
+        <h3 id="parallax-tips">⚡ Parallax Tips</h3>
         <ul>
             <li><strong>Layer Ordering:</strong> Draw from back to front</li>
             <li><strong>Speed Ratios:</strong> Consistent depth perception</li>
@@ -1375,7 +1375,7 @@ class AnimatedParallaxLayer(ParallaxLayer):
         </ul>
     </div>
 
-    <h2>Key Takeaways</h2>
+    <h2 id="key-takeaways">Key Takeaways</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <ul>
@@ -1390,7 +1390,7 @@ class AnimatedParallaxLayer(ParallaxLayer):
         </ul>
     </div>
 
-    <h2>What's Next?</h2>
+    <h2 id="what-s-next">What's Next?</h2>
     
     <p>Congratulations on completing the 2D Platformer Development section! Next, we'll dive into AI for Games, learning pathfinding, state machines, and intelligent NPC behavior!</p>
 

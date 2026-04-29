@@ -62,16 +62,16 @@
         <span class="current">Section 2: Game Mathematics - Lesson 4</span>
     </nav>
 
-    <h2>Making Movement Smooth and Natural</h2>
+    <h2 id="making-movement-smooth-and-natural">Making Movement Smooth and Natural</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <p>Interpolation and easing are the secret ingredients that make games feel polished and professional. They transform robotic movements into smooth animations, harsh transitions into gentle flows, and static UIs into dynamic experiences. Let's master the art of smooth motion! 🎬✨</p>
     </div>
 
-    <h2>What is Interpolation?</h2>
+    <h2 id="what-is-interpolation">What is Interpolation?</h2>
     
     <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🚂 The Train Journey Analogy</h3>
+        <h3 id="the-train-journey-analogy">🚂 The Train Journey Analogy</h3>
         <p>Think of interpolation like a train journey:</p>
         <ul>
             <li><strong>Start Station:</strong> Your beginning value (0%)</li>
@@ -94,7 +94,7 @@
         E --> I["Spring/Bounce"]
     </div>
 
-    <h2>Interactive Easing Visualizer</h2>
+    <h2 id="interactive-easing-visualizer">Interactive Easing Visualizer</h2>
     
     <div class="canvas-wrapper">
         <canvas id="easingCanvas" width="600" height="400"></canvas>
@@ -286,7 +286,7 @@
         drawEasingCurve();
     </script>
 
-    <h2>Linear Interpolation (Lerp)</h2>
+    <h2 id="linear-interpolation-lerp">Linear Interpolation (Lerp)</h2>
     
     <pre class="language-python"><code>def lerp(start, end, t):
     """Linear interpolation between start and end by factor t (0 to 1)"""
@@ -331,7 +331,7 @@ class SmoothMover:
             t = min(self.move_time / self.move_duration, 1.0)
             self.current_pos = lerp_point(self.start_pos, self.target_pos, t)</code></pre>
 
-    <h2>Common Easing Functions</h2>
+    <h2 id="common-easing-functions">Common Easing Functions</h2>
     
     <pre class="language-python"><code>import math
 
@@ -455,7 +455,7 @@ class Easing:
         c3 = c1 + 1
         return 1 + c3 * pow(t - 1, 3) + c1 * pow(t - 1, 2)</code></pre>
 
-    <h2>Smooth Following (Lerp Smoothing)</h2>
+    <h2 id="smooth-following-lerp-smoothing">Smooth Following (Lerp Smoothing)</h2>
     
     <pre class="language-python"><code>class Camera:
     def __init__(self, x, y):
@@ -515,7 +515,7 @@ class HealthBar:
         health_width = (self.display_health.current / self.max_health) * width
         pygame.draw.rect(screen, (255, 0, 0), (x, y, health_width, height))</code></pre>
 
-    <h2>Animation System with Easing</h2>
+    <h2 id="animation-system-with-easing">Animation System with Easing</h2>
     
     <pre class="language-python"><code>class Animation:
     def __init__(self, start_value, end_value, duration, easing_func=None):
@@ -582,7 +582,7 @@ class AnimationSequence:
     def is_finished(self):
         return self.current_index >= len(self.animations)</code></pre>
 
-    <h2>Bezier Curves</h2>
+    <h2 id="bezier-curves">Bezier Curves</h2>
     
     <pre class="language-python"><code>def bezier_quadratic(p0, p1, p2, t):
     """Quadratic Bezier curve with 3 control points"""
@@ -677,7 +677,7 @@ class BezierPath:
         
         return total_length</code></pre>
 
-    <h2>Spring Physics</h2>
+    <h2 id="spring-physics">Spring Physics</h2>
     
     <pre class="language-python"><code>class Spring:
     def __init__(self, target, stiffness=0.1, damping=0.9):
@@ -739,7 +739,7 @@ class SpringCamera:
         self.spring.update()
         return self.spring.get_position()</code></pre>
 
-    <h2>Complete Interpolation Demo Game</h2>
+    <h2 id="complete-interpolation-demo-game">Complete Interpolation Demo Game</h2>
     
     <pre class="language-python"><code>import pygame
 import math
@@ -959,10 +959,10 @@ if __name__ == "__main__":
     demo = InterpolationDemo()
     demo.run()</code></pre>
 
-    <h2>Performance Considerations</h2>
+    <h2 id="performance-considerations">Performance Considerations</h2>
     
     <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>⚡ Optimization Tips</h3>
+        <h3 id="optimization-tips">⚡ Optimization Tips</h3>
         <ul>
             <li><strong>Pre-calculate:</strong> Store easing values in lookup tables</li>
             <li><strong>Simplify:</strong> Use simpler easing for many objects</li>
@@ -972,10 +972,10 @@ if __name__ == "__main__":
         </ul>
     </div>
 
-    <h2>Practice Exercises</h2>
+    <h2 id="practice-exercises">Practice Exercises</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🎯 Interpolation Challenges!</h3>
+        <h3 id="interpolation-challenges">🎯 Interpolation Challenges!</h3>
         <ol>
             <li><strong>UI Animation System:</strong> Sliding menus with different easings</li>
             <li><strong>Camera Controller:</strong> Smooth camera with deadzone and lookahead</li>
@@ -986,7 +986,7 @@ if __name__ == "__main__":
         </ol>
     </div>
 
-    <h2>Key Takeaways</h2>
+    <h2 id="key-takeaways">Key Takeaways</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <ul>
@@ -1000,7 +1000,7 @@ if __name__ == "__main__":
         </ul>
     </div>
 
-    <h2>What's Next?</h2>
+    <h2 id="what-s-next">What's Next?</h2>
     
     <p>Now that you've mastered smooth motion, next we'll explore random generation for games - creating variety, procedural content, and controlled randomness!</p>
 

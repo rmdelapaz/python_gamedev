@@ -62,16 +62,16 @@
         <span class="current">Lesson 4: Collision Detection</span>
     </nav>
 
-    <h2>Making Things Interact!</h2>
+    <h2 id="making-things-interact">Making Things Interact!</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <p>Collision detection is what makes games feel real! It's how we know when the player touches a coin, when a bullet hits an enemy, or when you crash into a wall. Without collision detection, objects would pass through each other like ghosts! 👻</p>
     </div>
 
-    <h2>Types of Collision Detection</h2>
+    <h2 id="types-of-collision-detection">Types of Collision Detection</h2>
     
     <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🎯 The Security Check Analogy</h3>
+        <h3 id="the-security-check-analogy">🎯 The Security Check Analogy</h3>
         <p>Think of collision detection like airport security checks:</p>
         <ul>
             <li><strong>Bounding Box:</strong> Like a metal detector gate - quick but not precise</li>
@@ -93,11 +93,11 @@
         E --> I["Complex Shapes"]
     </div>
 
-    <h2>Rectangle Collision (AABB)</h2>
+    <h2 id="rectangle-collision-aabb">Rectangle Collision (AABB)</h2>
     
     <p>AABB stands for "Axis-Aligned Bounding Box" - rectangles that don't rotate. This is the most common collision detection in 2D games!</p>
 
-    <h3>Basic Rectangle Collision</h3>
+    <h3 id="basic-rectangle-collision">Basic Rectangle Collision</h3>
     <pre class="language-python"><code># Check if two rectangles overlap
 def rectangles_collide(rect1, rect2):
     # rect format: (x, y, width, height)
@@ -120,7 +120,7 @@ point = (125, 125)
 if rect1.collidepoint(point):
     print("Point is inside rectangle!")</code></pre>
 
-    <h2>Interactive Collision Demo</h2>
+    <h2 id="interactive-collision-demo">Interactive Collision Demo</h2>
     
     <div class="canvas-wrapper">
         <canvas id="collisionCanvas" width="600" height="400"></canvas>
@@ -251,7 +251,7 @@ if rect1.collidepoint(point):
         drawCollisionDemo();
     </script>
 
-    <h2>Circle Collision Detection</h2>
+    <h2 id="circle-collision-detection">Circle Collision Detection</h2>
     
     <p>Perfect for round objects like balls, coins, or explosions!</p>
 
@@ -274,7 +274,7 @@ def circles_collide_fast(circle1, circle2):
     
     return distance_squared &lt; radius_sum * radius_sum</code></pre>
 
-    <h2>Pygame Sprite Collision</h2>
+    <h2 id="pygame-sprite-collision">Pygame Sprite Collision</h2>
     
     <pre class="language-python"><code>import pygame
 
@@ -314,10 +314,10 @@ for hit in hits:
 # Check collision between groups
 collisions = pygame.sprite.groupcollide(enemies, bullets, True, True)</code></pre>
 
-    <h2>Collision Response</h2>
+    <h2 id="collision-response">Collision Response</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>What Happens After Collision?</h3>
+        <h3 id="what-happens-after-collision">What Happens After Collision?</h3>
         <p>Detecting collision is only half the battle. You need to respond appropriately:</p>
         <ul>
             <li><strong>Bounce:</strong> Reverse velocity (balls, bullets)</li>
@@ -341,7 +341,7 @@ collisions = pygame.sprite.groupcollide(enemies, bullets, True, True)</code></pr
         D --> J["Trigger Event"]
     </div>
 
-    <h2>Separating Overlapping Objects</h2>
+    <h2 id="separating-overlapping-objects">Separating Overlapping Objects</h2>
     
     <pre class="language-python"><code>def separate_rectangles(rect1, rect2):
     """Push rectangles apart when they overlap"""
@@ -367,7 +367,7 @@ collisions = pygame.sprite.groupcollide(enemies, bullets, True, True)</code></pr
         else:
             rect1.bottom = rect2.top</code></pre>
 
-    <h2>Platform Collision Example</h2>
+    <h2 id="platform-collision-example">Platform Collision Example</h2>
     
     <pre class="language-python"><code>class Player:
     def __init__(self, x, y):
@@ -400,10 +400,10 @@ collisions = pygame.sprite.groupcollide(enemies, bullets, True, True)</code></pr
         if self.on_ground:
             self.vel_y = self.jump_speed</code></pre>
 
-    <h2>Optimization Techniques</h2>
+    <h2 id="optimization-techniques">Optimization Techniques</h2>
     
     <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>⚡ Speed Up Your Collision Detection</h3>
+        <h3 id="speed-up-your-collision-detection">⚡ Speed Up Your Collision Detection</h3>
         <ul>
             <li><strong>Broad Phase:</strong> Quick check to eliminate impossible collisions</li>
             <li><strong>Spatial Partitioning:</strong> Divide space into regions, only check nearby objects</li>
@@ -413,7 +413,7 @@ collisions = pygame.sprite.groupcollide(enemies, bullets, True, True)</code></pr
         </ul>
     </div>
 
-    <h3>Broad Phase Optimization</h3>
+    <h3 id="broad-phase-optimization">Broad Phase Optimization</h3>
     <pre class="language-python"><code>def broad_phase_check(obj1, obj2, margin=50):
     """Quick distance check before detailed collision"""
     # If objects are far apart, skip detailed check
@@ -430,7 +430,7 @@ for enemy in enemies:
             # Handle collision
             pass</code></pre>
 
-    <h3>Spatial Grid</h3>
+    <h3 id="spatial-grid">Spatial Grid</h3>
     <pre class="language-python"><code>class SpatialGrid:
     def __init__(self, width, height, cell_size):
         self.cell_size = cell_size
@@ -473,7 +473,7 @@ for enemy in enemies:
         nearby.discard(obj)  # Don't include self
         return nearby</code></pre>
 
-    <h2>Complete Collision System Example</h2>
+    <h2 id="complete-collision-system-example">Complete Collision System Example</h2>
     
     <pre class="language-python"><code>import pygame
 import random
@@ -626,10 +626,10 @@ while running:
 
 pygame.quit()</code></pre>
 
-    <h2>Common Collision Problems</h2>
+    <h2 id="common-collision-problems">Common Collision Problems</h2>
     
     <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>⚠️ Watch Out For These Issues!</h3>
+        <h3 id="watch-out-for-these-issues">⚠️ Watch Out For These Issues!</h3>
         <ul>
             <li><strong>Tunneling:</strong> Fast objects passing through thin walls - use continuous collision detection</li>
             <li><strong>Getting Stuck:</strong> Objects trapped inside each other - separate them properly</li>
@@ -639,10 +639,10 @@ pygame.quit()</code></pre>
         </ul>
     </div>
 
-    <h2>Practice Exercises</h2>
+    <h2 id="practice-exercises">Practice Exercises</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🎯 Challenge Yourself!</h3>
+        <h3 id="challenge-yourself">🎯 Challenge Yourself!</h3>
         <ol>
             <li><strong>Breakout Clone:</strong> Ball bouncing off paddle and bricks</li>
             <li><strong>Maze Game:</strong> Player navigating walls without passing through</li>
@@ -652,10 +652,10 @@ pygame.quit()</code></pre>
         </ol>
     </div>
 
-    <h2>Collision Detection Best Practices</h2>
+    <h2 id="collision-detection-best-practices">Collision Detection Best Practices</h2>
     
     <div style="background-color: #f0fff4; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>💡 Pro Tips</h3>
+        <h3 id="pro-tips">💡 Pro Tips</h3>
         <ul>
             <li><strong>Start Simple:</strong> Use rectangles first, optimize later if needed</li>
             <li><strong>Visual Debugging:</strong> Draw collision boxes to see what's happening</li>
@@ -666,7 +666,7 @@ pygame.quit()</code></pre>
         </ul>
     </div>
 
-    <h2>Key Takeaways</h2>
+    <h2 id="key-takeaways">Key Takeaways</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <ul>
@@ -679,7 +679,7 @@ pygame.quit()</code></pre>
         </ul>
     </div>
 
-    <h2>What's Next?</h2>
+    <h2 id="what-s-next">What's Next?</h2>
     
     <p>Now that you can detect when objects collide, next we'll add sound and music to make your games come alive with audio feedback! You'll learn how to play sound effects for collisions, background music, and create an immersive audio experience.</p>
 

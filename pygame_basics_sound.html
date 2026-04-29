@@ -62,16 +62,16 @@
         <span class="current">Lesson 5: Sound and Music</span>
     </nav>
 
-    <h2>Bringing Your Games to Life with Audio!</h2>
+    <h2 id="bringing-your-games-to-life-with-audio">Bringing Your Games to Life with Audio!</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <p>Sound is half the experience! Great audio can transform a simple game into an immersive adventure. In this lesson, you'll learn how to add sound effects, background music, and create dynamic audio that responds to gameplay. Let's make some noise! 🎵🔊</p>
     </div>
 
-    <h2>Understanding Game Audio</h2>
+    <h2 id="understanding-game-audio">Understanding Game Audio</h2>
     
     <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🎭 The Movie Theater Analogy</h3>
+        <h3 id="the-movie-theater-analogy">🎭 The Movie Theater Analogy</h3>
         <p>Think of game audio like a movie theater's sound system:</p>
         <ul>
             <li><strong>Background Music:</strong> Like the movie soundtrack - sets the mood</li>
@@ -98,7 +98,7 @@
         E --> N["Atmosphere"]
     </div>
 
-    <h2>Setting Up Pygame Audio</h2>
+    <h2 id="setting-up-pygame-audio">Setting Up Pygame Audio</h2>
     
     <pre class="language-python"><code>import pygame
 
@@ -117,9 +117,9 @@ pygame.mixer.init(
 # Set number of channels for sound effects
 pygame.mixer.set_num_channels(8)  # 8 simultaneous sounds</code></pre>
 
-    <h2>Loading and Playing Sounds</h2>
+    <h2 id="loading-and-playing-sounds">Loading and Playing Sounds</h2>
     
-    <h3>Sound Effects (Short Sounds)</h3>
+    <h3 id="sound-effects-short-sounds">Sound Effects (Short Sounds)</h3>
     <pre class="language-python"><code># Load a sound effect
 jump_sound = pygame.mixer.Sound("jump.wav")
 coin_sound = pygame.mixer.Sound("coin.ogg")
@@ -144,7 +144,7 @@ engine_sound.stop()
 # Fade out a sound
 engine_sound.fadeout(1000)  # Fade out over 1 second</code></pre>
 
-    <h3>Background Music</h3>
+    <h3 id="background-music">Background Music</h3>
     <pre class="language-python"><code># Load and play background music
 pygame.mixer.music.load("background_music.mp3")
 pygame.mixer.music.play(loops=-1)  # Loop forever
@@ -171,7 +171,7 @@ pygame.mixer.music.queue("next_song.mp3")
 if pygame.mixer.music.get_busy():
     print("Music is playing")</code></pre>
 
-    <h2>Interactive Audio Mixer Demo</h2>
+    <h2 id="interactive-audio-mixer-demo">Interactive Audio Mixer Demo</h2>
     
     <div class="canvas-wrapper">
         <canvas id="audioCanvas" width="600" height="400"></canvas>
@@ -426,10 +426,10 @@ if pygame.mixer.music.get_busy():
         drawAudioDemo();
     </script>
 
-    <h2>Audio File Formats</h2>
+    <h2 id="audio-file-formats">Audio File Formats</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>📁 Supported Audio Formats</h3>
+        <h3 id="supported-audio-formats">📁 Supported Audio Formats</h3>
         <table>
             <tr>
                 <th>Format</th>
@@ -469,7 +469,7 @@ if pygame.mixer.music.get_busy():
         </table>
     </div>
 
-    <h2>Managing Multiple Sounds</h2>
+    <h2 id="managing-multiple-sounds">Managing Multiple Sounds</h2>
     
     <pre class="language-python"><code>class SoundManager:
     def __init__(self):
@@ -539,7 +539,7 @@ sound_manager.play_sound('coin')
 # Background music
 sound_manager.play_music('music/level1.ogg')</code></pre>
 
-    <h2>Dynamic Audio System</h2>
+    <h2 id="dynamic-audio-system">Dynamic Audio System</h2>
     
     <div class="mermaid">
     graph LR
@@ -555,7 +555,7 @@ sound_manager.play_music('music/level1.ogg')</code></pre>
         E --> K["Environmental"]
     </div>
 
-    <h3>Distance-Based Volume</h3>
+    <h3 id="distance-based-volume">Distance-Based Volume</h3>
     <pre class="language-python"><code>def calculate_volume_by_distance(listener_pos, sound_pos, max_distance=500):
     """Calculate volume based on distance between listener and sound source"""
     dx = listener_pos[0] - sound_pos[0]
@@ -591,7 +591,7 @@ class PositionalSound:
                 # Pygame doesn't have built-in panning, but you can simulate it
                 # with channel volume for left/right speakers</code></pre>
 
-    <h3>Music Crossfading</h3>
+    <h3 id="music-crossfading">Music Crossfading</h3>
     <pre class="language-python"><code>class MusicCrossfader:
     def __init__(self):
         self.current_music = None
@@ -627,7 +627,7 @@ class PositionalSound:
         else:
             pygame.mixer.music.set_volume(self.current_volume)</code></pre>
 
-    <h2>Complete Audio Example Game</h2>
+    <h2 id="complete-audio-example-game">Complete Audio Example Game</h2>
     
     <pre class="language-python"><code>import pygame
 import math
@@ -838,10 +838,10 @@ if __name__ == "__main__":
     game = AudioGame()
     game.run()</code></pre>
 
-    <h2>Audio Best Practices</h2>
+    <h2 id="audio-best-practices">Audio Best Practices</h2>
     
     <div style="background-color: #f0fff4; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>💡 Pro Tips for Great Game Audio</h3>
+        <h3 id="pro-tips-for-great-game-audio">💡 Pro Tips for Great Game Audio</h3>
         <ul>
             <li><strong>Preload Everything:</strong> Load all sounds at startup, not during gameplay</li>
             <li><strong>Use Appropriate Formats:</strong> WAV for short SFX, OGG for music</li>
@@ -854,10 +854,10 @@ if __name__ == "__main__":
         </ul>
     </div>
 
-    <h2>Common Audio Problems and Solutions</h2>
+    <h2 id="common-audio-problems-and-solutions">Common Audio Problems and Solutions</h2>
     
     <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>⚠️ Audio Pitfalls to Avoid</h3>
+        <h3 id="audio-pitfalls-to-avoid">⚠️ Audio Pitfalls to Avoid</h3>
         <ul>
             <li><strong>Lag/Delay:</strong> Increase buffer size or preload sounds</li>
             <li><strong>Crackling/Popping:</strong> Reduce sample rate or increase buffer</li>
@@ -868,10 +868,10 @@ if __name__ == "__main__":
         </ul>
     </div>
 
-    <h2>Practice Exercises</h2>
+    <h2 id="practice-exercises">Practice Exercises</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🎯 Audio Challenges!</h3>
+        <h3 id="audio-challenges">🎯 Audio Challenges!</h3>
         <ol>
             <li><strong>Rhythm Game:</strong> Play sounds in time with visual cues</li>
             <li><strong>Audio Puzzle:</strong> Use sound cues to solve puzzles</li>
@@ -882,7 +882,7 @@ if __name__ == "__main__":
         </ol>
     </div>
 
-    <h2>Key Takeaways</h2>
+    <h2 id="key-takeaways">Key Takeaways</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <ul>
@@ -896,7 +896,7 @@ if __name__ == "__main__":
         </ul>
     </div>
 
-    <h2>What's Next?</h2>
+    <h2 id="what-s-next">What's Next?</h2>
     
     <p>Congratulations! You've completed the Pygame Basics module! You now know how to create game loops, draw graphics, handle input, detect collisions, and add audio. Next, we'll dive into Game Mathematics where you'll learn about 2D coordinate systems, vectors, and the math that makes games work!</p>
 

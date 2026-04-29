@@ -62,16 +62,16 @@
         <span class="current">Section 4: Game Physics - Lesson 5</span>
     </nav>
 
-    <h2>Building Your Own Physics Engine</h2>
+    <h2 id="building-your-own-physics-engine">Building Your Own Physics Engine</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <p>Time to combine everything! A physics engine integrates all the concepts we've learned - velocity, gravity, collisions, and forces - into a unified system. Let's build a flexible physics engine you can use in your games! 🚀🎮</p>
     </div>
 
-    <h2>Physics Engine Architecture</h2>
+    <h2 id="physics-engine-architecture">Physics Engine Architecture</h2>
     
     <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🏗️ The Building Blocks</h3>
+        <h3 id="the-building-blocks">🏗️ The Building Blocks</h3>
         <p>A physics engine consists of:</p>
         <ul>
             <li><strong>World:</strong> Container for all physics objects and settings</li>
@@ -103,7 +103,7 @@
         F --> P["Resolution"]
     </div>
 
-    <h2>Interactive Physics Engine Playground</h2>
+    <h2 id="interactive-physics-engine-playground">Interactive Physics Engine Playground</h2>
     
     <div class="canvas-wrapper">
         <canvas id="engineCanvas" width="600" height="400"></canvas>
@@ -769,7 +769,7 @@
         animate(performance.now());
     </script>
 
-    <h2>Core Physics Engine Structure</h2>
+    <h2 id="core-physics-engine-structure">Core Physics Engine Structure</h2>
     
     <pre class="language-python"><code>import pygame
 import math
@@ -895,7 +895,7 @@ class RigidBody:
         self.force = pygame.math.Vector2(0, 0)
         self.torque = 0</code></pre>
 
-    <h2>Physics World Implementation</h2>
+    <h2 id="physics-world-implementation">Physics World Implementation</h2>
     
     <pre class="language-python"><code>class PhysicsWorld:
     """Main physics simulation world"""
@@ -1067,7 +1067,7 @@ class Contact:
         self.penetration = penetration
         self.point = point  # Contact point in world space</code></pre>
 
-    <h2>Constraints and Joints</h2>
+    <h2 id="constraints-and-joints">Constraints and Joints</h2>
     
     <pre class="language-python"><code># Constraint system for connected bodies
 class Constraint:
@@ -1183,7 +1183,7 @@ class SpringConstraint(Constraint):
         if self.body_b.body_type == BodyType.DYNAMIC:
             self.body_b.apply_force(total_force)</code></pre>
 
-    <h2>Complete Physics Engine Example</h2>
+    <h2 id="complete-physics-engine-example">Complete Physics Engine Example</h2>
     
     <pre class="language-python"><code>import pygame
 import math
@@ -1479,10 +1479,10 @@ if __name__ == "__main__":
     engine = SimplePhysicsEngine()
     engine.run()</code></pre>
 
-    <h2>Best Practices</h2>
+    <h2 id="best-practices">Best Practices</h2>
     
     <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>⚡ Physics Engine Tips</h3>
+        <h3 id="physics-engine-tips">⚡ Physics Engine Tips</h3>
         <ul>
             <li><strong>Fixed Timestep:</strong> Use fixed timestep for deterministic physics</li>
             <li><strong>Sub-stepping:</strong> Multiple small steps for stability</li>
@@ -1495,10 +1495,10 @@ if __name__ == "__main__":
         </ul>
     </div>
 
-    <h2>Practice Exercises</h2>
+    <h2 id="practice-exercises">Practice Exercises</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🎯 Physics Engine Challenges!</h3>
+        <h3 id="physics-engine-challenges">🎯 Physics Engine Challenges!</h3>
         <ol>
             <li><strong>Ragdoll Physics:</strong> Connected bodies with joint limits</li>
             <li><strong>Soft Bodies:</strong> Mass-spring systems for deformable objects</li>
@@ -1509,7 +1509,7 @@ if __name__ == "__main__":
         </ol>
     </div>
 
-    <h2>Key Takeaways</h2>
+    <h2 id="key-takeaways">Key Takeaways</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <ul>
@@ -1524,7 +1524,7 @@ if __name__ == "__main__":
         </ul>
     </div>
 
-    <h2>What's Next?</h2>
+    <h2 id="what-s-next">What's Next?</h2>
     
     <p>Congratulations! You've completed the Game Physics section! You now have a solid foundation in physics simulation for games. Next, move on to the Intermediate Module where you'll learn about AI, pathfinding, procedural generation, and more advanced game development techniques!</p>
 

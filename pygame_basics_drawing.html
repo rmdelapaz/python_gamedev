@@ -62,16 +62,16 @@
         <span class="current">Lesson 2: Drawing Shapes & Sprites</span>
     </nav>
 
-    <h2>Bringing Your Game World to Life!</h2>
+    <h2 id="bringing-your-game-world-to-life">Bringing Your Game World to Life!</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <p>Now that you understand the game loop, it's time to make things appear on screen! In this lesson, you'll learn how to draw everything from simple shapes to complex sprites. By the end, you'll be creating colorful, animated game graphics! 🎨</p>
     </div>
 
-    <h2>Understanding the Pygame Coordinate System</h2>
+    <h2 id="understanding-the-pygame-coordinate-system">Understanding the Pygame Coordinate System</h2>
     
     <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>📐 The Canvas Analogy</h3>
+        <h3 id="the-canvas-analogy">📐 The Canvas Analogy</h3>
         <p>Imagine your game screen as a piece of graph paper. Each square has an address (x, y):</p>
         <ul>
             <li><strong>X-axis:</strong> Goes from left (0) to right (width)</li>
@@ -89,7 +89,7 @@
         style D fill:#4caf50
     </div>
 
-    <h2>Setting Up Your Drawing Surface</h2>
+    <h2 id="setting-up-your-drawing-surface">Setting Up Your Drawing Surface</h2>
     
     <pre class="language-python"><code># Initialize Pygame and create a display surface
 import pygame
@@ -110,14 +110,14 @@ BLUE = (0, 0, 255)
 YELLOW = (255, 255, 0)
 PURPLE = (128, 0, 128)</code></pre>
 
-    <h2>Drawing Basic Shapes</h2>
+    <h2 id="drawing-basic-shapes">Drawing Basic Shapes</h2>
     
-    <h3>Drawing Lines</h3>
+    <h3 id="drawing-lines">Drawing Lines</h3>
     <pre class="language-python"><code># Draw a line from point A to point B
 pygame.draw.line(screen, WHITE, (100, 100), (300, 200), 5)
 # Parameters: surface, color, start_pos, end_pos, width</code></pre>
 
-    <h3>Drawing Rectangles</h3>
+    <h3 id="drawing-rectangles">Drawing Rectangles</h3>
     <pre class="language-python"><code># Draw a filled rectangle
 pygame.draw.rect(screen, RED, (150, 150, 200, 100))
 # Parameters: surface, color, (x, y, width, height)
@@ -126,7 +126,7 @@ pygame.draw.rect(screen, RED, (150, 150, 200, 100))
 pygame.draw.rect(screen, GREEN, (400, 150, 200, 100), 3)
 # The last parameter is the border width</code></pre>
 
-    <h3>Drawing Circles</h3>
+    <h3 id="drawing-circles">Drawing Circles</h3>
     <pre class="language-python"><code># Draw a filled circle
 pygame.draw.circle(screen, BLUE, (400, 300), 50)
 # Parameters: surface, color, center_pos, radius
@@ -134,16 +134,16 @@ pygame.draw.circle(screen, BLUE, (400, 300), 50)
 # Draw a circle outline
 pygame.draw.circle(screen, YELLOW, (200, 300), 50, 3)</code></pre>
 
-    <h3>Drawing Polygons</h3>
+    <h3 id="drawing-polygons">Drawing Polygons</h3>
     <pre class="language-python"><code># Draw a triangle (or any polygon)
 points = [(300, 100), (400, 200), (200, 200)]
 pygame.draw.polygon(screen, PURPLE, points)
 # Parameters: surface, color, list_of_points</code></pre>
 
-    <h2>Interactive Shape Drawing Demo</h2>
+    <h2 id="interactive-shape-drawing-demo">Interactive Shape Drawing Demo</h2>
     
     <div style="background-color: #f9f9f9; padding: 20px; border-radius: 10px; margin: 20px 0; text-align: center;">
-        <h3>🎨 Draw Shapes Interactively!</h3>
+        <h3 id="draw-shapes-interactively">🎨 Draw Shapes Interactively!</h3>
         <canvas id="shapesCanvas" width="600" height="400"></canvas>
         <div>
             <button onclick="drawRandomShape()">Draw Random Shape</button>
@@ -233,7 +233,7 @@ pygame.draw.polygon(screen, PURPLE, points)
         }
     </script>
 
-    <h2>Complete Shape Drawing Example</h2>
+    <h2 id="complete-shape-drawing-example">Complete Shape Drawing Example</h2>
     
     <pre class="language-python"><code>import pygame
 import sys
@@ -306,14 +306,14 @@ while running:
 pygame.quit()
 sys.exit()</code></pre>
 
-    <h2>Working with Sprites</h2>
+    <h2 id="working-with-sprites">Working with Sprites</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>What Are Sprites?</h3>
+        <h3 id="what-are-sprites">What Are Sprites?</h3>
         <p>Sprites are 2D images or animations that represent game objects. Think of them as the actors in your game - characters, enemies, items, backgrounds. In Pygame, sprites are more than just images; they're objects that know how to draw themselves and can have behaviors!</p>
     </div>
 
-    <h2>Loading and Displaying Images</h2>
+    <h2 id="loading-and-displaying-images">Loading and Displaying Images</h2>
     
     <pre class="language-python"><code># Load an image
 player_image = pygame.image.load("player.png")
@@ -330,7 +330,7 @@ screen.blit(player_image, player_rect)
 # blit = Block Image Transfer (copying pixels to screen)</code></pre>
 
     <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>⚠️ Image Format Tips</h3>
+        <h3 id="image-format-tips">⚠️ Image Format Tips</h3>
         <ul>
             <li><strong>PNG:</strong> Best for sprites with transparency</li>
             <li><strong>JPG:</strong> Good for backgrounds (no transparency)</li>
@@ -339,7 +339,7 @@ screen.blit(player_image, player_rect)
         </ul>
     </div>
 
-    <h2>Creating a Simple Sprite Class</h2>
+    <h2 id="creating-a-simple-sprite-class">Creating a Simple Sprite Class</h2>
     
     <pre class="language-python"><code>import pygame
 
@@ -374,7 +374,7 @@ class Player(pygame.sprite.Sprite):
     def draw(self, screen):
         screen.blit(self.image, self.rect)</code></pre>
 
-    <h2>Sprite Groups - Managing Multiple Sprites</h2>
+    <h2 id="sprite-groups-managing-multiple-sprites">Sprite Groups - Managing Multiple Sprites</h2>
     
     <pre class="language-python"><code># Create sprite groups
 all_sprites = pygame.sprite.Group()
@@ -397,7 +397,7 @@ all_sprites.update()
 # Draw all sprites at once
 all_sprites.draw(screen)</code></pre>
 
-    <h2>Transforming Sprites</h2>
+    <h2 id="transforming-sprites">Transforming Sprites</h2>
     
     <pre class="language-python"><code># Scale an image
 scaled_image = pygame.transform.scale(original_image, (100, 100))
@@ -409,10 +409,10 @@ rotated_image = pygame.transform.rotate(original_image, 45)
 flipped_image = pygame.transform.flip(original_image, True, False)
 # Parameters: image, flip_x, flip_y</code></pre>
 
-    <h2>Interactive Sprite Demo</h2>
+    <h2 id="interactive-sprite-demo">Interactive Sprite Demo</h2>
     
     <div style="background-color: #f9f9f9; padding: 20px; border-radius: 10px; margin: 20px 0; text-align: center;">
-        <h3>🎮 Control the Bouncing Sprites!</h3>
+        <h3 id="control-the-bouncing-sprites">🎮 Control the Bouncing Sprites!</h3>
         <canvas id="spriteCanvas" width="600" height="400"></canvas>
         <p>Click to add sprites! They'll bounce around automatically.</p>
         <button onclick="clearSprites()">Clear All Sprites</button>
@@ -492,10 +492,10 @@ flipped_image = pygame.transform.flip(original_image, True, False)
         animateSprites();
     </script>
 
-    <h2>Color Theory for Games</h2>
+    <h2 id="color-theory-for-games">Color Theory for Games</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🎨 RGB Color System</h3>
+        <h3 id="rgb-color-system">🎨 RGB Color System</h3>
         <p>Colors in Pygame use RGB (Red, Green, Blue) values from 0 to 255:</p>
         <ul>
             <li><strong>(255, 0, 0)</strong> = Pure Red</li>
@@ -507,10 +507,10 @@ flipped_image = pygame.transform.flip(original_image, True, False)
         </ul>
     </div>
 
-    <h2>Performance Tips</h2>
+    <h2 id="performance-tips">Performance Tips</h2>
     
     <div style="background-color: #f0fff4; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>💡 Optimize Your Graphics</h3>
+        <h3 id="optimize-your-graphics">💡 Optimize Your Graphics</h3>
         <ul>
             <li><strong>Use convert():</strong> Always convert images after loading for 2-3x speed boost</li>
             <li><strong>Sprite Groups:</strong> Use groups to update and draw many sprites efficiently</li>
@@ -520,7 +520,7 @@ flipped_image = pygame.transform.flip(original_image, True, False)
         </ul>
     </div>
 
-    <h2>Complete Sprite Example</h2>
+    <h2 id="complete-sprite-example">Complete Sprite Example</h2>
     
     <pre class="language-python"><code>import pygame
 import random
@@ -613,10 +613,10 @@ while running:
 
 pygame.quit()</code></pre>
 
-    <h2>Practice Exercises</h2>
+    <h2 id="practice-exercises">Practice Exercises</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🎯 Try These Challenges!</h3>
+        <h3 id="try-these-challenges">🎯 Try These Challenges!</h3>
         <ol>
             <li><strong>Rainbow Circle:</strong> Draw a series of concentric circles with different colors</li>
             <li><strong>Moving Shape:</strong> Make a shape that follows your mouse cursor</li>
@@ -626,10 +626,10 @@ pygame.quit()</code></pre>
         </ol>
     </div>
 
-    <h2>Common Mistakes to Avoid</h2>
+    <h2 id="common-mistakes-to-avoid">Common Mistakes to Avoid</h2>
     
     <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>⚠️ Watch Out For:</h3>
+        <h3 id="watch-out-for">⚠️ Watch Out For:</h3>
         <ul>
             <li><strong>Forgetting flip():</strong> Nothing appears without pygame.display.flip()</li>
             <li><strong>Wrong coordinate system:</strong> Remember Y increases downward!</li>
@@ -639,7 +639,7 @@ pygame.quit()</code></pre>
         </ul>
     </div>
 
-    <h2>Key Takeaways</h2>
+    <h2 id="key-takeaways">Key Takeaways</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <ul>
@@ -651,7 +651,7 @@ pygame.quit()</code></pre>
         </ul>
     </div>
 
-    <h2>What's Next?</h2>
+    <h2 id="what-s-next">What's Next?</h2>
     
     <p>Now that you can draw shapes and sprites, next we'll learn how to handle keyboard and mouse input to make your games interactive. You'll create games that respond to player actions!</p>
 

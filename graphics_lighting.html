@@ -47,16 +47,16 @@
         <span class="current">Advanced Module - Section 1: Advanced Graphics - Lesson 2</span>
     </nav>
 
-    <h2>Illuminating Your Game World</h2>
+    <h2 id="illuminating-your-game-world">Illuminating Your Game World</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <p>Bring your games to life with dynamic lighting! Master different light types, implement real-time shadows, and create atmospheric effects using advanced lighting techniques like normal mapping and deferred rendering! 💡🌟🔦</p>
     </div>
 
-    <h2>Understanding Lighting</h2>
+    <h2 id="understanding-lighting">Understanding Lighting</h2>
     
     <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>💡 The Light Physics Analogy</h3>
+        <h3 id="the-light-physics-analogy">💡 The Light Physics Analogy</h3>
         <p>Think of lighting like how light works in the real world:</p>
         <ul>
             <li><strong>Ambient:</strong> Indirect light bouncing everywhere (sky light)</li>
@@ -68,7 +68,7 @@
         </ul>
     </div>
 
-    <h2>Lighting Implementation in Python/ModernGL</h2>
+    <h2 id="lighting-implementation-in-python-moderngl">Lighting Implementation in Python/ModernGL</h2>
     
     <pre class="language-python"><code>import moderngl
 import numpy as np
@@ -286,7 +286,7 @@ class SpotLight(Light):
         self.inner_cone = math.radians(30)
         self.outer_cone = math.radians(45)</code></pre>
 
-    <h2>Shadow Mapping</h2>
+    <h2 id="shadow-mapping">Shadow Mapping</h2>
     
     <pre class="language-python"><code>class ShadowMapper:
     """Shadow mapping system"""
@@ -346,10 +346,10 @@ class SpotLight(Light):
         # Reset viewport
         self.ctx.screen.use()</code></pre>
 
-    <h2>Best Practices</h2>
+    <h2 id="best-practices">Best Practices</h2>
     
     <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>⚡ Lighting Tips</h3>
+        <h3 id="lighting-tips">⚡ Lighting Tips</h3>
         <ul>
             <li><strong>Light Count:</strong> Limit dynamic lights for performance</li>
             <li><strong>Deferred Rendering:</strong> Handle many lights efficiently</li>
@@ -362,7 +362,7 @@ class SpotLight(Light):
         </ul>
     </div>
 
-    <h2>Key Takeaways</h2>
+    <h2 id="key-takeaways">Key Takeaways</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <ul>
@@ -377,7 +377,7 @@ class SpotLight(Light):
         </ul>
     </div>
 
-    <h2>What's Next?</h2>
+    <h2 id="what-s-next">What's Next?</h2>
     
     <p>Now that you understand lighting systems, next we'll explore post-processing effects to add the final polish to your visuals!</p>
 

@@ -1000,3 +1000,137 @@ code, pre {
         fill: #d4d4d4;
     }
 }
+
+/* ===========================
+   Phase 5 — Auto-TOC (added 2026)
+   Built at runtime by nav-enhancements.js / initAutoTOC() from <h2 id> elements.
+   Open: full sticky card under the main-nav.
+   Closed: 44px circular FAB in upper-left, just below the main-nav.
+   =========================== */
+
+.toc-card.auto-toc {
+    position: sticky;
+    top: calc(60px + env(safe-area-inset-top));
+    z-index: 100;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    margin: 0 0 var(--spacing-lg) 0;
+    padding: 0;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+/* Hide native disclosure marker — we render our own chevron */
+.toc-card.auto-toc summary { list-style: none; }
+.toc-card.auto-toc summary::-webkit-details-marker { display: none; }
+.toc-card.auto-toc summary::marker { content: ''; }
+
+.toc-card.auto-toc summary {
+    cursor: pointer;
+    padding: var(--spacing-sm) var(--spacing-md);
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    background: transparent;
+    color: var(--text-color);
+}
+.toc-card.auto-toc .toc-icon { font-size: 1.25rem; line-height: 1; }
+.toc-card.auto-toc .toc-label { font-size: 1.1rem; font-weight: 700; }
+.toc-card.auto-toc .toc-chevron {
+    margin-left: auto;
+    font-size: 0.85rem;
+    color: var(--text-light);
+    transition: transform 0.3s ease;
+}
+.toc-card.auto-toc[open] .toc-chevron { transform: rotate(180deg); }
+
+.toc-card.auto-toc nav {
+    padding: 0 var(--spacing-md) var(--spacing-md);
+}
+.toc-card.auto-toc ol {
+    list-style: decimal;
+    padding-left: var(--spacing-xl);
+    margin: 0;
+}
+.toc-card.auto-toc li {
+    padding: 2px 0;
+    margin: 0;
+}
+.toc-card.auto-toc .toc-link {
+    color: var(--text-color);
+    text-decoration: none;
+    transition: color 0.2s;
+    display: inline-block;
+    padding: 2px 0;
+}
+.toc-card.auto-toc .toc-link:hover {
+    color: var(--primary-color);
+    text-decoration: underline;
+}
+.toc-card.auto-toc .toc-link.active {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+/* ---- Collapsed state: floating action button in upper-left ----
+   Sits just below the sticky main-nav (~60px tall) at left: spacing-lg.
+   --- */
+.toc-card.auto-toc:not([open]) {
+    position: fixed;
+    top: calc(70px + env(safe-area-inset-top));
+    left: var(--spacing-lg);
+    bottom: auto;
+    right: auto;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    margin: 0;
+    border: none;
+    border-radius: 50%;
+    background: var(--primary-color);
+    box-shadow: var(--shadow-md);
+    z-index: 150;
+    overflow: hidden;
+}
+.toc-card.auto-toc:not([open]):hover {
+    transform: scale(1.08);
+    box-shadow: var(--shadow-lg);
+    filter: brightness(1.1);
+}
+.toc-card.auto-toc:not([open]) summary {
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    justify-content: center;
+    color: #fff;
+}
+.toc-card.auto-toc:not([open]) .toc-icon {
+    font-size: 1.25rem;
+    color: #fff;
+}
+.toc-card.auto-toc:not([open]) .toc-label,
+.toc-card.auto-toc:not([open]) .toc-chevron {
+    /* Visually hidden but still accessible to screen readers via summary */
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* On small screens, hug the left edge a bit tighter */
+@media (max-width: 768px) {
+    .toc-card.auto-toc:not([open]) {
+        top: calc(62px + env(safe-area-inset-top));
+        left: var(--spacing-md);
+        width: 40px;
+        height: 40px;
+    }
+    .toc-card.auto-toc:not([open]) .toc-icon { font-size: 1.1rem; }
+}

@@ -60,16 +60,16 @@
         <span class="current">Advanced Module - Section 1: Advanced Graphics - Lesson 1</span>
     </nav>
 
-    <h2>GPU Programming for Visual Effects</h2>
+    <h2 id="gpu-programming-for-visual-effects">GPU Programming for Visual Effects</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <p>Unlock the power of GPU programming! Learn to write vertex and fragment shaders, create stunning visual effects, and implement real-time post-processing that will make your games visually spectacular! 🎨✨🌟</p>
     </div>
 
-    <h2>Understanding Shaders</h2>
+    <h2 id="understanding-shaders">Understanding Shaders</h2>
     
     <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🎨 The Graphics Pipeline Analogy</h3>
+        <h3 id="the-graphics-pipeline-analogy">🎨 The Graphics Pipeline Analogy</h3>
         <p>Think of shaders like an assembly line for pixels:</p>
         <ul>
             <li><strong>Vertex Shader:</strong> Positions and transforms geometry</li>
@@ -94,7 +94,7 @@
         H["Attributes"] --> B
     </div>
 
-    <h2>Interactive Shader Playground</h2>
+    <h2 id="interactive-shader-playground">Interactive Shader Playground</h2>
     
     <div class="canvas-wrapper" style="text-align: center;">
         <canvas id="shaderCanvas" width="600" height="400" style="border: 1px solid #333; display: inline-block;"></canvas>
@@ -140,9 +140,9 @@
         
         <!-- Shader Code Display -->
         <div id="shaderCode" style="display: none; margin-top: 10px; padding: 10px; background-color: rgba(0,0,0,0.8); border-radius: 5px; text-align: left;">
-            <h3 style="color: white;">Vertex Shader:</h3>
+            <h3 id="vertex-shader" style="color: white;">Vertex Shader:</h3>
             <pre id="vertexCode" style="color: #4CAF50; font-size: 12px; overflow-x: auto;"></pre>
-            <h3 style="color: white;">Fragment Shader:</h3>
+            <h3 id="fragment-shader" style="color: white;">Fragment Shader:</h3>
             <pre id="fragmentCode" style="color: #2196F3; font-size: 12px; overflow-x: auto;"></pre>
         </div>
     </div>
@@ -791,7 +791,7 @@
         console.log('Shader Effects initialized!');
     </script>
 
-    <h2>Shader Implementation in Python/ModernGL</h2>
+    <h2 id="shader-implementation-in-python-moderngl">Shader Implementation in Python/ModernGL</h2>
     
     <pre class="language-python"><code>import moderngl
 import numpy as np
@@ -895,7 +895,7 @@ class ShaderRenderer:
         
         return self.compile_shader(vertex_shader, fragment_shader)</code></pre>
 
-    <h2>Post-Processing Effects</h2>
+    <h2 id="post-processing-effects">Post-Processing Effects</h2>
     
     <pre class="language-python"><code>class PostProcessing:
     """Post-processing effects pipeline"""
@@ -981,10 +981,10 @@ class ShaderRenderer:
         
         return fragment_shader</code></pre>
 
-    <h2>Best Practices</h2>
+    <h2 id="best-practices">Best Practices</h2>
     
     <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>⚡ Shader Tips</h3>
+        <h3 id="shader-tips">⚡ Shader Tips</h3>
         <ul>
             <li><strong>Performance:</strong> Minimize texture lookups and complex math</li>
             <li><strong>Precision:</strong> Use appropriate float precision (lowp, mediump, highp)</li>
@@ -997,7 +997,7 @@ class ShaderRenderer:
         </ul>
     </div>
 
-    <h2>Key Takeaways</h2>
+    <h2 id="key-takeaways">Key Takeaways</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <ul>
@@ -1012,7 +1012,7 @@ class ShaderRenderer:
         </ul>
     </div>
 
-    <h2>What's Next?</h2>
+    <h2 id="what-s-next">What's Next?</h2>
     
     <p>Now that you understand shaders, next we'll explore lighting systems to create atmospheric and realistic illumination!</p>
 

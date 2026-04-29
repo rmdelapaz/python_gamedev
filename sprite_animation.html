@@ -62,16 +62,16 @@
         <span class="current">Section 3: Sprite Management - Lesson 2</span>
     </nav>
 
-    <h2>Bringing Characters to Life</h2>
+    <h2 id="bringing-characters-to-life">Bringing Characters to Life</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <p>Animation is what transforms static sprites into living, breathing characters! By sequencing frames and controlling timing, you can create walk cycles, attacks, idle animations, and more. Let's learn how to make your sprites move naturally and expressively! 🏃‍♂️✨</p>
     </div>
 
-    <h2>Understanding Animation Principles</h2>
+    <h2 id="understanding-animation-principles">Understanding Animation Principles</h2>
     
     <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🎬 The Flipbook Analogy</h3>
+        <h3 id="the-flipbook-analogy">🎬 The Flipbook Analogy</h3>
         <p>Think of sprite animation like a flipbook:</p>
         <ul>
             <li><strong>Frames:</strong> Individual pages/drawings in sequence</li>
@@ -98,7 +98,7 @@
         E --> M["Frame Caching"]
     </div>
 
-    <h2>Interactive Animation Demo</h2>
+    <h2 id="interactive-animation-demo">Interactive Animation Demo</h2>
     
     <div class="canvas-wrapper">
         <canvas id="animCanvas" width="600" height="400"></canvas>
@@ -389,7 +389,7 @@
         animate(performance.now());
     </script>
 
-    <h2>Basic Frame Animation</h2>
+    <h2 id="basic-frame-animation">Basic Frame Animation</h2>
     
     <pre class="language-python"><code>import pygame
 
@@ -429,7 +429,7 @@ def load_animation_frames(base_path, frame_count):
 walk_frames = load_animation_frames("sprites/player_walk", 8)
 player = AnimatedSprite(walk_frames, 100, 100)</code></pre>
 
-    <h2>Time-Based Animation</h2>
+    <h2 id="time-based-animation">Time-Based Animation</h2>
     
     <pre class="language-python"><code>class TimedAnimation:
     """Animation with precise timing control"""
@@ -481,7 +481,7 @@ player = AnimatedSprite(walk_frames, 100, 100)</code></pre>
         """Jump to specific frame"""
         self.current_frame = min(frame_index, len(self.frames) - 1)</code></pre>
 
-    <h2>Animation State Machine</h2>
+    <h2 id="animation-state-machine">Animation State Machine</h2>
     
     <pre class="language-python"><code>class AnimationStateMachine:
     """Manage multiple animation states"""
@@ -602,7 +602,7 @@ class AnimatedCharacter(pygame.sprite.Sprite):
         if self.velocity_x < 0:
             self.image = pygame.transform.flip(self.image, True, False)</code></pre>
 
-    <h2>Advanced Animation Techniques</h2>
+    <h2 id="advanced-animation-techniques">Advanced Animation Techniques</h2>
     
     <pre class="language-python"><code># Animation with variable frame durations
 class AdvancedAnimation:
@@ -695,7 +695,7 @@ attack_anim = AnimationWithEvents(attack_frames)
 attack_anim.add_event(3, lambda: play_sound("sword_swing"))
 attack_anim.add_event(5, lambda: check_hit_enemies())</code></pre>
 
-    <h2>Sprite Animation Optimization</h2>
+    <h2 id="sprite-animation-optimization">Sprite Animation Optimization</h2>
     
     <pre class="language-python"><code># Frame caching system
 class AnimationCache:
@@ -759,7 +759,7 @@ class SpriteSheetAnimation:
     def update(self):
         self.current_frame = (self.current_frame + 1) % self.frame_count</code></pre>
 
-    <h2>Complete Animation System Example</h2>
+    <h2 id="complete-animation-system-example">Complete Animation System Example</h2>
     
     <pre class="language-python"><code>import pygame
 import math
@@ -1114,10 +1114,10 @@ if __name__ == "__main__":
     demo = CompleteAnimationDemo()
     demo.run()</code></pre>
 
-    <h2>Animation Best Practices</h2>
+    <h2 id="animation-best-practices">Animation Best Practices</h2>
     
     <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>⚡ Performance Tips</h3>
+        <h3 id="performance-tips">⚡ Performance Tips</h3>
         <ul>
             <li><strong>Use Sprite Sheets:</strong> Load once, use subsurfaces</li>
             <li><strong>Cache Transformations:</strong> Don't rotate/scale every frame</li>
@@ -1128,10 +1128,10 @@ if __name__ == "__main__":
         </ul>
     </div>
 
-    <h2>Common Animation Principles</h2>
+    <h2 id="common-animation-principles">Common Animation Principles</h2>
     
     <div style="background-color: #f0fff4; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🎨 Making Animations Feel Good</h3>
+        <h3 id="making-animations-feel-good">🎨 Making Animations Feel Good</h3>
         <ul>
             <li><strong>Anticipation:</strong> Prepare for action (crouch before jump)</li>
             <li><strong>Follow Through:</strong> Continue motion after main action</li>
@@ -1142,10 +1142,10 @@ if __name__ == "__main__":
         </ul>
     </div>
 
-    <h2>Practice Exercises</h2>
+    <h2 id="practice-exercises">Practice Exercises</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🎯 Animation Challenges!</h3>
+        <h3 id="animation-challenges">🎯 Animation Challenges!</h3>
         <ol>
             <li><strong>Walk Cycle:</strong> Create smooth 8-frame walk animation</li>
             <li><strong>State Machine:</strong> Character with idle, walk, run, jump, attack</li>
@@ -1156,7 +1156,7 @@ if __name__ == "__main__":
         </ol>
     </div>
 
-    <h2>Key Takeaways</h2>
+    <h2 id="key-takeaways">Key Takeaways</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <ul>
@@ -1170,7 +1170,7 @@ if __name__ == "__main__":
         </ul>
     </div>
 
-    <h2>What's Next?</h2>
+    <h2 id="what-s-next">What's Next?</h2>
     
     <p>Now that you can animate individual sprites, next we'll learn about sprite sheets - the efficient way to store and manage multiple animation frames in a single image!</p>
 

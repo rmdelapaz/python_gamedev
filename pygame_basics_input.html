@@ -62,16 +62,16 @@
         <span class="current">Lesson 3: Handling Input</span>
     </nav>
 
-    <h2>Making Your Games Interactive!</h2>
+    <h2 id="making-your-games-interactive">Making Your Games Interactive!</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <p>A game without input is just a movie! In this lesson, you'll learn how to capture and respond to player actions through keyboard and mouse controls. By the end, you'll be creating games that feel responsive and fun to play! 🎮</p>
     </div>
 
-    <h2>Two Ways to Handle Input</h2>
+    <h2 id="two-ways-to-handle-input">Two Ways to Handle Input</h2>
     
     <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🎯 The Restaurant Analogy</h3>
+        <h3 id="the-restaurant-analogy">🎯 The Restaurant Analogy</h3>
         <p>Think of input handling like a restaurant taking orders:</p>
         <ul>
             <li><strong>Event-Based (Discrete):</strong> Like a waiter taking individual orders - "Table 3 wants pizza!" Perfect for one-time actions like jumping or shooting.</li>
@@ -94,9 +94,9 @@
         H --> L["Aim, Draw, Hover Effects"]
     </div>
 
-    <h2>Event-Based Input (Discrete Actions)</h2>
+    <h2 id="event-based-input-discrete-actions">Event-Based Input (Discrete Actions)</h2>
     
-    <h3>Keyboard Events</h3>
+    <h3 id="keyboard-events">Keyboard Events</h3>
     <pre class="language-python"><code>import pygame
 import sys
 
@@ -130,7 +130,7 @@ while running:
 
 pygame.quit()</code></pre>
 
-    <h3>Mouse Events</h3>
+    <h3 id="mouse-events">Mouse Events</h3>
     <pre class="language-python"><code># Mouse button events
 for event in pygame.event.get():
     if event.type == pygame.MOUSEBUTTONDOWN:
@@ -152,9 +152,9 @@ for event in pygame.event.get():
         # This fires continuously when mouse moves
         print(f"Mouse at {event.pos}, moved by {event.rel}")</code></pre>
 
-    <h2>State-Based Input (Continuous Actions)</h2>
+    <h2 id="state-based-input-continuous-actions">State-Based Input (Continuous Actions)</h2>
     
-    <h3>Continuous Keyboard Input</h3>
+    <h3 id="continuous-keyboard-input">Continuous Keyboard Input</h3>
     <pre class="language-python"><code># Get the state of all keyboard keys
 keys = pygame.key.get_pressed()
 
@@ -173,7 +173,7 @@ if keys[pygame.K_DOWN] or keys[pygame.K_s]:
 # Diagonal movement is faster unless normalized!
 # We'll fix this later with vector math</code></pre>
 
-    <h3>Continuous Mouse Input</h3>
+    <h3 id="continuous-mouse-input">Continuous Mouse Input</h3>
     <pre class="language-python"><code># Get mouse position
 mouse_x, mouse_y = pygame.mouse.get_pos()
 
@@ -193,7 +193,7 @@ pygame.mouse.set_visible(True)   # Show cursor
 # Get relative mouse movement (useful for FPS games)
 mouse_rel = pygame.mouse.get_rel()</code></pre>
 
-    <h2>Interactive Input Demo</h2>
+    <h2 id="interactive-input-demo">Interactive Input Demo</h2>
     
     <div class="canvas-wrapper">
         <canvas id="inputCanvas" width="600" height="400"></canvas>
@@ -385,10 +385,10 @@ mouse_rel = pygame.mouse.get_rel()</code></pre>
         gameLoop();
     </script>
 
-    <h2>Common Key Constants</h2>
+    <h2 id="common-key-constants">Common Key Constants</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>📌 Pygame Key Constants Reference</h3>
+        <h3 id="pygame-key-constants-reference">📌 Pygame Key Constants Reference</h3>
         <table>
             <tr>
                 <th>Key</th>
@@ -429,7 +429,7 @@ mouse_rel = pygame.mouse.get_rel()</code></pre>
         </table>
     </div>
 
-    <h2>Complete Example: Interactive Paint Program</h2>
+    <h2 id="complete-example-interactive-paint-program">Complete Example: Interactive Paint Program</h2>
     
     <pre class="language-python"><code>import pygame
 import sys
@@ -554,10 +554,10 @@ if __name__ == "__main__":
     paint = PaintProgram()
     paint.run()</code></pre>
 
-    <h2>Input Best Practices</h2>
+    <h2 id="input-best-practices">Input Best Practices</h2>
     
     <div style="background-color: #f0fff4; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>💡 Pro Tips for Great Input</h3>
+        <h3 id="pro-tips-for-great-input">💡 Pro Tips for Great Input</h3>
         <ul>
             <li><strong>Responsive Feedback:</strong> Always give immediate visual/audio feedback for inputs</li>
             <li><strong>Input Buffering:</strong> Store inputs briefly to catch player intent</li>
@@ -568,10 +568,10 @@ if __name__ == "__main__":
         </ul>
     </div>
 
-    <h2>Practice Exercises</h2>
+    <h2 id="practice-exercises">Practice Exercises</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🎯 Challenge Yourself!</h3>
+        <h3 id="challenge-yourself">🎯 Challenge Yourself!</h3>
         <ol>
             <li><strong>Twin-Stick Shooter:</strong> WASD moves, mouse aims and shoots</li>
             <li><strong>Combo System:</strong> Detect sequences like ↓↓↑ or rapid button presses</li>
@@ -581,7 +581,7 @@ if __name__ == "__main__":
         </ol>
     </div>
 
-    <h2>Gamepad Support</h2>
+    <h2 id="gamepad-support">Gamepad Support</h2>
     
     <pre class="language-python"><code># Basic gamepad/joystick support
 pygame.joystick.init()
@@ -612,7 +612,7 @@ if joystick_count > 0:
     # Get D-pad (hat)
     hat = joystick.get_hat(0)  # Returns (x, y) tuple</code></pre>
 
-    <h2>Key Takeaways</h2>
+    <h2 id="key-takeaways">Key Takeaways</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <ul>
@@ -625,7 +625,7 @@ if joystick_count > 0:
         </ul>
     </div>
 
-    <h2>What's Next?</h2>
+    <h2 id="what-s-next">What's Next?</h2>
     
     <p>Now that you can handle player input, next we'll learn about collision detection - how to know when game objects touch or overlap. This is crucial for making games where things can interact!</p>
 

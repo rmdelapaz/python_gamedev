@@ -62,16 +62,16 @@
         <span class="current">Section 4: Game Physics - Lesson 4</span>
     </nav>
 
-    <h2>Making Objects React to Collisions</h2>
+    <h2 id="making-objects-react-to-collisions">Making Objects React to Collisions</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <p>Collision response is where physics gets exciting! When objects collide, they exchange momentum, bounce apart, or stick together. Understanding collision response lets you create everything from billiard games to explosive effects! 💥🎱</p>
     </div>
 
-    <h2>Understanding Collision Response</h2>
+    <h2 id="understanding-collision-response">Understanding Collision Response</h2>
     
     <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🎱 The Billiards Analogy</h3>
+        <h3 id="the-billiards-analogy">🎱 The Billiards Analogy</h3>
         <p>Think of collision response like a pool table:</p>
         <ul>
             <li><strong>Momentum Transfer:</strong> Fast ball hits slow ball, speeds exchange</li>
@@ -97,7 +97,7 @@
         D --> L["Sound"]
     </div>
 
-    <h2>Interactive Collision Response Simulator</h2>
+    <h2 id="interactive-collision-response-simulator">Interactive Collision Response Simulator</h2>
     
     <div class="canvas-wrapper">
         <canvas id="collisionCanvas" width="600" height="400"></canvas>
@@ -600,7 +600,7 @@
         animate(performance.now());
     </script>
 
-    <h2>Collision Detection and Response Basics</h2>
+    <h2 id="collision-detection-and-response-basics">Collision Detection and Response Basics</h2>
     
     <pre class="language-python"><code>import pygame
 import math
@@ -697,7 +697,7 @@ class MomentumSystem:
         
         return v1_final, v2_final</code></pre>
 
-    <h2>Advanced Collision Response</h2>
+    <h2 id="advanced-collision-response">Advanced Collision Response</h2>
     
     <pre class="language-python"><code># 2D collision response with rotation
 class AdvancedCollisionResponse:
@@ -823,7 +823,7 @@ class ContinuousCollisionDetection:
         obj1.position += obj1.velocity * remaining_time
         obj2.position += obj2.velocity * remaining_time</code></pre>
 
-    <h2>Separating Axis Theorem (SAT)</h2>
+    <h2 id="separating-axis-theorem-sat">Separating Axis Theorem (SAT)</h2>
     
     <pre class="language-python"><code># SAT for polygon collision
 class SATCollision:
@@ -922,7 +922,7 @@ class SATCollision:
         obj1.velocity -= axis * (impulse / obj1.mass)
         obj2.velocity += axis * (impulse / obj2.mass)</code></pre>
 
-    <h2>Complete Collision Response Demo</h2>
+    <h2 id="complete-collision-response-demo">Complete Collision Response Demo</h2>
     
     <pre class="language-python"><code>import pygame
 import math
@@ -1331,10 +1331,10 @@ if __name__ == "__main__":
     demo = CollisionResponseDemo()
     demo.run()</code></pre>
 
-    <h2>Best Practices</h2>
+    <h2 id="best-practices">Best Practices</h2>
     
     <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>⚡ Collision Response Tips</h3>
+        <h3 id="collision-response-tips">⚡ Collision Response Tips</h3>
         <ul>
             <li><strong>Separate First:</strong> Move objects apart before applying impulses</li>
             <li><strong>Check Velocity:</strong> Don't resolve if objects are already separating</li>
@@ -1346,10 +1346,10 @@ if __name__ == "__main__":
         </ul>
     </div>
 
-    <h2>Practice Exercises</h2>
+    <h2 id="practice-exercises">Practice Exercises</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🎯 Collision Response Challenges!</h3>
+        <h3 id="collision-response-challenges">🎯 Collision Response Challenges!</h3>
         <ol>
             <li><strong>Pool Game:</strong> Realistic billiards with spin and friction</li>
             <li><strong>Newton's Cradle:</strong> Conservation of momentum demonstration</li>
@@ -1360,7 +1360,7 @@ if __name__ == "__main__":
         </ol>
     </div>
 
-    <h2>Key Takeaways</h2>
+    <h2 id="key-takeaways">Key Takeaways</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <ul>
@@ -1374,7 +1374,7 @@ if __name__ == "__main__":
         </ul>
     </div>
 
-    <h2>What's Next?</h2>
+    <h2 id="what-s-next">What's Next?</h2>
     
     <p>Now that you understand collision response, next we'll combine everything into a simple physics engine that can handle complex simulations!</p>
 

@@ -28,6 +28,7 @@
     document.addEventListener('DOMContentLoaded', function () {
         initThemeToggle();
         initMobileMenu();
+        initAutoTOC();
     });
 
     /* -----------------------------------------------------------
@@ -154,6 +155,100 @@
                 btn.textContent = '☰';
                 btn.focus();
             }
+        });
+    }
+
+    /* -----------------------------------------------------------
+     * Auto-TOC — builds a sticky, FAB-collapsing table of contents
+     *   from the page's <h2 id="…"> headings at runtime.
+     *
+     * Requires inject_section_ids.py to have run first so headings
+     * have stable ids. Skips silently when fewer than 3 ids are
+     * found (not worth a TOC for short pages).
+     * ----------------------------------------------------------- */
+
+    function initAutoTOC() {
+        const main = document.querySelector('main#main-content') || document.querySelector('main') || document.body;
+        if (!main) return;
+
+        // Collect H2s with ids, in document order
+        const headings = Array.from(main.querySelectorAll('h2[id]'));
+        if (headings.length < 3) return;  // not enough sections to bother
+
+        // Don't double-build (idempotent across re-inits)
+        if (document.querySelector('.toc-card.auto-toc')) return;
+
+        // ---- Build TOC structure ----
+        const details = document.createElement('details');
+        details.className = 'card toc-card auto-toc';
+        details.open = true;
+
+        const summary = document.createElement('summary');
+        summary.setAttribute('aria-label', 'Toggle table of contents');
+        summary.innerHTML =
+            '<span class="toc-icon" aria-hidden="true">📑</span>' +
+            '<span class="toc-label">In This Lesson</span>' +
+            '<span class="toc-chevron" aria-hidden="true">▾</span>';
+        details.appendChild(summary);
+
+        const nav = document.createElement('nav');
+        nav.setAttribute('aria-label', 'Table of Contents');
+        const ol = document.createElement('ol');
+        headings.forEach(function (h) {
+            const li = document.createElement('li');
+            const a = document.createElement('a');
+            a.href = '#' + h.id;
+            a.className = 'toc-link';
+            // Use textContent to drop emoji-styled inner spans/code/etc.
+            a.textContent = (h.textContent || '').trim();
+            li.appendChild(a);
+            ol.appendChild(li);
+        });
+        nav.appendChild(ol);
+        details.appendChild(nav);
+
+        // ---- Insert before the first H2 (so it appears under the lesson header) ----
+        const firstH2 = main.querySelector('h2');
+        if (firstH2 && firstH2.parentNode) {
+            firstH2.parentNode.insertBefore(details, firstH2);
+        } else {
+            main.insertBefore(details, main.firstChild);
+        }
+
+        // ---- Active-section highlighting via IntersectionObserver ----
+        if (!('IntersectionObserver' in window)) return;
+
+        const links = details.querySelectorAll('.toc-link');
+        const linkById = {};
+        links.forEach(function (link) {
+            const id = decodeURIComponent(link.getAttribute('href').slice(1));
+            linkById[id] = link;
+        });
+
+        const observer = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (!entry.isIntersecting) return;
+                const id = entry.target.id;
+                links.forEach(function (l) { l.classList.remove('active'); });
+                if (linkById[id]) linkById[id].classList.add('active');
+            });
+        }, { rootMargin: '-20% 0px -70% 0px', threshold: 0 });
+
+        headings.forEach(function (h) { observer.observe(h); });
+
+        // ---- Smooth-scroll on TOC click, accounting for sticky nav offset ----
+        links.forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                const id = decodeURIComponent(this.getAttribute('href').slice(1));
+                const target = document.getElementById(id);
+                if (!target) return;
+                e.preventDefault();
+                // Offset for sticky main-nav (~60px) + small breathing room
+                const offset = 80;
+                const top = target.getBoundingClientRect().top + window.scrollY - offset;
+                window.scrollTo({ top: top, behavior: 'smooth' });
+                history.pushState(null, '', '#' + id);
+            });
         });
     }
 })();

@@ -62,16 +62,16 @@
         <span class="current">Intermediate Module - Section 1: Game Architecture - Lesson 2</span>
     </nav>
 
-    <h2>Organizing Game Worlds with Scenes</h2>
+    <h2 id="organizing-game-worlds-with-scenes">Organizing Game Worlds with Scenes</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <p>Scene management is how we organize game content into manageable chunks - levels, menus, cutscenes, and more. It handles loading, unloading, and transitioning between different parts of your game world seamlessly! 🌍🎬</p>
     </div>
 
-    <h2>Understanding Scene Management</h2>
+    <h2 id="understanding-scene-management">Understanding Scene Management</h2>
     
     <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🎬 The Movie Production Analogy</h3>
+        <h3 id="the-movie-production-analogy">🎬 The Movie Production Analogy</h3>
         <p>Think of scenes like movie production:</p>
         <ul>
             <li><strong>Scenes:</strong> Individual sets or locations (Level 1, Boss Arena, Shop)</li>
@@ -100,7 +100,7 @@
         E --> O["Custom"]
     </div>
 
-    <h2>Interactive Scene Manager Demo</h2>
+    <h2 id="interactive-scene-manager-demo">Interactive Scene Manager Demo</h2>
     
     <div class="canvas-wrapper">
         <canvas id="sceneCanvas" width="600" height="400"></canvas>
@@ -800,7 +800,7 @@
         animate(performance.now());
     </script>
 
-    <h2>Basic Scene Management System</h2>
+    <h2 id="basic-scene-management-system">Basic Scene Management System</h2>
     
     <pre class="language-python"><code>import pygame
 import json
@@ -1010,7 +1010,7 @@ class SceneManager:
         if self.current_scene and not self.transition_active:
             self.current_scene.handle_event(event)</code></pre>
 
-    <h2>Resource Management</h2>
+    <h2 id="resource-management">Resource Management</h2>
     
     <pre class="language-python"><code># Resource management for scenes
 class ResourceManager:
@@ -1162,10 +1162,10 @@ class AsyncSceneLoader:
         """Load data asynchronously"""
         self.resource_manager.load_json(path, name)</code></pre>
 
-    <h2>Best Practices</h2>
+    <h2 id="best-practices">Best Practices</h2>
     
     <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>⚡ Scene Management Tips</h3>
+        <h3 id="scene-management-tips">⚡ Scene Management Tips</h3>
         <ul>
             <li><strong>Lazy Loading:</strong> Load resources only when needed</li>
             <li><strong>Preloading:</strong> Load next scene while current plays</li>
@@ -1178,7 +1178,7 @@ class AsyncSceneLoader:
         </ul>
     </div>
 
-    <h2>Key Takeaways</h2>
+    <h2 id="key-takeaways">Key Takeaways</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <ul>
@@ -1192,7 +1192,7 @@ class AsyncSceneLoader:
         </ul>
     </div>
 
-    <h2>What's Next?</h2>
+    <h2 id="what-s-next">What's Next?</h2>
     
     <p>Now that you understand scene management, next we'll explore component systems - a powerful way to build flexible, reusable game objects!</p>
 

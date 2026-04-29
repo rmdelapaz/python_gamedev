@@ -62,16 +62,16 @@
         <span class="current">Section 4: Game Physics - Lesson 1</span>
     </nav>
 
-    <h2>The Foundation of Game Movement</h2>
+    <h2 id="the-foundation-of-game-movement">The Foundation of Game Movement</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <p>Velocity and acceleration are the heartbeat of game physics! They transform static objects into dynamic entities that move, respond to forces, and feel alive. Let's master the fundamentals of motion! 🚀📈</p>
     </div>
 
-    <h2>Understanding Motion</h2>
+    <h2 id="understanding-motion">Understanding Motion</h2>
     
     <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🚗 The Car Journey Analogy</h3>
+        <h3 id="the-car-journey-analogy">🚗 The Car Journey Analogy</h3>
         <p>Think of game physics like driving a car:</p>
         <ul>
             <li><strong>Position:</strong> Where you are on the road (x, y coordinates)</li>
@@ -99,7 +99,7 @@
         E --> N["Friction"]
     </div>
 
-    <h2>Interactive Physics Playground</h2>
+    <h2 id="interactive-physics-playground">Interactive Physics Playground</h2>
     
     <div class="canvas-wrapper">
         <canvas id="physicsCanvas" width="600" height="400"></canvas>
@@ -467,7 +467,7 @@
         animate(performance.now());
     </script>
 
-    <h2>Basic Position, Velocity, and Acceleration</h2>
+    <h2 id="basic-position-velocity-and-acceleration">Basic Position, Velocity, and Acceleration</h2>
     
     <pre class="language-python"><code>import pygame
 import math
@@ -547,7 +547,7 @@ def basic_motion_example():
     
     pygame.quit()</code></pre>
 
-    <h2>Types of Motion</h2>
+    <h2 id="types-of-motion">Types of Motion</h2>
     
     <pre class="language-python"><code># Different motion patterns
 
@@ -653,7 +653,7 @@ class AdvancedPhysicsObject:
         self.acceleration = pygame.math.Vector2(0, 0)
         self.angular_acceleration = 0</code></pre>
 
-    <h2>Integration Methods</h2>
+    <h2 id="integration-methods">Integration Methods</h2>
     
     <pre class="language-python"><code># Different integration methods for more accurate physics
 
@@ -712,7 +712,7 @@ class IntegrationMethods:
         obj.position = initial_pos + (k1_pos + 2*k2_pos + 2*k3_pos + k4_pos) * (dt/6)
         obj.velocity = initial_vel + (k1_vel + 2*k2_vel + 2*k3_vel + k4_vel) * (dt/6)</code></pre>
 
-    <h2>Practical Movement Systems</h2>
+    <h2 id="practical-movement-systems">Practical Movement Systems</h2>
     
     <pre class="language-python"><code># Player movement with acceleration
 class PlayerPhysics:
@@ -827,7 +827,7 @@ class CarPhysics:
         # Reset steering
         self.steering = 0</code></pre>
 
-    <h2>Complete Physics Demo</h2>
+    <h2 id="complete-physics-demo">Complete Physics Demo</h2>
     
     <pre class="language-python"><code>import pygame
 import math
@@ -1093,10 +1093,10 @@ if __name__ == "__main__":
     demo = PhysicsDemo()
     demo.run()</code></pre>
 
-    <h2>Best Practices</h2>
+    <h2 id="best-practices">Best Practices</h2>
     
     <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>⚡ Physics Optimization Tips</h3>
+        <h3 id="physics-optimization-tips">⚡ Physics Optimization Tips</h3>
         <ul>
             <li><strong>Use Delta Time:</strong> Always multiply by dt for frame-independent physics</li>
             <li><strong>Fixed Timestep:</strong> Consider fixed timestep for deterministic physics</li>
@@ -1108,10 +1108,10 @@ if __name__ == "__main__":
         </ul>
     </div>
 
-    <h2>Common Physics Patterns</h2>
+    <h2 id="common-physics-patterns">Common Physics Patterns</h2>
     
     <div style="background-color: #f0fff4; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🎮 Game Physics Applications</h3>
+        <h3 id="game-physics-applications">🎮 Game Physics Applications</h3>
         <ul>
             <li><strong>Platformer:</strong> Gravity, jump arcs, momentum</li>
             <li><strong>Racing:</strong> Acceleration, braking, turning forces</li>
@@ -1122,10 +1122,10 @@ if __name__ == "__main__":
         </ul>
     </div>
 
-    <h2>Practice Exercises</h2>
+    <h2 id="practice-exercises">Practice Exercises</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🎯 Physics Challenges!</h3>
+        <h3 id="physics-challenges">🎯 Physics Challenges!</h3>
         <ol>
             <li><strong>Lunar Lander:</strong> Control thrust to land safely</li>
             <li><strong>Angry Birds Clone:</strong> Projectile motion with targets</li>
@@ -1136,7 +1136,7 @@ if __name__ == "__main__":
         </ol>
     </div>
 
-    <h2>Key Takeaways</h2>
+    <h2 id="key-takeaways">Key Takeaways</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <ul>
@@ -1150,7 +1150,7 @@ if __name__ == "__main__":
         </ul>
     </div>
 
-    <h2>What's Next?</h2>
+    <h2 id="what-s-next">What's Next?</h2>
     
     <p>Now that you understand velocity and acceleration, next we'll add gravity to create more realistic physics simulations!</p>
 

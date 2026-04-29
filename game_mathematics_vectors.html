@@ -62,16 +62,16 @@
         <span class="current">Section 2: Game Mathematics - Lesson 2</span>
     </nav>
 
-    <h2>The Language of Movement and Physics</h2>
+    <h2 id="the-language-of-movement-and-physics">The Language of Movement and Physics</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <p>Vectors are the mathematical foundation of game movement, physics, and spatial relationships. They represent both position and direction, making them essential for everything from character movement to projectile physics. Let's unlock the power of vectors! 🚀📐</p>
     </div>
 
-    <h2>What is a Vector?</h2>
+    <h2 id="what-is-a-vector">What is a Vector?</h2>
     
     <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🏹 The Arrow Analogy</h3>
+        <h3 id="the-arrow-analogy">🏹 The Arrow Analogy</h3>
         <p>Think of vectors like arrows:</p>
         <ul>
             <li><strong>Magnitude:</strong> The length of the arrow (how far)</li>
@@ -94,7 +94,7 @@
         F --> J["Vertical Movement"]
     </div>
 
-    <h2>Basic Vector Class</h2>
+    <h2 id="basic-vector-class">Basic Vector Class</h2>
     
     <pre class="language-python"><code>import math
 
@@ -157,7 +157,7 @@ class Vector2:
         """Convert to tuple for Pygame"""
         return (int(self.x), int(self.y))</code></pre>
 
-    <h2>Interactive Vector Playground</h2>
+    <h2 id="interactive-vector-playground">Interactive Vector Playground</h2>
     
     <div class="canvas-wrapper">
         <canvas id="vectorCanvas" width="600" height="400"></canvas>
@@ -441,7 +441,7 @@ class Vector2:
         animate();
     </script>
 
-    <h2>Vector Addition and Subtraction</h2>
+    <h2 id="vector-addition-and-subtraction">Vector Addition and Subtraction</h2>
     
     <pre class="language-python"><code># Vector addition - combine movements/forces
 position = Vector2(100, 100)
@@ -459,10 +459,10 @@ wind = Vector2(2, 0)
 thrust = Vector2(0, -15)
 total_force = gravity + wind + thrust</code></pre>
 
-    <h2>Vector Normalization and Scaling</h2>
+    <h2 id="vector-normalization-and-scaling">Vector Normalization and Scaling</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>📏 Normalization</h3>
+        <h3 id="normalization">📏 Normalization</h3>
         <p>Normalizing a vector gives you a "unit vector" - same direction, but length of 1. Perfect for:</p>
         <ul>
             <li>Setting consistent movement speeds</li>
@@ -499,7 +499,7 @@ class Enemy:
         # Move towards player
         self.position += direction * self.speed</code></pre>
 
-    <h2>Dot Product and Projections</h2>
+    <h2 id="dot-product-and-projections">Dot Product and Projections</h2>
     
     <div class="mermaid">
     graph LR
@@ -548,9 +548,9 @@ def slide_along_wall(velocity, wall_normal):
     slide_velocity = velocity - into_wall
     return slide_velocity</code></pre>
 
-    <h2>Practical Vector Applications</h2>
+    <h2 id="practical-vector-applications">Practical Vector Applications</h2>
     
-    <h3>1. Steering Behaviors</h3>
+    <h3 id="1-steering-behaviors">1. Steering Behaviors</h3>
     <pre class="language-python"><code>class SteeringEntity:
     def __init__(self, x, y):
         self.position = Vector2(x, y)
@@ -609,7 +609,7 @@ def slide_along_wall(velocity, wall_normal):
         self.position += self.velocity
         self.acceleration = Vector2(0, 0)  # Reset acceleration</code></pre>
 
-    <h3>2. Projectile Motion</h3>
+    <h3 id="2-projectile-motion">2. Projectile Motion</h3>
     <pre class="language-python"><code>class Projectile:
     def __init__(self, start_pos, target_pos, speed):
         self.position = Vector2(start_pos[0], start_pos[1])
@@ -645,7 +645,7 @@ def slide_along_wall(velocity, wall_normal):
         
         return self.position.y > 0  # Still in air</code></pre>
 
-    <h3>3. Collision Response</h3>
+    <h3 id="3-collision-response">3. Collision Response</h3>
     <pre class="language-python"><code>def reflect_vector(incident, normal):
     """Reflect a vector off a surface"""
     # Formula: R = I - 2 * (I · N) * N
@@ -680,7 +680,7 @@ class Ball:
             self.velocity = bounce_off_wall(self.velocity, Vector2(0, -1))
             self.position.y = screen_height - self.radius</code></pre>
 
-    <h2>Complete Vector-Based Game</h2>
+    <h2 id="complete-vector-based-game">Complete Vector-Based Game</h2>
     
     <pre class="language-python"><code>import pygame
 import math
@@ -1002,10 +1002,10 @@ if __name__ == "__main__":
     game = VectorGame()
     game.run()</code></pre>
 
-    <h2>Vector Performance Tips</h2>
+    <h2 id="vector-performance-tips">Vector Performance Tips</h2>
     
     <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>⚡ Optimization Strategies</h3>
+        <h3 id="optimization-strategies">⚡ Optimization Strategies</h3>
         <ul>
             <li><strong>Cache Magnitudes:</strong> Don't recalculate if vector hasn't changed</li>
             <li><strong>Use Squared Distance:</strong> Avoid sqrt when just comparing distances</li>
@@ -1035,10 +1035,10 @@ def fast_normalize(x, y):
     inv_mag = 1.0 / math.sqrt(mag_sq)  # Can optimize further
     return (x * inv_mag, y * inv_mag)</code></pre>
 
-    <h2>Practice Exercises</h2>
+    <h2 id="practice-exercises">Practice Exercises</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🎯 Vector Challenges!</h3>
+        <h3 id="vector-challenges">🎯 Vector Challenges!</h3>
         <ol>
             <li><strong>Homing Missile:</strong> Create projectiles that track targets using vectors</li>
             <li><strong>Flocking Simulation:</strong> Implement boids with separation, alignment, cohesion</li>
@@ -1049,7 +1049,7 @@ def fast_normalize(x, y):
         </ol>
     </div>
 
-    <h2>Key Takeaways</h2>
+    <h2 id="key-takeaways">Key Takeaways</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <ul>
@@ -1063,7 +1063,7 @@ def fast_normalize(x, y):
         </ul>
     </div>
 
-    <h2>What's Next?</h2>
+    <h2 id="what-s-next">What's Next?</h2>
     
     <p>Now that you've mastered vectors, next we'll explore trigonometry in games - using sine, cosine, and angles to create rotations, waves, and circular motion!</p>
 

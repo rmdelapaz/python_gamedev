@@ -60,16 +60,16 @@
         <span class="current">Intermediate Module - Section 1: Game Architecture - Lesson 4</span>
     </nav>
 
-    <h2>Creating Decoupled Communication Between Systems</h2>
+    <h2 id="creating-decoupled-communication-between-systems">Creating Decoupled Communication Between Systems</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <p>Event systems enable game components to communicate without direct dependencies! They create loose coupling between systems, making your code more maintainable, testable, and flexible. Let's master this powerful pattern! 📡🎮</p>
     </div>
 
-    <h2>Understanding Event Systems</h2>
+    <h2 id="understanding-event-systems">Understanding Event Systems</h2>
     
     <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>📻 The Radio Broadcast Analogy</h3>
+        <h3 id="the-radio-broadcast-analogy">📻 The Radio Broadcast Analogy</h3>
         <p>Think of event systems like radio broadcasting:</p>
         <ul>
             <li><strong>Events:</strong> Radio signals being broadcast</li>
@@ -100,7 +100,7 @@
         K --> O["UI Events"]
     </div>
 
-    <h2>Interactive Event System Visualizer</h2>
+    <h2 id="interactive-event-system-visualizer">Interactive Event System Visualizer</h2>
     
     <div class="canvas-wrapper" style="text-align: center;">
         <canvas id="eventCanvas" width="600" height="400" style="border: 1px solid #333; background-color: #1a1a1a; display: inline-block;"></canvas>
@@ -144,7 +144,7 @@
 
     <script src="architecture_event_systems.js"></script>
 
-    <h2>Basic Event System Implementation</h2>
+    <h2 id="basic-event-system-implementation">Basic Event System Implementation</h2>
     
     <pre class="language-python"><code>from typing import Dict, List, Callable, Any
 from dataclasses import dataclass
@@ -264,7 +264,7 @@ class EventBus:
 # Global event bus instance
 event_bus = EventBus()</code></pre>
 
-    <h2>Advanced Event Patterns</h2>
+    <h2 id="advanced-event-patterns">Advanced Event Patterns</h2>
     
     <pre class="language-python"><code># Priority Queue Event System
 class PriorityEventBus(EventBus):
@@ -391,7 +391,7 @@ class ChannelManager:
         if name in self.channels:
             del self.channels[name]</code></pre>
 
-    <h2>Game Systems Using Events</h2>
+    <h2 id="game-systems-using-events">Game Systems Using Events</h2>
     
     <pre class="language-python"><code># Achievement System using events
 class AchievementSystem:
@@ -586,7 +586,7 @@ class SaveSystem:
             data={'save_data': self.save_data}
         ))</code></pre>
 
-    <h2>Complete Event-Driven Game Example</h2>
+    <h2 id="complete-event-driven-game-example">Complete Event-Driven Game Example</h2>
     
     <pre class="language-python"><code>import pygame
 from typing import Dict, Any
@@ -813,10 +813,10 @@ if __name__ == "__main__":
     game = EventDrivenGame()
     game.run()</code></pre>
 
-    <h2>Best Practices</h2>
+    <h2 id="best-practices">Best Practices</h2>
     
     <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>⚡ Event System Tips</h3>
+        <h3 id="event-system-tips">⚡ Event System Tips</h3>
         <ul>
             <li><strong>Event Naming:</strong> Use clear, descriptive event names</li>
             <li><strong>Data Contracts:</strong> Document expected event data structures</li>
@@ -829,10 +829,10 @@ if __name__ == "__main__":
         </ul>
     </div>
 
-    <h2>Common Patterns</h2>
+    <h2 id="common-patterns">Common Patterns</h2>
     
     <div style="background-color: #f0fff4; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🎮 Event System Patterns</h3>
+        <h3 id="event-system-patterns">🎮 Event System Patterns</h3>
         <ul>
             <li><strong>Command Pattern:</strong> Events as commands with undo/redo</li>
             <li><strong>Event Sourcing:</strong> Store all events as game history</li>
@@ -843,7 +843,7 @@ if __name__ == "__main__":
         </ul>
     </div>
 
-    <h2>Key Takeaways</h2>
+    <h2 id="key-takeaways">Key Takeaways</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <ul>
@@ -857,7 +857,7 @@ if __name__ == "__main__":
         </ul>
     </div>
 
-    <h2>What's Next?</h2>
+    <h2 id="what-s-next">What's Next?</h2>
     
     <p>Now that you understand event systems, next we'll explore save/load systems - how to persist and restore game state!</p>
 

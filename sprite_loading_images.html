@@ -62,16 +62,16 @@
         <span class="current">Section 3: Sprite Management - Lesson 1</span>
     </nav>
 
-    <h2>Bringing Your Games to Life with Images</h2>
+    <h2 id="bringing-your-games-to-life-with-images">Bringing Your Games to Life with Images</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <p>Images and sprites are the visual heart of your game! Moving from simple shapes to rich graphics transforms your projects from prototypes to polished games. Let's learn how to efficiently load, display, and manipulate images in Pygame! 🎨🖼️</p>
     </div>
 
-    <h2>Understanding Image Formats</h2>
+    <h2 id="understanding-image-formats">Understanding Image Formats</h2>
     
     <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🖼️ The Photo Album Analogy</h3>
+        <h3 id="the-photo-album-analogy">🖼️ The Photo Album Analogy</h3>
         <p>Think of image formats like different types of photos:</p>
         <ul>
             <li><strong>PNG:</strong> Like a cutout sticker - supports transparency, perfect for sprites</li>
@@ -98,7 +98,7 @@
         E --> M["Subsurfaces"]
     </div>
 
-    <h2>Basic Image Loading</h2>
+    <h2 id="basic-image-loading">Basic Image Loading</h2>
     
     <pre class="language-python"><code>import pygame
 import os
@@ -129,7 +129,7 @@ player_img = load_image(os.path.join(img_folder, 'player.png'))
 player_img = player_img.convert()  # For images without transparency
 enemy_img = enemy_img.convert_alpha()  # For images with transparency</code></pre>
 
-    <h2>Interactive Image Demo</h2>
+    <h2 id="interactive-image-demo">Interactive Image Demo</h2>
     
     <div class="canvas-wrapper">
         <canvas id="imageCanvas" width="600" height="400"></canvas>
@@ -324,7 +324,7 @@ enemy_img = enemy_img.convert_alpha()  # For images with transparency</code></pr
         drawImageDemo();
     </script>
 
-    <h2>Image Display and Blitting</h2>
+    <h2 id="image-display-and-blitting">Image Display and Blitting</h2>
     
     <pre class="language-python"><code># Blitting - copying image data to screen
 screen.blit(player_image, (x, y))  # Basic blit at position
@@ -346,7 +346,7 @@ screen.set_clip(clip_rect)  # Only draw within this area
 screen.blit(large_image, (0, 0))
 screen.set_clip(None)  # Reset clipping</code></pre>
 
-    <h2>Working with Transparency</h2>
+    <h2 id="working-with-transparency">Working with Transparency</h2>
     
     <pre class="language-python"><code># Different types of transparency
 
@@ -386,7 +386,7 @@ class FadingSprite:
         """Gradually fade out"""
         self.set_alpha(self.alpha - speed)</code></pre>
 
-    <h2>Image Transformations</h2>
+    <h2 id="image-transformations">Image Transformations</h2>
     
     <pre class="language-python"><code>import pygame
 
@@ -444,7 +444,7 @@ class TransformableSprite:
         if self.angle != 0:
             self.image = pygame.transform.rotate(self.image, self.angle)</code></pre>
 
-    <h2>Color Manipulation</h2>
+    <h2 id="color-manipulation">Color Manipulation</h2>
     
     <pre class="language-python"><code># Tinting images
 def tint_image(image, color):
@@ -488,7 +488,7 @@ def replace_color(image, old_color, new_color):
     pygame.PixelArray(new_image).replace(old_color, new_color)
     return new_image</code></pre>
 
-    <h2>Image Loading System</h2>
+    <h2 id="image-loading-system">Image Loading System</h2>
     
     <pre class="language-python"><code>import pygame
 import os
@@ -567,7 +567,7 @@ images_to_preload = [
 ]
 loader.preload_all(images_to_preload)</code></pre>
 
-    <h2>Optimizing Image Performance</h2>
+    <h2 id="optimizing-image-performance">Optimizing Image Performance</h2>
     
     <pre class="language-python"><code># Performance tips
 
@@ -635,7 +635,7 @@ class LODSprite:
         else:
             return self.low_res</code></pre>
 
-    <h2>Complete Image Management Example</h2>
+    <h2 id="complete-image-management-example">Complete Image Management Example</h2>
     
     <pre class="language-python"><code>import pygame
 import os
@@ -827,10 +827,10 @@ if __name__ == "__main__":
     demo = ImageDemo()
     demo.run()</code></pre>
 
-    <h2>Best Practices for Image Management</h2>
+    <h2 id="best-practices-for-image-management">Best Practices for Image Management</h2>
     
     <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>⚡ Image Optimization Tips</h3>
+        <h3 id="image-optimization-tips">⚡ Image Optimization Tips</h3>
         <ul>
             <li><strong>Always Convert:</strong> Use convert() or convert_alpha() after loading</li>
             <li><strong>Batch Operations:</strong> Group similar blits together</li>
@@ -842,10 +842,10 @@ if __name__ == "__main__":
         </ul>
     </div>
 
-    <h2>Common Image Problems and Solutions</h2>
+    <h2 id="common-image-problems-and-solutions">Common Image Problems and Solutions</h2>
     
     <div style="background-color: #f0fff4; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🔧 Troubleshooting</h3>
+        <h3 id="troubleshooting">🔧 Troubleshooting</h3>
         <ul>
             <li><strong>Black Boxes:</strong> Forgot to set colorkey or use convert_alpha()</li>
             <li><strong>Slow Performance:</strong> Not converting surfaces, transforming every frame</li>
@@ -856,10 +856,10 @@ if __name__ == "__main__":
         </ul>
     </div>
 
-    <h2>Practice Exercises</h2>
+    <h2 id="practice-exercises">Practice Exercises</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🎯 Image Challenges!</h3>
+        <h3 id="image-challenges">🎯 Image Challenges!</h3>
         <ol>
             <li><strong>Image Gallery:</strong> Create a scrollable image viewer with thumbnails</li>
             <li><strong>Color Picker:</strong> Sample colors from loaded images</li>
@@ -870,7 +870,7 @@ if __name__ == "__main__":
         </ol>
     </div>
 
-    <h2>Key Takeaways</h2>
+    <h2 id="key-takeaways">Key Takeaways</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <ul>
@@ -884,7 +884,7 @@ if __name__ == "__main__":
         </ul>
     </div>
 
-    <h2>What's Next?</h2>
+    <h2 id="what-s-next">What's Next?</h2>
     
     <p>Now that you can load and display images, next we'll learn how to animate sprites - bringing your characters to life with smooth animations and sprite sheets!</p>
 

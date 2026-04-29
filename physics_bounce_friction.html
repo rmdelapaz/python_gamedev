@@ -62,16 +62,16 @@
         <span class="current">Section 4: Game Physics - Lesson 3</span>
     </nav>
 
-    <h2>Making Objects Interact Realistically</h2>
+    <h2 id="making-objects-interact-realistically">Making Objects Interact Realistically</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <p>Bounce and friction bring surfaces to life! They determine how objects respond to collisions - whether they bounce like rubber balls, slide like ice, or stick like velcro. Let's master these essential physics properties! ⚽🎱</p>
     </div>
 
-    <h2>Understanding Bounce and Friction</h2>
+    <h2 id="understanding-bounce-and-friction">Understanding Bounce and Friction</h2>
     
     <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🎾 The Sports Equipment Analogy</h3>
+        <h3 id="the-sports-equipment-analogy">🎾 The Sports Equipment Analogy</h3>
         <p>Different materials behave differently:</p>
         <ul>
             <li><strong>Basketball:</strong> High bounce (elastic), moderate friction</li>
@@ -98,7 +98,7 @@
         D --> M["Ice"]
     </div>
 
-    <h2>Interactive Bounce and Friction Lab</h2>
+    <h2 id="interactive-bounce-and-friction-lab">Interactive Bounce and Friction Lab</h2>
     
     <div class="canvas-wrapper">
         <canvas id="bounceCanvas" width="600" height="400"></canvas>
@@ -470,7 +470,7 @@
         animate(performance.now());
     </script>
 
-    <h2>Coefficient of Restitution (Bounce)</h2>
+    <h2 id="coefficient-of-restitution-bounce">Coefficient of Restitution (Bounce)</h2>
     
     <pre class="language-python"><code>import pygame
 import math
@@ -550,7 +550,7 @@ class MaterialBounce:
         
         return heights</code></pre>
 
-    <h2>Friction Forces</h2>
+    <h2 id="friction-forces">Friction Forces</h2>
     
     <pre class="language-python"><code># Friction implementation
 class FrictionObject:
@@ -652,7 +652,7 @@ class AirResistance:
         drag_direction = -velocity.normalize()
         return drag_direction * drag_magnitude</code></pre>
 
-    <h2>Combined Bounce and Friction</h2>
+    <h2 id="combined-bounce-and-friction">Combined Bounce and Friction</h2>
     
     <pre class="language-python"><code># Complete physics object with bounce and friction
 class CompletePhysicsObject:
@@ -768,7 +768,7 @@ class CompletePhysicsObject:
         # Reset acceleration
         self.acceleration = pygame.math.Vector2(0, 0)</code></pre>
 
-    <h2>Complete Bounce and Friction Demo</h2>
+    <h2 id="complete-bounce-and-friction-demo">Complete Bounce and Friction Demo</h2>
     
     <pre class="language-python"><code>import pygame
 import math
@@ -1144,10 +1144,10 @@ if __name__ == "__main__":
     demo = BounceAndFrictionDemo()
     demo.run()</code></pre>
 
-    <h2>Best Practices</h2>
+    <h2 id="best-practices">Best Practices</h2>
     
     <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>⚡ Bounce and Friction Tips</h3>
+        <h3 id="bounce-and-friction-tips">⚡ Bounce and Friction Tips</h3>
         <ul>
             <li><strong>Energy Conservation:</strong> Perfect bounce (e=1) is rare in reality</li>
             <li><strong>Material Pairs:</strong> Use minimum restitution of colliding objects</li>
@@ -1159,10 +1159,10 @@ if __name__ == "__main__":
         </ul>
     </div>
 
-    <h2>Practice Exercises</h2>
+    <h2 id="practice-exercises">Practice Exercises</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🎯 Physics Challenges!</h3>
+        <h3 id="physics-challenges">🎯 Physics Challenges!</h3>
         <ol>
             <li><strong>Pinball Machine:</strong> Different bumpers with varying restitution</li>
             <li><strong>Ice Hockey:</strong> Low friction puck physics</li>
@@ -1173,7 +1173,7 @@ if __name__ == "__main__":
         </ol>
     </div>
 
-    <h2>Key Takeaways</h2>
+    <h2 id="key-takeaways">Key Takeaways</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <ul>
@@ -1187,7 +1187,7 @@ if __name__ == "__main__":
         </ul>
     </div>
 
-    <h2>What's Next?</h2>
+    <h2 id="what-s-next">What's Next?</h2>
     
     <p>Now that you understand bounce and friction, next we'll explore collision response - how objects react when they hit each other!</p>
 

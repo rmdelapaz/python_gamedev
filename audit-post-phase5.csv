@@ -1,0 +1,65 @@
+file,title,words,h2,h3,mermaid,canvas,canvas_px,static_svg,img,code_blocks,code_lines,inline_boxes,section_ids,has_summary,has_exercise,has_quiz,has_lesson_nav,clipboard_js,course_enh_js
+ai_behavior_trees.html,Behavior Trees - AI for Games,380,7,2,1,2,420000,0,0,1,264,3,9,True,True,False,True,True,True
+ai_decision_making.html,Simple Decision Making - AI for Games,271,6,2,0,0,0,0,0,1,153,3,8,True,True,False,True,True,True
+ai_flocking.html,Flocking/Swarm Behavior - AI for Games,394,7,2,1,1,240000,0,0,1,249,3,9,True,True,False,True,True,True
+ai_pathfinding.html,Pathfinding (A* Algorithm) - AI for Games,395,7,2,1,1,240000,0,0,1,209,3,9,True,True,False,True,True,True
+ai_state_machines.html,State Machines for NPCs - AI for Games,417,7,2,1,2,420000,0,0,1,299,3,9,True,True,False,True,True,True
+architecture_component_systems.html,Component Systems - Game Architecture,376,8,2,1,1,240000,0,0,2,188,3,10,True,True,False,True,True,True
+architecture_event_systems.html,Event Systems - Game Architecture,441,11,3,1,1,240000,0,0,4,657,3,14,True,True,False,True,True,True
+architecture_save_load.html,Save/Load Game State - Game Architecture,438,9,2,1,1,240000,0,0,3,623,3,11,True,True,False,True,True,True
+architecture_scene_management.html,Scene Management - Game Architecture,367,8,2,1,1,240000,0,0,2,356,3,10,True,True,False,True,True,True
+architecture_state_machines.html,State Machines - Game Architecture,284,6,1,1,1,240000,0,0,1,61,3,7,True,False,False,True,True,True
+game_mathematics_coordinates.html,2D Coordinate Systems - Game Mathematics,557,14,6,2,1,240000,0,0,7,417,6,20,True,True,False,True,True,True
+game_mathematics_interpolation.html,Interpolation and Easing - Game Mathematics,372,14,3,1,1,240000,0,0,7,652,4,17,True,True,False,True,True,True
+game_mathematics_random.html,Random Generation for Games - Game Mathematics,420,14,3,1,1,240000,0,0,7,733,4,17,True,True,False,True,True,True
+game_mathematics_trigonometry.html,Basic Trigonometry for Games - Game Mathematics,459,13,5,1,0,0,0,0,7,302,5,18,True,True,False,True,True,True
+game_mathematics_vectors.html,Vector Operations - Game Mathematics,472,13,7,2,1,240000,0,0,9,598,5,20,True,True,False,True,True,True
+genres_puzzle.html,Puzzle Game Logic - Different Game Genres,493,8,4,1,1,480000,0,0,0,0,4,12,True,True,False,True,True,False
+genres_puzzle_python.html,Puzzle Game Python Implementation - Different Game Genres,263,4,4,0,0,0,0,0,1,801,1,8,False,False,False,True,True,False
+genres_racing.html,Racing Game Physics - Different Game Genres,524,12,7,1,2,562500,0,0,3,79,4,19,True,True,False,True,True,False
+genres_rpg.html,RPG Systems - Different Game Genres,466,7,2,1,1,480000,0,0,0,0,3,9,True,True,False,True,True,False
+genres_rpg_python.html,RPG Systems (continued) - Different Game Genres,154,3,1,0,0,0,0,0,1,462,1,4,True,True,False,True,True,False
+genres_strategy.html,Strategy Game Mechanics - Different Game Genres,430,7,2,1,1,480000,0,0,0,0,3,9,True,True,False,True,True,False
+genres_strategy_python.html,Strategy Game Python Implementation - Different Game Genres,261,4,4,0,0,0,0,0,1,911,1,8,False,False,False,True,True,False
+genres_tower_defense.html,Tower Defense Patterns - Different Game Genres,625,13,8,1,1,540000,0,0,2,45,4,21,True,True,False,True,True,False
+genres_tower_defense_python.html,Tower Defense Python Implementation - Game Development with Python,303,7,2,0,0,0,0,0,2,1100,2,9,False,False,False,True,True,False
+graphics_lighting.html,Lighting Systems - Advanced Graphics,268,7,2,0,0,0,0,0,2,272,3,9,True,True,False,True,True,True
+graphics_postprocessing.html,Post-processing Effects - Advanced Graphics,381,7,2,1,1,240000,0,0,1,151,3,9,True,True,False,True,True,True
+graphics_procedural.html,Procedural Generation - Advanced Graphics,269,8,2,0,0,0,0,0,3,294,3,10,True,True,False,True,True,True
+graphics_shaders.html,Shaders and Effects - Advanced Graphics,346,8,4,1,1,240000,0,0,4,184,3,12,True,True,False,True,True,True
+graphics_ui_hud.html,UI/HUD Development - Advanced Graphics,260,7,2,0,0,0,0,0,2,356,3,9,True,True,False,True,True,True
+networking_basics.html,Networking Basics - Multiplayer & Networking,414,7,2,1,1,480000,0,0,1,464,3,9,True,True,False,True,True,True
+networking_client_server.html,Multiplayer Implementation - Multiplayer & Networking,139,4,1,0,0,0,0,0,1,125,1,5,True,True,False,True,True,False
+networking_lag_compensation.html,Lag Compensation - Networking & Multiplayer,430,8,2,1,1,240000,0,0,2,356,3,10,True,True,False,True,True,True
+networking_lobby.html,Simple Lobby System - Multiplayer Basics,442,10,7,1,0,0,0,0,4,1304,4,17,True,True,False,True,True,False
+networking_sockets.html,Socket Programming - Multiplayer Basics,509,12,9,1,0,0,0,0,8,864,4,21,True,True,False,True,True,False
+particle_effects.html,Particle Effects - Sprite Management,449,12,4,1,1,240000,0,0,4,590,4,16,True,True,False,True,True,True
+physics_bounce_friction.html,Bounce and Friction - Game Physics,417,11,3,1,1,240000,0,0,4,662,4,14,True,True,False,True,True,True
+physics_collision_response.html,Collision Response - Game Physics,418,11,3,1,1,240000,0,0,4,719,4,14,True,True,False,True,True,True
+physics_engine.html,Simple Physics Engine - Game Physics,435,11,3,1,1,240000,0,0,4,698,4,14,True,True,False,True,True,True
+physics_gravity.html,Gravity Simulation - Game Physics,421,11,3,1,1,240000,0,0,4,688,4,14,True,True,False,True,True,True
+physics_velocity_acceleration.html,Velocity and Acceleration - Game Physics,444,13,4,1,1,240000,0,0,5,611,4,17,True,True,False,True,True,True
+platformer_camera.html,Camera/Viewport - 2D Platformer Development,406,8,2,1,1,240000,0,0,2,387,3,10,True,True,False,True,True,True
+platformer_character_controller.html,Character Controllers - 2D Platformer Development,402,7,2,1,1,240000,0,0,1,247,3,9,True,True,False,True,True,True
+platformer_level_design.html,Level Design Tools - 2D Platformer Development,412,7,2,1,1,240000,0,0,1,278,3,9,True,True,False,True,True,True
+platformer_parallax.html,Parallax Scrolling - 2D Platformer Development,412,7,2,1,1,240000,0,0,1,212,3,9,True,True,False,True,True,True
+platformer_tilemap.html,Tile-based Maps - 2D Platformer Development,391,7,2,1,1,240000,0,0,1,180,3,9,True,True,False,True,True,True
+polish_difficulty.html,Difficulty Balancing - Game Polish & Feel,452,7,2,1,1,480000,0,0,1,305,3,9,True,True,False,True,True,True
+polish_playtesting.html,Playtesting Methods - Game Polish & Feel,494,7,3,1,1,480000,0,0,1,391,3,10,True,True,False,True,True,True
+polish_screenshake.html,Screen Shake and Effects - Game Polish & Feel,427,7,2,1,1,480000,0,0,1,334,3,9,True,True,False,True,True,True
+polish_sound.html,Sound Design - Game Polish & Feel,424,7,2,1,1,480000,0,0,1,361,3,9,True,True,False,True,True,True
+polish_tweening.html,Tweening and Juice - Game Polish & Feel,447,7,2,1,1,480000,0,0,1,342,3,9,True,True,False,True,True,True
+publishing_executables.html,Building Executables - Publishing Your Game,439,14,11,1,0,0,0,0,12,505,4,25,True,True,False,True,True,False
+publishing_marketing.html,Marketing Basics - Publishing Your Game,670,12,9,2,0,0,0,0,6,709,4,21,True,True,False,True,True,False
+publishing_performance.html,Performance Optimization - Publishing Your Game,557,13,9,1,1,320000,0,0,4,438,5,22,True,True,False,True,True,False
+publishing_platforms.html,Distribution Platforms - Publishing Your Game,657,12,9,2,0,0,0,0,5,410,4,21,True,True,False,True,True,False
+publishing_updates.html,Post-Launch Updates - Publishing Your Game,814,14,12,2,0,0,0,0,2,23,5,26,True,True,False,True,True,False
+pygame_basics_collision.html,Basic Collision Detection - Pygame Basics,675,16,9,2,1,240000,0,0,8,335,5,25,True,True,False,True,True,True
+pygame_basics_drawing.html,Drawing Shapes and Sprites - Pygame Basics,626,19,13,1,2,480000,0,0,11,272,8,32,True,True,False,True,True,True
+pygame_basics_game_loop.html,Game Loop Concept - Pygame Basics,784,13,13,2,2,420000,0,0,3,82,8,26,True,True,False,True,True,True
+pygame_basics_input.html,Handling Keyboard and Mouse Input - Pygame Basics,490,12,8,1,1,240000,0,0,6,237,5,20,True,True,False,True,True,True
+pygame_basics_sound.html,Sound and Music - Pygame Basics,627,14,9,2,1,240000,0,0,7,407,5,23,True,True,False,True,True,True
+sprite_animation.html,Sprite Animation - Sprite Management,451,14,4,1,1,240000,0,0,6,707,4,18,True,True,False,True,True,True
+sprite_groups_layers.html,Sprite Groups and Layers - Sprite Management,420,13,3,1,1,240000,0,0,6,806,4,16,True,True,False,True,True,True
+sprite_loading_images.html,Loading and Displaying Images - Sprite Management,504,16,4,1,1,240000,0,0,8,510,4,20,True,True,False,True,True,True
+sprite_sheets.html,Sprite Sheets - Sprite Management,412,9,3,1,1,240000,0,0,2,125,4,12,True,True,False,True,True,True

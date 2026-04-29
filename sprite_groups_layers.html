@@ -62,16 +62,16 @@
         <span class="current">Section 3: Sprite Management - Lesson 4</span>
     </nav>
 
-    <h2>Organizing Complex Game Scenes</h2>
+    <h2 id="organizing-complex-game-scenes">Organizing Complex Game Scenes</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <p>Sprite groups and layers are the backbone of organized game development! They help you manage hundreds of sprites, handle collisions efficiently, and create beautiful layered scenes with depth. Let's master the art of sprite organization! 🎮📚</p>
     </div>
 
-    <h2>Understanding Sprite Groups</h2>
+    <h2 id="understanding-sprite-groups">Understanding Sprite Groups</h2>
     
     <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🏢 The Office Building Analogy</h3>
+        <h3 id="the-office-building-analogy">🏢 The Office Building Analogy</h3>
         <p>Think of sprite groups like departments in an office building:</p>
         <ul>
             <li><strong>Groups:</strong> Different departments (enemies, players, bullets)</li>
@@ -98,7 +98,7 @@
         E --> M["Specialized Behavior"]
     </div>
 
-    <h2>Interactive Groups and Layers Demo</h2>
+    <h2 id="interactive-groups-and-layers-demo">Interactive Groups and Layers Demo</h2>
     
     <div class="canvas-wrapper">
         <canvas id="groupCanvas" width="600" height="400"></canvas>
@@ -442,7 +442,7 @@
         requestAnimationFrame(gameLoop);
     </script>
 
-    <h2>Basic Sprite Groups</h2>
+    <h2 id="basic-sprite-groups">Basic Sprite Groups</h2>
     
     <pre class="language-python"><code>import pygame
 
@@ -500,7 +500,7 @@ sprite_list = enemies.sprites()
 # Count sprites
 num_enemies = len(enemies)</code></pre>
 
-    <h2>Collision Detection with Groups</h2>
+    <h2 id="collision-detection-with-groups">Collision Detection with Groups</h2>
     
     <pre class="language-python"><code># Different collision detection methods
 
@@ -555,7 +555,7 @@ pygame.sprite.spritecollide(
     player, enemies, False, handle_player_enemy_collision
 )</code></pre>
 
-    <h2>Layered Sprite Groups</h2>
+    <h2 id="layered-sprite-groups">Layered Sprite Groups</h2>
     
     <pre class="language-python"><code>import pygame
 
@@ -622,7 +622,7 @@ game_sprites = GameLayeredGroup()
 game_sprites.add_to_layer(enemy, 'enemies')
 game_sprites.add_to_layer(bullet, 'bullets')</code></pre>
 
-    <h2>Custom Sprite Groups</h2>
+    <h2 id="custom-sprite-groups">Custom Sprite Groups</h2>
     
     <pre class="language-python"><code># Custom group with spatial hashing for efficient collision
 class SpatialHashGroup(pygame.sprite.Group):
@@ -711,7 +711,7 @@ class CameraGroup(pygame.sprite.Group):
             offset_pos = sprite.rect.topleft - self.offset
             self.display_surface.blit(sprite.image, offset_pos)</code></pre>
 
-    <h2>Group Management Patterns</h2>
+    <h2 id="group-management-patterns">Group Management Patterns</h2>
     
     <pre class="language-python"><code># Sprite pool for performance
 class SpritePool:
@@ -818,7 +818,7 @@ class GroupManager:
         item.apply(player)
         item.kill()</code></pre>
 
-    <h2>Complete Groups and Layers Example</h2>
+    <h2 id="complete-groups-and-layers-example">Complete Groups and Layers Example</h2>
     
     <pre class="language-python"><code>import pygame
 import random
@@ -1266,10 +1266,10 @@ if __name__ == "__main__":
     demo = CompleteGroupDemo()
     demo.run()</code></pre>
 
-    <h2>Best Practices</h2>
+    <h2 id="best-practices">Best Practices</h2>
     
     <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>⚡ Group Management Tips</h3>
+        <h3 id="group-management-tips">⚡ Group Management Tips</h3>
         <ul>
             <li><strong>Use Multiple Groups:</strong> Organize sprites logically for efficient updates</li>
             <li><strong>Layer Appropriately:</strong> Background → Game Objects → Effects → UI</li>
@@ -1281,10 +1281,10 @@ if __name__ == "__main__":
         </ul>
     </div>
 
-    <h2>Practice Exercises</h2>
+    <h2 id="practice-exercises">Practice Exercises</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🎯 Group Management Challenges!</h3>
+        <h3 id="group-management-challenges">🎯 Group Management Challenges!</h3>
         <ol>
             <li><strong>Particle System:</strong> Create group-based particle effects</li>
             <li><strong>Enemy Waves:</strong> Manage waves of enemies with groups</li>
@@ -1295,7 +1295,7 @@ if __name__ == "__main__":
         </ol>
     </div>
 
-    <h2>Key Takeaways</h2>
+    <h2 id="key-takeaways">Key Takeaways</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <ul>
@@ -1309,7 +1309,7 @@ if __name__ == "__main__":
         </ul>
     </div>
 
-    <h2>What's Next?</h2>
+    <h2 id="what-s-next">What's Next?</h2>
     
     <p>Now that you can organize sprites with groups and layers, next we'll create stunning visual effects with particle systems - the final piece of our sprite management toolkit!</p>
 

@@ -62,16 +62,16 @@
         <span class="current">Section 2: Game Mathematics - Lesson 3</span>
     </nav>
 
-    <h2>The Mathematics of Rotation and Waves</h2>
+    <h2 id="the-mathematics-of-rotation-and-waves">The Mathematics of Rotation and Waves</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <p>Trigonometry is the secret sauce behind smooth rotations, realistic physics, wave effects, and circular motion in games. From aiming cannons to creating ocean waves, trig functions power countless game mechanics. Let's unlock these mathematical superpowers! 🎯📐</p>
     </div>
 
-    <h2>Understanding Sine, Cosine, and Tangent</h2>
+    <h2 id="understanding-sine-cosine-and-tangent">Understanding Sine, Cosine, and Tangent</h2>
     
     <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🎡 The Ferris Wheel Analogy</h3>
+        <h3 id="the-ferris-wheel-analogy">🎡 The Ferris Wheel Analogy</h3>
         <p>Think of trigonometry like riding a Ferris wheel:</p>
         <ul>
             <li><strong>Angle:</strong> How far around you've rotated</li>
@@ -98,10 +98,10 @@
         E --> M["Line of sight"]
     </div>
 
-    <h2>Angles and Radians</h2>
+    <h2 id="angles-and-radians">Angles and Radians</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>📐 Degrees vs Radians</h3>
+        <h3 id="degrees-vs-radians">📐 Degrees vs Radians</h3>
         <p>Games often use radians internally but display degrees to players:</p>
         <ul>
             <li><strong>360 degrees</strong> = 2π radians (full circle)</li>
@@ -141,7 +141,7 @@ def normalize_angle_signed(angle_deg):
         angle -= 360
     return angle</code></pre>
 
-    <h2>Rotation in Games</h2>
+    <h2 id="rotation-in-games">Rotation in Games</h2>
     
     <pre class="language-python"><code>class RotatingObject:
     def __init__(self, x, y, image):
@@ -179,7 +179,7 @@ def normalize_angle_signed(angle_deg):
         """Get unit vector of facing direction"""
         return (math.cos(self.angle), math.sin(self.angle))</code></pre>
 
-    <h2>Circular and Elliptical Motion</h2>
+    <h2 id="circular-and-elliptical-motion">Circular and Elliptical Motion</h2>
     
     <pre class="language-python"><code># Circular motion
 class OrbitingObject:
@@ -234,7 +234,7 @@ class SpiralMotion:
         y = self.center_y + self.radius * math.sin(self.angle)
         return (x, y)</code></pre>
 
-    <h2>Wave Functions</h2>
+    <h2 id="wave-functions">Wave Functions</h2>
     
     <pre class="language-python"><code># Create wave effects
 class WaveEffect:
@@ -301,7 +301,7 @@ class FloatingObject:
             phase=math.pi/2
         )</code></pre>
 
-    <h2>Aiming and Line of Sight</h2>
+    <h2 id="aiming-and-line-of-sight">Aiming and Line of Sight</h2>
     
     <pre class="language-python"><code>class Turret:
     def __init__(self, x, y):
@@ -358,7 +358,7 @@ class FloatingObject:
         vy = speed * math.sin(self.angle)
         return Projectile(self.x, self.y, vx, vy)</code></pre>
 
-    <h2>Pendulum Physics</h2>
+    <h2 id="pendulum-physics">Pendulum Physics</h2>
     
     <pre class="language-python"><code>class Pendulum:
     def __init__(self, x, y, length, start_angle=math.pi/4):
@@ -390,10 +390,10 @@ class FloatingObject:
         """Push the pendulum"""
         self.angular_velocity += force</code></pre>
 
-    <h2>Trigonometric Optimization</h2>
+    <h2 id="trigonometric-optimization">Trigonometric Optimization</h2>
     
     <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>⚡ Performance Tips</h3>
+        <h3 id="performance-tips">⚡ Performance Tips</h3>
         <ul>
             <li><strong>Lookup Tables:</strong> Pre-calculate common angles</li>
             <li><strong>Approximations:</strong> Use Taylor series for small angles</li>
@@ -442,10 +442,10 @@ def small_angle_cos(angle):
         return 1 - (angle * angle) / 2
     return math.cos(angle)</code></pre>
 
-    <h2>Practice Exercises</h2>
+    <h2 id="practice-exercises">Practice Exercises</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🎯 Trigonometry Challenges!</h3>
+        <h3 id="trigonometry-challenges">🎯 Trigonometry Challenges!</h3>
         <ol>
             <li><strong>Radar Scanner:</strong> Create a rotating radar that detects objects</li>
             <li><strong>Sine Wave Runner:</strong> Platform game with wavy terrain</li>
@@ -456,10 +456,10 @@ def small_angle_cos(angle):
         </ol>
     </div>
 
-    <h2>Common Trigonometry Problems</h2>
+    <h2 id="common-trigonometry-problems">Common Trigonometry Problems</h2>
     
     <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>⚠️ Watch Out For These Issues!</h3>
+        <h3 id="watch-out-for-these-issues">⚠️ Watch Out For These Issues!</h3>
         <ul>
             <li><strong>Degree/Radian Confusion:</strong> Always know which unit you're using</li>
             <li><strong>atan vs atan2:</strong> Use atan2 for full 360° range</li>
@@ -470,7 +470,7 @@ def small_angle_cos(angle):
         </ul>
     </div>
 
-    <h2>Key Takeaways</h2>
+    <h2 id="key-takeaways">Key Takeaways</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <ul>
@@ -484,7 +484,7 @@ def small_angle_cos(angle):
         </ul>
     </div>
 
-    <h2>What's Next?</h2>
+    <h2 id="what-s-next">What's Next?</h2>
     
     <p>Now that you understand trigonometry in games, next we'll explore interpolation and easing functions - the tools that make movement smooth and animations feel natural!</p>
 

@@ -62,16 +62,16 @@
         <span class="current">Section 2: Game Mathematics - Lesson 1</span>
     </nav>
 
-    <h2>Understanding Space in Games</h2>
+    <h2 id="understanding-space-in-games">Understanding Space in Games</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <p>Every object in your game exists somewhere in space. Understanding coordinate systems is fundamental to positioning objects, moving characters, implementing cameras, and creating game worlds. Let's explore how games think about space! 📍🗺️</p>
     </div>
 
-    <h2>The Cartesian Coordinate System</h2>
+    <h2 id="the-cartesian-coordinate-system">The Cartesian Coordinate System</h2>
     
     <div style="background-color: #fff5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🗺️ The Map Analogy</h3>
+        <h3 id="the-map-analogy">🗺️ The Map Analogy</h3>
         <p>Think of coordinate systems like different types of maps:</p>
         <ul>
             <li><strong>Screen Space:</strong> Like a tourist map - what the player sees</li>
@@ -93,7 +93,7 @@
         E --> I["Relative to camera"]
     </div>
 
-    <h2>Screen Coordinates (Pygame Default)</h2>
+    <h2 id="screen-coordinates-pygame-default">Screen Coordinates (Pygame Default)</h2>
     
     <pre class="language-python"><code># Pygame screen coordinates
 # Origin (0,0) is at TOP-LEFT
@@ -116,7 +116,7 @@ bottom_right = (799, 599)
 # Drawing with screen coordinates
 pygame.draw.circle(screen, (255, 0, 0), center, 50)</code></pre>
 
-    <h2>Interactive Coordinate Explorer</h2>
+    <h2 id="interactive-coordinate-explorer">Interactive Coordinate Explorer</h2>
     
     <div class="canvas-wrapper">
         <canvas id="coordCanvas" width="600" height="400"></canvas>
@@ -335,7 +335,7 @@ pygame.draw.circle(screen, (255, 0, 0), center, 50)</code></pre>
         drawCoordinateSystem();
     </script>
 
-    <h2>Converting Between Coordinate Systems</h2>
+    <h2 id="converting-between-coordinate-systems">Converting Between Coordinate Systems</h2>
     
     <pre class="language-python"><code>class CoordinateConverter:
     def __init__(self, screen_width, screen_height):
@@ -368,10 +368,10 @@ pygame.draw.circle(screen, (255, 0, 0), center, 50)</code></pre>
         screen_y = int(y * self.screen_height)
         return (screen_x, screen_y)</code></pre>
 
-    <h2>World Space vs Screen Space</h2>
+    <h2 id="world-space-vs-screen-space">World Space vs Screen Space</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🌍 The Camera View</h3>
+        <h3 id="the-camera-view">🌍 The Camera View</h3>
         <p>World space is your entire game world, while screen space is just what the camera sees:</p>
         <ul>
             <li><strong>World Space:</strong> The complete game level (maybe 10,000 x 10,000 pixels)</li>
@@ -391,7 +391,7 @@ pygame.draw.circle(screen, (255, 0, 0), center, 50)</code></pre>
         H["Camera Zoom"] --> B
     </div>
 
-    <h3>Simple Camera System</h3>
+    <h3 id="simple-camera-system">Simple Camera System</h3>
     <pre class="language-python"><code>class Camera:
     def __init__(self, width, height):
         self.width = width
@@ -435,7 +435,7 @@ pygame.draw.circle(screen, (255, 0, 0), center, 50)</code></pre>
         world_y = screen_y / self.zoom + self.y
         return (int(world_x), int(world_y))</code></pre>
 
-    <h2>Polar Coordinates</h2>
+    <h2 id="polar-coordinates">Polar Coordinates</h2>
     
     <p>Sometimes it's easier to think in terms of angle and distance rather than X and Y!</p>
     
@@ -488,7 +488,7 @@ class OrbitingObject:
         y = self.center_y + self.radius * math.sin(self.angle)
         return (x, y)</code></pre>
 
-    <h2>Isometric Coordinates</h2>
+    <h2 id="isometric-coordinates">Isometric Coordinates</h2>
     
     <p>For that classic 2.5D look used in strategy games!</p>
     
@@ -519,7 +519,7 @@ class OrbitingObject:
         grid_x, grid_y = self.iso_to_cart(adjusted_x, adjusted_y)
         return (grid_x, grid_y)</code></pre>
 
-    <h2>Complete Example: Multi-Coordinate Game</h2>
+    <h2 id="complete-example-multi-coordinate-game">Complete Example: Multi-Coordinate Game</h2>
     
     <pre class="language-python"><code>import pygame
 import math
@@ -713,10 +713,10 @@ if __name__ == "__main__":
     demo = CoordinateDemo()
     demo.run()</code></pre>
 
-    <h2>Coordinate System Transformations</h2>
+    <h2 id="coordinate-system-transformations">Coordinate System Transformations</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🔄 Transform Operations</h3>
+        <h3 id="transform-operations">🔄 Transform Operations</h3>
         <ul>
             <li><strong>Translation:</strong> Moving objects (changing x, y)</li>
             <li><strong>Rotation:</strong> Spinning objects around a point</li>
@@ -786,10 +786,10 @@ class Transform2D:
             [0, 0, 1]
         ])</code></pre>
 
-    <h2>Practice Exercises</h2>
+    <h2 id="practice-exercises">Practice Exercises</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>🎯 Coordinate Challenges!</h3>
+        <h3 id="coordinate-challenges">🎯 Coordinate Challenges!</h3>
         <ol>
             <li><strong>Mini-Map System:</strong> Create a minimap showing world position on screen</li>
             <li><strong>Click to Move:</strong> Convert mouse clicks to world movement commands</li>
@@ -800,10 +800,10 @@ class Transform2D:
         </ol>
     </div>
 
-    <h2>Common Coordinate Problems</h2>
+    <h2 id="common-coordinate-problems">Common Coordinate Problems</h2>
     
     <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3>⚠️ Watch Out For These Issues!</h3>
+        <h3 id="watch-out-for-these-issues">⚠️ Watch Out For These Issues!</h3>
         <ul>
             <li><strong>Y-Axis Confusion:</strong> Screen Y goes down, math Y goes up</li>
             <li><strong>Off-by-One:</strong> Screen width 800 means pixels 0-799</li>
@@ -814,7 +814,7 @@ class Transform2D:
         </ul>
     </div>
 
-    <h2>Key Takeaways</h2>
+    <h2 id="key-takeaways">Key Takeaways</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <ul>
@@ -828,7 +828,7 @@ class Transform2D:
         </ul>
     </div>
 
-    <h2>What's Next?</h2>
+    <h2 id="what-s-next">What's Next?</h2>
     
     <p>Now that you understand coordinate systems, next we'll explore vector operations - the mathematical tools that make movement, physics, and game mechanics possible!</p>
 

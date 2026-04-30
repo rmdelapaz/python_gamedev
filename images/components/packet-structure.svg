@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 260" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="packet-title packet-desc">
+    <title id="packet-title">Network packet structure: header, payload, and checksum</title>
+    <desc id="packet-desc">A horizontal packet diagram divided into three coloured regions. The teal Header on the left contains four fields: Type (1 byte), Flags (1 byte), Length (2 bytes), and Sequence (4 bytes), totalling 8 bytes. The blue Payload in the middle holds the variable-length game data. The amber Checksum on the right is 4 bytes. Byte offsets are marked at section boundaries: 0, 8, 8 plus N, and 12 plus N.</desc>
+
+    <style>
+        svg {
+            --header-fill:    rgba(13, 148, 136, 0.12);
+            --header-stroke:  rgb(13, 148, 136);
+            --header-text:    rgb(15, 118, 110);
+            --payload-fill:   rgba(59, 130, 246, 0.12);
+            --payload-stroke: rgb(59, 130, 246);
+            --payload-text:   rgb(37, 99, 235);
+            --checksum-fill:   rgba(217, 119, 6, 0.12);
+            --checksum-stroke: rgb(217, 119, 6);
+            --checksum-text:   rgb(180, 83, 9);
+            --byte-text: rgb(100, 116, 139);
+            --tick:      rgb(148, 163, 184);
+        }
+        @media (prefers-color-scheme: dark) {
+            svg {
+                --header-fill:    rgba(45, 212, 191, 0.18);
+                --header-stroke:  rgb(45, 212, 191);
+                --header-text:    rgb(94, 234, 212);
+                --payload-fill:   rgba(86, 156, 214, 0.20);
+                --payload-stroke: rgb(86, 156, 214);
+                --payload-text:   rgb(147, 197, 253);
+                --checksum-fill:   rgba(251, 191, 36, 0.18);
+                --checksum-stroke: rgb(251, 191, 36);
+                --checksum-text:   rgb(252, 211, 77);
+                --byte-text: #94a3b8;
+                --tick:      #64748b;
+            }
+        }
+        .section-label { font: 700 18px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .field-name    { font: 600 14px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .byte-count    { font: italic 500 12px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; opacity: 0.85; }
+        .byte-marker   { fill: var(--byte-text); font: 500 13px ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace; }
+        .tick          { stroke: var(--tick); stroke-width: 1; fill: none; }
+
+        .header-region   { fill: var(--header-fill);   stroke: var(--header-stroke);   stroke-width: 1.5; }
+        .payload-region  { fill: var(--payload-fill);  stroke: var(--payload-stroke);  stroke-width: 1.5; }
+        .checksum-region { fill: var(--checksum-fill); stroke: var(--checksum-stroke); stroke-width: 1.5; }
+        .header-divider  { stroke: var(--header-stroke); stroke-width: 1; fill: none; }
+        .header-text     { fill: var(--header-text); }
+        .payload-text    { fill: var(--payload-text); }
+        .checksum-text   { fill: var(--checksum-text); }
+    </style>
+
+    <!-- Section labels (above strip) -->
+    <text class="section-label header-text"   x="160" y="70" text-anchor="middle">Header</text>
+    <text class="section-label payload-text"  x="420" y="70" text-anchor="middle">Payload</text>
+    <text class="section-label checksum-text" x="610" y="70" text-anchor="middle">Checksum</text>
+
+    <!-- Subtle connector ticks from labels down to strip -->
+    <line class="tick" x1="160" y1="80" x2="160" y2="115"/>
+    <line class="tick" x1="420" y1="80" x2="420" y2="115"/>
+    <line class="tick" x1="610" y1="80" x2="610" y2="115"/>
+
+    <!-- Three main regions -->
+    <rect class="header-region"   x="40"  y="115" width="240" height="85" rx="4"/>
+    <rect class="payload-region"  x="280" y="115" width="280" height="85" rx="4"/>
+    <rect class="checksum-region" x="560" y="115" width="100" height="85" rx="4"/>
+
+    <!-- Header internal dividers -->
+    <line class="header-divider" x1="90"  y1="115" x2="90"  y2="200"/>
+    <line class="header-divider" x1="140" y1="115" x2="140" y2="200"/>
+    <line class="header-divider" x1="200" y1="115" x2="200" y2="200"/>
+
+    <!-- Header field labels (name + byte count) -->
+    <text class="field-name header-text" x="65"  y="150" text-anchor="middle">Type</text>
+    <text class="byte-count header-text" x="65"  y="178" text-anchor="middle">1 B</text>
+    <text class="field-name header-text" x="115" y="150" text-anchor="middle">Flags</text>
+    <text class="byte-count header-text" x="115" y="178" text-anchor="middle">1 B</text>
+    <text class="field-name header-text" x="170" y="150" text-anchor="middle">Length</text>
+    <text class="byte-count header-text" x="170" y="178" text-anchor="middle">2 B</text>
+    <text class="field-name header-text" x="240" y="150" text-anchor="middle">Sequence</text>
+    <text class="byte-count header-text" x="240" y="178" text-anchor="middle">4 B</text>
+
+    <!-- Payload labels -->
+    <text class="field-name payload-text" x="420" y="150" text-anchor="middle">Game data, input, state…</text>
+    <text class="byte-count payload-text" x="420" y="178" text-anchor="middle">N bytes (variable)</text>
+
+    <!-- Checksum labels -->
+    <text class="field-name checksum-text" x="610" y="150" text-anchor="middle">CRC32</text>
+    <text class="byte-count checksum-text" x="610" y="178" text-anchor="middle">4 B</text>
+
+    <!-- Byte offset markers below strip -->
+    <text class="byte-marker" x="40"  y="225" text-anchor="start">0</text>
+    <text class="byte-marker" x="280" y="225" text-anchor="middle">8</text>
+    <text class="byte-marker" x="560" y="225" text-anchor="middle">8 + N</text>
+    <text class="byte-marker" x="660" y="225" text-anchor="end">12 + N</text>
+</svg>

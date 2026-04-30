@@ -100,6 +100,13 @@
         E --> O["Custom"]
     </div>
 
+    <figure class="svg-wrapper">
+        <img class="responsive-svg" src="/images/components/scene-graph.svg"
+             alt="Scene graph: a tree of game objects under a scene root, with the Player and its child Weapon highlighted in amber to show that children inherit transforms from their parent"
+             loading="lazy">
+        <figcaption>Inside a scene, game objects form a hierarchical tree. Children inherit transforms from their parent &mdash; moving the Player also moves its Weapon, Sprite, and any other children. This transform cascade is what distinguishes a scene graph from a flat list of objects.</figcaption>
+    </figure>
+
     <h2 id="interactive-scene-manager-demo">Interactive Scene Manager Demo</h2>
     
     <div class="canvas-wrapper">

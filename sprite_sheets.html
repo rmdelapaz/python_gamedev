@@ -82,6 +82,13 @@
         </ul>
     </div>
 
+    <figure class="svg-wrapper">
+        <img class="responsive-svg" loading="lazy"
+             src="/images/components/sprite-sheet.svg"
+             alt="Sprite sheet shown as a 4 by 2 grid of 8 walk-cycle frames numbered 0 through 7, with frame 2 highlighted and connected by a dashed line to a larger inset showing the same frame at higher resolution.">
+        <figcaption>A grid-based sprite sheet stores frames in a regular row-and-column layout. Once you know each cell's pixel size, you can address any frame by its <code>(col, row)</code> position and slice it out with a single subsurface call.</figcaption>
+    </figure>
+
     <div class="mermaid">
     graph TD
         A["Sprite Sheets"] --> B["Types"]
@@ -476,7 +483,14 @@
     </script>
 
     <h2 id="basic-sprite-sheet-loading">Basic Sprite Sheet Loading</h2>
-    
+
+    <figure class="svg-wrapper">
+        <img class="responsive-svg" loading="lazy"
+             src="/images/components/pixel-grid.svg"
+             alt="Eight by eight pixel grid forming a small heart shape, with column numbers 0 through 7 across the top, row numbers 0 through 7 down the left, and a leader line labelling cell (5, 1).">
+        <figcaption>Sprite-sheet coordinates are pixel coordinates. The <code>get_sprite(x, y, width, height)</code> call below addresses cells using the same (col, row) indexing shown here — just at a larger scale, with each frame spanning many pixels instead of one.</figcaption>
+    </figure>
+
     <pre class="language-python"><code>import pygame
 
 class SpriteSheet:

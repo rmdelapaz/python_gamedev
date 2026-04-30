@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 360" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="ss-title ss-desc">
+    <title id="ss-title">Sprite-sheet layout: a 4 by 2 grid of 8 walk-cycle frames with one frame extracted</title>
+    <desc id="ss-desc">A sprite sheet shown as a 4-column by 2-row grid containing 8 stick-figure walk-cycle frames numbered 0 through 7. The whole sheet measures 128 by 64 pixels and each individual cell is 32 by 32 pixels. Frame 2, at column 2 row 0, is highlighted with an amber border, and a dashed leader line connects it to a larger inset on the right showing the same frame extracted at higher resolution, labelled "frame[2]" and "32 by 32 px". This illustrates how a single image file can store many animation frames that a program then slices out one cell at a time.</desc>
+
+    <style>
+        svg {
+            --cell-fill:      rgba(13, 148, 136, 0.06);
+            --cell-stroke:    rgb(13, 148, 136);
+            --sprite:         rgb(59, 130, 246);
+            --highlight:      rgb(180, 83, 9);
+            --highlight-fill: rgba(180, 83, 9, 0.10);
+            --dim:            rgb(71, 85, 105);
+            --label:          rgb(71, 85, 105);
+            --index:          rgb(100, 116, 139);
+        }
+        @media (prefers-color-scheme: dark) {
+            svg {
+                --cell-fill:      rgba(45, 212, 191, 0.10);
+                --cell-stroke:    rgb(45, 212, 191);
+                --sprite:         rgb(86, 156, 214);
+                --highlight:      rgb(251, 191, 36);
+                --highlight-fill: rgba(251, 191, 36, 0.14);
+                --dim:            rgb(148, 163, 184);
+                --label:          rgb(203, 213, 225);
+                --index:          rgb(148, 163, 184);
+            }
+        }
+        .cell           { fill: var(--cell-fill);      stroke: var(--cell-stroke); stroke-width: 1.25; }
+        .cell-current   { fill: var(--highlight-fill); stroke: var(--highlight);   stroke-width: 2.5; }
+        .frame-index    { fill: var(--index);          font: 600 11px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .sprite         { stroke: var(--sprite);       stroke-width: 2.25; stroke-linecap: round; fill: none; }
+        .sprite-head    { fill: var(--sprite);         stroke: none; }
+        .dim-line       { stroke: var(--dim);          stroke-width: 1; fill: none; }
+        .dim-label      { fill: var(--label);          font: 500 13px ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; }
+        .callout-line   { stroke: var(--highlight);    stroke-width: 1.5; fill: none; stroke-dasharray: 5 4; }
+        .callout-title  { fill: var(--highlight);      font: italic 700 15px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .callout-meta   { fill: var(--label);          font: 500 13px ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; }
+    </style>
+
+    <!-- ==== Top dimension bar: 128 px (overall sheet width) ==== -->
+    <g class="dim-line">
+        <line x1="90"  y1="32" x2="410" y2="32"/>
+        <line x1="90"  y1="26" x2="90"  y2="38"/>
+        <line x1="410" y1="26" x2="410" y2="38"/>
+    </g>
+    <text class="dim-label" x="250" y="22" text-anchor="middle">128 px</text>
+
+    <!-- ==== Left dimension bar: 64 px (overall sheet height) ==== -->
+    <g class="dim-line">
+        <line x1="68" y1="50"  x2="68" y2="210"/>
+        <line x1="62" y1="50"  x2="74" y2="50"/>
+        <line x1="62" y1="210" x2="74" y2="210"/>
+    </g>
+    <text class="dim-label" x="48" y="130" text-anchor="middle" transform="rotate(-90, 48, 130)">64 px</text>
+
+    <!-- ==== Sprite-sheet cells (highlighted current frame drawn last so its border sits on top) ==== -->
+    <!-- Row 0: cells 0, 1, 3 -->
+    <rect class="cell" x="90"  y="50" width="80" height="80"/>
+    <rect class="cell" x="170" y="50" width="80" height="80"/>
+    <rect class="cell" x="330" y="50" width="80" height="80"/>
+    <!-- Row 1: cells 4, 5, 6, 7 -->
+    <rect class="cell" x="90"  y="130" width="80" height="80"/>
+    <rect class="cell" x="170" y="130" width="80" height="80"/>
+    <rect class="cell" x="250" y="130" width="80" height="80"/>
+    <rect class="cell" x="330" y="130" width="80" height="80"/>
+    <!-- Highlighted cell: frame 2 (col 2, row 0) -->
+    <rect class="cell-current" x="250" y="50" width="80" height="80"/>
+
+    <!-- ==== Frame index labels (top-left corner of each cell) ==== -->
+    <g class="frame-index">
+        <text x="96"  y="64">0</text>
+        <text x="176" y="64">1</text>
+        <text x="256" y="64">2</text>
+        <text x="336" y="64">3</text>
+        <text x="96"  y="144">4</text>
+        <text x="176" y="144">5</text>
+        <text x="256" y="144">6</text>
+        <text x="336" y="144">7</text>
+    </g>
+
+    <!-- ==== Stick-figure walk-cycle sprites in each cell ==== -->
+    <!-- Frame 0: neutral stand -->
+    <g transform="translate(90, 50)">
+        <circle class="sprite-head" cx="40" cy="28" r="5"/>
+        <line class="sprite" x1="40" y1="33" x2="40" y2="55"/>
+        <line class="sprite" x1="40" y1="55" x2="34" y2="68"/>
+        <line class="sprite" x1="40" y1="55" x2="46" y2="68"/>
+    </g>
+    <!-- Frame 1: left foot forward -->
+    <g transform="translate(170, 50)">
+        <circle class="sprite-head" cx="40" cy="28" r="5"/>
+        <line class="sprite" x1="40" y1="33" x2="40" y2="55"/>
+        <line class="sprite" x1="40" y1="55" x2="30" y2="68"/>
+        <line class="sprite" x1="40" y1="55" x2="48" y2="66"/>
+    </g>
+    <!-- Frame 2: wide stride [HIGHLIGHTED CURRENT FRAME] -->
+    <g transform="translate(250, 50)">
+        <circle class="sprite-head" cx="40" cy="26" r="5"/>
+        <line class="sprite" x1="40" y1="31" x2="40" y2="53"/>
+        <line class="sprite" x1="40" y1="53" x2="26" y2="68"/>
+        <line class="sprite" x1="40" y1="53" x2="54" y2="66"/>
+    </g>
+    <!-- Frame 3: right foot recovering -->
+    <g transform="translate(330, 50)">
+        <circle class="sprite-head" cx="40" cy="28" r="5"/>
+        <line class="sprite" x1="40" y1="33" x2="40" y2="55"/>
+        <line class="sprite" x1="40" y1="55" x2="40" y2="68"/>
+        <line class="sprite" x1="40" y1="55" x2="50" y2="66"/>
+    </g>
+    <!-- Frame 4: neutral stand (cycle midpoint) -->
+    <g transform="translate(90, 130)">
+        <circle class="sprite-head" cx="40" cy="28" r="5"/>
+        <line class="sprite" x1="40" y1="33" x2="40" y2="55"/>
+        <line class="sprite" x1="40" y1="55" x2="34" y2="68"/>
+        <line class="sprite" x1="40" y1="55" x2="46" y2="68"/>
+    </g>
+    <!-- Frame 5: right foot forward (mirror of 1) -->
+    <g transform="translate(170, 130)">
+        <circle class="sprite-head" cx="40" cy="28" r="5"/>
+        <line class="sprite" x1="40" y1="33" x2="40" y2="55"/>
+        <line class="sprite" x1="40" y1="55" x2="50" y2="68"/>
+        <line class="sprite" x1="40" y1="55" x2="32" y2="66"/>
+    </g>
+    <!-- Frame 6: wide stride mirror (of 2) -->
+    <g transform="translate(250, 130)">
+        <circle class="sprite-head" cx="40" cy="26" r="5"/>
+        <line class="sprite" x1="40" y1="31" x2="40" y2="53"/>
+        <line class="sprite" x1="40" y1="53" x2="54" y2="68"/>
+        <line class="sprite" x1="40" y1="53" x2="26" y2="66"/>
+    </g>
+    <!-- Frame 7: left foot recovering (mirror of 3) -->
+    <g transform="translate(330, 130)">
+        <circle class="sprite-head" cx="40" cy="28" r="5"/>
+        <line class="sprite" x1="40" y1="33" x2="40" y2="55"/>
+        <line class="sprite" x1="40" y1="55" x2="40" y2="68"/>
+        <line class="sprite" x1="40" y1="55" x2="30" y2="66"/>
+    </g>
+
+    <!-- ==== Callout leader: highlighted cell's right edge to the inset ==== -->
+    <line class="callout-line" x1="330" y1="90" x2="470" y2="120"/>
+
+    <!-- ==== Inset: frame 2 extracted at larger size ==== -->
+    <rect class="cell-current" x="475" y="80" width="180" height="180"/>
+    <!-- Sprite reproduced at 2.25x scale to fill the 180x180 inset -->
+    <g transform="translate(475, 80) scale(2.25)">
+        <circle class="sprite-head" cx="40" cy="26" r="5"/>
+        <line class="sprite" x1="40" y1="31" x2="40" y2="53"/>
+        <line class="sprite" x1="40" y1="53" x2="26" y2="68"/>
+        <line class="sprite" x1="40" y1="53" x2="54" y2="66"/>
+    </g>
+
+    <!-- ==== Inset labels ==== -->
+    <text class="callout-title" x="565" y="68"  text-anchor="middle">frame[2]</text>
+    <text class="callout-meta"  x="565" y="282" text-anchor="middle">32 × 32 px</text>
+</svg>

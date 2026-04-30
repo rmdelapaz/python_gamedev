@@ -98,6 +98,11 @@
         D --> O["Physics System"]
     </div>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/component-diagram.svg" alt="Three-band ECS diagram. Top: a palette of six components (Transform, Velocity, Sprite, Health, Input, AI) shown as labeled pills. Middle: three entity cards composed from those components — Player has Transform, Velocity, Sprite, Health, Input; Enemy has Transform, Velocity, Sprite, Health, AI; Particle has only Transform, Velocity, Sprite. Bottom: two systems — MovementSystem requires Transform and Velocity, CombatSystem requires Health. Dashed slate arrows fan from MovementSystem up to all three entity cards. Dashed amber arrows fan from CombatSystem up to Player and Enemy only. A truncated dashed line ending in an X marker labeled (no Health) sits between CombatSystem and Particle, showing that CombatSystem skips Particle because Particle lacks the required Health component." loading="lazy" class="responsive-svg">
+        <figcaption>Composition over inheritance: each entity is a bag of components pulled from the same palette. Systems filter entities by required components — <code>MovementSystem</code> applies to anything with <code>Transform</code> + <code>Velocity</code> (all three here), while <code>CombatSystem</code> needs <code>Health</code> and so quietly skips <code>Particle</code>. Adding a new entity type means picking components, not editing a class hierarchy.</figcaption>
+    </figure>
+
     <h2 id="interactive-ecs-visualizer">Interactive ECS Visualizer</h2>
     
     <div class="canvas-wrapper" style="text-align: center;">

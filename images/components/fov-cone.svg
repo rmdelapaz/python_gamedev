@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 360" role="img" aria-labelledby="fov-title fov-desc">
+  <title id="fov-title">Field of view cone for NPC perception</title>
+  <desc id="fov-desc">A top-down view. A blue NPC at left faces right. An amber-tinted cone shows its 60-degree vision angle, bounded by a dashed amber arc at the vision range. A teal target inside the cone is labelled A, visible. A red target behind the NPC is labelled B, hidden because it falls outside the vision angle. A gray target along the facing axis but beyond the dashed arc is labelled C, out of range. The half-angle of 30 degrees is marked between the facing axis and the upper cone edge.</desc>
+
+  <style>
+    svg {
+      --fov-stroke: rgb(100, 116, 139);
+      --fov-text: rgb(30, 41, 59);
+      --fov-npc: rgb(59, 130, 246);
+      --fov-cone-fill: rgba(217, 119, 6, 0.18);
+      --fov-cone-stroke: rgb(217, 119, 6);
+      --fov-visible: rgb(13, 148, 136);
+      --fov-hidden: rgb(220, 38, 38);
+      --fov-out: rgb(100, 116, 139);
+      --fov-callout-bg: rgba(248, 250, 252, 0.94);
+      --fov-callout-stroke: rgb(148, 163, 184);
+    }
+    @media (prefers-color-scheme: dark) {
+      svg {
+        --fov-stroke: rgb(148, 163, 184);
+        --fov-text: rgb(226, 232, 240);
+        --fov-npc: rgb(86, 156, 214);
+        --fov-cone-fill: rgba(251, 191, 36, 0.18);
+        --fov-cone-stroke: rgb(251, 191, 36);
+        --fov-visible: rgb(45, 212, 191);
+        --fov-hidden: rgb(248, 113, 113);
+        --fov-out: rgb(148, 163, 184);
+        --fov-callout-bg: rgba(30, 41, 59, 0.94);
+        --fov-callout-stroke: rgb(71, 85, 105);
+      }
+    }
+    .fov-cone-fill { fill: var(--fov-cone-fill); }
+    .fov-line-amber { fill: none; stroke: var(--fov-cone-stroke); stroke-width: 1.5; }
+    .fov-line-amber-dash { fill: none; stroke: var(--fov-cone-stroke); stroke-width: 1.5; stroke-dasharray: 5 4; }
+    .fov-axis { stroke: var(--fov-stroke); stroke-width: 1; stroke-dasharray: 4 4; fill: none; }
+    .fov-leader { stroke: var(--fov-stroke); stroke-width: 1; stroke-dasharray: 3 3; fill: none; }
+    .fov-text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 13px; fill: var(--fov-text); }
+    .fov-text-small { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 11px; fill: var(--fov-text); }
+    .fov-callout { fill: var(--fov-callout-bg); stroke: var(--fov-callout-stroke); stroke-width: 1; }
+    .fov-npc-body { fill: var(--fov-npc); }
+    .fov-target-visible { fill: var(--fov-visible); }
+    .fov-target-hidden { fill: var(--fov-hidden); }
+    .fov-target-out { fill: var(--fov-out); }
+    .fov-tick { stroke: var(--fov-cone-stroke); stroke-width: 2; fill: none; }
+  </style>
+
+  <!-- Cone fill (amber wedge) -->
+  <path class="fov-cone-fill"
+        d="M 160 180 L 367.85 60 A 240 240 0 0 1 367.85 300 Z"/>
+
+  <!-- Cone edges (solid amber lines from apex to arc endpoints) -->
+  <line class="fov-line-amber" x1="160" y1="180" x2="367.85" y2="60"/>
+  <line class="fov-line-amber" x1="160" y1="180" x2="367.85" y2="300"/>
+
+  <!-- Vision range arc (dashed amber) -->
+  <path class="fov-line-amber-dash"
+        d="M 367.85 60 A 240 240 0 0 1 367.85 300"/>
+
+  <!-- Facing axis (slate dashed) -->
+  <line class="fov-axis" x1="160" y1="180" x2="410" y2="180"/>
+
+  <!-- Half-angle arc (small amber arc inside the cone) -->
+  <path class="fov-line-amber"
+        d="M 230 180 A 70 70 0 0 0 220.62 145"/>
+
+  <!-- Range tick (perpendicular to facing axis where it crosses the arc) -->
+  <line class="fov-tick" x1="367.85" y1="174" x2="367.85" y2="186"/>
+
+  <!-- Leader lines (dashed slate) -->
+  <line class="fov-leader" x1="290" y1="130" x2="430" y2="65"/>
+  <line class="fov-leader" x1="90" y1="240" x2="130" y2="295"/>
+  <line class="fov-leader" x1="520" y1="180" x2="570" y2="215"/>
+
+  <!-- Targets -->
+  <circle class="fov-target-visible" cx="290" cy="130" r="9"/>
+  <circle class="fov-target-hidden" cx="90" cy="240" r="9"/>
+  <circle class="fov-target-out" cx="520" cy="180" r="9"/>
+
+  <!-- Callout boxes -->
+  <rect class="fov-callout" x="430" y="40" width="248" height="50" rx="6"/>
+  <rect class="fov-callout" x="20" y="295" width="220" height="50" rx="6"/>
+  <rect class="fov-callout" x="545" y="215" width="165" height="50" rx="6"/>
+
+  <!-- NPC body + facing chevron (drawn after cone so apex sits on top) -->
+  <rect class="fov-npc-body" x="146" y="166" width="28" height="28" rx="2"/>
+  <polygon class="fov-npc-body" points="174,180 184,174 184,186"/>
+
+  <!-- Text labels (drawn last) -->
+  <!-- Half-angle label -->
+  <text class="fov-text" x="240" y="160" fill="var(--fov-cone-stroke)">θ/2 = 30°</text>
+
+  <!-- Range label below facing axis -->
+  <text class="fov-text" x="245" y="200" fill="var(--fov-cone-stroke)">r = vision range</text>
+
+  <!-- Target letter labels -->
+  <text class="fov-text-small" x="304" y="135" fill="var(--fov-visible)" font-weight="700">A</text>
+  <text class="fov-text-small" x="76" y="245" fill="var(--fov-hidden)" font-weight="700" text-anchor="end">B</text>
+  <text class="fov-text-small" x="506" y="185" fill="var(--fov-out)" font-weight="700" text-anchor="end">C</text>
+
+  <!-- Callout text: A — Visible -->
+  <text class="fov-text" x="442" y="62" fill="var(--fov-visible)" font-weight="700">A — Visible</text>
+  <text class="fov-text-small" x="442" y="80">inside cone, within range</text>
+
+  <!-- Callout text: B — Hidden -->
+  <text class="fov-text" x="32" y="317" fill="var(--fov-hidden)" font-weight="700">B — Hidden</text>
+  <text class="fov-text-small" x="32" y="335">outside the vision angle</text>
+
+  <!-- Callout text: C — Out of range -->
+  <text class="fov-text" x="557" y="237" fill="var(--fov-out)" font-weight="700">C — Out of range</text>
+  <text class="fov-text-small" x="557" y="255">beyond vision distance</text>
+
+  <!-- NPC label -->
+  <text class="fov-text-small" x="160" y="215" text-anchor="middle" fill="var(--fov-text)" font-weight="700">NPC</text>
+</svg>

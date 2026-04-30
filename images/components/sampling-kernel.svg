@@ -1,0 +1,154 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 360" role="img" aria-labelledby="sk-title sk-desc">
+  <title id="sk-title">Three by three PCF sampling kernel for soft shadows</title>
+  <desc id="sk-desc">A shadow-mapping technique called Percentage Closer Filtering (PCF) shown in three sections. Left section is a three by three grid of depth-map texels around a fragment. Five cells passed the depth test (lit, shown with pale yellow fill, labelled 1) and four cells failed (in shadow, shown with deep slate fill, labelled 0). The center cell is highlighted with a thicker teal outline as the texel directly under the fragment being shaded. Middle section bridges the kernel to the result with the calculation: zero plus zero plus one plus zero plus one plus one plus zero plus one plus one divided by nine equals 0.56, the soft fractional shadow value. Right section compares the visual result of a single-tap test against the nine-tap average: the top swatch snaps abruptly from dark to light at a hard boundary, while the bottom swatch transitions smoothly through a gradient — the same scene rendered with a soft penumbra instead of a jagged edge.</desc>
+
+  <style>
+    svg {
+      --sk-text: rgb(30, 41, 59);
+      --sk-text-secondary: rgb(100, 116, 139);
+      --sk-text-muted: rgb(148, 163, 184);
+      --sk-axis: rgb(100, 116, 139);
+      --sk-amber: rgb(217, 119, 6);
+      --sk-teal: rgb(13, 148, 136);
+      --sk-card-fill: rgb(248, 250, 252);
+      --sk-card-stroke: rgb(203, 213, 225);
+      --sk-lit-fill: rgb(254, 243, 199);     /* warm pale yellow = sunlight */
+      --sk-lit-stroke: rgb(217, 119, 6);
+      --sk-lit-text: rgb(30, 41, 59);
+      --sk-shadow-fill: rgb(30, 41, 59);     /* deep cool dark = shadow */
+      --sk-shadow-stroke: rgb(100, 116, 139);
+      --sk-shadow-text: rgb(241, 245, 249);
+      --sk-edge-lit: rgb(254, 243, 199);
+      --sk-edge-shadow: rgb(30, 41, 59);
+    }
+    @media (prefers-color-scheme: dark) {
+      svg {
+        --sk-text: rgb(226, 232, 240);
+        --sk-text-secondary: rgb(148, 163, 184);
+        --sk-text-muted: rgb(100, 116, 139);
+        --sk-axis: rgb(148, 163, 184);
+        --sk-amber: rgb(251, 191, 36);
+        --sk-teal: rgb(45, 212, 191);
+        --sk-card-fill: rgb(31, 41, 55);
+        --sk-card-stroke: rgb(71, 85, 105);
+        --sk-lit-fill: rgb(180, 130, 50);    /* warm tone, slightly muted for dark bg */
+        --sk-lit-stroke: rgb(251, 191, 36);
+        --sk-lit-text: rgb(15, 23, 42);
+        --sk-shadow-fill: rgb(15, 23, 42);
+        --sk-shadow-stroke: rgb(100, 116, 139);
+        --sk-shadow-text: rgb(241, 245, 249);
+        --sk-edge-lit: rgb(180, 130, 50);
+        --sk-edge-shadow: rgb(15, 23, 42);
+      }
+    }
+    .sk-title-text { font: 700 14px ui-sans-serif, system-ui, sans-serif; fill: var(--sk-text); }
+    .sk-section-label { font: 600 11px ui-sans-serif, system-ui, sans-serif; fill: var(--sk-text-secondary); letter-spacing: 0.04em; text-transform: uppercase; }
+    .sk-cell-text-lit { font: 600 16px ui-monospace, "SF Mono", Menlo, Consolas, monospace; fill: var(--sk-lit-text); text-anchor: middle; }
+    .sk-cell-text-shadow { font: 600 16px ui-monospace, "SF Mono", Menlo, Consolas, monospace; fill: var(--sk-shadow-text); text-anchor: middle; }
+    .sk-formula { font: 500 12.5px ui-monospace, "SF Mono", Menlo, Consolas, monospace; fill: var(--sk-text); text-anchor: middle; }
+    .sk-formula-result { font: 700 19px ui-monospace, "SF Mono", Menlo, Consolas, monospace; fill: var(--sk-teal); text-anchor: middle; }
+    .sk-caption { font: italic 11px ui-sans-serif, system-ui, sans-serif; fill: var(--sk-text-secondary); text-anchor: middle; }
+    .sk-edge-label { font: 600 12px ui-sans-serif, system-ui, sans-serif; fill: var(--sk-text); text-anchor: middle; }
+    .sk-legend-bold { font-weight: 700; }
+  </style>
+
+  <defs>
+    <!-- Linear gradient for soft shadow edge -->
+    <linearGradient id="sk-grad-soft" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="var(--sk-edge-shadow)"/>
+      <stop offset="20%"  stop-color="var(--sk-edge-shadow)"/>
+      <stop offset="80%"  stop-color="var(--sk-edge-lit)"/>
+      <stop offset="100%" stop-color="var(--sk-edge-lit)"/>
+    </linearGradient>
+
+    <!-- Arrowhead for averaging arrow -->
+    <marker id="sk-arrow-axis" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="rgb(100,116,139)"/>
+    </marker>
+  </defs>
+
+  <!-- Title bar -->
+  <text x="360" y="22" class="sk-title-text" text-anchor="middle">3×3 PCF kernel — soften shadow edges by averaging neighbouring taps</text>
+
+  <!-- Section labels strip -->
+  <text x="40"  y="56" class="sk-section-label">Depth-map taps</text>
+  <text x="240" y="56" class="sk-section-label">Average</text>
+  <text x="395" y="56" class="sk-section-label">Edge comparison</text>
+
+  <!-- ============================================================ -->
+  <!-- LEFT: 3×3 KERNEL GRID                                         -->
+  <!-- Cells: 50×50, gap 4, origin (40, 70), total 158×158           -->
+  <!-- Pattern: 4 shadow + 5 lit (vertical occluder on the left)    -->
+  <!-- ============================================================ -->
+  <!-- Row 0 (y=70-120) -->
+  <rect x="40"  y="70" width="50" height="50" rx="4" fill="var(--sk-shadow-fill)" stroke="var(--sk-shadow-stroke)"/>
+  <text x="65"  y="102" class="sk-cell-text-shadow">0</text>
+  <rect x="94"  y="70" width="50" height="50" rx="4" fill="var(--sk-shadow-fill)" stroke="var(--sk-shadow-stroke)"/>
+  <text x="119" y="102" class="sk-cell-text-shadow">0</text>
+  <rect x="148" y="70" width="50" height="50" rx="4" fill="var(--sk-lit-fill)" stroke="var(--sk-lit-stroke)"/>
+  <text x="173" y="102" class="sk-cell-text-lit">1</text>
+
+  <!-- Row 1 (y=124-174) — middle row, center cell highlighted -->
+  <rect x="40"  y="124" width="50" height="50" rx="4" fill="var(--sk-shadow-fill)" stroke="var(--sk-shadow-stroke)"/>
+  <text x="65"  y="156" class="sk-cell-text-shadow">0</text>
+  <!-- CENTER cell (the fragment being shaded): teal outline -->
+  <rect x="94"  y="124" width="50" height="50" rx="4" fill="var(--sk-lit-fill)" stroke="var(--sk-teal)" stroke-width="3"/>
+  <text x="119" y="156" class="sk-cell-text-lit">1</text>
+  <rect x="148" y="124" width="50" height="50" rx="4" fill="var(--sk-lit-fill)" stroke="var(--sk-lit-stroke)"/>
+  <text x="173" y="156" class="sk-cell-text-lit">1</text>
+
+  <!-- Row 2 (y=178-228) -->
+  <rect x="40"  y="178" width="50" height="50" rx="4" fill="var(--sk-shadow-fill)" stroke="var(--sk-shadow-stroke)"/>
+  <text x="65"  y="210" class="sk-cell-text-shadow">0</text>
+  <rect x="94"  y="178" width="50" height="50" rx="4" fill="var(--sk-lit-fill)" stroke="var(--sk-lit-stroke)"/>
+  <text x="119" y="210" class="sk-cell-text-lit">1</text>
+  <rect x="148" y="178" width="50" height="50" rx="4" fill="var(--sk-lit-fill)" stroke="var(--sk-lit-stroke)"/>
+  <text x="173" y="210" class="sk-cell-text-lit">1</text>
+
+  <!-- Center-cell label -->
+  <text x="119" y="248" class="sk-caption">↑ center tap = fragment</text>
+
+  <!-- ============================================================ -->
+  <!-- MIDDLE: AVERAGING ARROW + FORMULA                             -->
+  <!-- Zone x=210-380, vertical center y=149                         -->
+  <!-- ============================================================ -->
+  <!-- Formula line (above the arrow) -->
+  <text x="295" y="125" class="sk-formula">(0+0+1+0+1+1+0+1+1)</text>
+  <text x="295" y="143" class="sk-formula">────────────── ÷ 9</text>
+
+  <!-- Averaging arrow -->
+  <line x1="220" y1="160" x2="370" y2="160" stroke="var(--sk-axis)" stroke-width="1.5" marker-end="url(#sk-arrow-axis)"/>
+
+  <!-- Result -->
+  <text x="295" y="186" class="sk-formula-result">= 0.56</text>
+  <text x="295" y="206" class="sk-caption">soft (fractional) shadow</text>
+
+  <!-- ============================================================ -->
+  <!-- RIGHT: HARD vs SOFT SHADOW EDGE COMPARISON                    -->
+  <!-- ============================================================ -->
+
+  <!-- Hard shadow: x=395-695, y=80-150 -->
+  <text x="545" y="78" class="sk-edge-label">1-tap (hard)</text>
+  <!-- Two abutting solid rects: shadow then lit, sharp boundary at x=545 -->
+  <rect x="395" y="88" width="150" height="40" fill="var(--sk-edge-shadow)" stroke="var(--sk-card-stroke)"/>
+  <rect x="545" y="88" width="150" height="40" fill="var(--sk-edge-lit)" stroke="var(--sk-card-stroke)"/>
+  <!-- Boundary marker line -->
+  <line x1="545" y1="84" x2="545" y2="132" stroke="var(--sk-amber)" stroke-width="1.5" stroke-dasharray="3 3"/>
+  <text x="545" y="148" class="sk-caption">snaps from 0 to 1 at the boundary</text>
+
+  <!-- Soft shadow: x=395-695, y=170-240 -->
+  <text x="545" y="170" class="sk-edge-label">9-tap (soft, this kernel)</text>
+  <!-- Gradient rect for smooth transition -->
+  <rect x="395" y="180" width="300" height="40" fill="url(#sk-grad-soft)" stroke="var(--sk-card-stroke)"/>
+  <text x="545" y="240" class="sk-caption">smooth penumbra spans several texels</text>
+
+  <!-- ============================================================ -->
+  <!-- BOTTOM EXPLANATION STRIP                                      -->
+  <!-- ============================================================ -->
+  <g id="sk-legend">
+    <rect x="40" y="278" width="640" height="68" rx="6" fill="var(--sk-card-fill)" stroke="var(--sk-card-stroke)"/>
+    <text x="60" y="299" font-family="ui-sans-serif, system-ui, sans-serif" font-size="12" font-weight="600" fill="var(--sk-text)">Percentage Closer Filtering (PCF)</text>
+    <text x="60" y="318" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11" fill="var(--sk-text-secondary)">For each fragment, sample the depth map at the center texel plus its 8 neighbours. Each tap returns 0 (in shadow) or 1 (lit).</text>
+    <text x="60" y="334" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11" fill="var(--sk-text-secondary)">The fractional average replaces a binary depth comparison with a smoothed value — turning the depth-only shader's hard edge into a soft penumbra.</text>
+  </g>
+</svg>

@@ -1,0 +1,173 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 400" role="img" aria-labelledby="lm-title lm-desc">
+  <title id="lm-title">Phong lighting decomposition: ambient plus diffuse plus specular equals final shading</title>
+  <desc id="lm-desc">Four spheres in a horizontal row illustrate how three lighting terms combine to shade a surface. The first sphere has a uniform dim fill representing ambient light bouncing in from all directions. The second sphere shows diffuse shading with Lambert's cosine: a bright highlight on the side facing the upper-left light source, smoothly fading to dark on the opposite side. The third sphere is dark with a small bright specular highlight where the view direction reflects off the surface. The fourth sphere combines all three terms — ambient floor prevents the shadowed side from going fully black, diffuse adds the directional brightness gradient, and the specular highlight gives a glossy point of reflection. Plus and equals signs separate the four spheres. A sun glyph at the upper left with a directional ray indicates the light source position.</desc>
+
+  <style>
+    svg {
+      --lm-text: rgb(30, 41, 59);
+      --lm-text-secondary: rgb(100, 116, 139);
+      --lm-text-muted: rgb(148, 163, 184);
+      --lm-axis: rgb(100, 116, 139);
+      --lm-amber: rgb(217, 119, 6);
+      --lm-card-fill: rgb(248, 250, 252);
+      --lm-card-stroke: rgb(203, 213, 225);
+      /* Sphere palette — blue chromatic series */
+      --lm-base: rgb(15, 23, 42);            /* deep dark = back of sphere (light mode) */
+      --lm-ambient-fill: rgb(71, 85, 105);   /* uniform ambient fill */
+      --lm-diffuse-mid: rgb(59, 130, 246);   /* mid blue diffuse */
+      --lm-diffuse-bright: rgb(191, 219, 254); /* bright blue near light */
+      --lm-specular: rgb(255, 255, 255);     /* white specular highlight */
+    }
+    @media (prefers-color-scheme: dark) {
+      svg {
+        --lm-text: rgb(226, 232, 240);
+        --lm-text-secondary: rgb(148, 163, 184);
+        --lm-text-muted: rgb(100, 116, 139);
+        --lm-axis: rgb(148, 163, 184);
+        --lm-amber: rgb(251, 191, 36);
+        --lm-card-fill: rgb(31, 41, 55);
+        --lm-card-stroke: rgb(71, 85, 105);
+        --lm-base: rgb(30, 41, 59);          /* slightly lifted so sphere reads against dark page bg */
+        --lm-ambient-fill: rgb(100, 116, 139);
+        --lm-diffuse-mid: rgb(86, 156, 214);
+        --lm-diffuse-bright: rgb(219, 234, 254);
+        --lm-specular: rgb(255, 255, 255);
+      }
+    }
+    .lm-title-text { font: 700 14px ui-sans-serif, system-ui, sans-serif; fill: var(--lm-text); }
+    .lm-sphere-label { font: 600 14px ui-sans-serif, system-ui, sans-serif; fill: var(--lm-text); text-anchor: middle; }
+    .lm-formula { font: 500 11.5px ui-monospace, "SF Mono", Menlo, Consolas, monospace; fill: var(--lm-text-secondary); text-anchor: middle; }
+    .lm-caption-text { font: italic 11px ui-sans-serif, system-ui, sans-serif; fill: var(--lm-text-muted); text-anchor: middle; }
+    .lm-operator { font: 300 32px ui-sans-serif, system-ui, sans-serif; fill: var(--lm-axis); text-anchor: middle; }
+    .lm-light-label { font: 600 11px ui-sans-serif, system-ui, sans-serif; fill: var(--lm-text); text-anchor: middle; }
+    .lm-legend-text { font: 400 11px ui-sans-serif, system-ui, sans-serif; fill: var(--lm-text); }
+    .lm-legend-muted { font: italic 10.5px ui-sans-serif, system-ui, sans-serif; fill: var(--lm-text-secondary); }
+    .lm-legend-bold { font-weight: 700; }
+  </style>
+
+  <defs>
+    <!-- Diffuse: Lambert-style gradient. Bright at upper-left (where N aligns with L), fading to dark base -->
+    <radialGradient id="lm-grad-diffuse" cx="50%" cy="50%" r="65%" fx="28%" fy="28%">
+      <stop offset="0%"   stop-color="var(--lm-diffuse-bright)"/>
+      <stop offset="38%"  stop-color="var(--lm-diffuse-mid)"/>
+      <stop offset="100%" stop-color="var(--lm-base)"/>
+    </radialGradient>
+
+    <!-- Specular: small bright spot, transparent elsewhere so dark base shows through -->
+    <radialGradient id="lm-grad-specular" cx="50%" cy="50%" r="55%" fx="32%" fy="30%">
+      <stop offset="0%"   stop-color="var(--lm-specular)" stop-opacity="1"/>
+      <stop offset="6%"   stop-color="var(--lm-specular)" stop-opacity="0.95"/>
+      <stop offset="14%"  stop-color="var(--lm-specular)" stop-opacity="0.4"/>
+      <stop offset="22%"  stop-color="var(--lm-specular)" stop-opacity="0"/>
+      <stop offset="100%" stop-color="var(--lm-specular)" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Combined: layered ambient floor + diffuse falloff + specular peak in one gradient -->
+    <radialGradient id="lm-grad-combined" cx="50%" cy="50%" r="65%" fx="28%" fy="28%">
+      <stop offset="0%"   stop-color="var(--lm-specular)"/>
+      <stop offset="6%"   stop-color="var(--lm-specular)"/>
+      <stop offset="11%"  stop-color="var(--lm-diffuse-bright)"/>
+      <stop offset="40%"  stop-color="var(--lm-diffuse-mid)"/>
+      <stop offset="100%" stop-color="var(--lm-ambient-fill)"/>
+    </radialGradient>
+
+    <!-- Arrowhead for light-direction ray -->
+    <marker id="lm-arrow-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="rgb(217,119,6)"/>
+    </marker>
+  </defs>
+
+  <!-- Title bar -->
+  <text x="360" y="22" class="lm-title-text" text-anchor="middle">Phong lighting model — three terms combine to shade a surface</text>
+
+  <!-- ============================================================ -->
+  <!-- LIGHT SOURCE GLYPH (top-left) + directional ray              -->
+  <!-- ============================================================ -->
+  <g id="lm-light-source">
+    <!-- sun core -->
+    <circle cx="42" cy="58" r="12" fill="var(--lm-amber)"/>
+    <!-- 8 rays around the sun -->
+    <g stroke="var(--lm-amber)" stroke-width="2.2" stroke-linecap="round">
+      <line x1="42" y1="40" x2="42" y2="46"/>
+      <line x1="42" y1="70" x2="42" y2="76"/>
+      <line x1="24" y1="58" x2="30" y2="58"/>
+      <line x1="54" y1="58" x2="60" y2="58"/>
+      <line x1="29" y1="45" x2="33" y2="49"/>
+      <line x1="51" y1="67" x2="55" y2="71"/>
+      <line x1="51" y1="49" x2="55" y2="45"/>
+      <line x1="29" y1="71" x2="33" y2="67"/>
+    </g>
+    <text x="42" y="98" class="lm-light-label">light source</text>
+  </g>
+
+  <!-- Single directional ray pointing toward the sphere row -->
+  <line x1="62" y1="76" x2="115" y2="129" stroke="var(--lm-amber)" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#lm-arrow-amber)"/>
+  <text x="103" y="118" class="lm-formula" text-anchor="start" fill="var(--lm-text-secondary)">L</text>
+
+  <!-- ============================================================ -->
+  <!-- SPHERES                                                       -->
+  <!-- 4 spheres, centers at y=180, radius 55                       -->
+  <!-- Centers: 110, 270, 430, 600                                   -->
+  <!-- ============================================================ -->
+
+  <!-- Sphere 1: AMBIENT — flat fill -->
+  <g id="lm-sphere-ambient">
+    <circle cx="110" cy="180" r="55" fill="var(--lm-ambient-fill)" stroke="var(--lm-axis)" stroke-width="1"/>
+    <text x="110" y="263" class="lm-sphere-label">Ambient</text>
+    <text x="110" y="282" class="lm-formula">constant base</text>
+    <text x="110" y="300" class="lm-caption-text">indirect light, all directions</text>
+  </g>
+
+  <!-- "+" between sphere 1 and 2 -->
+  <text x="190" y="190" class="lm-operator">+</text>
+
+  <!-- Sphere 2: DIFFUSE — Lambert gradient -->
+  <g id="lm-sphere-diffuse">
+    <circle cx="270" cy="180" r="55" fill="url(#lm-grad-diffuse)" stroke="var(--lm-axis)" stroke-width="1"/>
+    <text x="270" y="263" class="lm-sphere-label">Diffuse</text>
+    <text x="270" y="282" class="lm-formula">max(N · L, 0)</text>
+    <text x="270" y="300" class="lm-caption-text">Lambert's cosine law</text>
+  </g>
+
+  <!-- "+" between sphere 2 and 3 -->
+  <text x="350" y="190" class="lm-operator">+</text>
+
+  <!-- Sphere 3: SPECULAR — dark base + sharp highlight -->
+  <g id="lm-sphere-specular">
+    <!-- Dark base for contrast against the highlight -->
+    <circle cx="430" cy="180" r="55" fill="var(--lm-base)" stroke="var(--lm-axis)" stroke-width="1"/>
+    <!-- Highlight overlay -->
+    <circle cx="430" cy="180" r="55" fill="url(#lm-grad-specular)"/>
+    <text x="430" y="263" class="lm-sphere-label">Specular</text>
+    <text x="430" y="282" class="lm-formula">max(R · V, 0)^n</text>
+    <text x="430" y="300" class="lm-caption-text">view-dependent highlight</text>
+  </g>
+
+  <!-- "=" between sphere 3 and 4 -->
+  <text x="515" y="190" class="lm-operator">=</text>
+
+  <!-- Sphere 4: COMBINED — all three layered into one gradient -->
+  <g id="lm-sphere-combined">
+    <circle cx="600" cy="180" r="55" fill="url(#lm-grad-combined)" stroke="var(--lm-axis)" stroke-width="1.5"/>
+    <text x="600" y="263" class="lm-sphere-label">Final shading</text>
+    <text x="600" y="282" class="lm-formula">I = ambient + diffuse + specular</text>
+    <text x="600" y="300" class="lm-caption-text">how the surface actually looks</text>
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- LEGEND / NOTATION STRIP at the bottom                        -->
+  <!-- ============================================================ -->
+  <g id="lm-legend">
+    <rect x="40" y="334" width="640" height="50" rx="6" fill="var(--lm-card-fill)" stroke="var(--lm-card-stroke)"/>
+    <text x="60" y="354" class="lm-legend-text">
+      <tspan class="lm-legend-bold">N</tspan> surface normal &#160;·&#160;
+      <tspan class="lm-legend-bold">L</tspan> light direction &#160;·&#160;
+      <tspan class="lm-legend-bold">V</tspan> view direction &#160;·&#160;
+      <tspan class="lm-legend-bold">R</tspan> reflection of L &#160;·&#160;
+      <tspan class="lm-legend-bold">n</tspan> shininess exponent
+    </text>
+    <text x="60" y="372" class="lm-legend-muted">
+      The PBR shader in this lesson generalizes this model: diffuse becomes Lambertian + Fresnel; specular becomes Cook-Torrance (NDF · G · F).
+    </text>
+  </g>
+</svg>

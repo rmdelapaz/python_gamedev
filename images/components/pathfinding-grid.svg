@@ -1,0 +1,231 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 320" role="img" aria-labelledby="pf-title pf-desc">
+  <title id="pf-title">Pathfinding grid: A* finds a least-cost route around an obstacle</title>
+  <desc id="pf-desc">An 8-by-5 cell grid. The start cell is at column 1 row 3 (left, marked S in green) and the goal at column 6 row 1 (right, marked G in red). A vertical wall of three dark cells in column 3 (rows 1, 2, and 3) blocks the direct route. A gold path winds from the start, up column 2, across the top row, and down to the goal — nine cardinal moves. Five lightly-tinted cells around the path show neighbours that A* added to the closed list but did not include in the final route. A spotlight ring on cell (2, 2) connects via a dashed amber leader to a callout that breaks down the A* values for that cell: g equals 2, h equals 5, f equals g plus h equals 7, with parent cell (2, 3).</desc>
+
+  <style>
+    svg {
+      --grid-line: rgb(148, 163, 184);
+      --cell-empty: rgb(248, 250, 252);
+      --cell-text: rgb(30, 41, 59);
+      --wall-fill: rgb(51, 65, 85);
+      --wall-stroke: rgb(15, 23, 42);
+      --start-fill: rgb(204, 251, 241);
+      --start-stroke: rgb(13, 148, 136);
+      --start-text: rgb(13, 148, 136);
+      --goal-fill: rgb(254, 226, 226);
+      --goal-stroke: rgb(220, 38, 38);
+      --goal-text: rgb(185, 28, 28);
+      --closed-fill: rgb(241, 245, 249);
+      --closed-stroke: rgb(203, 213, 225);
+      --path-fill: rgb(254, 243, 199);
+      --path-stroke: rgb(217, 119, 6);
+      --path-line: rgb(217, 119, 6);
+      --leader: rgb(217, 119, 6);
+      --callout-fill: rgb(254, 243, 199);
+      --callout-stroke: rgb(217, 119, 6);
+      --callout-text: rgb(120, 53, 15);
+      --label-text: rgb(30, 41, 59);
+      --label-mute: rgb(100, 116, 139);
+    }
+    @media (prefers-color-scheme: dark) {
+      svg {
+        --grid-line: rgb(71, 85, 105);
+        --cell-empty: rgb(30, 41, 59);
+        --cell-text: rgb(226, 232, 240);
+        --wall-fill: rgb(15, 23, 42);
+        --wall-stroke: rgb(2, 6, 23);
+        --start-fill: rgb(19, 78, 74);
+        --start-stroke: rgb(45, 212, 191);
+        --start-text: rgb(94, 234, 212);
+        --goal-fill: rgb(127, 29, 29);
+        --goal-stroke: rgb(248, 113, 113);
+        --goal-text: rgb(254, 202, 202);
+        --closed-fill: rgb(51, 65, 85);
+        --closed-stroke: rgb(71, 85, 105);
+        --path-fill: rgb(120, 53, 15);
+        --path-stroke: rgb(251, 191, 36);
+        --path-line: rgb(251, 191, 36);
+        --leader: rgb(251, 191, 36);
+        --callout-fill: rgb(120, 53, 15);
+        --callout-stroke: rgb(251, 191, 36);
+        --callout-text: rgb(254, 243, 199);
+        --label-text: rgb(226, 232, 240);
+        --label-mute: rgb(148, 163, 184);
+      }
+    }
+    .pf-empty { fill: var(--cell-empty); stroke: none; }
+    .pf-closed { fill: var(--closed-fill); stroke: var(--closed-stroke); stroke-width: 1; }
+    .pf-path { fill: var(--path-fill); stroke: var(--path-stroke); stroke-width: 1.25; }
+    .pf-wall { fill: var(--wall-fill); stroke: var(--wall-stroke); stroke-width: 1; }
+    .pf-start { fill: var(--start-fill); stroke: var(--start-stroke); stroke-width: 2; }
+    .pf-goal { fill: var(--goal-fill); stroke: var(--goal-stroke); stroke-width: 2; }
+    .pf-spotlight {
+      fill: var(--path-fill);
+      stroke: var(--path-stroke);
+      stroke-width: 3;
+    }
+    .pf-grid-lines {
+      fill: none;
+      stroke: var(--grid-line);
+      stroke-width: 1;
+    }
+    .pf-path-line {
+      fill: none;
+      stroke: var(--path-line);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .pf-leader {
+      fill: none;
+      stroke: var(--leader);
+      stroke-width: 1.5;
+      stroke-dasharray: 4 3;
+    }
+    .pf-letter {
+      font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      text-anchor: middle;
+    }
+    .pf-letter-s { fill: var(--start-text); }
+    .pf-letter-g { fill: var(--goal-text); }
+    .pf-callout-rect {
+      fill: var(--callout-fill);
+      stroke: var(--callout-stroke);
+      stroke-width: 1.5;
+    }
+    .pf-callout-title {
+      fill: var(--callout-text);
+      font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .pf-callout-line {
+      fill: var(--callout-text);
+      font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+      font-size: 12px;
+    }
+    .pf-callout-mono {
+      fill: var(--callout-text);
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .pf-callout-italic {
+      fill: var(--callout-text);
+      font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+      font-size: 12px;
+      font-style: italic;
+    }
+    .pf-legend-title {
+      fill: var(--label-text);
+      font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .pf-legend-text {
+      fill: var(--label-text);
+      font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+      font-size: 11px;
+    }
+    .pf-legend-note {
+      fill: var(--label-mute);
+      font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+      font-size: 11px;
+      font-style: italic;
+    }
+  </style>
+
+  <!-- Layer 1: empty grid background -->
+  <rect class="pf-empty" x="20" y="28" width="352" height="220" />
+
+  <!-- Layer 2: closed-list (explored, not on path) cells -->
+  <rect class="pf-closed" x="64"  y="116" width="44" height="44" />  <!-- (1,2) -->
+  <rect class="pf-closed" x="64"  y="204" width="44" height="44" />  <!-- (1,4) -->
+  <rect class="pf-closed" x="108" y="204" width="44" height="44" />  <!-- (2,4) -->
+  <rect class="pf-closed" x="196" y="160" width="44" height="44" />  <!-- (4,3) -->
+  <rect class="pf-closed" x="240" y="160" width="44" height="44" />  <!-- (5,3) -->
+
+  <!-- Layer 3: path cells (excluding start, goal, and the spotlight cell which is drawn last) -->
+  <rect class="pf-path" x="108" y="160" width="44" height="44" />  <!-- (2,3) -->
+  <rect class="pf-path" x="108" y="72"  width="44" height="44" />  <!-- (2,1) -->
+  <rect class="pf-path" x="108" y="28"  width="44" height="44" />  <!-- (2,0) -->
+  <rect class="pf-path" x="152" y="28"  width="44" height="44" />  <!-- (3,0) -->
+  <rect class="pf-path" x="196" y="28"  width="44" height="44" />  <!-- (4,0) -->
+  <rect class="pf-path" x="240" y="28"  width="44" height="44" />  <!-- (5,0) -->
+  <rect class="pf-path" x="240" y="72"  width="44" height="44" />  <!-- (5,1) -->
+
+  <!-- Layer 4: walls (column 3, rows 1-3) -->
+  <rect class="pf-wall" x="152" y="72"  width="44" height="44" />  <!-- (3,1) -->
+  <rect class="pf-wall" x="152" y="116" width="44" height="44" />  <!-- (3,2) -->
+  <rect class="pf-wall" x="152" y="160" width="44" height="44" />  <!-- (3,3) -->
+
+  <!-- Layer 5: start (1,3) and goal (6,1) -->
+  <rect class="pf-start" x="64"  y="160" width="44" height="44" />
+  <rect class="pf-goal"  x="284" y="72"  width="44" height="44" />
+
+  <!-- Layer 6: grid lines drawn over cell fills so every cell shows a clean border -->
+  <g class="pf-grid-lines">
+    <path d="M 20 28 V 248" />
+    <path d="M 64 28 V 248" />
+    <path d="M 108 28 V 248" />
+    <path d="M 152 28 V 248" />
+    <path d="M 196 28 V 248" />
+    <path d="M 240 28 V 248" />
+    <path d="M 284 28 V 248" />
+    <path d="M 328 28 V 248" />
+    <path d="M 372 28 V 248" />
+    <path d="M 20 28  H 372" />
+    <path d="M 20 72  H 372" />
+    <path d="M 20 116 H 372" />
+    <path d="M 20 160 H 372" />
+    <path d="M 20 204 H 372" />
+    <path d="M 20 248 H 372" />
+  </g>
+
+  <!-- Layer 7: cell letters S and G -->
+  <text class="pf-letter pf-letter-s" x="86"  y="189">S</text>
+  <text class="pf-letter pf-letter-g" x="306" y="101">G</text>
+
+  <!-- Layer 8: path line through cell centres -->
+  <path class="pf-path-line"
+        d="M 86 182 L 130 182 L 130 138 L 130 94 L 130 50 L 174 50 L 218 50 L 262 50 L 262 94 L 306 94" />
+
+  <!-- Layer 9: spotlight on cell (2,2) — drawn last so its thick gold border sits on top -->
+  <rect class="pf-spotlight" x="108" y="116" width="44" height="44" />
+
+  <!-- Layer 10: dashed leader from spotlight right-edge midpoint to callout left edge -->
+  <path class="pf-leader" d="M 152 138 Q 270 138 400 80" />
+
+  <!-- Layer 11: callout box -->
+  <rect class="pf-callout-rect" x="400" y="36" width="296" height="124" rx="6" />
+  <text class="pf-callout-title"  x="416" y="58">Cell (2, 2) — A* values</text>
+  <text class="pf-callout-line"   x="416" y="78">Three numbers tracked per node:</text>
+  <text class="pf-callout-mono"   x="416" y="98">g = 2</text>
+  <text class="pf-callout-line"   x="468" y="98">cost from start (steps)</text>
+  <text class="pf-callout-mono"   x="416" y="116">h = 5</text>
+  <text class="pf-callout-line"   x="468" y="116">Manhattan distance to goal</text>
+  <text class="pf-callout-mono"   x="416" y="134">f = g + h = 7</text>
+  <text class="pf-callout-italic" x="416" y="152">parent &#8592; (2, 3) &#160; used to rebuild the path</text>
+
+  <!-- Layer 12: legend -->
+  <text class="pf-legend-title" x="20" y="276">Legend</text>
+
+  <rect class="pf-start"  x="20"  y="284" width="14" height="14" />
+  <text class="pf-legend-text" x="40" y="295">Start</text>
+
+  <rect class="pf-goal"   x="84"  y="284" width="14" height="14" />
+  <text class="pf-legend-text" x="104" y="295">Goal</text>
+
+  <rect class="pf-wall"   x="148" y="284" width="14" height="14" />
+  <text class="pf-legend-text" x="168" y="295">Wall</text>
+
+  <rect class="pf-path"   x="212" y="284" width="14" height="14" />
+  <text class="pf-legend-text" x="232" y="295">Path</text>
+
+  <rect class="pf-closed" x="276" y="284" width="14" height="14" />
+  <text class="pf-legend-text" x="296" y="295">Closed list</text>
+
+  <text class="pf-legend-note" x="20" y="315">Cardinal moves only. Each move costs 1; total path cost = 9.</text>
+</svg>

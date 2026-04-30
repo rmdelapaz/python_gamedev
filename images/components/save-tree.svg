@@ -1,0 +1,136 @@
+<svg viewBox="0 0 720 440" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="st-title st-desc">
+  <title id="st-title">Save file structure</title>
+  <desc id="st-desc">A JSON tree showing the contents of savegame_1.json. The file's top-level metadata strip lists version, timestamp, and play_time. Three section cards below — player, progress, and world — contain typed fields representing the SaveData dataclass. A dashed callout points from the player position field to a box explaining that Python tuples become JSON arrays during asdict() serialization.</desc>
+
+  <style>
+    svg {
+      --frame-fill: rgb(248, 250, 252);
+      --frame-border: rgb(203, 213, 225);
+      --text-primary: rgb(15, 23, 42);
+      --text-secondary: rgb(71, 85, 105);
+      --text-muted: rgb(148, 163, 184);
+      --card-fill: rgb(255, 255, 255);
+      --card-border: rgb(226, 232, 240);
+      --pill-fill: rgba(148, 163, 184, 0.14);
+      --player-header: rgb(37, 99, 235);
+      --progress-header: rgb(15, 118, 110);
+      --world-header: rgb(180, 83, 9);
+      --callout-fill: rgba(251, 191, 36, 0.12);
+      --callout-border: rgb(217, 119, 6);
+    }
+    @media (prefers-color-scheme: dark) {
+      svg {
+        --frame-fill: rgb(30, 41, 59);
+        --frame-border: rgb(71, 85, 105);
+        --text-primary: rgb(241, 245, 249);
+        --text-secondary: rgb(203, 213, 225);
+        --text-muted: rgb(148, 163, 184);
+        --card-fill: rgb(15, 23, 42);
+        --card-border: rgb(51, 65, 85);
+        --pill-fill: rgba(148, 163, 184, 0.18);
+        --callout-fill: rgba(251, 191, 36, 0.16);
+        --callout-border: rgb(251, 191, 36);
+      }
+    }
+    .st-frame { fill: var(--frame-fill); stroke: var(--frame-border); stroke-width: 1.5; }
+    .st-card { fill: var(--card-fill); stroke: var(--card-border); stroke-width: 1; }
+    .st-card-h-player { fill: var(--player-header); }
+    .st-card-h-progress { fill: var(--progress-header); }
+    .st-card-h-world { fill: var(--world-header); }
+    .st-divider { stroke: var(--frame-border); stroke-width: 1; }
+    .st-pill { fill: var(--pill-fill); stroke: none; }
+    .st-mono { font-family: 'Menlo', 'Consolas', 'Monaco', monospace; }
+    .st-sans { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
+    .st-title-text { font-weight: 700; font-size: 22px; fill: var(--text-primary); }
+    .st-pill-text { font-size: 12px; fill: var(--text-secondary); }
+    .st-meta-text { font-size: 13px; fill: var(--text-secondary); }
+    .st-meta-val { fill: var(--text-primary); }
+    .st-card-h-text { font-weight: 700; font-size: 14px; fill: white; }
+    .st-field { font-size: 12.5px; }
+    .st-field-key { fill: var(--text-secondary); }
+    .st-field-val { fill: var(--text-primary); }
+    .st-callout-box { fill: var(--callout-fill); stroke: var(--callout-border); stroke-width: 1.5; }
+    .st-callout-leader { stroke: var(--callout-border); stroke-width: 1.5; stroke-dasharray: 4 3; fill: none; }
+    .st-callout-title { font-weight: 600; font-size: 13px; fill: var(--text-primary); }
+    .st-callout-sub { font-size: 11.5px; fill: var(--text-secondary); }
+    .st-icon-fill { fill: var(--text-muted); opacity: 0.7; }
+  </style>
+
+  <!-- Outer file frame -->
+  <rect class="st-frame" x="20" y="20" width="680" height="400" rx="10" />
+
+  <!-- File icon (folded-corner document) -->
+  <g transform="translate(36, 32)">
+    <path class="st-icon-fill" d="M 0 0 L 16 0 L 22 6 L 22 28 L 0 28 Z" />
+    <path d="M 16 0 L 22 6 L 16 6 Z" fill="var(--frame-fill)" />
+  </g>
+
+  <!-- Filename -->
+  <text class="st-mono st-title-text" x="68" y="52">savegame_1.json</text>
+
+  <!-- Slot pill (top-right) -->
+  <rect class="st-pill" x="600" y="38" width="84" height="22" rx="11" />
+  <text class="st-mono st-pill-text" x="642" y="53" text-anchor="middle">Slot 1 of 3</text>
+
+  <!-- Title bar divider -->
+  <line class="st-divider" x1="36" y1="72" x2="684" y2="72" />
+
+  <!-- Metadata strip: 3 top-level scalar fields as pills -->
+  <rect class="st-pill" x="36"  y="84" width="208" height="24" rx="12" />
+  <rect class="st-pill" x="256" y="84" width="208" height="24" rx="12" />
+  <rect class="st-pill" x="476" y="84" width="208" height="24" rx="12" />
+
+  <text class="st-mono st-meta-text" x="140" y="100" text-anchor="middle">
+    <tspan>"version":</tspan>
+    <tspan class="st-meta-val" dx="3">"1.0.0"</tspan>
+  </text>
+  <text class="st-mono st-meta-text" x="360" y="100" text-anchor="middle">
+    <tspan>"timestamp":</tspan>
+    <tspan class="st-meta-val" dx="3">1745971200</tspan>
+  </text>
+  <text class="st-mono st-meta-text" x="580" y="100" text-anchor="middle">
+    <tspan>"play_time":</tspan>
+    <tspan class="st-meta-val" dx="3">1847.3</tspan>
+  </text>
+
+  <!-- ===== Section cards ===== -->
+
+  <!-- player card -->
+  <rect class="st-card" x="36" y="128" width="208" height="208" rx="6" />
+  <path class="st-card-h-player" d="M 36 134 Q 36 128 42 128 L 238 128 Q 244 128 244 134 L 244 160 L 36 160 Z" />
+  <text class="st-mono st-card-h-text" x="48" y="149">"player"</text>
+  <g class="st-mono st-field">
+    <text x="48" y="184"><tspan class="st-field-key">"name":</tspan><tspan class="st-field-val" dx="4">"Aria"</tspan></text>
+    <text x="48" y="208"><tspan class="st-field-key">"level":</tspan><tspan class="st-field-val" dx="4">12</tspan></text>
+    <text x="48" y="232"><tspan class="st-field-key">"health":</tspan><tspan class="st-field-val" dx="4">85</tspan></text>
+    <text x="48" y="256"><tspan class="st-field-key">"position":</tspan><tspan class="st-field-val" dx="4">[340, 220]</tspan></text>
+    <text x="48" y="280"><tspan class="st-field-key">"inventory":</tspan><tspan class="st-field-val" dx="4">[3 items]</tspan></text>
+  </g>
+
+  <!-- progress card -->
+  <rect class="st-card" x="256" y="128" width="208" height="208" rx="6" />
+  <path class="st-card-h-progress" d="M 256 134 Q 256 128 262 128 L 458 128 Q 464 128 464 134 L 464 160 L 256 160 Z" />
+  <text class="st-mono st-card-h-text" x="268" y="149">"progress"</text>
+  <g class="st-mono st-field">
+    <text x="268" y="184"><tspan class="st-field-key">"current_level":</tspan><tspan class="st-field-val" dx="4">3</tspan></text>
+    <text x="268" y="208"><tspan class="st-field-key">"completed":</tspan><tspan class="st-field-val" dx="4">[1, 2]</tspan></text>
+    <text x="268" y="232"><tspan class="st-field-key">"score":</tspan><tspan class="st-field-val" dx="4">4830</tspan></text>
+    <text x="268" y="256"><tspan class="st-field-key">"achievements":</tspan><tspan class="st-field-val" dx="4">[2 items]</tspan></text>
+  </g>
+
+  <!-- world card -->
+  <rect class="st-card" x="476" y="128" width="208" height="208" rx="6" />
+  <path class="st-card-h-world" d="M 476 134 Q 476 128 482 128 L 678 128 Q 684 128 684 134 L 684 160 L 476 160 Z" />
+  <text class="st-mono st-card-h-text" x="488" y="149">"world"</text>
+  <g class="st-mono st-field">
+    <text x="488" y="184"><tspan class="st-field-key">"world_seed":</tspan><tspan class="st-field-val" dx="4">42</tspan></text>
+    <text x="488" y="208"><tspan class="st-field-key">"enemies":</tspan><tspan class="st-field-val" dx="4">[3 items]</tspan></text>
+    <text x="488" y="232"><tspan class="st-field-key">"items":</tspan><tspan class="st-field-val" dx="4">[7 items]</tspan></text>
+  </g>
+
+  <!-- Pedagogical callout: position tuple -> JSON array -->
+  <path class="st-callout-leader" d="M 175 256 Q 195 312 260 358" />
+  <rect class="st-callout-box" x="200" y="356" width="320" height="56" rx="6" />
+  <text class="st-sans st-callout-title" x="360" y="378" text-anchor="middle">Python tuples → JSON arrays</text>
+  <text class="st-sans st-callout-sub" x="360" y="397" text-anchor="middle">asdict() flattens nested types into JSON primitives</text>
+</svg>

@@ -224,6 +224,11 @@ class UtilityAI:
         
         return modifiers.get(action, 1.0)</code></pre>
 
+    <figure class="svg-wrapper">
+        <img class="responsive-svg" src="/images/components/utility-response-curves.svg" loading="lazy" alt="Five normalized response curves overlaid on a 0-to-1 chart: linear (slate diagonal), quadratic (blue), exponential cubed (teal), sigmoid (amber S-curve), and gaussian (red bell). A dashed vertical line at input 0.7 crosses each curve at a different output value: 0.70 linear, 0.49 quadratic, 0.34 exponential, 0.88 sigmoid, 0.61 gaussian. A side panel lists each curve with its formula and the worked output values; a footer ties the curves to the lesson's score_eat (exponential) and score_fight (sigmoid).">
+        <figcaption>Five response curves used by the utility AI's <code>score_*</code> functions. The dashed line at <code>input = 0.7</code> shows the same input value producing very different output scores depending on the curve — sigmoid behaves like a threshold (snap to high near the center), exponential delays the response (high values dominate late), and gaussian peaks at the center then falls off both sides. Tuning a utility AI is largely about picking the curve whose shape matches how the agent should react to that need.</figcaption>
+    </figure>
+
     <h2 id="best-practices">Best Practices</h2>
     
     <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">

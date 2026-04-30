@@ -81,6 +81,14 @@
         </ul>
     </div>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/state-machine-ai.svg"
+             alt="A finite state machine for an enemy AI with four states arranged in a square: Idle (top-left), Patrol (top-right), Chase (bottom-right), and Attack (bottom-left). A start dot points into Idle. Transitions cycle clockwise: Idle to Patrol on a timer, Patrol to Chase when the player is spotted, Chase to Attack when in attack range, and Attack back to Idle when the target is down."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>A four-state enemy AI cycling Idle &rarr; Patrol &rarr; Chase &rarr; Attack &rarr; Idle. Each transition fires when its trigger condition is met; real NPCs typically add more transitions for fleeing, recovery, and edge cases.</figcaption>
+    </figure>
+
     <div class="mermaid">
     graph TD
         A["Finite State Machine"] --> B["States"]
@@ -100,6 +108,14 @@
         D --> M["Concurrent"]
         D --> N["Pushdown Automata"]
     </div>
+
+    <figure class="svg-wrapper">
+        <img src="/images/components/fov-cone.svg"
+             alt="A top-down diagram of an NPC at the apex of a 60-degree amber vision cone bounded by a dashed amber arc at vision range. A teal target inside the cone is labelled A, visible. A red target behind the NPC is labelled B, hidden because it falls outside the vision angle. A gray target along the facing axis but beyond the dashed arc is labelled C, out of range. The half-angle of 30 degrees is marked between the facing axis and the upper cone edge."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>An NPC's field of view is the intersection of an angle (the cone) and a range (the radius). The state machine's <code>canSeePlayer()</code> check fails if the player is outside either &mdash; too wide an angle, or too far away. The interactive demo below visualises this as the yellow wedge attached to each NPC.</figcaption>
+    </figure>
 
     <h2 id="interactive-npc-state-machine-demo">Interactive NPC State Machine Demo</h2>
     

@@ -1,0 +1,165 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 400" role="img" aria-labelledby="pl-title pl-desc">
+  <title id="pl-title">Parallax layer depth — speed factors and apparent motion</title>
+  <desc id="pl-desc">Side-elevation depth diagram showing five horizontal layer flats stacked vertically by conceptual depth, from top (farthest from the camera) to bottom (closest). Top to bottom the layers are Sky with speed factor 0.1×, Mountains 0.2×, Far Trees 0.4×, Near Trees 0.7×, and Foreground 1.2×. Each flat has a leftward amber motion arrow whose length is proportional to its speed factor, representing the layer's apparent shift across the camera frame when the camera moves right. A blue camera glyph at the bottom-left moves right by Δx = +100 pixels, shown with a blue rightward arrow. A callout below explains the formula offset = camera.x × layer.speedX, and shows worked per-layer offsets for Δx = +100 px: Sky 10, Mountains 20, Far Trees 40, Near Trees 70, and Foreground 120 pixels.</desc>
+
+  <style>
+    svg {
+      --pl-text:           rgb(30, 41, 59);
+      --pl-text-secondary: rgb(100, 116, 139);
+      --pl-text-muted:     rgb(148, 163, 184);
+      --pl-axis:           rgb(100, 116, 139);
+      --pl-camera:         rgb(59, 130, 246);
+      --pl-arrow:          rgb(217, 119, 6);
+      --pl-band-stroke:    rgb(15, 118, 110);
+      --pl-band-far:       rgba(15, 118, 110, 0.18);
+      --pl-band-2:         rgba(15, 118, 110, 0.32);
+      --pl-band-3:         rgba(15, 118, 110, 0.48);
+      --pl-band-4:         rgba(15, 118, 110, 0.65);
+      --pl-band-near:      rgba(15, 118, 110, 0.85);
+      --pl-callout-bg:     rgb(248, 250, 252);
+      --pl-callout-stroke: rgb(203, 213, 225);
+      --pl-pill-bg:        rgb(255, 255, 255);
+      --pl-camera-lens:    rgb(255, 255, 255);
+    }
+    @media (prefers-color-scheme: dark) {
+      svg {
+        --pl-text:           rgb(226, 232, 240);
+        --pl-text-secondary: rgb(148, 163, 184);
+        --pl-text-muted:     rgb(100, 116, 139);
+        --pl-axis:           rgb(148, 163, 184);
+        --pl-camera:         rgb(86, 156, 214);
+        --pl-arrow:          rgb(251, 191, 36);
+        --pl-band-stroke:    rgb(45, 212, 191);
+        --pl-band-far:       rgba(45, 212, 191, 0.14);
+        --pl-band-2:         rgba(45, 212, 191, 0.24);
+        --pl-band-3:         rgba(45, 212, 191, 0.36);
+        --pl-band-4:         rgba(45, 212, 191, 0.52);
+        --pl-band-near:      rgba(45, 212, 191, 0.72);
+        --pl-callout-bg:     rgb(31, 41, 55);
+        --pl-callout-stroke: rgb(71, 85, 105);
+        --pl-pill-bg:        rgb(15, 23, 42);
+        --pl-camera-lens:    rgb(15, 23, 42);
+      }
+    }
+    .pl-band-name    { font: 700 13px ui-sans-serif, system-ui, sans-serif; fill: var(--pl-text); }
+    .pl-band-speed   { font: 600 12px ui-monospace, "SF Mono", Menlo, Consolas, monospace; fill: var(--pl-text-secondary); }
+    .pl-camera-label { font: 700 13px ui-sans-serif, system-ui, sans-serif; fill: var(--pl-text); text-anchor: middle; }
+    .pl-camera-sub   { font: italic 10.5px ui-sans-serif, system-ui, sans-serif; fill: var(--pl-text-muted); text-anchor: middle; }
+    .pl-camera-delta { font: 700 12px ui-monospace, "SF Mono", Menlo, Consolas, monospace; fill: var(--pl-camera); text-anchor: middle; }
+    .pl-formula      { font: 700 14px ui-monospace, "SF Mono", Menlo, Consolas, monospace; fill: var(--pl-text); text-anchor: middle; }
+    .pl-formula-sub  { font: italic 11.5px ui-sans-serif, system-ui, sans-serif; fill: var(--pl-text-secondary); text-anchor: middle; }
+    .pl-pill-name    { font: 600 9.5px ui-sans-serif, system-ui, sans-serif; fill: var(--pl-text-secondary); text-anchor: middle; letter-spacing: 0.03em; }
+    .pl-pill-value   { font: 700 14px ui-monospace, "SF Mono", Menlo, Consolas, monospace; fill: var(--pl-text); text-anchor: middle; }
+    .pl-footer       { font: italic 10.5px ui-sans-serif, system-ui, sans-serif; fill: var(--pl-text-muted); text-anchor: middle; }
+  </style>
+
+  <defs>
+    <!-- Amber arrowhead for per-layer apparent-motion arrows -->
+    <marker id="pl-arrow-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--pl-arrow)"/>
+    </marker>
+    <!-- Blue arrowhead for the camera-motion arrow -->
+    <marker id="pl-arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--pl-camera)"/>
+    </marker>
+  </defs>
+
+  <!-- ============================================================ -->
+  <!-- LAYER BANDS (top to bottom = farthest to closest)            -->
+  <!-- All bands: x=70, width=420, height=32, rx=4                  -->
+  <!-- Atmospheric perspective: opacity grades from far (faded)     -->
+  <!-- to near (saturated), reinforcing depth.                       -->
+  <!-- Per-layer leftward motion arrows scale 1:1 with offset px:   -->
+  <!-- Sky 10, Mountains 20, Far 40, Near 70, Foreground 120.       -->
+  <!-- ============================================================ -->
+
+  <!-- Band 0: Sky (y=24-56, center y=40) -->
+  <rect x="70" y="24" width="420" height="32" rx="4" fill="var(--pl-band-far)" stroke="var(--pl-band-stroke)" stroke-width="1" stroke-opacity="0.5"/>
+  <line x1="485" y1="40" x2="475" y2="40" stroke="var(--pl-arrow)" stroke-width="2" marker-end="url(#pl-arrow-amber)"/>
+  <text x="505" y="36" class="pl-band-name">Sky</text>
+  <text x="505" y="52" class="pl-band-speed">0.1×</text>
+
+  <!-- Band 1: Mountains (y=66-98, center y=82) -->
+  <rect x="70" y="66" width="420" height="32" rx="4" fill="var(--pl-band-2)" stroke="var(--pl-band-stroke)" stroke-width="1" stroke-opacity="0.5"/>
+  <line x1="485" y1="82" x2="465" y2="82" stroke="var(--pl-arrow)" stroke-width="2" marker-end="url(#pl-arrow-amber)"/>
+  <text x="505" y="78" class="pl-band-name">Mountains</text>
+  <text x="505" y="94" class="pl-band-speed">0.2×</text>
+
+  <!-- Band 2: Far Trees (y=108-140, center y=124) -->
+  <rect x="70" y="108" width="420" height="32" rx="4" fill="var(--pl-band-3)" stroke="var(--pl-band-stroke)" stroke-width="1" stroke-opacity="0.5"/>
+  <line x1="485" y1="124" x2="445" y2="124" stroke="var(--pl-arrow)" stroke-width="2" marker-end="url(#pl-arrow-amber)"/>
+  <text x="505" y="120" class="pl-band-name">Far Trees</text>
+  <text x="505" y="136" class="pl-band-speed">0.4×</text>
+
+  <!-- Band 3: Near Trees (y=150-182, center y=166) -->
+  <rect x="70" y="150" width="420" height="32" rx="4" fill="var(--pl-band-4)" stroke="var(--pl-band-stroke)" stroke-width="1" stroke-opacity="0.5"/>
+  <line x1="485" y1="166" x2="415" y2="166" stroke="var(--pl-arrow)" stroke-width="2" marker-end="url(#pl-arrow-amber)"/>
+  <text x="505" y="162" class="pl-band-name">Near Trees</text>
+  <text x="505" y="178" class="pl-band-speed">0.7×</text>
+
+  <!-- Band 4: Foreground (y=192-224, center y=208) -->
+  <rect x="70" y="192" width="420" height="32" rx="4" fill="var(--pl-band-near)" stroke="var(--pl-band-stroke)" stroke-width="1" stroke-opacity="0.5"/>
+  <line x1="485" y1="208" x2="365" y2="208" stroke="var(--pl-arrow)" stroke-width="2" marker-end="url(#pl-arrow-amber)"/>
+  <text x="505" y="204" class="pl-band-name">Foreground</text>
+  <text x="505" y="220" class="pl-band-speed">1.2×</text>
+
+  <!-- ============================================================ -->
+  <!-- CAMERA GLYPH + MOTION ARROW (bottom-left)                    -->
+  <!-- ============================================================ -->
+
+  <!-- "Δx = +100 px" caption above the arrow -->
+  <text x="185" y="284" class="pl-camera-delta">Δx = +100 px</text>
+
+  <!-- Camera motion arrow (rightward, BLUE) -->
+  <line x1="130" y1="295" x2="240" y2="295" stroke="var(--pl-camera)" stroke-width="3" marker-end="url(#pl-arrow-blue)"/>
+
+  <!-- Camera body (filled circle) and lens (inner circle) -->
+  <circle cx="110" cy="295" r="14" fill="var(--pl-camera)"/>
+  <circle cx="110" cy="295" r="5" fill="var(--pl-camera-lens)"/>
+
+  <!-- Camera labels -->
+  <text x="110" y="325" class="pl-camera-label">Camera</text>
+  <text x="110" y="340" class="pl-camera-sub">(scrolls right when reader presses →)</text>
+
+  <!-- ============================================================ -->
+  <!-- CALLOUT BOX with formula and worked numbers                  -->
+  <!-- ============================================================ -->
+  <g id="pl-callout">
+    <rect x="270" y="252" width="425" height="135" rx="8" fill="var(--pl-callout-bg)" stroke="var(--pl-callout-stroke)" stroke-width="1"/>
+
+    <!-- Formula header -->
+    <text x="482" y="278" class="pl-formula">offset = camera.x × layer.speedX</text>
+
+    <!-- Subhead -->
+    <text x="482" y="298" class="pl-formula-sub">For Δx = +100 px, each layer's offset becomes:</text>
+
+    <!-- 5 PILLS with name + value (px implied by subhead) -->
+    <!-- Pill 0: Sky 10 -->
+    <rect x="276" y="308" width="78" height="38" rx="6" fill="var(--pl-pill-bg)" stroke="var(--pl-callout-stroke)" stroke-width="1"/>
+    <text x="315" y="322" class="pl-pill-name">SKY</text>
+    <text x="315" y="340" class="pl-pill-value">10</text>
+
+    <!-- Pill 1: Mountains 20 -->
+    <rect x="360" y="308" width="78" height="38" rx="6" fill="var(--pl-pill-bg)" stroke="var(--pl-callout-stroke)" stroke-width="1"/>
+    <text x="399" y="322" class="pl-pill-name">MOUNTAINS</text>
+    <text x="399" y="340" class="pl-pill-value">20</text>
+
+    <!-- Pill 2: Far Trees 40 -->
+    <rect x="444" y="308" width="78" height="38" rx="6" fill="var(--pl-pill-bg)" stroke="var(--pl-callout-stroke)" stroke-width="1"/>
+    <text x="483" y="322" class="pl-pill-name">FAR TREES</text>
+    <text x="483" y="340" class="pl-pill-value">40</text>
+
+    <!-- Pill 3: Near Trees 70 -->
+    <rect x="528" y="308" width="78" height="38" rx="6" fill="var(--pl-pill-bg)" stroke="var(--pl-callout-stroke)" stroke-width="1"/>
+    <text x="567" y="322" class="pl-pill-name">NEAR TREES</text>
+    <text x="567" y="340" class="pl-pill-value">70</text>
+
+    <!-- Pill 4: Foreground 120 -->
+    <rect x="612" y="308" width="78" height="38" rx="6" fill="var(--pl-pill-bg)" stroke="var(--pl-callout-stroke)" stroke-width="1"/>
+    <text x="651" y="322" class="pl-pill-name">FOREGROUND</text>
+    <text x="651" y="340" class="pl-pill-value">120</text>
+
+    <!-- Footer caption -->
+    <text x="482" y="370" class="pl-footer">Higher speedX → closer to camera. speedX &gt; 1 means the layer scrolls faster than the camera itself.</text>
+  </g>
+</svg>

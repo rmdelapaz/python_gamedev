@@ -81,6 +81,11 @@
         </ul>
     </div>
 
+    <figure class="svg-wrapper">
+        <img class="responsive-svg" src="/images/components/parallax-layers.svg" loading="lazy" alt="Side-elevation depth diagram of five parallax layer flats stacked from farthest (Sky, speed 0.1×) at the top to closest (Foreground, speed 1.2×) at the bottom. Each flat has a leftward amber motion arrow whose length is proportional to its speed factor. A blue camera glyph at the bottom-left moves right by Δx = +100 pixels, and a callout below shows the formula offset = camera.x × layer.speedX with worked per-layer offsets of 10, 20, 40, 70, and 120 pixels.">
+        <figcaption>Each layer flat has a <strong>speed factor</strong> that scales how much the camera's position offsets it. Far layers (low factor) barely shift; foreground layers (factor &gt; 1) shift further than the camera moves. The five values shown match the Forest scene loaded by the demo above.</figcaption>
+    </figure>
+
     <div class="mermaid">
     graph TD
         A["Parallax System"] --> B["Layer Management"]

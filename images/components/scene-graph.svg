@@ -1,0 +1,142 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 420" role="img" aria-labelledby="sg-title sg-desc">
+  <title id="sg-title">Scene graph: a tree of game objects under a scene root</title>
+  <desc id="sg-desc">A three-level tree. The root node Scene: Level 1 branches into three children: Player (highlighted), Enemies, and Environment. Each of those has two leaf children: Sprite and Weapon under Player, Goblin and Slime under Enemies, Platform and Pickup under Environment. The Weapon node and the edge connecting it to Player are highlighted in amber. A dashed leader connects Weapon to a callout that reads "Move Player, Weapon follows — child transforms cascade from parent."</desc>
+
+  <style>
+    svg {
+      --node-text: rgb(30, 41, 59);
+      --edge: rgb(148, 163, 184);
+      --teal-fill: rgb(204, 251, 241);
+      --teal-stroke: rgb(13, 148, 136);
+      --blue-fill: rgb(219, 234, 254);
+      --blue-stroke: rgb(59, 130, 246);
+      --amber-fill: rgb(254, 243, 199);
+      --amber-stroke: rgb(217, 119, 6);
+      --callout-text: rgb(120, 53, 15);
+    }
+    @media (prefers-color-scheme: dark) {
+      svg {
+        --node-text: rgb(226, 232, 240);
+        --edge: rgb(100, 116, 139);
+        --teal-fill: rgb(19, 78, 74);
+        --teal-stroke: rgb(45, 212, 191);
+        --blue-fill: rgb(30, 58, 138);
+        --blue-stroke: rgb(86, 156, 214);
+        --amber-fill: rgb(120, 53, 15);
+        --amber-stroke: rgb(251, 191, 36);
+        --callout-text: rgb(254, 243, 199);
+      }
+    }
+    .sg-edge {
+      stroke: var(--edge);
+      stroke-width: 1.5;
+      fill: none;
+    }
+    .sg-edge-hl {
+      stroke: var(--amber-stroke);
+      stroke-width: 2.5;
+      fill: none;
+    }
+    .sg-leader {
+      stroke: var(--amber-stroke);
+      stroke-width: 1.5;
+      stroke-dasharray: 4 3;
+      fill: none;
+    }
+    .sg-rect { stroke-width: 2; }
+    .sg-rect-hl { stroke-width: 2.5; }
+    .sg-text {
+      fill: var(--node-text);
+      font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+      font-size: 14px;
+      text-anchor: middle;
+    }
+    .sg-leaf { font-size: 13px; }
+    .sg-callout {
+      fill: var(--callout-text);
+      font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+      font-size: 13px;
+      text-anchor: middle;
+    }
+    .sg-callout-sub { font-size: 11px; font-style: italic; }
+  </style>
+
+  <!-- Edges (drawn before nodes so node fills sit on top) -->
+  <!-- Root to Level 1: trunk + crossbar + drops -->
+  <path class="sg-edge" d="M 360 64 V 110" />
+  <path class="sg-edge" d="M 140 110 H 580" />
+  <path class="sg-edge" d="M 140 110 V 153" />
+  <path class="sg-edge" d="M 360 110 V 153" />
+  <path class="sg-edge" d="M 580 110 V 153" />
+
+  <!-- Player branch (Weapon edge highlighted amber) -->
+  <path class="sg-edge" d="M 140 187 V 240" />
+  <path class="sg-edge" d="M 90 240 H 140" />
+  <path class="sg-edge-hl" d="M 140 240 H 190" />
+  <path class="sg-edge" d="M 90 240 V 283" />
+  <path class="sg-edge-hl" d="M 190 240 V 283" />
+
+  <!-- Enemies branch -->
+  <path class="sg-edge" d="M 360 187 V 240" />
+  <path class="sg-edge" d="M 320 240 H 400" />
+  <path class="sg-edge" d="M 320 240 V 283" />
+  <path class="sg-edge" d="M 400 240 V 283" />
+
+  <!-- Environment branch -->
+  <path class="sg-edge" d="M 580 187 V 240" />
+  <path class="sg-edge" d="M 540 240 H 620" />
+  <path class="sg-edge" d="M 540 240 V 283" />
+  <path class="sg-edge" d="M 620 240 V 283" />
+
+  <!-- Nodes: Level 0 root -->
+  <rect class="sg-rect" x="290" y="30" width="140" height="34" rx="4"
+        fill="var(--teal-fill)" stroke="var(--teal-stroke)" />
+  <text class="sg-text" x="360" y="51">Scene: Level 1</text>
+
+  <!-- Level 1: Player (highlighted), Enemies, Environment -->
+  <rect class="sg-rect-hl" x="90" y="153" width="100" height="34" rx="4"
+        fill="var(--blue-fill)" stroke="var(--amber-stroke)" />
+  <text class="sg-text" x="140" y="174">Player</text>
+
+  <rect class="sg-rect" x="310" y="153" width="100" height="34" rx="4"
+        fill="var(--teal-fill)" stroke="var(--teal-stroke)" />
+  <text class="sg-text" x="360" y="174">Enemies</text>
+
+  <rect class="sg-rect" x="530" y="153" width="100" height="34" rx="4"
+        fill="var(--teal-fill)" stroke="var(--teal-stroke)" />
+  <text class="sg-text" x="580" y="174">Environment</text>
+
+  <!-- Level 2: leaves under Player (Weapon highlighted) -->
+  <rect class="sg-rect" x="45" y="283" width="90" height="30" rx="4"
+        fill="var(--blue-fill)" stroke="var(--blue-stroke)" />
+  <text class="sg-text sg-leaf" x="90" y="302">Sprite</text>
+
+  <rect class="sg-rect-hl" x="145" y="283" width="90" height="30" rx="4"
+        fill="var(--amber-fill)" stroke="var(--amber-stroke)" />
+  <text class="sg-text sg-leaf" x="190" y="302">Weapon</text>
+
+  <!-- Leaves under Enemies -->
+  <rect class="sg-rect" x="275" y="283" width="90" height="30" rx="4"
+        fill="var(--teal-fill)" stroke="var(--teal-stroke)" />
+  <text class="sg-text sg-leaf" x="320" y="302">Goblin</text>
+
+  <rect class="sg-rect" x="355" y="283" width="90" height="30" rx="4"
+        fill="var(--teal-fill)" stroke="var(--teal-stroke)" />
+  <text class="sg-text sg-leaf" x="400" y="302">Slime</text>
+
+  <!-- Leaves under Environment -->
+  <rect class="sg-rect" x="495" y="283" width="90" height="30" rx="4"
+        fill="var(--teal-fill)" stroke="var(--teal-stroke)" />
+  <text class="sg-text sg-leaf" x="540" y="302">Platform</text>
+
+  <rect class="sg-rect" x="575" y="283" width="90" height="30" rx="4"
+        fill="var(--teal-fill)" stroke="var(--teal-stroke)" />
+  <text class="sg-text sg-leaf" x="620" y="302">Pickup</text>
+
+  <!-- Callout: transform inheritance -->
+  <path class="sg-leader" d="M 190 313 Q 220 340 360 355" />
+  <rect x="240" y="355" width="240" height="50" rx="6"
+        fill="var(--amber-fill)" stroke="var(--amber-stroke)" stroke-width="1.5" />
+  <text class="sg-callout" x="360" y="376">Move Player &#8594; Weapon follows</text>
+  <text class="sg-callout sg-callout-sub" x="360" y="394">child transforms cascade from parent</text>
+</svg>

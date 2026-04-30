@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 360" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="topo-title topo-desc">
+    <title id="topo-title">Network topology comparison: client-server versus full-mesh peer-to-peer</title>
+    <desc id="topo-desc">Two network topologies shown side by side. On the left, a client-server topology has one central server (teal) with four clients (blue) arranged in a cross pattern, each connecting only to the server, for a total of four connections. On the right, a full-mesh peer-to-peer topology has four peers (blue) at the corners of a square, with every peer connected directly to every other peer, for a total of six connections.</desc>
+
+    <style>
+        svg {
+            --card-stroke:   rgb(226, 232, 240);
+            --card-fill:     rgba(241, 245, 249, 0.5);
+            --title-text:    rgb(30, 41, 59);
+            --caption-text:  rgb(71, 85, 105);
+            --formula-text:  rgb(100, 116, 139);
+            --server-fill:   rgb(13, 148, 136);
+            --server-stroke: rgb(15, 118, 110);
+            --node-fill:     rgb(59, 130, 246);
+            --node-stroke:   rgb(37, 99, 235);
+            --node-label:    #ffffff;
+            --conn-cs:       rgba(13, 148, 136, 0.65);
+            --conn-p2p:      rgba(59, 130, 246, 0.55);
+        }
+        @media (prefers-color-scheme: dark) {
+            svg {
+                --card-stroke:   rgb(51, 65, 85);
+                --card-fill:     rgba(30, 41, 59, 0.4);
+                --title-text:    #f1f5f9;
+                --caption-text:  #cbd5e1;
+                --formula-text:  #94a3b8;
+                --server-fill:   rgb(20, 184, 166);
+                --server-stroke: rgb(45, 212, 191);
+                --node-fill:     rgb(86, 156, 214);
+                --node-stroke:   rgb(125, 178, 222);
+                --node-label:    rgb(15, 23, 42);
+                --conn-cs:       rgba(45, 212, 191, 0.7);
+                --conn-p2p:      rgba(125, 178, 222, 0.65);
+            }
+        }
+        .topology-card    { fill: var(--card-fill);    stroke: var(--card-stroke); stroke-width: 1; }
+        .topology-title   { fill: var(--title-text);   font: 700 18px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .conn-cs          { stroke: var(--conn-cs);    stroke-width: 2.5; fill: none; stroke-linecap: round; }
+        .conn-p2p         { stroke: var(--conn-p2p);   stroke-width: 2.5; fill: none; stroke-linecap: round; }
+        .server-node      { fill: var(--server-fill);  stroke: var(--server-stroke); stroke-width: 2; }
+        .peer-node        { fill: var(--node-fill);    stroke: var(--node-stroke);   stroke-width: 2; }
+        .node-label       { fill: var(--node-label);   font: 700 12px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .server-label     { fill: var(--node-label);   font: 700 12px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .conn-formula     { fill: var(--formula-text); font: italic 500 13px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    </style>
+
+    <!-- Card backgrounds -->
+    <rect class="topology-card" x="30"  y="20" width="300" height="280" rx="10"/>
+    <rect class="topology-card" x="370" y="20" width="300" height="280" rx="10"/>
+
+    <!-- Topology titles -->
+    <text class="topology-title" x="180" y="55" text-anchor="middle">Client–Server</text>
+    <text class="topology-title" x="520" y="55" text-anchor="middle">Peer-to-Peer (full mesh)</text>
+
+    <!-- ============ Client–Server ============ -->
+    <!-- Connections (drawn first, behind nodes) -->
+    <g>
+        <line class="conn-cs" x1="180" y1="180" x2="180" y2="115"/>
+        <line class="conn-cs" x1="180" y1="180" x2="245" y2="180"/>
+        <line class="conn-cs" x1="180" y1="180" x2="180" y2="245"/>
+        <line class="conn-cs" x1="180" y1="180" x2="115" y2="180"/>
+    </g>
+    <!-- Client nodes -->
+    <circle class="peer-node" cx="180" cy="115" r="15"/>
+    <circle class="peer-node" cx="245" cy="180" r="15"/>
+    <circle class="peer-node" cx="180" cy="245" r="15"/>
+    <circle class="peer-node" cx="115" cy="180" r="15"/>
+    <text class="node-label" x="180" y="115" text-anchor="middle" dominant-baseline="central">C</text>
+    <text class="node-label" x="245" y="180" text-anchor="middle" dominant-baseline="central">C</text>
+    <text class="node-label" x="180" y="245" text-anchor="middle" dominant-baseline="central">C</text>
+    <text class="node-label" x="115" y="180" text-anchor="middle" dominant-baseline="central">C</text>
+    <!-- Server node (drawn last, on top) -->
+    <circle class="server-node" cx="180" cy="180" r="26"/>
+    <text class="server-label" x="180" y="180" text-anchor="middle" dominant-baseline="central">Server</text>
+
+    <!-- Client-server connection-count formula -->
+    <text class="conn-formula" x="180" y="285" text-anchor="middle">N clients → N connections</text>
+
+    <!-- ============ Full Mesh P2P ============ -->
+    <!-- Peer positions: TL(470,135), TR(570,135), BR(570,225), BL(470,225) -->
+    <!-- Connections (6 lines, drawn first) -->
+    <g>
+        <line class="conn-p2p" x1="470" y1="135" x2="570" y2="135"/>
+        <line class="conn-p2p" x1="570" y1="135" x2="570" y2="225"/>
+        <line class="conn-p2p" x1="570" y1="225" x2="470" y2="225"/>
+        <line class="conn-p2p" x1="470" y1="225" x2="470" y2="135"/>
+        <line class="conn-p2p" x1="470" y1="135" x2="570" y2="225"/>
+        <line class="conn-p2p" x1="570" y1="135" x2="470" y2="225"/>
+    </g>
+    <!-- Peer nodes -->
+    <circle class="peer-node" cx="470" cy="135" r="20"/>
+    <circle class="peer-node" cx="570" cy="135" r="20"/>
+    <circle class="peer-node" cx="570" cy="225" r="20"/>
+    <circle class="peer-node" cx="470" cy="225" r="20"/>
+    <text class="node-label" x="470" y="135" text-anchor="middle" dominant-baseline="central">P1</text>
+    <text class="node-label" x="570" y="135" text-anchor="middle" dominant-baseline="central">P2</text>
+    <text class="node-label" x="570" y="225" text-anchor="middle" dominant-baseline="central">P3</text>
+    <text class="node-label" x="470" y="225" text-anchor="middle" dominant-baseline="central">P4</text>
+
+    <!-- Mesh connection-count formula -->
+    <text class="conn-formula" x="520" y="285" text-anchor="middle">N peers → N(N−1)/2 connections</text>
+
+    <!-- Bottom caption: connection counts at N=4 -->
+    <text class="conn-formula" x="180" y="335" text-anchor="middle">at N = 4: 4 connections</text>
+    <text class="conn-formula" x="520" y="335" text-anchor="middle">at N = 4: 6 connections</text>
+</svg>

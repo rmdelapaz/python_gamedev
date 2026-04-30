@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 440" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="vec-title vec-desc">
+    <title id="vec-title">Vector with magnitude, direction, and X/Y components</title>
+    <desc id="vec-desc">A two-dimensional vector v originates from a point labelled origin and points up and to the right. Dashed lines drop from the vector's tip to show its horizontal X component (delta x) and vertical Y component (delta y). The angle theta between the vector and the positive X-axis is labelled.</desc>
+
+    <style>
+        :root {
+            --grid: #e2e8f0;
+            --axis: #94a3b8;
+            --axis-text: rgb(71, 85, 105);
+            --vec: rgb(59, 130, 246);
+            --vec-text: rgb(30, 41, 59);
+            --comp: #94a3b8;
+            --comp-text: rgb(71, 85, 105);
+            --angle: rgb(245, 158, 11);
+            --origin: rgb(51, 65, 85);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --grid: #334155;
+                --axis: #94a3b8;
+                --axis-text: #cbd5e1;
+                --vec: #569cd6;
+                --vec-text: #f1f5f9;
+                --comp: #94a3b8;
+                --comp-text: #cbd5e1;
+                --angle: #fbbf24;
+                --origin: #d4d4d4;
+            }
+        }
+        .grid line { stroke: var(--grid); stroke-width: 1; }
+        .axis { stroke: var(--axis); stroke-width: 1.5; fill: none; }
+        .axis-label { fill: var(--axis-text); font: italic 500 18px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .vec-line { stroke: var(--vec); stroke-width: 4; fill: none; stroke-linecap: round; }
+        .comp-line { stroke: var(--comp); stroke-width: 2; stroke-dasharray: 7 5; fill: none; }
+        .comp-label { fill: var(--comp-text); font: 500 18px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .vec-label { fill: var(--vec-text); font: 700 22px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .vec-bar { stroke: var(--vec-text); stroke-width: 2.5; stroke-linecap: round; fill: none; }
+        .vec-bar-head { fill: var(--vec-text); }
+        .angle-arc { stroke: var(--angle); stroke-width: 2.5; fill: none; }
+        .angle-label { fill: var(--angle); font: italic 700 24px "Times New Roman", Georgia, serif; }
+        .origin-dot { fill: var(--origin); }
+        .origin-label { fill: var(--axis-text); font: 500 16px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    </style>
+
+    <defs>
+        <marker id="vec-arrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+            <path d="M0,0 L12,6 L0,12 Z" fill="var(--vec)"/>
+        </marker>
+        <marker id="axis-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 Z" fill="var(--axis)"/>
+        </marker>
+    </defs>
+
+    <!-- Subtle grid -->
+    <g class="grid">
+        <line x1="0" y1="80"  x2="700" y2="80"/>
+        <line x1="0" y1="160" x2="700" y2="160"/>
+        <line x1="0" y1="240" x2="700" y2="240"/>
+        <line x1="220" y1="0" x2="220" y2="440"/>
+        <line x1="330" y1="0" x2="330" y2="440"/>
+        <line x1="440" y1="0" x2="440" y2="440"/>
+        <line x1="550" y1="0" x2="550" y2="440"/>
+        <line x1="660" y1="0" x2="660" y2="440"/>
+    </g>
+
+    <!-- Axes -->
+    <line class="axis" x1="50"  y1="350" x2="680" y2="350" marker-end="url(#axis-arrow)"/>
+    <line class="axis" x1="110" y1="410" x2="110" y2="40"  marker-end="url(#axis-arrow)"/>
+    <text class="axis-label" x="675" y="375" text-anchor="end">x</text>
+    <text class="axis-label" x="100" y="50"  text-anchor="end">y</text>
+
+    <!-- Component lines (dashed) -->
+    <line class="comp-line" x1="110" y1="350" x2="520" y2="350"/>
+    <line class="comp-line" x1="520" y1="350" x2="520" y2="90"/>
+
+    <!-- Component labels -->
+    <text class="comp-label" x="315" y="380" text-anchor="middle">Δx</text>
+    <text class="comp-label" x="538" y="225" text-anchor="start">Δy</text>
+
+    <!-- Angle arc (positive x-axis to vector) -->
+    <path class="angle-arc" d="M 180 350 A 70 70 0 0 0 169.1 312.5"/>
+    <text class="angle-label" x="195" y="338">θ</text>
+
+    <!-- The vector itself -->
+    <line class="vec-line" x1="110" y1="350" x2="520" y2="90" marker-end="url(#vec-arrow)"/>
+
+    <!-- Vector label "v" with arrow overline, rotated along the line -->
+    <g transform="rotate(-32.35 295 195)">
+        <text class="vec-label" x="295" y="200" text-anchor="middle" font-style="italic">v</text>
+        <line class="vec-bar" x1="284" y1="178" x2="306" y2="178"/>
+        <polygon class="vec-bar-head" points="306,178 300,174.5 300,181.5"/>
+    </g>
+
+    <!-- Origin dot and label -->
+    <circle class="origin-dot" cx="110" cy="350" r="5"/>
+    <text class="origin-label" x="100" y="372" text-anchor="end">origin</text>
+</svg>

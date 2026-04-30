@@ -82,6 +82,14 @@
         </ul>
     </div>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/packet-structure.svg"
+             alt="A horizontal packet diagram divided into three coloured regions. The teal Header on the left contains four fields: Type (1 byte), Flags (1 byte), Length (2 bytes), and Sequence (4 bytes), totalling 8 bytes. The blue Payload in the middle holds the variable-length game data. The amber Checksum on the right is 4 bytes. Byte offsets are marked at section boundaries: 0, 8, 8 plus N, and 12 plus N."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>A typical game-networking packet: a fixed-size <strong>header</strong> describing the message, a variable-length <strong>payload</strong> carrying game data, and a trailing <strong>checksum</strong> for error detection.</figcaption>
+    </figure>
+
     <div class="mermaid">
     graph TD
         A["Networking Architectures"] --> B["Client-Server"]
@@ -98,6 +106,14 @@
         D --> J["Server-Assisted P2P"]
         D --> K["Regional Servers"]
     </div>
+
+    <figure class="svg-wrapper">
+        <img src="/images/components/network-topology.svg"
+             alt="Two network topologies side by side. On the left, a client-server topology has one central server with four clients arranged around it, each connecting only to the server, totalling four connections. On the right, a full-mesh peer-to-peer topology has four peers at the corners of a square, every peer connected directly to every other peer, totalling six connections."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>Connection scaling: client-server grows linearly with N clients, while a full mesh grows quadratically — N(N&minus;1)/2 connections — making it impractical past a handful of peers.</figcaption>
+    </figure>
 
     <h2 id="interactive-network-simulator">Interactive Network Simulator</h2>
     

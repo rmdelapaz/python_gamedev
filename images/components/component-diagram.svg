@@ -1,0 +1,233 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 440" role="img" aria-labelledby="cd-title cd-desc">
+  <title id="cd-title">Entity-Component-System composition and filtering</title>
+  <desc id="cd-desc">Three bands showing ECS structure. Top band: a palette of six components — Transform, Velocity, Sprite, Health, Input, AI. Middle band: three entity cards composed from those components — Player has Transform, Velocity, Sprite, Health, Input; Enemy has Transform, Velocity, Sprite, Health, AI; Particle has only Transform, Velocity, Sprite. Bottom band: two systems — MovementSystem requires Transform and Velocity, CombatSystem requires Health. Dashed slate lines fan from MovementSystem up to all three entity cards; dashed amber lines fan from CombatSystem up to Player and Enemy only. A truncated amber line with an X marker and "(no Health)" annotation between CombatSystem and Particle shows that CombatSystem skips Particle because Particle lacks the required Health component.</desc>
+
+  <style>
+    svg {
+      --cd-bg: transparent;
+      --cd-surface: rgb(248, 250, 252);
+      --cd-surface-2: rgb(241, 245, 249);
+      --cd-border: rgb(203, 213, 225);
+      --cd-text: rgb(30, 41, 59);
+      --cd-text-secondary: rgb(100, 116, 139);
+      --cd-text-muted: rgb(148, 163, 184);
+      --cd-teal: rgb(13, 148, 136);
+      --cd-blue: rgb(59, 130, 246);
+      --cd-amber: rgb(217, 119, 6);
+      --cd-red: rgb(220, 38, 38);
+      --cd-slate: rgb(100, 116, 139);
+      /* Theme-stable header colors so white text passes WCAG contrast in both modes */
+      --cd-player-header: rgb(37, 99, 235);
+      --cd-enemy-header: rgb(180, 83, 9);
+      --cd-particle-header: rgb(15, 118, 110);
+    }
+    @media (prefers-color-scheme: dark) {
+      svg {
+        --cd-surface: rgb(31, 41, 55);
+        --cd-surface-2: rgb(17, 24, 39);
+        --cd-border: rgb(71, 85, 105);
+        --cd-text: rgb(226, 232, 240);
+        --cd-text-secondary: rgb(148, 163, 184);
+        --cd-text-muted: rgb(100, 116, 139);
+        --cd-teal: rgb(45, 212, 191);
+        --cd-blue: rgb(86, 156, 214);
+        --cd-amber: rgb(251, 191, 36);
+        --cd-red: rgb(248, 113, 113);
+        --cd-slate: rgb(148, 163, 184);
+      }
+    }
+    .cd-band-label { font: 600 12px ui-sans-serif, system-ui, sans-serif; fill: var(--cd-text-secondary); letter-spacing: 0.04em; text-transform: uppercase; }
+    .cd-pill { fill: var(--cd-surface); stroke: var(--cd-border); stroke-width: 1; }
+    .cd-pill-text { font: 500 12.5px ui-monospace, "SF Mono", Menlo, Consolas, monospace; fill: var(--cd-text); text-anchor: middle; }
+    .cd-card { fill: var(--cd-surface); stroke: var(--cd-border); stroke-width: 1; }
+    .cd-card-header-text { font: 700 14px ui-monospace, "SF Mono", Menlo, Consolas, monospace; fill: white; text-anchor: middle; }
+    .cd-badge { fill: var(--cd-surface-2); stroke: var(--cd-border); stroke-width: 0.75; }
+    .cd-badge-text { font: 500 11.5px ui-monospace, "SF Mono", Menlo, Consolas, monospace; fill: var(--cd-text); }
+    .cd-system-meta { font: 400 11px ui-sans-serif, system-ui, sans-serif; fill: var(--cd-text-secondary); }
+    .cd-system-req { font: 500 11.5px ui-monospace, "SF Mono", Menlo, Consolas, monospace; fill: var(--cd-text); }
+    .cd-skip-text { font: 500 10.5px ui-sans-serif, system-ui, sans-serif; fill: var(--cd-amber); }
+  </style>
+
+  <defs>
+    <marker id="cd-arrow-slate" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="rgb(100,116,139)"/>
+    </marker>
+    <marker id="cd-arrow-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="rgb(217,119,6)"/>
+    </marker>
+  </defs>
+
+  <!-- ============================================================ -->
+  <!-- BAND 1: COMPONENTS PALETTE                                    -->
+  <!-- ============================================================ -->
+  <text x="16" y="26" class="cd-band-label">Components (data)</text>
+
+  <!-- 6 pills, each 100 wide, gap 12, starting x=16 -->
+  <!-- Transform -->
+  <rect x="16"  y="44" width="100" height="34" rx="6" class="cd-pill"/>
+  <rect x="16"  y="44" width="4"   height="34" rx="2" fill="var(--cd-teal)"/>
+  <text x="68"  y="65" class="cd-pill-text">Transform</text>
+  <!-- Velocity -->
+  <rect x="128" y="44" width="100" height="34" rx="6" class="cd-pill"/>
+  <rect x="128" y="44" width="4"   height="34" rx="2" fill="var(--cd-blue)"/>
+  <text x="180" y="65" class="cd-pill-text">Velocity</text>
+  <!-- Sprite -->
+  <rect x="240" y="44" width="100" height="34" rx="6" class="cd-pill"/>
+  <rect x="240" y="44" width="4"   height="34" rx="2" fill="var(--cd-amber)"/>
+  <text x="292" y="65" class="cd-pill-text">Sprite</text>
+  <!-- Health -->
+  <rect x="352" y="44" width="100" height="34" rx="6" class="cd-pill"/>
+  <rect x="352" y="44" width="4"   height="34" rx="2" fill="var(--cd-red)"/>
+  <text x="404" y="65" class="cd-pill-text">Health</text>
+  <!-- Input -->
+  <rect x="464" y="44" width="100" height="34" rx="6" class="cd-pill"/>
+  <rect x="464" y="44" width="4"   height="34" rx="2" fill="var(--cd-slate)"/>
+  <text x="516" y="65" class="cd-pill-text">Input</text>
+  <!-- AI -->
+  <rect x="576" y="44" width="100" height="34" rx="6" class="cd-pill"/>
+  <rect x="576" y="44" width="4"   height="34" rx="2" fill="var(--cd-teal)"/>
+  <text x="628" y="65" class="cd-pill-text">AI</text>
+
+  <!-- ============================================================ -->
+  <!-- CONNECTION LINES (drawn before entity/system cards)           -->
+  <!-- From systems (bottom) UP to entity cards (middle)             -->
+  <!-- Drawn first so cards sit on top                               -->
+  <!-- ============================================================ -->
+  <!-- MovementSystem center: x=220, top of card y=355 -->
+  <!-- Entity card bottoms: Player (126, 305), Enemy (360, 305), Particle (594, 305) -->
+  <g stroke="var(--cd-slate)" stroke-width="1.5" stroke-dasharray="5 4" fill="none" opacity="0.7">
+    <path d="M 220 355 Q 220 330 126 305" marker-end="url(#cd-arrow-slate)"/>
+    <path d="M 220 355 Q 290 330 360 305" marker-end="url(#cd-arrow-slate)"/>
+    <path d="M 220 355 Q 400 330 594 305" marker-end="url(#cd-arrow-slate)"/>
+  </g>
+  <!-- CombatSystem center: x=520, top of card y=355 -->
+  <!-- Goes to Player (126) and Enemy (360); does NOT go to Particle (594) -->
+  <g stroke="var(--cd-amber)" stroke-width="1.75" stroke-dasharray="5 4" fill="none">
+    <path d="M 520 355 Q 320 330 126 305" marker-end="url(#cd-arrow-amber)"/>
+    <path d="M 520 355 Q 440 330 360 305" marker-end="url(#cd-arrow-amber)"/>
+  </g>
+  <!-- Truncated "would-be" arrow from CombatSystem toward Particle, ending in X -->
+  <g stroke="var(--cd-amber)" stroke-width="1.5" stroke-dasharray="3 4" fill="none" opacity="0.55">
+    <path d="M 580 355 L 605 335"/>
+  </g>
+  <!-- X marker at end of truncated line -->
+  <g stroke="var(--cd-amber)" stroke-width="2" stroke-linecap="round" opacity="0.9">
+    <line x1="600" y1="330" x2="612" y2="342"/>
+    <line x1="612" y1="330" x2="600" y2="342"/>
+  </g>
+  <text x="618" y="340" class="cd-skip-text">(no Health)</text>
+
+  <!-- ============================================================ -->
+  <!-- BAND 2: ENTITIES (3 composition cards)                        -->
+  <!-- ============================================================ -->
+  <text x="16" y="128" class="cd-band-label">Entities (composition)</text>
+
+  <!-- =========== PLAYER CARD =========== -->
+  <!-- Card body: x=16, y=140, w=220, h=165 -->
+  <rect x="16" y="140" width="220" height="165" rx="8" class="cd-card"/>
+  <!-- Top-only-rounded header band, h=32 -->
+  <path d="M 16 148 Q 16 140 24 140 L 228 140 Q 236 140 236 148 L 236 172 L 16 172 Z" fill="var(--cd-player-header)"/>
+  <text x="126" y="162" class="cd-card-header-text">Player</text>
+  <!-- Component badges, 5 stacked, body y=180–298 -->
+  <!-- Badge: x=28, w=196, h=18, gap 5 -->
+  <g>
+    <rect x="28" y="184" width="196" height="18" rx="4" class="cd-badge"/>
+    <rect x="28" y="184" width="3"   height="18" rx="1.5" fill="var(--cd-teal)"/>
+    <text x="40" y="197" class="cd-badge-text">Transform</text>
+
+    <rect x="28" y="207" width="196" height="18" rx="4" class="cd-badge"/>
+    <rect x="28" y="207" width="3"   height="18" rx="1.5" fill="var(--cd-blue)"/>
+    <text x="40" y="220" class="cd-badge-text">Velocity</text>
+
+    <rect x="28" y="230" width="196" height="18" rx="4" class="cd-badge"/>
+    <rect x="28" y="230" width="3"   height="18" rx="1.5" fill="var(--cd-amber)"/>
+    <text x="40" y="243" class="cd-badge-text">Sprite</text>
+
+    <rect x="28" y="253" width="196" height="18" rx="4" class="cd-badge"/>
+    <rect x="28" y="253" width="3"   height="18" rx="1.5" fill="var(--cd-red)"/>
+    <text x="40" y="266" class="cd-badge-text">Health</text>
+
+    <rect x="28" y="276" width="196" height="18" rx="4" class="cd-badge"/>
+    <rect x="28" y="276" width="3"   height="18" rx="1.5" fill="var(--cd-slate)"/>
+    <text x="40" y="289" class="cd-badge-text">Input</text>
+  </g>
+
+  <!-- =========== ENEMY CARD =========== -->
+  <!-- Card body: x=250, y=140, w=220, h=165 -->
+  <rect x="250" y="140" width="220" height="165" rx="8" class="cd-card"/>
+  <path d="M 250 148 Q 250 140 258 140 L 462 140 Q 470 140 470 148 L 470 172 L 250 172 Z" fill="var(--cd-enemy-header)"/>
+  <text x="360" y="162" class="cd-card-header-text">Enemy</text>
+  <g>
+    <rect x="262" y="184" width="196" height="18" rx="4" class="cd-badge"/>
+    <rect x="262" y="184" width="3"   height="18" rx="1.5" fill="var(--cd-teal)"/>
+    <text x="274" y="197" class="cd-badge-text">Transform</text>
+
+    <rect x="262" y="207" width="196" height="18" rx="4" class="cd-badge"/>
+    <rect x="262" y="207" width="3"   height="18" rx="1.5" fill="var(--cd-blue)"/>
+    <text x="274" y="220" class="cd-badge-text">Velocity</text>
+
+    <rect x="262" y="230" width="196" height="18" rx="4" class="cd-badge"/>
+    <rect x="262" y="230" width="3"   height="18" rx="1.5" fill="var(--cd-amber)"/>
+    <text x="274" y="243" class="cd-badge-text">Sprite</text>
+
+    <rect x="262" y="253" width="196" height="18" rx="4" class="cd-badge"/>
+    <rect x="262" y="253" width="3"   height="18" rx="1.5" fill="var(--cd-red)"/>
+    <text x="274" y="266" class="cd-badge-text">Health</text>
+
+    <rect x="262" y="276" width="196" height="18" rx="4" class="cd-badge"/>
+    <rect x="262" y="276" width="3"   height="18" rx="1.5" fill="var(--cd-teal)"/>
+    <text x="274" y="289" class="cd-badge-text">AI</text>
+  </g>
+
+  <!-- =========== PARTICLE CARD =========== -->
+  <!-- Card body: x=484, y=140, w=220, h=165 -->
+  <rect x="484" y="140" width="220" height="165" rx="8" class="cd-card"/>
+  <path d="M 484 148 Q 484 140 492 140 L 696 140 Q 704 140 704 148 L 704 172 L 484 172 Z" fill="var(--cd-particle-header)"/>
+  <text x="594" y="162" class="cd-card-header-text">Particle</text>
+  <g>
+    <rect x="496" y="184" width="196" height="18" rx="4" class="cd-badge"/>
+    <rect x="496" y="184" width="3"   height="18" rx="1.5" fill="var(--cd-teal)"/>
+    <text x="508" y="197" class="cd-badge-text">Transform</text>
+
+    <rect x="496" y="207" width="196" height="18" rx="4" class="cd-badge"/>
+    <rect x="496" y="207" width="3"   height="18" rx="1.5" fill="var(--cd-blue)"/>
+    <text x="508" y="220" class="cd-badge-text">Velocity</text>
+
+    <rect x="496" y="230" width="196" height="18" rx="4" class="cd-badge"/>
+    <rect x="496" y="230" width="3"   height="18" rx="1.5" fill="var(--cd-amber)"/>
+    <text x="508" y="243" class="cd-badge-text">Sprite</text>
+    <!-- Remaining body space (y=253 to y=298, ~45px) intentionally empty: Particle has fewer components -->
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- BAND 3: SYSTEMS                                               -->
+  <!-- ============================================================ -->
+  <text x="16" y="343" class="cd-band-label">Systems (logic)</text>
+
+  <!-- =========== MOVEMENT SYSTEM CARD =========== -->
+  <!-- x=80, y=355, w=280, h=70 -->
+  <rect x="80" y="355" width="280" height="70" rx="8" class="cd-card"/>
+  <text x="220" y="378" class="cd-pill-text" font-weight="600">MovementSystem</text>
+  <text x="220" y="396" class="cd-system-meta" text-anchor="middle">requires:</text>
+  <!-- Required-component mini badges, inline -->
+  <g>
+    <rect x="115" y="402" width="100" height="18" rx="4" class="cd-badge"/>
+    <rect x="115" y="402" width="3"   height="18" rx="1.5" fill="var(--cd-teal)"/>
+    <text x="127" y="415" class="cd-badge-text">Transform</text>
+
+    <rect x="225" y="402" width="100" height="18" rx="4" class="cd-badge"/>
+    <rect x="225" y="402" width="3"   height="18" rx="1.5" fill="var(--cd-blue)"/>
+    <text x="237" y="415" class="cd-badge-text">Velocity</text>
+  </g>
+
+  <!-- =========== COMBAT SYSTEM CARD =========== -->
+  <!-- x=380, y=355, w=280, h=70 -->
+  <rect x="380" y="355" width="280" height="70" rx="8" class="cd-card"/>
+  <text x="520" y="378" class="cd-pill-text" font-weight="600">CombatSystem</text>
+  <text x="520" y="396" class="cd-system-meta" text-anchor="middle">requires:</text>
+  <g>
+    <rect x="470" y="402" width="100" height="18" rx="4" class="cd-badge"/>
+    <rect x="470" y="402" width="3"   height="18" rx="1.5" fill="var(--cd-red)"/>
+    <text x="482" y="415" class="cd-badge-text">Health</text>
+  </g>
+</svg>

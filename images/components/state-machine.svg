@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 360" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="sm-title sm-desc">
+    <title id="sm-title">Game state machine: MainMenu, Playing, Paused, and GameOver with labelled transitions</title>
+    <desc id="sm-desc">A finite state machine diagram. A solid teal dot at top-left marks the initial state, with an arrow pointing down into the first state, MainMenu. Three rectangular states sit in a row at the top: MainMenu, Playing, and GameOver. A fourth state, Paused, sits below Playing. Labelled transitions: MainMenu to Playing on Start Game; Playing to GameOver on Player Dies; a paired vertical loop between Playing and Paused, with Pause going down and Resume going up; and a curved arrow at the bottom from GameOver back to MainMenu, labelled Main Menu.</desc>
+
+    <style>
+        svg {
+            --state-fill:    rgba(59, 130, 246, 0.08);
+            --state-stroke:  rgb(59, 130, 246);
+            --state-text:    rgb(15, 23, 42);
+            --initial-dot:   rgb(13, 148, 136);
+            --transition:    rgb(71, 85, 105);
+            --event-text:    rgb(180, 83, 9);
+        }
+        @media (prefers-color-scheme: dark) {
+            svg {
+                --state-fill:    rgba(86, 156, 214, 0.18);
+                --state-stroke:  rgb(86, 156, 214);
+                --state-text:    #f1f5f9;
+                --initial-dot:   rgb(45, 212, 191);
+                --transition:    rgb(148, 163, 184);
+                --event-text:    rgb(251, 191, 36);
+            }
+        }
+        .state-box   { fill: var(--state-fill);   stroke: var(--state-stroke); stroke-width: 2; }
+        .state-name  { fill: var(--state-text);   font: 700 16px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .initial-dot { fill: var(--initial-dot); }
+        .transition  { stroke: var(--transition); stroke-width: 2; fill: none; stroke-linecap: round; }
+        .event-label { fill: var(--event-text);   font: italic 600 13px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    </style>
+
+    <defs>
+        <marker id="sm-head" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+            <path d="M0,0 L12,6 L0,12 Z" fill="var(--transition)"/>
+        </marker>
+    </defs>
+
+    <!-- ==== Transition lines (drawn first, behind state boxes) ==== -->
+    <!-- Initial dot -> MainMenu (short vertical) -->
+    <line class="transition" x1="90"  y1="32"  x2="90"  y2="60"  marker-end="url(#sm-head)"/>
+    <!-- MainMenu -> Playing -->
+    <line class="transition" x1="160" y1="90"  x2="288" y2="90"  marker-end="url(#sm-head)"/>
+    <!-- Playing -> GameOver -->
+    <line class="transition" x1="430" y1="90"  x2="558" y2="90"  marker-end="url(#sm-head)"/>
+    <!-- Playing -> Paused (down; offset left of column centre) -->
+    <line class="transition" x1="335" y1="118" x2="335" y2="210" marker-end="url(#sm-head)"/>
+    <!-- Paused -> Playing (up; offset right of column centre) -->
+    <line class="transition" x1="385" y1="210" x2="385" y2="120" marker-end="url(#sm-head)"/>
+    <!-- GameOver -> MainMenu (curve underneath all states) -->
+    <path class="transition" d="M 630 120 C 630 400 90 400 90 120" marker-end="url(#sm-head)"/>
+
+    <!-- ==== State boxes (drawn on top of transition lines) ==== -->
+    <rect class="state-box" x="20"  y="62"  width="140" height="56" rx="8"/>
+    <rect class="state-box" x="290" y="62"  width="140" height="56" rx="8"/>
+    <rect class="state-box" x="560" y="62"  width="140" height="56" rx="8"/>
+    <rect class="state-box" x="290" y="212" width="140" height="56" rx="8"/>
+
+    <!-- ==== State names ==== -->
+    <text class="state-name" x="90"  y="90"  text-anchor="middle" dominant-baseline="central">MainMenu</text>
+    <text class="state-name" x="360" y="90"  text-anchor="middle" dominant-baseline="central">Playing</text>
+    <text class="state-name" x="630" y="90"  text-anchor="middle" dominant-baseline="central">GameOver</text>
+    <text class="state-name" x="360" y="240" text-anchor="middle" dominant-baseline="central">Paused</text>
+
+    <!-- ==== Initial-state indicator dot ==== -->
+    <circle class="initial-dot" cx="90" cy="25" r="7"/>
+
+    <!-- ==== Event labels (drawn last, on top) ==== -->
+    <text class="event-label" x="224" y="80"  text-anchor="middle">Start Game</text>
+    <text class="event-label" x="494" y="80"  text-anchor="middle">Player Dies</text>
+    <text class="event-label" x="325" y="142" text-anchor="end">Pause</text>
+    <text class="event-label" x="395" y="190" text-anchor="start">Resume</text>
+    <text class="event-label" x="360" y="314" text-anchor="middle">Main Menu</text>
+</svg>

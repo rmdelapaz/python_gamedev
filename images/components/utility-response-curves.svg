@@ -1,0 +1,184 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 400" role="img" aria-labelledby="urc-title urc-desc">
+  <title id="urc-title">Utility AI response curves — same input, different output</title>
+  <desc id="urc-desc">Five normalized response curves overlaid on a unit-square chart with input value on the x-axis (0 to 1) and output score on the y-axis (0 to 1). The curves are: linear (slate diagonal reference, f(x) = x), quadratic (blue, f(x) = x squared), exponential cubed (teal, f(x) = x cubed, matching exponential(hunger, 3) in score_eat), sigmoid (amber, steepness 10 centered at 0.5, matching sigmoid(health) in score_fight), and gaussian (red, centered at 0.5 with width 0.2). A dashed slate vertical line at input = 0.7 crosses all five curves at visibly different output values: linear 0.70, quadratic 0.49, exponential 0.34, sigmoid 0.88, gaussian 0.61. A right-side legend lists each curve with its formula. A worked-values panel below the legend shows the five output values at input = 0.7 in their respective colors. A bottom strip ties the curves to the lesson's score functions: score_eat uses exponential, score_fight uses sigmoid.</desc>
+
+  <style>
+    svg {
+      --urc-text:           rgb(30, 41, 59);
+      --urc-text-secondary: rgb(71, 85, 105);
+      --urc-text-muted:     rgb(100, 116, 139);
+      --urc-axis:           rgb(100, 116, 139);
+      --urc-grid:           rgba(100, 116, 139, 0.18);
+      --urc-card-bg:        rgb(248, 250, 252);
+      --urc-card-stroke:    rgb(203, 213, 225);
+      --urc-chart-bg:       rgb(255, 255, 255);
+      --urc-linear:         rgb(100, 116, 139);
+      --urc-quadratic:      rgb(59, 130, 246);
+      --urc-exponential:    rgb(13, 148, 136);
+      --urc-sigmoid:        rgb(217, 119, 6);
+      --urc-gaussian:       rgb(220, 38, 38);
+    }
+    @media (prefers-color-scheme: dark) {
+      svg {
+        --urc-text:           rgb(226, 232, 240);
+        --urc-text-secondary: rgb(148, 163, 184);
+        --urc-text-muted:     rgb(100, 116, 139);
+        --urc-axis:           rgb(148, 163, 184);
+        --urc-grid:           rgba(148, 163, 184, 0.18);
+        --urc-card-bg:        rgb(31, 41, 55);
+        --urc-card-stroke:    rgb(71, 85, 105);
+        --urc-chart-bg:       rgb(15, 23, 42);
+        --urc-linear:         rgb(148, 163, 184);
+        --urc-quadratic:      rgb(86, 156, 214);
+        --urc-exponential:    rgb(45, 212, 191);
+        --urc-sigmoid:        rgb(251, 191, 36);
+        --urc-gaussian:       rgb(248, 113, 113);
+      }
+    }
+    .urc-title       { font: 700 15px ui-sans-serif, system-ui, sans-serif; fill: var(--urc-text); text-anchor: middle; }
+    .urc-axis-tick   { font: 500 11px ui-monospace, "SF Mono", Menlo, Consolas, monospace; fill: var(--urc-text-secondary); text-anchor: middle; }
+    .urc-axis-tick-y { font: 500 11px ui-monospace, "SF Mono", Menlo, Consolas, monospace; fill: var(--urc-text-secondary); text-anchor: end; }
+    .urc-axis-label  { font: italic 11px ui-sans-serif, system-ui, sans-serif; fill: var(--urc-text-muted); text-anchor: middle; }
+    .urc-cmp-label   { font: 700 10.5px ui-monospace, "SF Mono", Menlo, Consolas, monospace; fill: var(--urc-text-secondary); text-anchor: middle; }
+    .urc-legend-head { font: 700 10.5px ui-sans-serif, system-ui, sans-serif; fill: var(--urc-text-secondary); text-anchor: start; letter-spacing: 0.06em; }
+    .urc-legend-name { font: 700 12.5px ui-sans-serif, system-ui, sans-serif; fill: var(--urc-text); }
+    .urc-legend-form { font: 500 11px ui-monospace, "SF Mono", Menlo, Consolas, monospace; fill: var(--urc-text-secondary); }
+    .urc-worked-head { font: 700 10.5px ui-sans-serif, system-ui, sans-serif; fill: var(--urc-text-secondary); text-anchor: start; letter-spacing: 0.06em; }
+    .urc-worked-input{ font: 700 12px ui-monospace, "SF Mono", Menlo, Consolas, monospace; fill: var(--urc-text); text-anchor: start; }
+    .urc-worked-name { font: 600 10.5px ui-sans-serif, system-ui, sans-serif; fill: var(--urc-text-secondary); }
+    .urc-worked-val  { font: 700 12.5px ui-monospace, "SF Mono", Menlo, Consolas, monospace; text-anchor: end; }
+    .urc-foot-head   { font: 700 12px ui-sans-serif, system-ui, sans-serif; fill: var(--urc-text); text-anchor: middle; }
+    .urc-foot-sub    { font: 500 11px ui-monospace, "SF Mono", Menlo, Consolas, monospace; fill: var(--urc-text-secondary); text-anchor: middle; }
+  </style>
+
+  <!-- Title -->
+  <text x="252" y="22" class="urc-title">Utility response curves</text>
+
+  <!-- Chart background card -->
+  <rect x="44" y="34" width="416" height="282" rx="6" fill="var(--urc-chart-bg)" stroke="var(--urc-card-stroke)" stroke-width="1"/>
+
+  <!-- Grid lines (at 0.25, 0.5, 0.75 on each axis) -->
+  <!-- Vertical grid: x = 60 + t*380; t = 0.25,0.5,0.75 -> 155, 250, 345 -->
+  <line x1="155" y1="44"  x2="155" y2="304" stroke="var(--urc-grid)" stroke-width="1" stroke-dasharray="2 3"/>
+  <line x1="250" y1="44"  x2="250" y2="304" stroke="var(--urc-grid)" stroke-width="1" stroke-dasharray="2 3"/>
+  <line x1="345" y1="44"  x2="345" y2="304" stroke="var(--urc-grid)" stroke-width="1" stroke-dasharray="2 3"/>
+  <!-- Horizontal grid: y = 304 - v*260; v = 0.25,0.5,0.75 -> 239, 174, 109 -->
+  <line x1="60"  y1="239" x2="440" y2="239" stroke="var(--urc-grid)" stroke-width="1" stroke-dasharray="2 3"/>
+  <line x1="60"  y1="174" x2="440" y2="174" stroke="var(--urc-grid)" stroke-width="1" stroke-dasharray="2 3"/>
+  <line x1="60"  y1="109" x2="440" y2="109" stroke="var(--urc-grid)" stroke-width="1" stroke-dasharray="2 3"/>
+
+  <!-- Axes -->
+  <line x1="60" y1="44"  x2="60"  y2="304" stroke="var(--urc-axis)" stroke-width="1.25"/>
+  <line x1="60" y1="304" x2="440" y2="304" stroke="var(--urc-axis)" stroke-width="1.25"/>
+
+  <!-- Axis ticks (small marks at 0, 0.5, 1) -->
+  <line x1="60"  y1="304" x2="60"  y2="308" stroke="var(--urc-axis)" stroke-width="1.25"/>
+  <line x1="250" y1="304" x2="250" y2="308" stroke="var(--urc-axis)" stroke-width="1.25"/>
+  <line x1="440" y1="304" x2="440" y2="308" stroke="var(--urc-axis)" stroke-width="1.25"/>
+  <line x1="60"  y1="304" x2="56"  y2="304" stroke="var(--urc-axis)" stroke-width="1.25"/>
+  <line x1="60"  y1="174" x2="56"  y2="174" stroke="var(--urc-axis)" stroke-width="1.25"/>
+  <line x1="60"  y1="44"  x2="56"  y2="44"  stroke="var(--urc-axis)" stroke-width="1.25"/>
+
+  <!-- Axis tick labels -->
+  <text x="60"  y="320" class="urc-axis-tick">0</text>
+  <text x="250" y="320" class="urc-axis-tick">0.5</text>
+  <text x="440" y="320" class="urc-axis-tick">1</text>
+  <text x="52"  y="307" class="urc-axis-tick-y">0</text>
+  <text x="52"  y="177" class="urc-axis-tick-y">0.5</text>
+  <text x="52"  y="47"  class="urc-axis-tick-y">1</text>
+
+  <!-- Axis labels -->
+  <text x="250" y="335" class="urc-axis-label">input value (e.g. hunger, fear, distance/range)</text>
+  <text x="22"  y="174" class="urc-axis-label" transform="rotate(-90, 22, 174)">output score</text>
+
+  <!-- Vertical comparison line at input = 0.7 (chart_x = 60 + 0.7*380 = 326) -->
+  <line x1="326" y1="44" x2="326" y2="304" stroke="var(--urc-axis)" stroke-width="1.25" stroke-dasharray="4 3" opacity="0.7"/>
+  <text x="326" y="320" class="urc-cmp-label">0.7</text>
+
+  <!-- Curves: drawn linear first (lowest visual weight), then quadratic, exponential, gaussian, sigmoid (most distinctive on top) -->
+
+  <!-- Linear: f(x) = x -->
+  <line x1="60" y1="304" x2="440" y2="44" stroke="var(--urc-linear)" stroke-width="2.25" stroke-linecap="round" fill="none"/>
+
+  <!-- Quadratic: f(x) = x^2 -->
+  <polyline points="60,304 79,303 98,301 117,298 136,294 155,288 174,281 193,272 212,262 231,251 250,239 269,225 288,210 307,194 326,177 345,158 364,138 383,116 402,93 421,69 440,44"
+            stroke="var(--urc-quadratic)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+  <!-- Exponential cubed: f(x) = x^3 (matches score_eat's exponential(hunger, 3)) -->
+  <polyline points="60,304 79,304 98,304 117,303 136,302 155,300 174,297 193,293 212,287 231,280 250,272 269,261 288,248 307,233 326,215 345,194 364,171 383,144 402,114 421,81 440,44"
+            stroke="var(--urc-exponential)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+  <!-- Gaussian: f(x) = e^(-(x-0.5)^2 / (2*0.2^2)) -->
+  <polyline points="60,293 79,283 98,269 117,248 136,220 155,185 174,146 193,108 212,75 231,52 250,44 269,52 288,75 307,108 326,146 345,185 364,220 383,248 402,269 421,283 440,293"
+            stroke="var(--urc-gaussian)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+  <!-- Sigmoid: f(x) = 1 / (1 + e^(-10*(x-0.5))) (matches score_fight's sigmoid(health)) -->
+  <polyline points="60,302 79,301 98,299 117,296 136,292 155,284 174,273 193,257 212,234 231,206 250,174 269,142 288,114 307,91 326,75 345,64 364,56 383,52 402,49 421,47 440,46"
+            stroke="var(--urc-sigmoid)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+  <!-- Intersection dots at input = 0.7 -->
+  <circle cx="326" cy="122" r="4" fill="var(--urc-linear)"      stroke="var(--urc-chart-bg)" stroke-width="1.5"/>
+  <circle cx="326" cy="177" r="4" fill="var(--urc-quadratic)"   stroke="var(--urc-chart-bg)" stroke-width="1.5"/>
+  <circle cx="326" cy="215" r="4" fill="var(--urc-exponential)" stroke="var(--urc-chart-bg)" stroke-width="1.5"/>
+  <circle cx="326" cy="146" r="4" fill="var(--urc-gaussian)"    stroke="var(--urc-chart-bg)" stroke-width="1.5"/>
+  <circle cx="326" cy="75"  r="4" fill="var(--urc-sigmoid)"     stroke="var(--urc-chart-bg)" stroke-width="1.5"/>
+
+  <!-- ============== RIGHT COLUMN ============== -->
+
+  <!-- Legend card -->
+  <rect x="476" y="34" width="220" height="186" rx="6" fill="var(--urc-card-bg)" stroke="var(--urc-card-stroke)" stroke-width="1"/>
+  <text x="488" y="52" class="urc-legend-head">CURVES</text>
+
+  <!-- Legend row: linear -->
+  <line x1="488" y1="74" x2="510" y2="74" stroke="var(--urc-linear)" stroke-width="3" stroke-linecap="round"/>
+  <text x="518" y="78" class="urc-legend-name">linear</text>
+  <text x="518" y="92" class="urc-legend-form">f(x) = x</text>
+
+  <!-- Legend row: quadratic -->
+  <line x1="488" y1="108" x2="510" y2="108" stroke="var(--urc-quadratic)" stroke-width="3" stroke-linecap="round"/>
+  <text x="518" y="112" class="urc-legend-name">quadratic</text>
+  <text x="518" y="126" class="urc-legend-form">f(x) = x²</text>
+
+  <!-- Legend row: exponential -->
+  <line x1="488" y1="142" x2="510" y2="142" stroke="var(--urc-exponential)" stroke-width="3" stroke-linecap="round"/>
+  <text x="518" y="146" class="urc-legend-name">exponential</text>
+  <text x="518" y="160" class="urc-legend-form">f(x) = x³  <tspan fill="var(--urc-text-muted)">(power=3)</tspan></text>
+
+  <!-- Legend row: sigmoid -->
+  <line x1="488" y1="176" x2="510" y2="176" stroke="var(--urc-sigmoid)" stroke-width="3" stroke-linecap="round"/>
+  <text x="518" y="180" class="urc-legend-name">sigmoid</text>
+  <text x="518" y="194" class="urc-legend-form">k=10, c=0.5</text>
+
+  <!-- Legend row: gaussian -->
+  <line x1="488" y1="210" x2="510" y2="210" stroke="var(--urc-gaussian)" stroke-width="3" stroke-linecap="round"/>
+  <text x="518" y="214" class="urc-legend-name">gaussian</text>
+  <text x="608" y="214" class="urc-legend-form">c=0.5, w=0.2</text>
+
+  <!-- Worked-values card: "At input = 0.7" -->
+  <rect x="476" y="232" width="220" height="84" rx="6" fill="var(--urc-card-bg)" stroke="var(--urc-card-stroke)" stroke-width="1"/>
+  <text x="488" y="250" class="urc-worked-head">AT INPUT</text>
+  <text x="540" y="250" class="urc-worked-input">= 0.7</text>
+
+  <!-- Two columns of worked values inside the card -->
+  <!-- Left column: linear, quadratic, exponential -->
+  <text x="488" y="270" class="urc-worked-name">linear</text>
+  <text x="572" y="270" class="urc-worked-val" fill="var(--urc-linear)">0.70</text>
+
+  <text x="488" y="286" class="urc-worked-name">quadratic</text>
+  <text x="572" y="286" class="urc-worked-val" fill="var(--urc-quadratic)">0.49</text>
+
+  <text x="488" y="302" class="urc-worked-name">exponential</text>
+  <text x="572" y="302" class="urc-worked-val" fill="var(--urc-exponential)">0.34</text>
+
+  <!-- Right column: sigmoid, gaussian (only 2 because there are 5 total — 3 left, 2 right) -->
+  <text x="588" y="286" class="urc-worked-name">sigmoid</text>
+  <text x="684" y="286" class="urc-worked-val" fill="var(--urc-sigmoid)">0.88</text>
+
+  <text x="588" y="302" class="urc-worked-name">gaussian</text>
+  <text x="684" y="302" class="urc-worked-val" fill="var(--urc-gaussian)">0.61</text>
+
+  <!-- ============== BOTTOM STRIP ============== -->
+  <rect x="40" y="334" width="640" height="56" rx="6" fill="var(--urc-card-bg)" stroke="var(--urc-card-stroke)" stroke-width="1"/>
+  <text x="360" y="354" class="urc-foot-head">Same input → very different output. The curve <tspan font-style="italic">shapes</tspan> how an agent reacts.</text>
+  <text x="360" y="376" class="urc-foot-sub">Lesson code: <tspan fill="var(--urc-exponential)" font-weight="700">score_eat</tspan> uses <tspan font-weight="700">exponential(hunger, 3)</tspan> · <tspan fill="var(--urc-sigmoid)" font-weight="700">score_fight</tspan> uses <tspan font-weight="700">sigmoid(health)</tspan></text>
+</svg>

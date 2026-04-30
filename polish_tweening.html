@@ -97,6 +97,11 @@
         H --> M["Back"]
     </div>
 
+    <figure class="svg-wrapper">
+        <img class="responsive-svg" src="/images/components/easing-curves.svg" loading="lazy" alt="Six small charts arranged in a 3-column by 2-row grid, each plotting one easing function with t on the x-axis and value on the y-axis. Top row, left to right: linear (slate diagonal, constant rate), easeOutQuad (blue, fast then slow), easeInOutCubic (teal S-curve, smooth both ends). Bottom row, left to right: easeOutBounce (amber, multiple decaying bumps), easeOutElastic (red, large overshoot above v=1 then oscillates), easeOutBack (indigo, small overshoot then settles). Each chart has dashed reference lines at v=0 and v=1 so overshoot is visible. Footer: Out = front-loaded (responsive), In = builds anticipation, InOut = both.">
+        <figcaption>Six representative easing curves at a glance — the dashed <code>v=1</code> line in each chart is the destination. <code>linear</code> and <code>easeOutQuad</code> arrive cleanly at 1; <code>easeInOutCubic</code> takes its time at both ends; <code>easeOutBounce</code> hits 1 then settles in decaying bumps; <code>easeOutElastic</code> overshoots dramatically (peak ≈1.27) before oscillating back; <code>easeOutBack</code> overshoots gently (≈1.10) and snaps in. The interactive playground below animates one curve at a time — this strip is for picking which one to try.</figcaption>
+    </figure>
+
     <h2 id="interactive-tweening-playground">Interactive Tweening Playground</h2>
     
     <div class="canvas-wrapper" style="text-align: center;">

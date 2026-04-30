@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 400" role="img" aria-labelledby="as-title as-desc">
+  <title id="as-title">Frame timing strip comparing uniform and variable durations</title>
+  <desc id="as-desc">Two horizontal timelines compare uniform and variable frame timing. The top row shows a six-frame walk cycle with each frame held for one hundred milliseconds, totaling six hundred milliseconds, then looping back to frame zero. The bottom row shows a four-phase attack sequence — wind-up at eighty milliseconds, hit at forty milliseconds, impact-hold at two hundred milliseconds, and recovery at one hundred twenty milliseconds — totaling four hundred forty milliseconds and playing once before returning to idle. The impact-hold phase is outlined in amber to call attention to the fact that variable timing makes some frames linger far longer than others. Frame box widths are drawn proportional to duration on a shared scale of one pixel per millisecond, so the attack row visibly stops short of the walk row's right edge.</desc>
+
+  <style>
+    svg {
+      --as-stroke: rgb(100, 116, 139);
+      --as-text: rgb(30, 41, 59);
+      --as-text-muted: rgb(100, 116, 139);
+      --as-frame-fill: rgb(59, 130, 246);
+      --as-frame-stroke: rgb(13, 148, 136);
+      --as-frame-bg: rgba(13, 148, 136, 0.06);
+      --as-highlight-stroke: rgb(217, 119, 6);
+      --as-highlight-fill: rgba(217, 119, 6, 0.16);
+      --as-amber: rgb(217, 119, 6);
+      --as-loop: rgb(217, 119, 6);
+      --as-divider: rgba(100, 116, 139, 0.3);
+    }
+    @media (prefers-color-scheme: dark) {
+      svg {
+        --as-stroke: rgb(148, 163, 184);
+        --as-text: rgb(226, 232, 240);
+        --as-text-muted: rgb(148, 163, 184);
+        --as-frame-fill: rgb(86, 156, 214);
+        --as-frame-stroke: rgb(45, 212, 191);
+        --as-frame-bg: rgba(45, 212, 191, 0.10);
+        --as-highlight-stroke: rgb(251, 191, 36);
+        --as-highlight-fill: rgba(251, 191, 36, 0.20);
+        --as-amber: rgb(251, 191, 36);
+        --as-loop: rgb(251, 191, 36);
+        --as-divider: rgba(148, 163, 184, 0.3);
+      }
+    }
+    .as-title { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 13px; fill: var(--as-text); font-weight: 600; }
+    .as-row-label { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 13px; fill: var(--as-text); font-weight: 700; }
+    .as-row-sub { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 11px; fill: var(--as-text-muted); }
+    .as-frame-box { fill: var(--as-frame-bg); stroke: var(--as-frame-stroke); stroke-width: 1.5; }
+    .as-frame-highlight { fill: var(--as-highlight-fill); stroke: var(--as-highlight-stroke); stroke-width: 2; }
+    .as-figure-line { stroke: var(--as-frame-fill); stroke-width: 1.4; stroke-linecap: round; fill: none; }
+    .as-figure-head { fill: var(--as-frame-fill); }
+    .as-frame-num { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 10px; fill: var(--as-text-muted); }
+    .as-duration { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 11px; fill: var(--as-amber); font-weight: 700; }
+    .as-phase { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 11px; fill: var(--as-text); font-weight: 600; }
+    .as-phase-highlight { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 11px; fill: var(--as-amber); font-weight: 700; }
+    .as-loop-line { fill: none; stroke: var(--as-loop); stroke-width: 1.6; stroke-linejoin: round; }
+    .as-loop-head { fill: var(--as-loop); }
+    .as-loop-text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 11px; fill: var(--as-amber); font-weight: 600; }
+    .as-end-line { fill: none; stroke: var(--as-text-muted); stroke-width: 1.2; stroke-dasharray: 4 3; }
+    .as-end-head { fill: var(--as-text-muted); }
+    .as-end-text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 11px; fill: var(--as-text-muted); font-style: italic; }
+    .as-divider-line { stroke: var(--as-divider); stroke-width: 1; stroke-dasharray: 2 4; fill: none; }
+  </style>
+
+  <!-- Title -->
+  <text class="as-title" x="15" y="22">Frame timing on a shared scale (1 px = 1 ms)</text>
+
+  <!-- ============================================================ -->
+  <!-- ROW 1: WALK CYCLE — uniform timing -->
+  <!-- ============================================================ -->
+
+  <!-- Left-side row label -->
+  <text class="as-row-label" x="15" y="138">Walk cycle</text>
+  <text class="as-row-sub" x="15" y="154">(uniform)</text>
+  <text class="as-row-sub" x="15" y="168">Total: 600 ms</text>
+  <text class="as-row-sub" x="15" y="182">loops</text>
+
+  <!-- Duration labels above each frame -->
+  <text class="as-duration" x="150" y="100" text-anchor="middle">100 ms</text>
+  <text class="as-duration" x="250" y="100" text-anchor="middle">100 ms</text>
+  <text class="as-duration" x="350" y="100" text-anchor="middle">100 ms</text>
+  <text class="as-duration" x="450" y="100" text-anchor="middle">100 ms</text>
+  <text class="as-duration" x="550" y="100" text-anchor="middle">100 ms</text>
+  <text class="as-duration" x="650" y="100" text-anchor="middle">100 ms</text>
+
+  <!-- Frame boxes: 6 × 100 px wide, x=100..700, y=110..180 -->
+  <rect class="as-frame-box" x="100" y="110" width="100" height="70"/>
+  <rect class="as-frame-box" x="200" y="110" width="100" height="70"/>
+  <rect class="as-frame-box" x="300" y="110" width="100" height="70"/>
+  <rect class="as-frame-box" x="400" y="110" width="100" height="70"/>
+  <rect class="as-frame-box" x="500" y="110" width="100" height="70"/>
+  <rect class="as-frame-box" x="600" y="110" width="100" height="70"/>
+
+  <!-- Frame numbers in top-left corner of each box -->
+  <text class="as-frame-num" x="108" y="124">frame 0</text>
+  <text class="as-frame-num" x="208" y="124">frame 1</text>
+  <text class="as-frame-num" x="308" y="124">frame 2</text>
+  <text class="as-frame-num" x="408" y="124">frame 3</text>
+  <text class="as-frame-num" x="508" y="124">frame 4</text>
+  <text class="as-frame-num" x="608" y="124">frame 5</text>
+
+  <!-- Stick figures (walk cycle poses), centered in each frame -->
+  <!-- Frame 0 (cx=150): contact pose, legs spread forward/back -->
+  <circle class="as-figure-head" cx="150" cy="138" r="4"/>
+  <line class="as-figure-line" x1="150" y1="142" x2="150" y2="160"/>
+  <line class="as-figure-line" x1="150" y1="160" x2="142" y2="172"/>
+  <line class="as-figure-line" x1="150" y1="160" x2="158" y2="172"/>
+  <line class="as-figure-line" x1="150" y1="148" x2="142" y2="156"/>
+  <line class="as-figure-line" x1="150" y1="148" x2="158" y2="156"/>
+
+  <!-- Frame 1 (cx=250): down pose, knees bent -->
+  <circle class="as-figure-head" cx="250" cy="142" r="4"/>
+  <line class="as-figure-line" x1="250" y1="146" x2="250" y2="161"/>
+  <line class="as-figure-line" x1="250" y1="161" x2="246" y2="172"/>
+  <line class="as-figure-line" x1="250" y1="161" x2="254" y2="172"/>
+  <line class="as-figure-line" x1="250" y1="151" x2="244" y2="158"/>
+  <line class="as-figure-line" x1="250" y1="151" x2="256" y2="158"/>
+
+  <!-- Frame 2 (cx=350): passing pose, vertical leg -->
+  <circle class="as-figure-head" cx="350" cy="138" r="4"/>
+  <line class="as-figure-line" x1="350" y1="142" x2="350" y2="160"/>
+  <line class="as-figure-line" x1="350" y1="160" x2="350" y2="172"/>
+  <line class="as-figure-line" x1="350" y1="160" x2="355" y2="172"/>
+  <line class="as-figure-line" x1="350" y1="148" x2="344" y2="153"/>
+  <line class="as-figure-line" x1="350" y1="148" x2="356" y2="153"/>
+
+  <!-- Frame 3 (cx=450): up pose, leg lifted -->
+  <circle class="as-figure-head" cx="450" cy="136" r="4"/>
+  <line class="as-figure-line" x1="450" y1="140" x2="450" y2="158"/>
+  <line class="as-figure-line" x1="450" y1="158" x2="458" y2="170"/>
+  <line class="as-figure-line" x1="450" y1="158" x2="446" y2="170"/>
+  <line class="as-figure-line" x1="450" y1="146" x2="456" y2="152"/>
+  <line class="as-figure-line" x1="450" y1="146" x2="444" y2="152"/>
+
+  <!-- Frame 4 (cx=550): contact pose mirrored -->
+  <circle class="as-figure-head" cx="550" cy="138" r="4"/>
+  <line class="as-figure-line" x1="550" y1="142" x2="550" y2="160"/>
+  <line class="as-figure-line" x1="550" y1="160" x2="558" y2="172"/>
+  <line class="as-figure-line" x1="550" y1="160" x2="542" y2="172"/>
+  <line class="as-figure-line" x1="550" y1="148" x2="558" y2="156"/>
+  <line class="as-figure-line" x1="550" y1="148" x2="542" y2="156"/>
+
+  <!-- Frame 5 (cx=650): down pose mirrored -->
+  <circle class="as-figure-head" cx="650" cy="142" r="4"/>
+  <line class="as-figure-line" x1="650" y1="146" x2="650" y2="161"/>
+  <line class="as-figure-line" x1="650" y1="161" x2="654" y2="172"/>
+  <line class="as-figure-line" x1="650" y1="161" x2="646" y2="172"/>
+  <line class="as-figure-line" x1="650" y1="151" x2="656" y2="158"/>
+  <line class="as-figure-line" x1="650" y1="151" x2="644" y2="158"/>
+
+  <!-- Loop arrow: starts below right edge of frame 5, goes down → left → up to below frame 0 -->
+  <path class="as-loop-line"
+        d="M 695 188 L 695 212 L 155 212 L 155 192"/>
+  <polygon class="as-loop-head" points="155,184 150,193 160,193"/>
+  <text class="as-loop-text" x="425" y="208" text-anchor="middle">↺ loops back to frame 0</text>
+
+  <!-- ============================================================ -->
+  <!-- Divider between rows -->
+  <!-- ============================================================ -->
+  <line class="as-divider-line" x1="15" y1="240" x2="700" y2="240"/>
+
+  <!-- ============================================================ -->
+  <!-- ROW 2: ATTACK SEQUENCE — variable timing -->
+  <!-- ============================================================ -->
+
+  <!-- Left-side row label -->
+  <text class="as-row-label" x="15" y="338">Attack</text>
+  <text class="as-row-sub" x="15" y="354">(variable)</text>
+  <text class="as-row-sub" x="15" y="368">Total: 440 ms</text>
+  <text class="as-row-sub" x="15" y="382">one-shot</text>
+
+  <!-- Duration labels above each frame -->
+  <!-- Widths: 80 (x=100..180), 40 (x=180..220), 200 (x=220..420), 120 (x=420..540) -->
+  <text class="as-duration" x="140" y="300" text-anchor="middle">80</text>
+  <text class="as-duration" x="200" y="300" text-anchor="middle">40</text>
+  <text class="as-duration" x="320" y="300" text-anchor="middle">200 ms</text>
+  <text class="as-duration" x="480" y="300" text-anchor="middle">120</text>
+
+  <!-- Frame boxes -->
+  <rect class="as-frame-box" x="100" y="310" width="80" height="70"/>
+  <rect class="as-frame-box" x="180" y="310" width="40" height="70"/>
+  <rect class="as-frame-highlight" x="220" y="310" width="200" height="70"/>
+  <rect class="as-frame-box" x="420" y="310" width="120" height="70"/>
+
+  <!-- Frame numbers in top-left corner -->
+  <text class="as-frame-num" x="108" y="324">frame 0</text>
+  <text class="as-frame-num" x="185" y="324">f.1</text>
+  <text class="as-frame-num" x="228" y="324">frame 2</text>
+  <text class="as-frame-num" x="428" y="324">frame 3</text>
+
+  <!-- Phase labels, centered in each frame -->
+  <text class="as-phase" x="140" y="352" text-anchor="middle">wind-up</text>
+  <text class="as-phase" x="200" y="352" text-anchor="middle">hit</text>
+  <text class="as-phase-highlight" x="320" y="350" text-anchor="middle">impact-hold</text>
+  <text class="as-row-sub" x="320" y="366" text-anchor="middle">(longest frame — sells the impact)</text>
+  <text class="as-phase" x="480" y="352" text-anchor="middle">recovery</text>
+
+  <!-- One-shot terminator: dashed arrow → idle -->
+  <line class="as-end-line" x1="545" y1="345" x2="610" y2="345"/>
+  <polygon class="as-end-head" points="610,345 603,341 603,349"/>
+  <text class="as-end-text" x="615" y="349">→ idle</text>
+</svg>

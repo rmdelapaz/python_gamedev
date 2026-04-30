@@ -82,6 +82,13 @@
         </ul>
     </div>
 
+    <figure class="svg-wrapper">
+        <img class="responsive-svg" loading="lazy"
+             src="/images/components/sprite-sheet.svg"
+             alt="Sprite sheet shown as a 4 by 2 grid of 8 walk-cycle frames numbered 0 through 7, with frame 2 highlighted and connected by a dashed line to a larger inset showing the same frame at higher resolution.">
+        <figcaption>A sprite sheet packs all 8 walk-cycle frames into a single image. The program plays the animation by displaying one cell at a time, in order — just like flipping through pages of a flipbook.</figcaption>
+    </figure>
+
     <div class="mermaid">
     graph TD
         A["Sprite Animation"] --> B["Frame Management"]
@@ -388,6 +395,13 @@
         
         animate(performance.now());
     </script>
+
+    <figure class="svg-wrapper">
+        <img class="responsive-svg" loading="lazy"
+             src="/images/components/animation-strip.svg"
+             alt="Two horizontal timelines compare uniform and variable frame timing. The top row is a six-frame walk cycle, each frame held one hundred milliseconds for six hundred total milliseconds, then looping back to frame zero. The bottom row is a four-phase attack: wind-up eighty milliseconds, hit forty milliseconds, impact-hold two hundred milliseconds, and recovery one hundred twenty milliseconds, totaling four hundred forty milliseconds before returning to idle. The impact-hold phase is outlined in amber. Frame box widths are proportional to duration on a shared one-pixel-per-millisecond scale.">
+        <figcaption>Frames have a position on a sprite sheet — and a <em>duration</em> on a timeline. Uniform timing (top) holds every frame the same length, easy to author with a single <code>frame_duration</code> value. Variable timing (bottom) lets specific frames linger or flash by; the long <code>impact-hold</code> is what makes the attack land. Both patterns appear in the code below.</figcaption>
+    </figure>
 
     <h2 id="basic-frame-animation">Basic Frame Animation</h2>
     

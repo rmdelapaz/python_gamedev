@@ -68,6 +68,13 @@
         </ul>
     </div>
 
+    <figure class="svg-wrapper">
+        <img class="responsive-svg" loading="lazy"
+             src="/images/components/lighting-model.svg"
+             alt="Four spheres in a row showing how lighting decomposes into three additive terms. Left sphere: uniform dim blue, labelled Ambient with the caption constant base. Second sphere: smooth blue gradient, bright at the upper-left and fading to dark, labelled Diffuse with the formula max of N dot L. Third sphere: dark with a small bright white highlight at the upper-left, labelled Specular with the formula max of R dot V to the n. Fourth sphere combines all three: ambient floor with diffuse falloff and a specular peak, labelled Final shading. A sun glyph at the upper-left with a directional ray indicates the light source.">
+        <figcaption>Lighting on a surface decomposes into three additive terms: ambient (constant base from indirect light), diffuse (cosine of the angle between surface normal and light direction), and specular (a sharp highlight where view and reflection align). The PBR fragment shader below evaluates a more elaborate version of the same idea — Lambertian diffuse modulated by Fresnel, and Cook-Torrance microfacet specular — but the conceptual decomposition is the same.</figcaption>
+    </figure>
+
     <h2 id="lighting-implementation-in-python-moderngl">Lighting Implementation in Python/ModernGL</h2>
     
     <pre class="language-python"><code>import moderngl
@@ -345,6 +352,13 @@ class SpotLight(Light):
         
         # Reset viewport
         self.ctx.screen.use()</code></pre>
+
+    <figure class="svg-wrapper">
+        <img class="responsive-svg" loading="lazy"
+             src="/images/components/sampling-kernel.svg"
+             alt="Three-section comparison of single-tap versus nine-tap shadow sampling. Left section: a three by three grid of depth-map texels around a fragment, with five cells lit (pale yellow, marked 1) and four cells in shadow (deep slate, marked 0); the center cell is outlined in teal as the fragment being shaded. Middle section: an arrow with the calculation zero plus zero plus one plus zero plus one plus one plus zero plus one plus one divided by nine equals 0.56, the soft fractional shadow value. Right section: two horizontal swatches comparing edges. The top swatch (1-tap, hard) snaps abruptly from dark to light at a single boundary marked with a dashed amber line. The bottom swatch (9-tap, soft) transitions smoothly through a gradient — the same scene rendered with a soft penumbra.">
+        <figcaption>The depth-only shader above gives you one comparison per fragment: either fully in shadow or fully lit, which produces hard, jagged shadow edges. Percentage Closer Filtering (PCF) extends that test by sampling the center texel plus its 8 neighbours and averaging the 9 binary results. The fractional value softens the boundary into a penumbra a few texels wide — a small per-fragment cost for a much more believable shadow.</figcaption>
+    </figure>
 
     <h2 id="best-practices">Best Practices</h2>
     

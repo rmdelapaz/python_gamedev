@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 320" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="sm-ai-title sm-ai-desc">
+    <title id="sm-ai-title">Enemy AI state machine: Idle, Patrol, Chase, and Attack arranged in a cycling square</title>
+    <desc id="sm-ai-desc">A finite state machine for an enemy NPC. Four rounded-rectangle states sit at the corners of a square: Idle at the top-left, Patrol at the top-right, Chase at the bottom-right, and Attack at the bottom-left. A solid teal dot above Idle marks the initial state, with an arrow pointing down into Idle. Four arrows form a clockwise cycle around the square: Idle to Patrol labelled "On timer"; Patrol to Chase labelled "Player spotted"; Chase to Attack labelled "In range"; and Attack back to Idle labelled "Target down".</desc>
+
+    <style>
+        svg {
+            --state-fill:    rgba(59, 130, 246, 0.08);
+            --state-stroke:  rgb(59, 130, 246);
+            --state-text:    rgb(15, 23, 42);
+            --initial-dot:   rgb(13, 148, 136);
+            --transition:    rgb(71, 85, 105);
+            --event-text:    rgb(180, 83, 9);
+        }
+        @media (prefers-color-scheme: dark) {
+            svg {
+                --state-fill:    rgba(86, 156, 214, 0.18);
+                --state-stroke:  rgb(86, 156, 214);
+                --state-text:    #f1f5f9;
+                --initial-dot:   rgb(45, 212, 191);
+                --transition:    rgb(148, 163, 184);
+                --event-text:    rgb(251, 191, 36);
+            }
+        }
+        .state-box   { fill: var(--state-fill);   stroke: var(--state-stroke); stroke-width: 2; }
+        .state-name  { fill: var(--state-text);   font: 700 16px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .initial-dot { fill: var(--initial-dot); }
+        .transition  { stroke: var(--transition); stroke-width: 2; fill: none; stroke-linecap: round; }
+        .event-label { fill: var(--event-text);   font: italic 600 13px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    </style>
+
+    <defs>
+        <marker id="sm-ai-head" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+            <path d="M0,0 L12,6 L0,12 Z" fill="var(--transition)"/>
+        </marker>
+    </defs>
+
+    <!-- ==== Transition lines (drawn first, behind state boxes) ==== -->
+    <!-- Initial dot -> Idle (short vertical) -->
+    <line class="transition" x1="150" y1="32"  x2="150" y2="50"  marker-end="url(#sm-ai-head)"/>
+    <!-- Idle -> Patrol (top edge, rightward) -->
+    <line class="transition" x1="220" y1="80"  x2="378" y2="80"  marker-end="url(#sm-ai-head)"/>
+    <!-- Patrol -> Chase (right edge, downward) -->
+    <line class="transition" x1="450" y1="108" x2="450" y2="250" marker-end="url(#sm-ai-head)"/>
+    <!-- Chase -> Attack (bottom edge, leftward) -->
+    <line class="transition" x1="380" y1="280" x2="222" y2="280" marker-end="url(#sm-ai-head)"/>
+    <!-- Attack -> Idle (left edge, upward) -->
+    <line class="transition" x1="150" y1="252" x2="150" y2="110" marker-end="url(#sm-ai-head)"/>
+
+    <!-- ==== State boxes (drawn on top of transition lines) ==== -->
+    <rect class="state-box" x="80"  y="52"  width="140" height="56" rx="8"/>
+    <rect class="state-box" x="380" y="52"  width="140" height="56" rx="8"/>
+    <rect class="state-box" x="380" y="252" width="140" height="56" rx="8"/>
+    <rect class="state-box" x="80"  y="252" width="140" height="56" rx="8"/>
+
+    <!-- ==== State names ==== -->
+    <text class="state-name" x="150" y="80"  text-anchor="middle" dominant-baseline="central">Idle</text>
+    <text class="state-name" x="450" y="80"  text-anchor="middle" dominant-baseline="central">Patrol</text>
+    <text class="state-name" x="450" y="280" text-anchor="middle" dominant-baseline="central">Chase</text>
+    <text class="state-name" x="150" y="280" text-anchor="middle" dominant-baseline="central">Attack</text>
+
+    <!-- ==== Initial-state indicator dot ==== -->
+    <circle class="initial-dot" cx="150" cy="25" r="7"/>
+
+    <!-- ==== Event labels (drawn last; placed outside the cycle) ==== -->
+    <text class="event-label" x="300" y="70"  text-anchor="middle">On timer</text>
+    <text class="event-label" x="460" y="183" text-anchor="start">Player spotted</text>
+    <text class="event-label" x="300" y="295" text-anchor="middle">In range</text>
+    <text class="event-label" x="140" y="183" text-anchor="end">Target down</text>
+</svg>

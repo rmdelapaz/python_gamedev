@@ -105,6 +105,11 @@
         E --> Q["State Restoration"]
     </div>
 
+    <figure class="svg-wrapper">
+        <img class="responsive-svg" src="/images/components/save-tree.svg" alt="JSON tree of a save file showing top-level metadata (version, timestamp, play_time) and three nested sections — player (name, level, health, position, inventory), progress (current_level, completed, score, achievements), and world (world_seed, enemies, items). A dashed callout highlights how Python tuples become JSON arrays during asdict() serialization." loading="lazy">
+        <figcaption>Inside one save slot: top-level metadata wraps three logical sections — player, progress, and world. Python types like tuples flatten to JSON primitives on save and rehydrate back to Python objects on load.</figcaption>
+    </figure>
+
     <h2 id="interactive-save-load-system-demo">Interactive Save/Load System Demo</h2>
     
     <div class="canvas-wrapper" style="text-align: center;">

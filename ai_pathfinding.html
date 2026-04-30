@@ -100,6 +100,13 @@
         D --> M["Path Smoothing"]
     </div>
 
+    <figure class="svg-wrapper">
+        <img class="responsive-svg" src="/images/components/pathfinding-grid.svg"
+             alt="An 8-by-5 pathfinding grid. Start cell on the left, goal on the right, separated by a vertical wall of three cells in column 3. The found path winds in gold up over the wall and across the top row to reach the goal. A spotlight on cell (2, 2) connects via a dashed leader to a callout that breaks down its A* values: g equals 2, h equals 5, f equals 7, parent (2, 3)."
+             loading="lazy">
+        <figcaption>A* picks the next cell to expand by minimising <strong>f = g + h</strong>, where <strong>g</strong> is the actual cost from the start and <strong>h</strong> is a heuristic estimate of cost remaining to the goal (Manhattan distance, here). The wall in column 3 forces the optimal path up over the top; once the goal is reached, walking parent pointers back to the start reconstructs the route. Lightly-tinted cells show neighbours that landed on the closed list but were beaten by cheaper alternatives.</figcaption>
+    </figure>
+
     <h2 id="interactive-a-pathfinding-demo">Interactive A* Pathfinding Demo</h2>
     
     <div class="canvas-wrapper" style="text-align: center;">

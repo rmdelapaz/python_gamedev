@@ -107,11 +107,10 @@
       "build_concept": "3×2 grid of cells, viewBox ~720×420. Each cell shows one primitive: rect (with x,y,w,h labels), circle (center, radius), polygon (3 points labeled), line (start, end, width), ellipse (bounding rect with rx,ry), arc (start_angle, stop_angle in radians). Below each shape, monospace `pygame.draw.<fn>(surface, color, ...)` signature with arg names color-tinted to match the visual feature each controls."
     },
     "pygame_basics_game_loop.html": {
-      "status": "needs_new_svg",
+      "status": "reuse (built chat 14)",
       "fallback_svg": "game-loop-cycle.svg",
       "fallback_alt": "The game loop's three-phase cycle: process input, update state, render.",
-      "fallback_caption": "The game loop's three-phase cycle: process input → update state → render → repeat. The interactive demo visualizes each phase running per frame; this diagram shows the cycle and what happens in each phase.",
-      "build_concept": "Circular flow with 3 large nodes, viewBox ~720×420. Nodes: Input (poll events, read keys/mouse), Update (advance physics, run AI, advance dt), Render (clear, draw entities, flip). Arrows clockwise around with `dt` labeled on the cycle. Each node has small bullet list of typical work. Center label 'one frame' with arrow to a side strip showing target frame budget at 60 FPS = 16.67 ms."
+      "fallback_caption": "The game loop's three-phase cycle: process input → update state → render → repeat. The interactive demo visualizes each phase running per frame; this diagram shows the cycle and what happens in each phase."
     }
   }
 }

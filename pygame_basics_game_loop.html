@@ -105,6 +105,14 @@
             <p>Make sure the game runs at a consistent speed, typically 30 or 60 frames per second (FPS).</p>
         </div>
 
+        <figure class="svg-wrapper">
+            <img src="/images/components/game-loop-cycle.svg"
+                 alt="The game loop's per-frame cycle as three nodes arranged in a triangle: Input at the top, Update at the bottom right, and Render at the bottom left, connected by clockwise curved arrows. Input lists poll events, read keys and mouse, queue input. Update lists advance physics, run AI and check collisions, step by dt. Render lists clear screen, draw entities, flip and present. The center reads 'one frame' with a circular arrow glyph. Below the cycle is a horizontal stacked bar split into illustrative input, update, and render segments, labelled 16.67 milliseconds at its right end, with a note that clock dot tick of 60 enforces this budget."
+                 class="responsive-svg"
+                 loading="lazy">
+            <figcaption>Each frame cycles through three phases &mdash; <strong>Input → Update → Render</strong> &mdash; then starts the next frame. The bar below shows the <code>16.67&nbsp;ms</code> budget at 60&nbsp;FPS that <code>clock.tick(60)</code> enforces; if the three phases together overrun the budget, the game drops a frame.</figcaption>
+        </figure>
+
         <h2 id="your-first-game-loop-in-pygame">Your First Game Loop in Pygame</h2>
         
         <pre><code># Import Pygame
@@ -167,6 +175,13 @@ sys.exit()</code></pre>
         <div style="background-color: #f9f9f9; padding: 20px; border-radius: 10px; margin: 20px 0; text-align: center;">
             <h3 id="interactive-demo-see-the-game-loop-in-action">🎮 Interactive Demo: See the Game Loop in Action!</h3>
             <canvas id="gameLoopDemo" width="600" height="400"></canvas>
+            <figure class="canvas-fallback">
+                <img src="/images/components/game-loop-cycle.svg"
+                     alt="The game loop's three-phase cycle: process input, update state, render."
+                     class="responsive-svg"
+                     loading="lazy">
+                <figcaption>The game loop's three-phase cycle: process input → update state → render → repeat. The interactive demo visualizes each phase running per frame; this diagram shows the cycle and what happens in each phase.</figcaption>
+            </figure>
             <button onclick="toggleGame()">Start/Stop Game</button>
             <button onclick="toggleVisualization()">Show/Hide Loop Steps</button>
             <p>FPS: <span id="fpsDisplay">0</span> | Frame: <span id="frameCount">0</span></p>
@@ -368,6 +383,13 @@ while running:
         <div class="interactive-demo">
             <h3 id="game-loop-in-popular-games">Game Loop in Popular Games</h3>
             <canvas id="gameExamplesCanvas" width="600" height="300"></canvas>
+            <figure class="canvas-fallback">
+                <img src="/images/components/game-loop-cycle.svg"
+                     alt="The game loop's three-phase cycle: process input, update state, render."
+                     class="responsive-svg"
+                     loading="lazy">
+                <figcaption>The game loop's three-phase cycle: process input → update state → render → repeat. The interactive demo visualizes each phase running per frame; this diagram shows the cycle and what happens in each phase.</figcaption>
+            </figure>
         </div>
 
         <script>

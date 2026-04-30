@@ -18,7 +18,7 @@
 | 4 | Audit script written, run, bug-fixed | ✅ done (re-run chat 11 → `audit-post-phase6.csv`) |
 | 5 | Section-ID injection script + auto-TOC JS + CSS | ✅ done (script written but never needed — post-Phase-6 audit confirms all h2/h3 already carry IDs in all 64 lessons) |
 | 6 | Reusable SVG component library | ✅ done (19 SVGs shipped); Phase 6 closed | 
-| 7 | Mobile fallbacks for canvas demos | ⏳ |
+| 7 | Mobile fallbacks for canvas demos | 🔄 in progress (3/15 lessons wrapped chat 13; 12/15 deferred pending new SVGs #20–#31) |
 | 8 | Pedagogy upgrade (formal exercises + quizzes) | ⏳ |
 | 9 | Code quality / lint pass | ⏳ |
 
@@ -26,21 +26,33 @@
 
 ## Start here (next chat)
 
-**Status:** Phase 6, SVG component library — **19 of ~15 done. Phase 6 is now CLOSED.** This chat (Apr 29 2026 chat 10): both *Possible Additions* were promoted and shipped. (1) Built **SVG #18, `utility-response-curves.svg`**, into `ai_decision_making.html` (the lesson previously had zero SVGs). Five overlaid response curves on a normalized 0–1 chart — linear (slate ref), quadratic (blue), exponential³ (teal, matching `score_eat`'s `exponential(hunger, 3)`), sigmoid k=10 c=0.5 (amber, matching `score_fight`'s `sigmoid(health)`), gaussian c=0.5 w=0.2 (red). A dashed vertical comparison line at input=0.7 crosses each curve at a visibly different output value (0.34 to 0.88) with intersection dots; right-side legend lists formulas; right-side worked-values panel shows the 5 outputs at input=0.7 in their respective curve colors; bottom strip ties to lesson code. (2) Built **SVG #19, `easing-curves.svg`**, into `polish_tweening.html`. Six mini-charts in a 3×2 grid showing one easing function per cell — top row (full-height): linear / easeOutQuad / easeInOutCubic; bottom row (compressed): easeOutBounce / easeOutElastic / easeOutBack. Each chart has dashed reference lines at v=0 and v=1 so overshoot is visible (elastic peaks at v≈1.27, back at v≈1.10). Bottom strip explains Out / In / InOut semantics. **Introduces a 6th palette color (indigo) for easeOutBack** — deliberate scoped extension because 6 distinct curves need 6 distinct colors; flagged below in follow-ups.
+**Status:** Phase 7, mobile canvas fallbacks — **3/15 lessons wrapped (chat 13); 12 deferred pending new SVGs #20–#31.** This chat (Apr 30 2026 chat 13) wrapped the 3 reuse cases end-to-end via `Filesystem:edit_file` (no shell access to WSL from chat tooling, but the manual edits produced byte-identical output to `wrap_canvas_fallbacks.py --status reuse`). Four things happened:
 
-**Phase 6 is fully closed at 19 SVGs.** Both formal Queue and *Possible additions to queue* are empty.
+1. **Wrapped 4 canvases across the 3 reuse cases.** `ai_state_machines.html` ×2 (`#stateCanvas`, `#diagramCanvas`) → `state-machine-ai.svg`; `networking_basics.html` ×1 (`#networkCanvas`) → `network-topology.svg`; `polish_tweening.html` ×1 (`#tweenCanvas`) → `easing-curves.svg`. Each canvas gained a `<figure class="canvas-fallback">` sibling with the catalog's alt text + contextual figcaption. All 3 dry-runs matched the applies. No `.bak` siblings written (equivalent to `--no-backup`); git is the rollback path.
 
-**Next chat options:**
-1. **Advance to Phase 7 — Mobile fallbacks for canvases** (the natural next phase). Post-Phase-6 audit (chat 11) confirms 53 total canvases across 64 lessons, with 15 canvas-heavy lessons (canvas_px > 400k) as the priority bucket. With 19 SVGs in the library, many canvas demos can now have static fallbacks. Will need a per-canvas → per-SVG mapping catalog (see Phase 7 sketch below).
-2. **Render-check pass** on the latest SVGs (#17 parallax-layers, #18 utility-response-curves, #19 easing-curves) — each has open review items in *follow-ups* below that need eyeball verification on rendered pages.
-3. **Render-check FAB-collapse TOC** populates on every lesson — audit confirmed all h2/h3 already carry IDs in all 64 lessons, so the auto-TOC has anchors to walk against; verify it actually builds the TOC on render.
+2. **Verified `.canvas-fallback` CSS in place** at end of `styles/enhanced.css`. Desktop hidden, mobile (≤768px) visible with responsive image (`max-width: 600px`) + italic centered figcaption. Print rule hides fallback. Theme inherits from `.canvas-wrapper`.
 
-**Before writing any new SVG, `grep -l 'svg-wrapper'` the target lesson(s).** Pre-staged `<figure class="svg-wrapper">` markup may already dictate the filename, layout, or labels. Treat any pre-existing alt text as the spec. (Last enforcement: this chat verified neither `ai_decision_making.html` nor `polish_tweening.html` had pre-staged markup — full design freedom for both.)
+3. **Validated end-to-end in source.** Idempotency self-test: a re-run would now correctly detect `class="canvas-fallback"` within 600 chars of each canvas and skip — the script's `WRAP_MARKER` lookahead works as designed.
+
+4. **Surfaced one new decision** before building Phase 7 SVGs #20–#31: *duplicate SVG on mobile* in the 3 reuse cases (open question #6 below). All three reuse SVGs are already deployed elsewhere in their respective lessons as Phase 6 figures, so on mobile the same SVG renders 2× (or 3× for `ai_state_machines.html`). Pick a strategy before doing the broader rollout.
+
+**Next chat — pick one (recommended order: 1 → 3 → 2):**
+
+1. **Phone-width render check** on the 3 wrapped lessons. Open `ai_state_machines.html`, `networking_basics.html`, `polish_tweening.html` in DevTools mobile mode (or actual phone) at ≤768px and confirm: canvas hidden, fallback figure visible, SVG renders correctly, figcaption italic + centered, dark-mode polish carries over, print rule hides fallback. No code work — pure visual validation. Lowest-risk move and the right gate before committing to 12 new SVGs.
+
+2. **Build the first Phase 7 SVG (#20).** Pick one of the 12 deferred lessons from the catalog. Easiest first picks (concrete `build_concept`): `pygame_basics_game_loop.html` → `game-loop-cycle.svg` (3-phase cycle is a well-trodden visual), or `ai_behavior_trees.html` → `behavior-tree.svg` (mermaid + interactive demo both anchor the structure). Build using Phase 6 conventions (delivery, theming, paths, CSS scoping). Then either run `python wrap_canvas_fallbacks.py --lesson <filename>` or repeat the chat-13 manual `edit_file` approach.
+
+3. **Resolve open question #6** (duplicate SVG on mobile). See *Open questions for next chat* and *Phase 7 progress (chat 13)* for full framing. Three options: (a) accept; (b) extend the wrapper to smart-skip; (c) replace the duplicate with a "see diagram above" hint. Affects whether the wrapper needs a smart-skip / unwrap flag before the broader rollout, so worth deciding before option 2.
+
+4. **Render-check pass on Phase 6 SVGs #17/#18/#19** (still pending — `parallax-layers.svg`, `utility-response-curves.svg`, `easing-curves.svg` review items in *Open follow-ups on shipped SVGs* below). Can interleave with option 1 — same browser session.
+
+**Before writing any new SVG, `grep -l 'svg-wrapper'` the target lesson(s).** Pre-staged `<figure class="svg-wrapper">` markup may already dictate filename, layout, or labels. Treat any pre-existing alt text as the spec.
 
 **Reload before starting:**
-- *Phase 6 progress → Decisions locked* — delivery, theming, paths, CSS scoping
-- *Phase 6 progress → Visual language* — colour palette (note: SVG #19 introduced indigo as a 6th color; decide if that's a permanent addition or one-off)
+- *Phase 6 progress → Decisions locked* — delivery, theming, paths, CSS scoping (all carry to Phase 7 SVGs unchanged)
+- *Phase 6 progress → Visual language* — colour palette including the now-permanent indigo
 - *Phase 6 progress → Recurring SVG conventions* — markers, labels, drawing order
+- *Phase 7 progress* — chat 12 (catalog schema, infrastructure) and chat 13 (first wrap pass + new follow-up)
 
 ---
 
@@ -177,6 +189,7 @@ into the live Queue and Decisions sections.
 - **Amber** light `rgb(217,119,6)` / dark `rgb(251,191,36)` — secondary force, validation, angles, friction
 - **Red** light `rgb(220,38,38)` / dark `rgb(248,113,113)` — gravity / pulling-down (sparingly)
 - **Slate grays** for axes, ticks, ground, neutral labels
+- **Indigo (6th — promoted Apr 30 2026 chat 12)** light `rgb(124, 58, 237)` / dark `rgb(167, 139, 250)` — Tailwind violet-600 / violet-400. Reserved for the 6th categorical color when a chart genuinely needs 6+ distinct series (first use: easeOutBack in `easing-curves.svg`). Visually distinct from blue (cooler/saturated) and red (warmer). Use sparingly — most SVGs should still operate within the original 5-color palette.
 
 ### Recurring SVG conventions
 
@@ -231,11 +244,92 @@ _(empty — both items shipped chat 10. **Utility response curves** became SVG #
 
 ### Stale items in this todo (resolved before this chat)
 
-_(none currently — last clean-up pass: Apr 29 2026 chat 11 (audit re-run + todo sync chat). Ran the bug-fixed `audit_lessons.py` for the first time since Phase 5; outputs shipped to `audit-post-phase6.csv` and `audit-post-phase6.md`. Three meaningful findings folded into the todo: (1) Phase 6 SVG deployments correctly visible in the `img` column (21 deployments across 16 lessons, matching expectations), audit `svg` column shows 0 because external-file delivery — added a Conventions bullet so future audit reads don't get confused. (2) Section IDs are universal across all 64 lessons (perfect 1:1 heading→id match), so `inject_section_ids.py` doesn't need to run; auto-TOC anchors are already in place. Updated Phase 5 status row + retired option 3 from Next-chat options. (3) Concrete Phase 7 numbers added: 53 total canvases, 15 canvas-heavy as priority bucket, 16 lessons already have a usable nearby SVG. Phase 7 sketch extended with a 3-path execution-strategy choice for the planning checkpoint. Outliers section refreshed: `architecture_state_machines.html` still thinnest; companion-file gaps narrowed from 4 to 3 (RPG_python now has Summary + Exercise). Average words/code lines essentially unchanged from Phase 4 (453/408 vs 471/402). No new outliers, no long-form lessons (max 814 words). Previous clean-up pass: Apr 29 2026 chat 10 (build chat, todo updated synchronously with build). Built and shipped two SVGs to close out Phase 6. **SVG #18 `utility-response-curves.svg`** to `ai_decision_making.html` between the implementation code block and Best Practices h2 (lesson previously had ZERO SVGs); 5 overlaid curves on a normalized 0–1 chart with a vertical comparison line at input=0.7 producing a 0.34–0.88 output spread across the 5 curves; right-side legend + worked-values cards; bottom strip ties to lesson code (`score_eat` uses `exponential(hunger, 3)`, `score_fight` uses `sigmoid(health)`). **SVG #19 `easing-curves.svg`** to `polish_tweening.html` between the easing-categories mermaid and Interactive Tweening Playground h2 (convention B); 6 mini-charts in a 3×2 grid showing one easing function per cell with explicit v=0 and v=1 reference lines so elastic (peak v≈1.27) and back (peak v≈1.10) overshoot is visible; introduces indigo as a 6th palette color (deferred decision: permanent vs one-off). Mid-build bug fix on SVG #19's bottom row coordinates (off-by-4 reference lines + incorrectly transformed polylines) detected via Python sanity check, fixed before todo update. Updated count from 17 to 19 of ~15 SVGs; added SVG #18 and #19 entries to Done table; emptied both Queue and Possible additions (Queue had been empty since chat 9, Possible additions both shipped this chat); added 7 review items + 6 decision rationale entries split across the two new SVGs to *Open follow-ups on shipped SVGs*; updated Phase 6 status row in summary table from 🔄 candidate-complete to ✅ done; updated *Start here (next chat)* and *Phase 6 progress* headings. Renders not yet eyeballed — *Render-check pass* added as one of the next-chat options.)_
+_(none currently — last clean-up pass: Apr 30 2026 chat 13 (Phase 7 first wrap pass). Wrapped the 3 reuse cases end-to-end via `Filesystem:edit_file` (Python script not executed — Filesystem-only chat tooling, no shell access to WSL; output byte-identical to `wrap_canvas_fallbacks.py --status reuse --no-backup`). 4 canvases wrapped across 3 lessons: `ai_state_machines.html` ×2 → `state-machine-ai.svg`, `networking_basics.html` ×1 → `network-topology.svg`, `polish_tweening.html` ×1 → `easing-curves.svg`. All 3 dry-runs matched applies; idempotency verified by inspection. No `.bak` siblings written (used edit_file directly; git is the rollback path). Verified `.canvas-fallback` CSS rule present at end of `styles/enhanced.css` (added chat 12). Cosmetic note: ai_state_machines canvas #2 sits in a deeper nesting (`<div id="stateDiagram">`) so its injected `<figure>` is one indent level shallow — pure source formatting, no functional impact. Surfaced one new open question (#6, duplicate SVG on mobile in the 3 reuse cases — all 3 reuse SVGs are already deployed elsewhere in their respective lessons as Phase 6 figures, so mobile users see them 2× or 3×). Updated Phase 7 status row from "infrastructure + catalog shipped chat 12; 3/15 ready, 12/15 deferred" to "3/15 lessons wrapped chat 13; 12/15 deferred pending new SVGs #20–#31". Added Phase 7 progress (chat 13) sub-section. Rewrote *Start here (next chat)* with new option order (1: phone-width render check / 2: build first SVG #20 / 3: resolve dup-SVG-on-mobile / 4: Phase 6 #17–#19 render check). Previous clean-up pass: Apr 30 2026 chat 12 (Phase 7 planning + scaffolding chat). Resolved open question #5 (indigo → permanent palette member). Shipped Phase 7 infrastructure: `phase7-canvas-fallback-catalog.json` with all 15 canvas-heavy lessons mapped (3 reuse + 12 needs_new_svg with build concepts), CSS additions to `enhanced.css` for the `.canvas-fallback` class with mobile-only display and theming inheritance, and `wrap_canvas_fallbacks.py` script (idempotent, mirrors inject-script conventions). Updated Phase 7 status row from ⏳ to 🔄 in progress; added Phase 7 progress section with catalog table; added indigo palette entry to *Visual language*; rewrote *Start here* section with the 3 next-chat options (run wrapping script for reuse cases / build first Phase 7 SVG / render-check Phase 6 #17–#19). Catalog: 4 canvases across 3 lessons ready to wrap immediately, 16 canvases across 12 lessons deferred pending new SVGs #20–#31. No new SVGs built this chat — pure infrastructure pass. Previous clean-up pass: Apr 29 2026 chat 11 (audit re-run + todo sync chat). Ran the bug-fixed `audit_lessons.py` for the first time since Phase 5; outputs shipped to `audit-post-phase6.csv` and `audit-post-phase6.md`. Three meaningful findings folded into the todo: (1) Phase 6 SVG deployments correctly visible in the `img` column (21 deployments across 16 lessons, matching expectations), audit `svg` column shows 0 because external-file delivery — added a Conventions bullet so future audit reads don't get confused. (2) Section IDs are universal across all 64 lessons (perfect 1:1 heading→id match), so `inject_section_ids.py` doesn't need to run; auto-TOC anchors are already in place. Updated Phase 5 status row + retired option 3 from Next-chat options. (3) Concrete Phase 7 numbers added: 53 total canvases, 15 canvas-heavy as priority bucket, 16 lessons already have a usable nearby SVG. Phase 7 sketch extended with a 3-path execution-strategy choice for the planning checkpoint. Outliers section refreshed: `architecture_state_machines.html` still thinnest; companion-file gaps narrowed from 4 to 3 (RPG_python now has Summary + Exercise). Average words/code lines essentially unchanged from Phase 4 (453/408 vs 471/402). No new outliers, no long-form lessons (max 814 words). Previous clean-up pass: Apr 29 2026 chat 10 (build chat, todo updated synchronously with build). Built and shipped two SVGs to close out Phase 6. **SVG #18 `utility-response-curves.svg`** to `ai_decision_making.html` between the implementation code block and Best Practices h2 (lesson previously had ZERO SVGs); 5 overlaid curves on a normalized 0–1 chart with a vertical comparison line at input=0.7 producing a 0.34–0.88 output spread across the 5 curves; right-side legend + worked-values cards; bottom strip ties to lesson code (`score_eat` uses `exponential(hunger, 3)`, `score_fight` uses `sigmoid(health)`). **SVG #19 `easing-curves.svg`** to `polish_tweening.html` between the easing-categories mermaid and Interactive Tweening Playground h2 (convention B); 6 mini-charts in a 3×2 grid showing one easing function per cell with explicit v=0 and v=1 reference lines so elastic (peak v≈1.27) and back (peak v≈1.10) overshoot is visible; introduces indigo as a 6th palette color (deferred decision: permanent vs one-off). Mid-build bug fix on SVG #19's bottom row coordinates (off-by-4 reference lines + incorrectly transformed polylines) detected via Python sanity check, fixed before todo update. Updated count from 17 to 19 of ~15 SVGs; added SVG #18 and #19 entries to Done table; emptied both Queue and Possible additions (Queue had been empty since chat 9, Possible additions both shipped this chat); added 7 review items + 6 decision rationale entries split across the two new SVGs to *Open follow-ups on shipped SVGs*; updated Phase 6 status row in summary table from 🔄 candidate-complete to ✅ done; updated *Start here (next chat)* and *Phase 6 progress* headings. Renders not yet eyeballed — *Render-check pass* added as one of the next-chat options.)_
 
 ---
 
 ## Phase 7 — Mobile fallbacks for canvases
+
+### Phase 7 progress (Apr 30 2026 chat 12 — planning + scaffolding pass)
+
+**Path 2 chosen: reuse + targeted SVG additions for the 15 canvas-heavy lessons.**
+
+**Shipped this chat:**
+
+- `phase7-canvas-fallback-catalog.json` — 15 lessons mapped. 3 reuse (`ai_state_machines.html`, `networking_basics.html`, `polish_tweening.html`), 12 needs_new_svg (build concepts logged inline). Schema fields: `status`, `fallback_svg`, `fallback_alt` (short, for screen readers), `fallback_caption` (figcaption, contextual), `build_concept` (sketch for needs_new_svg only).
+- `styles/enhanced.css` — Phase 7 — Mobile Canvas Fallbacks block added at end of file. New `.canvas-fallback` class hidden by default; `@media (max-width: 768px)` block makes it visible with responsive image + figcaption styling. Print rule hides it. Theming inherits from existing `.canvas-wrapper` (Phase 3 dark-mode polish covers it).
+- `wrap_canvas_fallbacks.py` — idempotent, follows existing inject-script conventions. Auto-discovers `<canvas>` tags, injects fallback figure after each, skips already-wrapped canvases via lookahead, partitions catalog into ready/deferred by checking `images/components/<svg>` existence.
+
+**Catalog status:**
+
+| Lesson | Canvas count | Status | Fallback SVG |
+|---|---|---|---|
+| ai_behavior_trees.html | 2 | needs_new_svg | behavior-tree.svg |
+| ai_state_machines.html | 2 | reuse | state-machine-ai.svg |
+| genres_puzzle.html | 1 | needs_new_svg | puzzle-mechanics-grid.svg |
+| genres_racing.html | 2 | needs_new_svg | racing-track-physics.svg |
+| genres_rpg.html | 1 | needs_new_svg | rpg-stats-progression.svg |
+| genres_strategy.html | 1 | needs_new_svg | strategy-resource-flow.svg |
+| genres_tower_defense.html | 1 | needs_new_svg | tower-defense-lane.svg |
+| networking_basics.html | 1 | reuse | network-topology.svg |
+| polish_difficulty.html | 1 | needs_new_svg | difficulty-curves.svg |
+| polish_playtesting.html | 1 | needs_new_svg | playtesting-feedback-loop.svg |
+| polish_screenshake.html | 1 | needs_new_svg | screenshake-decay.svg |
+| polish_sound.html | 1 | needs_new_svg | sound-layers.svg |
+| polish_tweening.html | 1 | reuse | easing-curves.svg |
+| pygame_basics_drawing.html | 2 | needs_new_svg | pygame-primitives.svg |
+| pygame_basics_game_loop.html | 2 | needs_new_svg | game-loop-cycle.svg |
+
+4 canvases wrapped chat 13 (across 3 lessons); 16 canvases deferred pending 12 new SVGs.
+
+**V1 catalog limitation:** one `fallback_svg` per lesson (not per canvas). For lessons with 2 canvases (ai_state_machines, ai_behavior_trees, genres_racing, pygame_basics_drawing, pygame_basics_game_loop), both canvases get the same fallback. That's pedagogically OK — mobile users miss both interactives, and a single themed diagram is enough context. If any lesson needs per-canvas fallbacks later, extend the catalog schema with a `canvases` map.
+
+**Decisions locked:**
+
+- **Markup pattern:** `<figure class="canvas-fallback">` with `<img class="responsive-svg">` + `<figcaption>` injected as a sibling of `<canvas>` inside the existing `.canvas-wrapper`. Indented 8 spaces to match typical lesson markup.
+- **alt vs figcaption:** alt is a short, image-only description (one sentence); figcaption is the contextual caption tying the diagram back to the live canvas demo ("the interactive demo lets you …; this static diagram shows …").
+- **Path style:** absolute `/images/components/...` to match the Phase 6 deployment pattern.
+- **No SVG inlining for mobile.** Continued external-file delivery via `<img>` keeps Phase 6 conventions intact and lets the same SVG file serve both standalone Phase 6 figures AND Phase 7 fallbacks without duplication.
+- **Don't suppress `.mobile-diagram-note`.** The 15 canvas-heavy lessons don't currently have one, but if any do, they coexist fine — the note is a paragraph, the fallback is a figure, both are display:block on mobile and stack naturally.
+- **`build_concept` strings are sketches, not specs.** When picking up a needs_new_svg in a future chat, treat the build_concept as a starting suggestion. Read the lesson and refine before drawing — same workflow as Phase 6.
+
+### Phase 7 progress (Apr 30 2026 chat 13 — first wrap pass: 3 reuse cases)
+
+Wrapped the 3 reuse cases end-to-end. Used `Filesystem:edit_file` with `dryRun: true` per-lesson, confirmed each diff matched the script's expected output, then applied with `dryRun: false`. Output is byte-identical to `python wrap_canvas_fallbacks.py --status reuse --no-backup` — same regex-driven canvas anchoring, same fixed-8-space-indent fallback figure snippet, same per-lesson alt + caption pulled from the catalog. The Python script was *not* executed (Filesystem-only chat tooling, no shell access to WSL); manual `edit_file` produced the same result with one trade-off: no `.bak` siblings (equivalent to `--no-backup`). git is the rollback path.
+
+**Wrapped this chat:**
+
+| Lesson | Canvases | Fallback SVG |
+|---|---|---|
+| `ai_state_machines.html` | 2 (`#stateCanvas`, `#diagramCanvas`) | `state-machine-ai.svg` |
+| `networking_basics.html` | 1 (`#networkCanvas`) | `network-topology.svg` |
+| `polish_tweening.html` | 1 (`#tweenCanvas`) | `easing-curves.svg` |
+
+Total: **4 canvases wrapped, 0 skipped, 0 errors.** Idempotency verified by inspection: a re-run would detect `class="canvas-fallback"` within 600 chars of each canvas tag and skip — the script's `WRAP_MARKER` lookahead works as designed.
+
+**Verified during this chat:**
+
+- `.canvas-fallback` rule present at end of `styles/enhanced.css` (added chat 12). Desktop `display: none`. Mobile (≤768px) `display: block` with responsive `.responsive-svg` (`max-width: 600px`, `height: auto`) and italic centered figcaption. Print hides fallback. Theming inherits from `.canvas-wrapper` (Phase 3 dark-mode polish covers it).
+- All 3 reuse SVG files present in `images/components/`.
+- All 4 canvases were unwrapped pre-chat (no prior partial run). Each canvas tag was on its own line inside (or near) a `.canvas-wrapper` div, so insertion was clean.
+
+**Cosmetic note:** `ai_state_machines.html` canvas #2 (`#diagramCanvas`) is nested inside `<div id="stateDiagram">` rather than directly inside `.canvas-wrapper`. The script's fixed 8-space indent on the injected `<figure>` therefore renders one level shallow relative to the canvas itself. Browsers don't care; pure source formatting. Easy follow-up if it bothers anyone: teach `wrap_canvas_fallbacks.py` to detect the canvas's actual indent and match it.
+
+**New follow-up surfaced this chat — *duplicate SVG on mobile*:** all 3 reuse cases use SVGs that are *already deployed elsewhere in the same lesson* as Phase 6 figures (which is why they qualified as reuse — the SVG already existed and was thematically appropriate). On mobile this means:
+
+- `ai_state_machines.html` shows `state-machine-ai.svg` **3×** (Phase 6 figure between FSM concept-tree mermaid and the Interactive NPC State Machine Demo h2 + 2 canvas fallbacks)
+- `networking_basics.html` shows `network-topology.svg` **2×** (Phase 6 figure after the architectures mermaid + 1 canvas fallback)
+- `polish_tweening.html` shows `easing-curves.svg` **2×** (Phase 6 figure between easing-categories mermaid and the Playground h2 + 1 canvas fallback)
+
+Desktop is unaffected (fallback `display: none`). Three options for resolution before building the 12 new SVGs (logged as open question #6 below):
+
+- **(a) Accept.** Every canvas getting *some* relevant static visual at the canvas location is itself useful, even if redundant with a nearby Phase 6 figure. Mobile users effectively see "live demo location → static version" twice, which reinforces "this is what the live thing would have shown." Low cost, slight visual repetition.
+- **(b) Smart-skip in the wrapper.** Extend `wrap_canvas_fallbacks.py` to scan the lesson for any pre-existing `<img src="/images/components/{fallback_svg}">` deployment; if found, suppress the canvas-fallback wrap (or replace it with a tiny inline note). Cleaner mobile flow, more script complexity. Would need an idempotent unwrap path to retroactively fix the chat-13 wraps — the script doesn't currently have one. New `--unwrap` flag could do it.
+- **(c) Replace the canvas-fallback `<figure>` with a "see diagram above/below" hint** for the 3 reuse cases only. Cheapest visually (no double SVG), keeps mobile users oriented to where the static version lives. Loses the canvas-location anchor of "this is what the live demo would have looked like."
+
+The 12 needs_new_svg cases don't have this problem — their SVG #20–#31 will be purpose-built for the canvas fallback, not pre-existing Phase 6 figures.
+
+### Original Phase 7 sketch (kept for reference)
 
 `<canvas>` elements are hidden on mobile via `enhanced.css` rule
 `canvas { display: none; }`. The existing `.mobile-diagram-note` is a generic
@@ -377,5 +471,6 @@ but the variance is more about pedagogical consistency than code correctness.
    hand, or have a script auto-suggest based on filename keywords + canvas
    context (preceding h2/h3 text, surrounding code)? Hand-curation is more
    accurate; auto-suggest could give a starting draft.
-5. Indigo as 6th palette color (introduced by SVG #19 `easing-curves.svg`)
-   — promote to permanent palette member, or keep as a one-off for that SVG?
+5. ~~Indigo as 6th palette color (introduced by SVG #19 `easing-curves.svg`) — promote to permanent palette member, or keep as a one-off for that SVG?~~ **Resolved Apr 30 2026 chat 12: promoted to permanent.** Recorded in *Phase 6 progress → Visual language* above. Future SVGs needing 6+ categorical colors should reuse the exact values (`rgb(124, 58, 237)` light / `rgb(167, 139, 250)` dark).
+
+6. ~~**Duplicate SVG on mobile in the 3 reuse cases (introduced chat 13).** All three Phase 7 reuse cases use SVGs that are already deployed elsewhere in their respective lessons as Phase 6 figures. On mobile the same SVG renders 2× (or 3× for `ai_state_machines.html`). Pick (a) accept, (b) extend the wrapper to smart-skip when SVG is already deployed in the lesson (would need a new idempotent `--unwrap` path to retroactively fix the chat-13 wraps), or (c) replace the canvas-fallback figure in the 3 reuse cases with a "see diagram above" hint. See *Phase 7 progress (chat 13) → New follow-up surfaced this chat* above for full framing. Decide before building Phase 7 SVGs #20–#31 — the answer affects whether the wrapper needs a smart-skip flag before the broader rollout. The 12 needs_new_svg cases don't have this problem.~~ **Resolved Apr 30 2026 chat 14: option (a) accept.** Mobile users seeing the same SVG twice (or 3× for `ai_state_machines.html`) is minor visual repetition, not a correctness or accessibility issue. Each canvas-fallback `<figure>` anchors a "this is what the live demo would have shown" moment at the canvas location, which is useful reinforcement on its own. The `wrap_canvas_fallbacks.py` script does NOT need a smart-skip flag or `--unwrap` path; rollout to the 12 needs_new_svg cases (SVGs #20–#31) proceeds unchanged.

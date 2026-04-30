@@ -1134,3 +1134,59 @@ code, pre {
     }
     .toc-card.auto-toc:not([open]) .toc-icon { font-size: 1.1rem; }
 }
+
+/* ===========================
+   Phase 7 — Mobile Canvas Fallbacks (added 2026)
+   On viewports where canvas is hidden by the existing
+     @media (max-width: 768px) { canvas { display: none; } }
+   rule, show a static SVG fallback inside the same .canvas-wrapper.
+
+   Markup pattern (injected by wrap_canvas_fallbacks.py per the catalog at
+   phase7-canvas-fallback-catalog.json):
+
+     <div class="canvas-wrapper">
+       <canvas id="…" …></canvas>
+       <figure class="canvas-fallback">
+         <img class="responsive-svg" src="/images/components/….svg" alt="…" loading="lazy">
+         <figcaption>…</figcaption>
+       </figure>
+     </div>
+
+   Hidden by default on desktop. Only flips visible at ≤ 768px so it never
+   competes with the live canvas demo. Theming inherits from .canvas-wrapper
+   (Phase 3 already polishes that for dark mode).
+   =========================== */
+
+.canvas-fallback {
+    display: none;
+    margin: 0;
+    padding: 0;
+}
+
+@media (max-width: 768px) {
+    .canvas-fallback {
+        display: block;
+        text-align: center;
+        margin: 0;
+    }
+    .canvas-fallback .responsive-svg {
+        width: 100%;
+        max-width: 600px;
+        height: auto;
+        margin: 0 auto;
+    }
+    .canvas-fallback figcaption {
+        font-size: 0.92rem;
+        color: var(--text-light);
+        margin-top: 0.5rem;
+        font-style: italic;
+        padding: 0 0.5rem;
+        text-align: center;
+        line-height: 1.45;
+    }
+}
+
+/* Print: hide fallbacks (canvas is already hidden in print) */
+@media print {
+    .canvas-fallback { display: none !important; }
+}

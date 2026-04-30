@@ -121,6 +121,13 @@
     
     <div class="canvas-wrapper" style="text-align: center;">
         <canvas id="stateCanvas" width="600" height="400" style="border: 1px solid #333; background-color: #2C3E50; display: inline-block;"></canvas>
+        <figure class="canvas-fallback">
+            <img src="/images/components/state-machine-ai.svg"
+                 alt="An NPC state machine cycling through Idle, Patrol, Chase, and Attack states."
+                 class="responsive-svg"
+                 loading="lazy">
+            <figcaption>An NPC state machine cycling through Idle → Patrol → Chase → Attack. The interactive simulation lets you trigger transitions and step through frames; this diagram shows the full state cycle that drives the agent.</figcaption>
+        </figure>
     </div>
     <div style="text-align: center; margin-top: 10px;">
         <p>Control the player (green) with Arrow Keys/WASD. Watch how NPCs react to your presence!</p>
@@ -179,6 +186,13 @@
         <!-- State Diagram -->
         <div id="stateDiagram" style="display: none; margin-top: 10px; padding: 10px; background-color: rgba(0,0,0,0.7); border-radius: 5px;">
             <canvas id="diagramCanvas" width="600" height="300" style="border: 1px solid #555;"></canvas>
+        <figure class="canvas-fallback">
+            <img src="/images/components/state-machine-ai.svg"
+                 alt="An NPC state machine cycling through Idle, Patrol, Chase, and Attack states."
+                 class="responsive-svg"
+                 loading="lazy">
+            <figcaption>An NPC state machine cycling through Idle → Patrol → Chase → Attack. The interactive simulation lets you trigger transitions and step through frames; this diagram shows the full state cycle that drives the agent.</figcaption>
+        </figure>
         </div>
     </div>
 

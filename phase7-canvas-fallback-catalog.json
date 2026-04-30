@@ -1,0 +1,117 @@
+{
+  "version": 1,
+  "phase": 7,
+  "scope": "canvas-heavy lessons (>400k px²) — 15 lessons identified by audit-post-phase6.csv",
+  "approach": "path 2: reuse Phase 6 SVGs where a usable one is adjacent + targeted new SVG additions for the rest",
+  "schema_notes": [
+    "Each entry maps a lesson filename to a fallback SVG that shows on mobile (where canvas { display: none }).",
+    "status='reuse' uses an existing Phase 6 SVG. status='needs_new_svg' has a build concept for a future chat.",
+    "The wrap script applies the same fallback to every <canvas> in the lesson — V1 limitation, fine for now.",
+    "fallback_alt is the short img alt (concise for screen readers); fallback_caption is the figcaption (contextual).",
+    "build_concept (only on needs_new_svg) is a sketch for the next-chat design pass, not a final spec."
+  ],
+  "lessons": {
+    "ai_behavior_trees.html": {
+      "status": "needs_new_svg",
+      "fallback_svg": "behavior-tree.svg",
+      "fallback_alt": "Hierarchical behavior tree showing Selector and Sequence composite nodes with leaf actions.",
+      "fallback_caption": "A behavior tree with Selector (?) and Sequence (→) composite nodes coordinating leaf actions. The interactive demo lets you watch ticks propagate through the tree; this static diagram shows the structure and one highlighted tick path.",
+      "build_concept": "Hierarchical tree, viewBox ~720×420. Root Selector (?) with 3 children: a Sequence branch (CheckEnemyVisible → Chase → Attack), a Sequence branch (CheckHealthLow → Flee), and a leaf Wander. Highlight one tick path in amber from root through the active branch. Status colors on returned nodes (success=teal, failure=red-tint, running=amber). Legend strip below explains tick semantics."
+    },
+    "ai_state_machines.html": {
+      "status": "reuse",
+      "fallback_svg": "state-machine-ai.svg",
+      "fallback_alt": "An NPC state machine cycling through Idle, Patrol, Chase, and Attack states.",
+      "fallback_caption": "An NPC state machine cycling through Idle → Patrol → Chase → Attack. The interactive simulation lets you trigger transitions and step through frames; this diagram shows the full state cycle that drives the agent."
+    },
+    "genres_puzzle.html": {
+      "status": "needs_new_svg",
+      "fallback_svg": "puzzle-mechanics-grid.svg",
+      "fallback_alt": "Five puzzle mechanics shown side by side: match-3, sliding tiles, projectile arc, pattern memory, and AND-gate logic.",
+      "fallback_caption": "Five core puzzle mechanics shown side by side: match-3 grid, sliding tiles, projectile arc, pattern sequence, and an AND-gate. The interactive demo lets you switch between all five; this diagram shows representative states from each.",
+      "build_concept": "5-cell horizontal strip (or 3+2 grid), viewBox ~720×400. Each cell shows characteristic gameplay: match-3 6×6 with one selected gem highlighted and a 3-of-a-kind row, 4×4 sliding puzzle mid-shuffle with empty slot marked, projectile arc (parabola) with target circles, color-sequence row with one button currently lit (WATCH! / REPEAT! style), AND gate with both inputs ON and output GREEN. Cell labels match lesson terminology."
+    },
+    "genres_racing.html": {
+      "status": "needs_new_svg",
+      "fallback_svg": "racing-track-physics.svg",
+      "fallback_alt": "Top-down racing track with a car at a corner showing velocity and tire-grip vectors.",
+      "fallback_caption": "Top-down racing track showing the car at a turn with velocity, tire-grip, and resulting deceleration vectors. The interactive demo lets you drive around a procedural track; this diagram shows the steering/grip relationship that produces understeer or oversteer.",
+      "build_concept": "Top-down curved track segment (start/finish + one tight corner), viewBox ~720×400. One car at the corner with three labeled vectors: velocity (blue, tangent to path), tire-grip max (teal, perpendicular into corner), resulting lateral force (amber arrow). Optional dashed skid arc showing what happens when |velocity| × mass > grip. Side panel with friction-circle diagram (one circle, current force vector inside)."
+    },
+    "genres_rpg.html": {
+      "status": "needs_new_svg",
+      "fallback_svg": "rpg-stats-progression.svg",
+      "fallback_alt": "An RPG character sheet with stats, an XP bar, an inventory grid, and equipment slots.",
+      "fallback_caption": "An RPG character sheet: STR/DEX/INT stats, an XP bar partway to next level, a 4×4 inventory grid with three items, and six equipment slots with two filled. The interactive demo lets you level up, equip items, and battle; this diagram shows the core progression systems.",
+      "build_concept": "Single character-sheet panel, viewBox ~720×440. Left column: stats block (STR 12, DEX 8, INT 14, +modifiers), HP/MP bars, XP bar at ~60% to next level with 'Lvl 5 → 6' label. Center column: 4×4 inventory grid with 3 sample items (potion, sword, scroll) + empty cells. Right column: 6 equipment slots arranged paper-doll style (head/chest/weapon/offhand/legs/feet) with weapon and chest filled. Theme-stable header colors per section."
+    },
+    "genres_strategy.html": {
+      "status": "needs_new_svg",
+      "fallback_svg": "strategy-resource-flow.svg",
+      "fallback_alt": "A strategy game's resource → production → unit pipeline showing gold, wood, and food feeding production buildings that train units.",
+      "fallback_caption": "A strategy game's resource flow: gold/wood/food sources feed production buildings that train units. The interactive demo lets you build a base and command armies; this diagram shows the resource → production → military pipeline with example flow rates.",
+      "build_concept": "Three-band horizontal pipeline, viewBox ~720×400. Band 1: 3 resource sources (gold mine, lumber mill, farm) each with a small icon + name + per-tick rate. Band 2: 2 production buildings (barracks, archery range) each consuming specific resources (cost shown in pills). Band 3: 2 unit types (footman, archer) with stats (HP/DMG). Slate-dashed Q-curves connect resources → buildings → units; consumption rates labeled mid-line. Theme-aware header colors per band."
+    },
+    "genres_tower_defense.html": {
+      "status": "needs_new_svg",
+      "fallback_svg": "tower-defense-lane.svg",
+      "fallback_alt": "A tower defense lane with three tower types covering an enemy path.",
+      "fallback_caption": "A tower defense lane with arrow, cannon, and freezer towers covering an enemy path, plus three enemy types at different positions. The interactive demo lets you place towers and watch waves; this diagram shows tower range overlap and enemy routing.",
+      "build_concept": "Top-down map, viewBox ~720×400. One winding path from spawn (left) to base (right). 4 tower placements: 2 arrow towers with overlapping translucent range circles, 1 cannon tower with larger circle (slower fire), 1 freezer tower with cooler-colored slow zone. 3 enemies on the path at different points: fast (small, blue), normal (medium, teal), tank (large, red). Range circles use teal/amber/cyan tints with low opacity so overlap is visible. Legend identifies each."
+    },
+    "networking_basics.html": {
+      "status": "reuse",
+      "fallback_svg": "network-topology.svg",
+      "fallback_alt": "Two network topologies side by side: client-server vs full-mesh peer-to-peer.",
+      "fallback_caption": "Two network architectures side by side: client-server (one hub, N spokes) vs full-mesh peer-to-peer (every node talks to every other). The interactive simulator lets you switch architectures, adjust latency, and watch packets flow; this diagram shows how connection count scales with player count."
+    },
+    "polish_difficulty.html": {
+      "status": "needs_new_svg",
+      "fallback_svg": "difficulty-curves.svg",
+      "fallback_alt": "Three difficulty curves shown side by side: linear ramp, plateau with rest periods, and dynamic difficulty adjustment.",
+      "fallback_caption": "Three difficulty curves over time: linear ramp, plateau (rest periods between spikes), and dynamic difficulty adjustment (DDA) that follows player performance. The interactive demo lets you tune curve parameters; this diagram shows the three patterns side by side.",
+      "build_concept": "Three sub-charts in a row, viewBox ~720×360. Each chart: difficulty (Y) vs time (X). Linear: straight diagonal teal line. Plateau: stairstep amber pattern (rise / hold / rise / hold). DDA: oscillating curve red that tracks a dashed slate 'player skill' line. Bottom strip explains each pattern's pedagogical use case."
+    },
+    "polish_playtesting.html": {
+      "status": "needs_new_svg",
+      "fallback_svg": "playtesting-feedback-loop.svg",
+      "fallback_alt": "A circular feedback loop with five steps: build, test, observe, analyze, iterate.",
+      "fallback_caption": "The playtesting feedback loop: build → test → observe → analyze → iterate. The interactive demo simulates running a session with feedback collection; this diagram shows the iteration cycle and the data collected at each step.",
+      "build_concept": "Circular 5-step pentagon, viewBox ~720×420. Each step is a node (Build, Test, Observe, Analyze, Iterate) with arrows clockwise. Per-node side callouts list typical artifacts: Build (prototype, vertical slice), Test (session recording, survey), Observe (heatmaps, time-on-task, frustration markers), Analyze (notes, themes, priority list), Iterate (changelog, next-build plan). Center label 'Tighten the loop' with iteration count."
+    },
+    "polish_screenshake.html": {
+      "status": "needs_new_svg",
+      "fallback_svg": "screenshake-decay.svg",
+      "fallback_alt": "Two stacked charts showing screen-shake trauma decay over time and the resulting screen-offset jitter.",
+      "fallback_caption": "Screen-shake intensity over time: trauma value spikes on impact then decays exponentially, with offset jitter scaled by trauma². The interactive demo lets you trigger shakes; this diagram shows the decay curve and offset envelope side by side.",
+      "build_concept": "Two stacked charts, viewBox ~720×400. Top: trauma(t) — spike at t=0 to value 1.0, exponential decay to 0 over ~1s, formula `trauma *= 0.95` per frame labeled. Bottom: screen offset(t) — random oscillation with amplitude `max_offset * trauma²` (so it dies off faster than trauma). Vertical comparison line at t=0.3s with annotation showing trauma=0.6 → offset envelope 0.36×max."
+    },
+    "polish_sound.html": {
+      "status": "needs_new_svg",
+      "fallback_svg": "sound-layers.svg",
+      "fallback_alt": "Four stacked audio tracks: music bed, ambient loop, SFX bursts, UI clicks.",
+      "fallback_caption": "A game's audio mix in four stacked layers: music bed, ambient loop, SFX bursts, UI clicks. The interactive demo lets you toggle layers and adjust mix; this diagram shows how layers stack on the master bus with their typical character and gain ranges.",
+      "build_concept": "Horizontal timeline with 4 stacked tracks, viewBox ~720×400. Each track shows characteristic waveform: music (continuous medium-amplitude wave), ambient (low-amplitude drone), SFX (sparse high-amplitude bursts at impact moments), UI (sharp narrow clicks at button events). Right-side gain labels (-12 dB music, -18 dB ambient, -6 dB SFX, -10 dB UI). Master bus row at bottom shows summed envelope."
+    },
+    "polish_tweening.html": {
+      "status": "reuse",
+      "fallback_svg": "easing-curves.svg",
+      "fallback_alt": "Six easing functions plotted on shared axes: linear, easeOutQuad, easeInOutCubic, easeOutBounce, easeOutElastic, easeOutBack.",
+      "fallback_caption": "Six easing functions plotted on shared axes — linear, easeOutQuad, easeInOutCubic, easeOutBounce, easeOutElastic, easeOutBack. The interactive playground lets you preview each curve in motion; this diagram shows their shapes side by side, with overshoot visible above the dashed v=1 line."
+    },
+    "pygame_basics_drawing.html": {
+      "status": "needs_new_svg",
+      "fallback_svg": "pygame-primitives.svg",
+      "fallback_alt": "Six pygame drawing primitives — rect, circle, polygon, line, ellipse, arc — each labeled with their key arguments.",
+      "fallback_caption": "Pygame's drawing primitives: rect, circle, polygon, line, ellipse, arc — each shown with its key arguments labeled. The interactive demo lets you tweak parameters and see the result; this diagram pairs each shape with its pygame.draw signature.",
+      "build_concept": "3×2 grid of cells, viewBox ~720×420. Each cell shows one primitive: rect (with x,y,w,h labels), circle (center, radius), polygon (3 points labeled), line (start, end, width), ellipse (bounding rect with rx,ry), arc (start_angle, stop_angle in radians). Below each shape, monospace `pygame.draw.<fn>(surface, color, ...)` signature with arg names color-tinted to match the visual feature each controls."
+    },
+    "pygame_basics_game_loop.html": {
+      "status": "needs_new_svg",
+      "fallback_svg": "game-loop-cycle.svg",
+      "fallback_alt": "The game loop's three-phase cycle: process input, update state, render.",
+      "fallback_caption": "The game loop's three-phase cycle: process input → update state → render → repeat. The interactive demo visualizes each phase running per frame; this diagram shows the cycle and what happens in each phase.",
+      "build_concept": "Circular flow with 3 large nodes, viewBox ~720×420. Nodes: Input (poll events, read keys/mouse), Update (advance physics, run AI, advance dt), Render (clear, draw entities, flip). Arrows clockwise around with `dt` labeled on the cycle. Each node has small bullet list of typical work. Center label 'one frame' with arrow to a side strip showing target frame budget at 60 FPS = 16.67 ms."
+    }
+  }
+}

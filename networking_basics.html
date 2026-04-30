@@ -119,6 +119,13 @@
     
     <div class="canvas-wrapper" style="text-align: center;">
         <canvas id="networkCanvas" width="800" height="600" style="border: 1px solid #333; display: inline-block;"></canvas>
+        <figure class="canvas-fallback">
+            <img src="/images/components/network-topology.svg"
+                 alt="Two network topologies side by side: client-server vs full-mesh peer-to-peer."
+                 class="responsive-svg"
+                 loading="lazy">
+            <figcaption>Two network architectures side by side: client-server (one hub, N spokes) vs full-mesh peer-to-peer (every node talks to every other). The interactive simulator lets you switch architectures, adjust latency, and watch packets flow; this diagram shows how connection count scales with player count.</figcaption>
+        </figure>
     </div>
     <div style="text-align: center; margin-top: 10px;">
         <p>Visualize network architectures, packet flow, and latency effects in real-time!</p>

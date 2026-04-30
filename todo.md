@@ -8,15 +8,15 @@
 
 ---
 
-## Status — Phases 1–5 complete, 6+ pending
+## Status — Phases 1–6 complete, 7+ pending
 
 | Phase | What | Status |
 |---|---|---|
 | 1 | Theme system foundation (CSS vars, dark/light toggle support) | ✅ done |
 | 2 | Top nav + `nav-enhancements.js` injected across 64 lessons | ✅ done |
 | 3 | Dark-mode polish for inline-styled boxes (`#f0f8ff`, `#fff5f5`, `#f9f9f9`) + mermaid container | ✅ done |
-| 4 | Audit script written, run, bug-fixed | ✅ done (script ready to re-run) |
-| 5 | Section-ID injection script + auto-TOC JS + CSS | ✅ done (`audit-post-phase5.csv` shipped) |
+| 4 | Audit script written, run, bug-fixed | ✅ done (re-run chat 11 → `audit-post-phase6.csv`) |
+| 5 | Section-ID injection script + auto-TOC JS + CSS | ✅ done (script written but never needed — post-Phase-6 audit confirms all h2/h3 already carry IDs in all 64 lessons) |
 | 6 | Reusable SVG component library | ✅ done (19 SVGs shipped); Phase 6 closed | 
 | 7 | Mobile fallbacks for canvas demos | ⏳ |
 | 8 | Pedagogy upgrade (formal exercises + quizzes) | ⏳ |
@@ -31,10 +31,9 @@
 **Phase 6 is fully closed at 19 SVGs.** Both formal Queue and *Possible additions to queue* are empty.
 
 **Next chat options:**
-1. **Advance to Phase 7 — Mobile fallbacks for canvases** (the natural next phase). Will need a per-canvas → per-SVG mapping catalog (see Phase 7 sketch below). With 19 SVGs in the library, many canvas demos can now have static fallbacks.
-2. **Run the bug-fixed `audit_lessons.py`** to get clean post-Phase-6 numbers (script is ready, hasn't been re-run since Phase 5).
-3. **Run the not-yet-run `inject_section_ids.py`** to ship Phase 5's section-ID injection across all 64 lessons.
-4. **Render-check pass** on the latest SVGs (#17 parallax-layers, #18 utility-response-curves, #19 easing-curves) — each has open review items in *follow-ups* below that need eyeball verification on rendered pages.
+1. **Advance to Phase 7 — Mobile fallbacks for canvases** (the natural next phase). Post-Phase-6 audit (chat 11) confirms 53 total canvases across 64 lessons, with 15 canvas-heavy lessons (canvas_px > 400k) as the priority bucket. With 19 SVGs in the library, many canvas demos can now have static fallbacks. Will need a per-canvas → per-SVG mapping catalog (see Phase 7 sketch below).
+2. **Render-check pass** on the latest SVGs (#17 parallax-layers, #18 utility-response-curves, #19 easing-curves) — each has open review items in *follow-ups* below that need eyeball verification on rendered pages.
+3. **Render-check FAB-collapse TOC** populates on every lesson — audit confirmed all h2/h3 already carry IDs in all 64 lessons, so the auto-TOC has anchors to walk against; verify it actually builds the TOC on render.
 
 **Before writing any new SVG, `grep -l 'svg-wrapper'` the target lesson(s).** Pre-staged `<figure class="svg-wrapper">` markup may already dictate the filename, layout, or labels. Treat any pre-existing alt text as the spec. (Last enforcement: this chat verified neither `ai_decision_making.html` nor `polish_tweening.html` had pre-staged markup — full design freedom for both.)
 
@@ -68,9 +67,11 @@
   into all 64 lessons; upgraded mermaid `<script type="module">` to expose
   `window.__mermaid` and pick initial theme.
 - `audit_lessons.py` — Phase 4. Bug-fixed for canvas size + section-ID counting.
-  Ready to re-run for clean post-Phase-5 numbers.
-- `inject_section_ids.py` — Phase 5. **Not yet run.** Slugifies H2/H3 text into
-  stable `id` attributes; idempotent.
+  Re-run on Apr 29 2026 chat 11; outputs in `audit-post-phase6.csv` and
+  `audit-post-phase6.md`. See *Audit findings* section below.
+- `inject_section_ids.py` — Phase 5. **Never needed to run.** The post-Phase-6
+  audit confirmed every h2/h3 in every lesson already has an `id` attribute.
+  Script is kept for reference/safety net but should not be invoked.
 
 ### Lessons (the content, after Phases 1–3)
 - All 64 `*.html` lesson files have:
@@ -86,21 +87,30 @@
 
 ---
 
-## Audit findings (key insights from Phase 4)
+## Audit findings
 
-Run produced: 65 files analyzed, average **471 words / 402 code lines per lesson**.
-Lessons are code-heavy and prose-light — pedagogical density lives in code samples.
+### Post-Phase-6 audit (chat 11, Apr 29 2026) — `audit-post-phase6.csv` / `audit-post-phase6.md`
+
+64 files analyzed (index.html excluded by default), average **453 words / 408 code lines per lesson** — basically unchanged from Phase 4 (471/402). Total: 63 mermaid diagrams, 53 canvas demos.
+
+**Confirmed deltas vs Phase 4:**
+- **Phase 6 SVG deployments visible in `img` column** (NOT `svg` — see Conventions below): 16 lessons gained Phase 6 SVGs, 21 total deployments (matches: 19 unique SVGs + pixel-grid in 2 lessons + sprite-sheet in 2 lessons). The audit `svg` column still reports 0 across the board because Phase 6 SVGs are external files embedded via `<img>`, not inline `<svg>` elements.
+- **Section IDs are universal.** Every h2/h3 in every lesson already has an `id` attribute (perfect 1:1 match between heading count and id count, spot-checked across multiple lessons). Either authored that way from the start, or `inject_section_ids.py` was run silently in an earlier chat. Either way, the script doesn't need to run. Auto-TOC anchors are already in place.
+- **No long outliers.** Max words/lesson 814 (publishing_updates), well under the 4000-word flag threshold.
+- **48/64 lessons still have no static visuals** (mermaid only) — this number is now post-Phase-6 accurate (the 16 SVG-receiving lessons are correctly excluded because their img count > 0).
+- **15 canvas-heavy lessons (>400k px²)** — these are the priority bucket for Phase 7 mobile fallbacks. Visible in the audit md: ai_behavior_trees, ai_state_machines, genres_puzzle, genres_racing, genres_rpg, genres_strategy, genres_tower_defense, networking_basics + 7 more (full list in CSV via canvas_px column).
 
 **Universal gaps (every lesson):**
-- 0 static SVGs anywhere — Phase 6 target
+- 0 inline `<svg>` (Phase 6 ships externally; see above)
 - 0 quizzes anywhere — Phase 8 target
 
-**Outliers worth attention:**
-- `architecture_state_machines.html` — thinnest standalone lesson (1 H2, 61 lines, no exercise)
-- 4 `_python.html` companion files (`genres_puzzle_python.html`,
-  `genres_strategy_python.html`, `genres_tower_defense_python.html`,
-  `genres_rpg_python.html`) — all lack a Summary section, look like code-only
-  appendices. Decide if they should be standalone or restructured.
+**Outliers worth attention (post-Phase-6 audit):**
+- `architecture_state_machines.html` — thinnest standalone lesson (315 words, 6 H2, 1 H3, 61 code lines, no exercise). Same outlier as Phase 4. Phase 8 candidate for restructuring.
+- 3 `_python.html` companion files (`genres_puzzle_python.html`,
+  `genres_strategy_python.html`, `genres_tower_defense_python.html`) — all
+  lack both Summary and Exercise sections, look like code-only appendices.
+  `genres_rpg_python.html` now has both (probably hand-added since Phase 4).
+  Decide if the remaining 3 should be standalone or restructured.
 - `networking_lobby.html` (1304 lines), `genres_tower_defense_python.html`
   (1100 lines), `networking_sockets.html` (864 lines), `sprite_groups_layers.html`
   (806 lines) — heavy code, candidates for `<details>`-collapsing the longest
@@ -177,7 +187,7 @@ into the live Queue and Decisions sections.
 
 ### Queue (priority order — pick up where we left off)
 
-_(empty — Parallax layers was the last queued item, shipped in chat 9. See **Possible additions to queue** below for candidate items awaiting a prioritization decision, and **Start here (next chat)** above for next-chat options including closing out Phase 6.)_
+_(empty — Phase 6 closed. Parallax layers was the last formal Queue item (shipped chat 9); both *Possible additions* shipped chat 10 (see entries for SVGs #18 and #19 in the Done table above). See **Start here (next chat)** for next-phase options.)_
 
 ### Possible additions to queue (not yet prioritized)
 
@@ -208,7 +218,7 @@ _(empty — both items shipped chat 10. **Utility response curves** became SVG #
 - Decision (this chat): chose **insertion location A** (between Train Window Analogy and concept-tree mermaid) over **location B** (the established convention of between mermaid and Interactive Demo). The Train Window Analogy is implicitly a side-elevation depth model — the train is the camera, world objects sit at varying depths from the train, and apparent angular velocity scales inversely with distance. The SVG visualizes the analogy literally, so pairing them directly is a stronger narrative than respecting the convention. Trade-off: deviates from chat 6/7/8 placement pattern (scene-graph, pathfinding-grid, fov-cone, animation-strip, save-tree, component-diagram all used B). If location A reads worse on render, swap to B is a trivial figure-block move.
 - Decision (this chat): used **teal-graduated opacity** for band fills instead of distinct semantic colors (sky-blue / mountain-gray / tree-green). Keeps palette consistent with the locked teal/blue/amber/red set, AND reinforces depth metaphor with a real visual depth cue (atmospheric perspective: far things look hazy, near things look saturated). The labels ("Sky", "Mountains", etc.) carry the semantic weight; band colors don't need to. Trade-off: less immediately scene-evocative, but more abstract and palette-consistent. Future SVGs that need a depth gradient can reuse this opacity-ramp pattern (0.18 / 0.32 / 0.48 / 0.65 / 0.85 light; 0.14 / 0.24 / 0.36 / 0.52 / 0.72 dark).
 - Decision (this chat): scaled per-band motion arrows **1:1 with the worked offset values** (Sky 10 px → Foreground 120 px), so visual length matches callout numbers exactly. Foreground arrow at 120 px extends from x=485 to x=365, well inside the 70–490 band x-range. Sky arrow at 10 px is intentionally tiny (marker-dominated wedge) — pedagogically correct for "barely moves," but flagged for render verification (see review items above). Considered alternative: scale arrows by a constant factor (e.g., × 0.6) to make the small ones more legible; rejected because the 1:1 mapping reinforces the formula visually — readers can measure arrows against the band width and infer the numbers without consulting the callout.
-- - `utility-response-curves.svg` review items pending: (1) **Vertical comparison line at input=0.7 readability** — dashed slate `4 3` opacity 0.7 spans the full chart height. Crossing five colored curves with five intersection dots, the line provides the visual structure for the "same input → different output" pedagogy. Verify on render that it reads as a clear reference axis and not as another curve. If too subtle, bump opacity or swap to thicker dashes; if too prominent, drop opacity further. (2) **Intersection dot stroke contrast** — each dot is 4 px filled with curve color and 1.5 px stroke in white (chart-bg). Sigmoid (326, 75) and gaussian (326, 146) sit on different curves' bodies near them; verify dots don't visually merge with the curve they sit on. If contrast is weak in dark mode (where chart-bg is `rgb(15, 23, 42)` slate-900), the white-stroke approach should still work — but flag if it doesn't. (3) **Legend formula readability** — sigmoid uses parameter shorthand `k=10, c=0.5` and gaussian uses `c=0.5, w=0.2` instead of the full mathematical formulas. The full formulas (`1/(1+e^(-10(x-0.5)))` and `e^(-(x-0.5)²/0.08)`) didn't fit the 220-px-wide legend. Trade-off accepted: parameter notation is sufficient for a legend (full formulas live in the lesson code), but if it reads as too cryptic, the legend card could be widened to ~260 px. (4) **Bottom-strip color tspans** — `score_eat`, `exponential(hunger, 3)`, `score_fight`, `sigmoid(health)` are color-tinted to match their curves. Verify tspan rendering in both light and dark modes (some browsers occasionally drop fill on tspan inheritance). If broken, fall back to inline `<text>` siblings. (5) **Worked-values 2-column layout balance** — the 5-value AT INPUT card has 3 values left (linear/quadratic/exponential at x=488) and 2 values right (sigmoid/gaussian at x=588). The right column has empty space below (no third row). Acceptable as natural padding, but if it reads unbalanced, options: re-balance to 3-2 vertical split (3 in left col, 2 in right col aligned to top) which is what's there now, or 2-3 split, or single 5-row column (changes vertical density). (6) **Z-order verification** — polylines drawn linear-first, then quadratic, exponential, gaussian, sigmoid (last on top). At input=0.7 sigmoid at y=75 sits above gaussian at y=146 (curves don't visually overlap there) but in the t=[0.5, 0.7] range gaussian descends through where sigmoid is ascending; verify they cross cleanly. (7) **No mermaid in this lesson** — no keep-vs-replace concern. The SVG sits between code and Best Practices, providing a visual interpretation layer that the lesson previously lacked.
+- `utility-response-curves.svg` review items pending: (1) **Vertical comparison line at input=0.7 readability** — dashed slate `4 3` opacity 0.7 spans the full chart height. Crossing five colored curves with five intersection dots, the line provides the visual structure for the "same input → different output" pedagogy. Verify on render that it reads as a clear reference axis and not as another curve. If too subtle, bump opacity or swap to thicker dashes; if too prominent, drop opacity further. (2) **Intersection dot stroke contrast** — each dot is 4 px filled with curve color and 1.5 px stroke in white (chart-bg). Sigmoid (326, 75) and gaussian (326, 146) sit on different curves' bodies near them; verify dots don't visually merge with the curve they sit on. If contrast is weak in dark mode (where chart-bg is `rgb(15, 23, 42)` slate-900), the white-stroke approach should still work — but flag if it doesn't. (3) **Legend formula readability** — sigmoid uses parameter shorthand `k=10, c=0.5` and gaussian uses `c=0.5, w=0.2` instead of the full mathematical formulas. The full formulas (`1/(1+e^(-10(x-0.5)))` and `e^(-(x-0.5)²/0.08)`) didn't fit the 220-px-wide legend. Trade-off accepted: parameter notation is sufficient for a legend (full formulas live in the lesson code), but if it reads as too cryptic, the legend card could be widened to ~260 px. (4) **Bottom-strip color tspans** — `score_eat`, `exponential(hunger, 3)`, `score_fight`, `sigmoid(health)` are color-tinted to match their curves. Verify tspan rendering in both light and dark modes (some browsers occasionally drop fill on tspan inheritance). If broken, fall back to inline `<text>` siblings. (5) **Worked-values 2-column layout balance** — the 5-value AT INPUT card has 3 values left (linear/quadratic/exponential at x=488) and 2 values right (sigmoid/gaussian at x=588). The right column has empty space below (no third row). Acceptable as natural padding, but if it reads unbalanced, options: re-balance to 3-2 vertical split (3 in left col, 2 in right col aligned to top) which is what's there now, or 2-3 split, or single 5-row column (changes vertical density). (6) **Z-order verification** — polylines drawn linear-first, then quadratic, exponential, gaussian, sigmoid (last on top). At input=0.7 sigmoid at y=75 sits above gaussian at y=146 (curves don't visually overlap there) but in the t=[0.5, 0.7] range gaussian descends through where sigmoid is ascending; verify they cross cleanly. (7) **No mermaid in this lesson** — no keep-vs-replace concern. The SVG sits between code and Best Practices, providing a visual interpretation layer that the lesson previously lacked.
 - Decision (this chat): chose to include **5 curves rather than 4** in `utility-response-curves.svg`. The original *Possible additions* note said "linear / quadratic / sigmoid / gaussian curves" (four), but reading the lesson code revealed 5 distinct functions: `linear`, `quadratic`, `exponential` (default power=2), `sigmoid`, `gaussian`. The lesson actually CALLS `exponential(hunger, 3)` in `score_eat` and `sigmoid(health)` in `score_fight` — so showing the cubic version of exponential (matching the actual call site, distinct from quadratic) gives the reader a meaningfully different shape. Including all 5 ties the visual directly to every curve the lesson defines, and the chart isn't crowded.
 - Decision (this chat): chose **vertical comparison line at input=0.7** rather than legend-only. The pedagogical core of utility AI is "different curves transform the same input differently" — making this concrete with a worked example at one specific input value (with dot intersections + numeric values in the right-side panel) is much stronger than just labeling the curves. 0.7 was chosen because it produces the widest output spread (0.34 to 0.88) across the 5 curves; 0.5 would have been too clean (sigmoid and gaussian both equal 1.0/0.5/center exactly), and 0.9 would have squashed all curves near 1.0.
 - Decision (this chat): chose **right-column layout** (legend + worked-values cards stacked on the right) over below-chart layout (legend strip below x-axis). The right column lets the legend sit at the same eye level as the curves it describes; below-chart would have stretched the legend into a thin horizontal row that's harder to scan. Right-column also leaves the bottom strip free for the lesson-code tie-in.
@@ -216,13 +226,12 @@ _(empty — both items shipped chat 10. **Utility response curves** became SVG #
 - Decision (this chat): chose framing **(b) easing-curve comparison strip** over framing (a) tween-sequence timeline. Three reasons: (1) the mermaid above the SVG explicitly lists 5 easing categories, so the SVG visualizes the lesson's own taxonomy; (2) the canvas demo shows ONE curve at a time (the user must click through buttons to compare), so a static strip showing ALL at once is genuinely additive rather than redundant; (3) the Best Practices section literally says "Out easing feels responsive, In easing builds anticipation" — the comparison strip makes that visceral by side-by-side curve shapes. Framing (a) would have been a sequence-of-phases timeline showing `buttonPress`'s anticipation→overshoot→settle; rejected because the `buttonPress` code is already in the lesson, and a sequence diagram would have overlapped with what the canvas demo demonstrates dynamically.
 - Decision (this chat): chose **y-range -0.2 to 1.4** for all charts (rather than 0 to 1) so elastic and back overshoot is visible. This is a deviation from "normalize to [0,1]" charting convention but pedagogically essential — the WHOLE POINT of elastic and back is the overshoot above v=1, and a chart that clips at v=1 would hide the most distinctive feature of those two curves. The reference lines at v=0 and v=1 explicitly mark the "normal" range, so readers see overshoot as visually distinct from in-range motion.
 - Decision (this chat): chose the specific **6 curves** (linear, easeOutQuad, easeInOutCubic, easeOutBounce, easeOutElastic, easeOutBack) as the canonical set. Rationale: the mermaid above the SVG lists 5 categories (Linear, Ease In/Out, Bounce, Elastic, Back); chose the *Out* variant of each (since "Out feels responsive" is the lesson's stated default), plus easeInOutCubic to represent the In/Out family. easeInQuad/easeInBack/easeInElastic and the symmetric InOut variants were excluded — once readers grok one Out curve, the In counterpart is just the mirror image. Omitting them keeps the strip focused on shape diversity rather than directional permutations.
-
-**Heads-up for future SVG drops:** before writing a new SVG, always check the target lesson(s) for an existing `<figure class="svg-wrapper">` block. `ai_state_machines.html` had one pointing at `/images/components/state-machine.svg` with alt text describing a 4-state AI cycle — that pre-staged markup dictated the layout, file naming (variant suffix), and content for SVG #6. `graphics_lighting.html` had TWO pre-staged blocks (`lighting-model.svg` and `sampling-kernel.svg`) with detailed alt-text specs that the SVG files match tightly — pre-staging is the established pattern when a lesson author knows what they want. Other lessons may have similar hidden constraints.
+- **Heads-up for future SVG drops:** before writing a new SVG, always check the target lesson(s) for an existing `<figure class="svg-wrapper">` block. `ai_state_machines.html` had one pointing at `/images/components/state-machine.svg` with alt text describing a 4-state AI cycle — that pre-staged markup dictated the layout, file naming (variant suffix), and content for SVG #6. `graphics_lighting.html` had TWO pre-staged blocks (`lighting-model.svg` and `sampling-kernel.svg`) with detailed alt-text specs that the SVG files match tightly — pre-staging is the established pattern when a lesson author knows what they want. Other lessons may have similar hidden constraints.
 - The mermaid concept tree directly after each newly-inserted SVG (in the lessons we touched) may feel redundant. Defer the keep-vs-replace decision until all SVGs are in.
 
 ### Stale items in this todo (resolved before this chat)
 
-_(none currently — last clean-up pass: Apr 29 2026 chat 10 (build chat, todo updated synchronously with build). Built and shipped two SVGs to close out Phase 6. **SVG #18 `utility-response-curves.svg`** to `ai_decision_making.html` between the implementation code block and Best Practices h2 (lesson previously had ZERO SVGs); 5 overlaid curves on a normalized 0–1 chart with a vertical comparison line at input=0.7 producing a 0.34–0.88 output spread across the 5 curves; right-side legend + worked-values cards; bottom strip ties to lesson code (`score_eat` uses `exponential(hunger, 3)`, `score_fight` uses `sigmoid(health)`). **SVG #19 `easing-curves.svg`** to `polish_tweening.html` between the easing-categories mermaid and Interactive Tweening Playground h2 (convention B); 6 mini-charts in a 3×2 grid showing one easing function per cell with explicit v=0 and v=1 reference lines so elastic (peak v≈1.27) and back (peak v≈1.10) overshoot is visible; introduces indigo as a 6th palette color (deferred decision: permanent vs one-off). Mid-build bug fix on SVG #19's bottom row coordinates (off-by-4 reference lines + incorrectly transformed polylines) detected via Python sanity check, fixed before todo update. Updated count from 17 to 19 of ~15 SVGs; added SVG #18 and #19 entries to Done table; emptied both Queue and Possible additions (Queue had been empty since chat 9, Possible additions both shipped this chat); added 7 review items + 6 decision rationale entries split across the two new SVGs to *Open follow-ups on shipped SVGs*; updated Phase 6 status row in summary table from 🔄 candidate-complete to ✅ done; updated *Start here (next chat)* and *Phase 6 progress* headings. Renders not yet eyeballed — *Render-check pass* added as one of the next-chat options.)_
+_(none currently — last clean-up pass: Apr 29 2026 chat 11 (audit re-run + todo sync chat). Ran the bug-fixed `audit_lessons.py` for the first time since Phase 5; outputs shipped to `audit-post-phase6.csv` and `audit-post-phase6.md`. Three meaningful findings folded into the todo: (1) Phase 6 SVG deployments correctly visible in the `img` column (21 deployments across 16 lessons, matching expectations), audit `svg` column shows 0 because external-file delivery — added a Conventions bullet so future audit reads don't get confused. (2) Section IDs are universal across all 64 lessons (perfect 1:1 heading→id match), so `inject_section_ids.py` doesn't need to run; auto-TOC anchors are already in place. Updated Phase 5 status row + retired option 3 from Next-chat options. (3) Concrete Phase 7 numbers added: 53 total canvases, 15 canvas-heavy as priority bucket, 16 lessons already have a usable nearby SVG. Phase 7 sketch extended with a 3-path execution-strategy choice for the planning checkpoint. Outliers section refreshed: `architecture_state_machines.html` still thinnest; companion-file gaps narrowed from 4 to 3 (RPG_python now has Summary + Exercise). Average words/code lines essentially unchanged from Phase 4 (453/408 vs 471/402). No new outliers, no long-form lessons (max 814 words). Previous clean-up pass: Apr 29 2026 chat 10 (build chat, todo updated synchronously with build). Built and shipped two SVGs to close out Phase 6. **SVG #18 `utility-response-curves.svg`** to `ai_decision_making.html` between the implementation code block and Best Practices h2 (lesson previously had ZERO SVGs); 5 overlaid curves on a normalized 0–1 chart with a vertical comparison line at input=0.7 producing a 0.34–0.88 output spread across the 5 curves; right-side legend + worked-values cards; bottom strip ties to lesson code (`score_eat` uses `exponential(hunger, 3)`, `score_fight` uses `sigmoid(health)`). **SVG #19 `easing-curves.svg`** to `polish_tweening.html` between the easing-categories mermaid and Interactive Tweening Playground h2 (convention B); 6 mini-charts in a 3×2 grid showing one easing function per cell with explicit v=0 and v=1 reference lines so elastic (peak v≈1.27) and back (peak v≈1.10) overshoot is visible; introduces indigo as a 6th palette color (deferred decision: permanent vs one-off). Mid-build bug fix on SVG #19's bottom row coordinates (off-by-4 reference lines + incorrectly transformed polylines) detected via Python sanity check, fixed before todo update. Updated count from 17 to 19 of ~15 SVGs; added SVG #18 and #19 entries to Done table; emptied both Queue and Possible additions (Queue had been empty since chat 9, Possible additions both shipped this chat); added 7 review items + 6 decision rationale entries split across the two new SVGs to *Open follow-ups on shipped SVGs*; updated Phase 6 status row in summary table from 🔄 candidate-complete to ✅ done; updated *Start here (next chat)* and *Phase 6 progress* headings. Renders not yet eyeballed — *Render-check pass* added as one of the next-chat options.)_
 
 ---
 
@@ -232,6 +241,12 @@ _(none currently — last clean-up pass: Apr 29 2026 chat 10 (build chat, todo u
 `canvas { display: none; }`. The existing `.mobile-diagram-note` is a generic
 apology, not a substitute.
 
+**Scope (post-Phase-6 audit numbers):**
+- **53 canvas demos across 64 lessons** (84% of lessons have at least one canvas).
+- **15 canvas-heavy lessons (>400k px²)** — priority bucket where the mobile loss is largest. Includes: ai_behavior_trees, ai_state_machines, genres_puzzle, genres_racing, genres_rpg, genres_strategy, genres_tower_defense, networking_basics + 7 more (sortable by canvas_px in `audit-post-phase6.csv`).
+- **16 lessons already have a Phase 6 SVG** that may double as a partial fallback for an adjacent canvas (see Phase 6 Done table for SVG → lesson mapping).
+- **48 lessons have no static visuals** (mermaid only) — Phase 7 won't help these without extending the SVG library, OR these canvases get a generic apology + caption fallback.
+
 **Approach (sketch):**
 - Script wraps every `<canvas>` in a `<div class="canvas-with-fallback">`
   containing canvas + a static SVG (from Phase 6 library) + descriptive caption.
@@ -240,6 +255,13 @@ apology, not a substitute.
 
 Probably needs a JSON catalog file mapping `lesson_filename` →
 `canvas_id` → `fallback_svg_name`. Hand-curated.
+
+**Three execution paths to choose from at planning checkpoint:**
+1. **Reuse-only catalog** — only map canvases that have an existing Phase 6 SVG nearby (~16 lessons covered). Fastest, lowest coverage; the rest get a generic caption.
+2. **Reuse + targeted SVG additions** — map the 15 canvas-heavy lessons specifically; build new SVGs for the ones that don't already have a usable Phase 6 SVG. Medium effort, high-value coverage.
+3. **Full coverage** — every canvas gets a fallback (53 mappings); requires extending the SVG library substantially (~30+ new SVGs). Highest effort.
+
+Likely answer is path 2.
 
 ---
 
@@ -312,6 +334,7 @@ but the variance is more about pedagogical consistency than code correctness.
 
 - **Filesystem tool > computer use tool** for all WSL file ops in this project
 - **Prefer `edit_file` over `write_file`** for existing files (less rewrite risk)
+- **`audit_lessons.py`'s `svg` column counts inline `<svg>` only.** Phase 6 SVGs (delivered as standalone files in `/images/components/` via `<img>`) show up in the `img` column, not `svg`. To count Phase 6 deployments, sum `img` across lessons that received them. Audit's `svg` will likely stay at 0 across the project unless we change the delivery convention.
 - **Before writing a new SVG, `grep -l 'svg-wrapper'` the target lesson(s).** Pre-staged `<figure class="svg-wrapper">` markup may already dictate filename, layout, or labels (e.g. `ai_state_machines.html` this chat). Existing alt text = spec.
 - **Warn when conversation is getting long** rather than letting auto-compaction hit
 - **Don't add content not present in existing lessons** unless explicitly requested
@@ -342,8 +365,17 @@ but the variance is more about pedagogical consistency than code correctness.
 
 1. Are the `_python.html` companion files meant to be standalone learning
    resources, or appendix code dumps for their parent lessons? Determines
-   whether they need summaries/exercises or should be restructured.
+   whether they need summaries/exercises or should be restructured. (3 still
+   missing both Summary + Exercise as of post-Phase-6 audit; rpg_python self-resolved.)
 2. Should `index.html` join the design system (CSS vars, theme toggle) or stay
    bespoke? Currently doesn't theme-flip.
-3. Phase 7 (mobile fallbacks) needs a per-canvas → per-SVG mapping. Build the
-   catalog by hand, or have a script auto-suggest based on filename keywords?
+3. Phase 7 (mobile fallbacks) — three execution paths defined in the Phase 7
+   section above (reuse-only / reuse+targeted / full coverage). Pick a path at
+   the planning checkpoint. Likely answer is path 2 (reuse + targeted
+   additions to cover the 15 canvas-heavy lessons specifically).
+4. Phase 7 catalog construction — build the per-canvas → per-SVG mapping by
+   hand, or have a script auto-suggest based on filename keywords + canvas
+   context (preceding h2/h3 text, surrounding code)? Hand-curation is more
+   accurate; auto-suggest could give a starting draft.
+5. Indigo as 6th palette color (introduced by SVG #19 `easing-curves.svg`)
+   — promote to permanent palette member, or keep as a one-off for that SVG?

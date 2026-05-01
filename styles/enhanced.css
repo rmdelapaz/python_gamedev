@@ -72,8 +72,11 @@
     }
     
     /* Hide canvas on mobile, show mobile message */
+    /* !important is required to beat per-canvas inline `display: inline-block`/`display: block` */
+    /* attributes that some lessons set for layout. Without it, those canvases stay visible */
+    /* on mobile and the .canvas-fallback figures render as duplicate content. */
     canvas {
-        display: none;
+        display: none !important;
     }
     
     .mobile-diagram-note {

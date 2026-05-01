@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- behavior-tree.svg
+     Phase 6 / 7 SVG #22 for ai_behavior_trees.html (Phase 6 figure between
+     concept-tree mermaid and Interactive Behavior Tree Demo h2 — convention B;
+     ALSO deployed as canvas-fallback for #behaviorCanvas per Phase 7).
+
+     Hierarchical tree showing one tick:
+       Selector(?) -> [ Combat(->),  Survive(->),  Wander leaf ]
+       Combat(->)  -> [ Enemy?, Chase, Attack ]
+       Survive(->) -> [ HP low?, Flee ]
+
+     Tick state encoded by node border + fill:
+       teal  = success
+       red   = failure
+       amber = running
+       slate = not ticked
+
+     This snapshot: Combat fails (no enemy), Survive runs Flee (HP low),
+     Wander never tried (Selector short-circuits at first non-failure).
+
+     Theme-aware via prefers-color-scheme. ID prefix `bt-`. ViewBox 720x420. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 420" role="img"
+     aria-labelledby="bt-title bt-desc" preserveAspectRatio="xMidYMid meet">
+  <title id="bt-title">Behavior tree mid-tick: Survive runs Flee while Combat fails</title>
+  <desc id="bt-desc">A behavior tree with a Selector root and three children: a Combat sequence (Enemy? then Chase then Attack), a Survive sequence (HP low? then Flee), and a Wander leaf. In this tick the agent has no enemy visible and low health, so Combat fails because Enemy? returns failure, Survive runs Flee because HP low? returned success, and Wander is never tried because the Selector short-circuits at the first non-failure. Border colors show each node's tick result: teal for success, red for failure, amber for running, slate for not ticked. The amber path highlights the currently running route from root through Survive to Flee.</desc>
+
+  <style>
+    svg {
+      --bt-card-fill: rgb(255, 255, 255);
+      --bt-text-primary: rgb(15, 23, 42);
+      --bt-text-secondary: rgb(71, 85, 105);
+      --bt-text-muted: rgb(100, 116, 139);
+      --bt-edge: rgb(148, 163, 184);
+      --bt-strip-fill: rgb(248, 250, 252);
+      --bt-strip-stroke: rgb(226, 232, 240);
+      --bt-divider: rgb(226, 232, 240);
+
+      --bt-success: rgb(13, 148, 136);
+      --bt-success-fill: rgb(204, 251, 241);
+      --bt-failure: rgb(220, 38, 38);
+      --bt-failure-fill: rgb(254, 226, 226);
+      --bt-running: rgb(217, 119, 6);
+      --bt-running-fill: rgb(255, 237, 213);
+      --bt-idle: rgb(100, 116, 139);
+      --bt-idle-fill: rgb(241, 245, 249);
+
+      --bt-badge-fill: rgb(71, 85, 105);
+      --bt-badge-text: rgb(255, 255, 255);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      svg {
+        --bt-card-fill: rgb(31, 41, 55);
+        --bt-text-primary: rgb(229, 231, 235);
+        --bt-text-secondary: rgb(156, 163, 175);
+        --bt-text-muted: rgb(148, 163, 184);
+        --bt-edge: rgb(100, 116, 139);
+        --bt-strip-fill: rgb(15, 23, 42);
+        --bt-strip-stroke: rgb(51, 65, 85);
+        --bt-divider: rgb(51, 65, 85);
+
+        --bt-success: rgb(45, 212, 191);
+        --bt-success-fill: rgba(45, 212, 191, 0.16);
+        --bt-failure: rgb(248, 113, 113);
+        --bt-failure-fill: rgba(248, 113, 113, 0.18);
+        --bt-running: rgb(251, 191, 36);
+        --bt-running-fill: rgba(251, 191, 36, 0.18);
+        --bt-idle: rgb(148, 163, 184);
+        --bt-idle-fill: rgba(148, 163, 184, 0.10);
+
+        --bt-badge-fill: rgb(148, 163, 184);
+        --bt-badge-text: rgb(15, 23, 42);
+      }
+    }
+
+    .bt-edge-default {
+      stroke: var(--bt-edge);
+      stroke-width: 1.5;
+      fill: none;
+    }
+
+    .bt-edge-active {
+      stroke: var(--bt-running);
+      stroke-width: 3;
+      stroke-linecap: round;
+      fill: none;
+    }
+
+    .bt-node-rect {
+      fill: var(--bt-idle-fill);
+      stroke: var(--bt-idle);
+      stroke-width: 1.5;
+    }
+
+    .bt-node-success { fill: var(--bt-success-fill); stroke: var(--bt-success); stroke-width: 2; }
+    .bt-node-failure { fill: var(--bt-failure-fill); stroke: var(--bt-failure); stroke-width: 2; }
+    .bt-node-running { fill: var(--bt-running-fill); stroke: var(--bt-running); stroke-width: 2.5; }
+
+    .bt-node-text {
+      font: 600 12.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      fill: var(--bt-text-primary);
+    }
+
+    .bt-leaf-text {
+      font: 500 11.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      fill: var(--bt-text-primary);
+    }
+
+    .bt-badge-circle {
+      fill: var(--bt-badge-fill);
+    }
+
+    .bt-badge-text {
+      font: 700 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      fill: var(--bt-badge-text);
+      text-anchor: middle;
+    }
+
+    .bt-running-tag {
+      font: italic 500 10.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      fill: var(--bt-running);
+      text-anchor: middle;
+    }
+
+    .bt-strip {
+      fill: var(--bt-strip-fill);
+      stroke: var(--bt-strip-stroke);
+      stroke-width: 1;
+    }
+
+    .bt-strip-divider {
+      stroke: var(--bt-divider);
+      stroke-width: 1;
+    }
+
+    .bt-strip-label {
+      font: 500 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      fill: var(--bt-text-secondary);
+    }
+
+    .bt-strip-semantics {
+      font: 500 11.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      fill: var(--bt-text-primary);
+    }
+
+    .bt-strip-semantics-symbol {
+      font-weight: 700;
+      fill: var(--bt-text-primary);
+    }
+
+    .bt-strip-scenario {
+      font: italic 500 10.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      fill: var(--bt-text-muted);
+    }
+  </style>
+
+  <!-- ===== Edges (drawn first, nodes overlay on top) ===== -->
+
+  <!-- Default slate edges (every parent-child link) -->
+  <g>
+    <!-- Root -> Combat -->
+    <line class="bt-edge-default" x1="360" y1="77" x2="182" y2="127" />
+    <!-- Root -> Survive (will be overlaid by amber active edge) -->
+    <line class="bt-edge-default" x1="360" y1="77" x2="468" y2="127" />
+    <!-- Root -> Wander (Wander is leaf at level 1; top edge y = 148-19 = 129) -->
+    <line class="bt-edge-default" x1="360" y1="77" x2="646" y2="129" />
+    <!-- Combat -> Enemy? / Chase / Attack -->
+    <line class="bt-edge-default" x1="182" y1="169" x2="74"  y2="225" />
+    <line class="bt-edge-default" x1="182" y1="169" x2="182" y2="225" />
+    <line class="bt-edge-default" x1="182" y1="169" x2="290" y2="225" />
+    <!-- Survive -> HP low? -->
+    <line class="bt-edge-default" x1="468" y1="169" x2="414" y2="225" />
+    <!-- Survive -> Flee (will be overlaid by amber active edge) -->
+    <line class="bt-edge-default" x1="468" y1="169" x2="522" y2="225" />
+  </g>
+
+  <!-- Active path: amber, drawn over slate. Goes Root -> Survive -> Flee. -->
+  <g>
+    <line class="bt-edge-active" x1="360" y1="77"  x2="468" y2="127" />
+    <line class="bt-edge-active" x1="468" y1="169" x2="522" y2="225" />
+  </g>
+
+  <!-- ===== Nodes ===== -->
+
+  <!-- Level 0: Root Selector (RUNNING) -->
+  <g>
+    <rect class="bt-node-rect bt-node-running" x="290" y="35" width="140" height="42" rx="8" />
+    <circle class="bt-badge-circle" cx="311" cy="56" r="11" />
+    <text class="bt-badge-text" x="311" y="61">?</text>
+    <text class="bt-node-text" x="330" y="61">Selector</text>
+  </g>
+
+  <!-- Level 1: Combat Sequence (FAILURE) -->
+  <g>
+    <rect class="bt-node-rect bt-node-failure" x="112" y="127" width="140" height="42" rx="8" />
+    <circle class="bt-badge-circle" cx="133" cy="148" r="11" />
+    <text class="bt-badge-text" x="133" y="153">→</text>
+    <text class="bt-node-text" x="152" y="153">Combat</text>
+  </g>
+
+  <!-- Level 1: Survive Sequence (RUNNING) -->
+  <g>
+    <rect class="bt-node-rect bt-node-running" x="398" y="127" width="140" height="42" rx="8" />
+    <circle class="bt-badge-circle" cx="419" cy="148" r="11" />
+    <text class="bt-badge-text" x="419" y="153">→</text>
+    <text class="bt-node-text" x="438" y="153">Survive</text>
+  </g>
+
+  <!-- Level 1: Wander leaf (IDLE) -->
+  <g>
+    <rect class="bt-node-rect" x="596" y="129" width="100" height="38" rx="6" />
+    <text class="bt-leaf-text" x="646" y="153" text-anchor="middle">Wander</text>
+  </g>
+
+  <!-- Level 2 under Combat -->
+  <!-- Enemy? (FAILURE) -->
+  <g>
+    <rect class="bt-node-rect bt-node-failure" x="24" y="225" width="100" height="38" rx="6" />
+    <text class="bt-leaf-text" x="74" y="248" text-anchor="middle">Enemy?</text>
+  </g>
+  <!-- Chase (IDLE — Combat short-circuited on Enemy? failure) -->
+  <g>
+    <rect class="bt-node-rect" x="132" y="225" width="100" height="38" rx="6" />
+    <text class="bt-leaf-text" x="182" y="248" text-anchor="middle">Chase</text>
+  </g>
+  <!-- Attack (IDLE) -->
+  <g>
+    <rect class="bt-node-rect" x="240" y="225" width="100" height="38" rx="6" />
+    <text class="bt-leaf-text" x="290" y="248" text-anchor="middle">Attack</text>
+  </g>
+
+  <!-- Level 2 under Survive -->
+  <!-- HP low? (SUCCESS) -->
+  <g>
+    <rect class="bt-node-rect bt-node-success" x="364" y="225" width="100" height="38" rx="6" />
+    <text class="bt-leaf-text" x="414" y="248" text-anchor="middle">HP low?</text>
+  </g>
+  <!-- Flee (RUNNING — currently active) -->
+  <g>
+    <rect class="bt-node-rect bt-node-running" x="472" y="225" width="100" height="38" rx="6" />
+    <text class="bt-leaf-text" x="522" y="248" text-anchor="middle">Flee</text>
+  </g>
+
+  <!-- Running indicator below Flee (the amber path's terminal) -->
+  <text class="bt-running-tag" x="522" y="282">▶ running</text>
+
+  <!-- ===== Bottom strip: legend + tick semantics + scenario ===== -->
+  <rect class="bt-strip" x="24" y="290" width="672" height="118" rx="8" />
+
+  <!-- Row 1 — state legend (4 swatches) -->
+  <g>
+    <circle cx="44"  cy="310" r="5.5" fill="var(--bt-success)" />
+    <text class="bt-strip-label" x="55"  y="314">success</text>
+
+    <circle cx="178" cy="310" r="5.5" fill="var(--bt-failure)" />
+    <text class="bt-strip-label" x="189" y="314">failure</text>
+
+    <circle cx="304" cy="310" r="5.5" fill="var(--bt-running)" />
+    <text class="bt-strip-label" x="315" y="314">running</text>
+
+    <circle cx="430" cy="310" r="5.5" fill="var(--bt-idle)" />
+    <text class="bt-strip-label" x="441" y="314">not ticked</text>
+  </g>
+
+  <line class="bt-strip-divider" x1="40" y1="324" x2="680" y2="324" />
+
+  <!-- Rows 2–3 — tick semantics for Selector and Sequence -->
+  <text class="bt-strip-semantics" x="44" y="344"><tspan class="bt-strip-semantics-symbol">?</tspan> — Selector: tries children left → right, returns the first non-failure result.</text>
+  <text class="bt-strip-semantics" x="44" y="364"><tspan class="bt-strip-semantics-symbol">→</tspan> — Sequence: runs children in order, fails on the first failure, succeeds if all succeed.</text>
+
+  <line class="bt-strip-divider" x1="40" y1="376" x2="680" y2="376" />
+
+  <!-- Row 4 — scenario explainer for this snapshot -->
+  <text class="bt-strip-scenario" x="44" y="395">This tick: Combat fails (no enemy) → Survive succeeds (HP low) → Flee runs · Wander never tried.</text>
+</svg>

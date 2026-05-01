@@ -1,0 +1,159 @@
+<svg viewBox="0 0 720 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ssd-title ssd-desc">
+  <title id="ssd-title">Screen-shake trauma decay and offset envelope</title>
+  <desc id="ssd-desc">Two stacked charts on a shared time axis. The top chart shows trauma decaying linearly from 1.0 to 0 over one second. The bottom chart shows the resulting screen-offset jitter, with its envelope dying as trauma squared. A dashed comparison line at t equals 0.4 seconds marks trauma at 0.6 in the top chart and an envelope of plus or minus 0.36 of the maximum offset in the bottom chart. A right-side card breaks down the calculation, and a footer strip ties the diagram to the lesson's Python code.</desc>
+  <style>
+    svg {
+      --ssd-text: rgb(15, 23, 42);
+      --ssd-text-secondary: rgb(71, 85, 105);
+      --ssd-axis: rgb(100, 116, 139);
+      --ssd-grid: rgb(203, 213, 225);
+      --ssd-card-bg: rgb(255, 255, 255);
+      --ssd-card-stroke: rgb(203, 213, 225);
+      --ssd-divider: rgb(226, 232, 240);
+      --ssd-trauma: rgb(13, 148, 136);
+      --ssd-offset: rgb(217, 119, 6);
+      --ssd-offset-fill: rgba(217, 119, 6, 0.16);
+      --ssd-offset-jitter: rgba(217, 119, 6, 0.78);
+      --ssd-compare: rgb(100, 116, 139);
+    }
+    @media (prefers-color-scheme: dark) {
+      svg {
+        --ssd-text: rgb(241, 245, 249);
+        --ssd-text-secondary: rgb(203, 213, 225);
+        --ssd-axis: rgb(148, 163, 184);
+        --ssd-grid: rgb(51, 65, 85);
+        --ssd-card-bg: rgb(15, 23, 42);
+        --ssd-card-stroke: rgb(51, 65, 85);
+        --ssd-divider: rgb(51, 65, 85);
+        --ssd-trauma: rgb(45, 212, 191);
+        --ssd-offset: rgb(251, 191, 36);
+        --ssd-offset-fill: rgba(251, 191, 36, 0.20);
+        --ssd-offset-jitter: rgba(251, 191, 36, 0.82);
+        --ssd-compare: rgb(148, 163, 184);
+      }
+    }
+    .ssd-axis-line { stroke: var(--ssd-axis); stroke-width: 1.5; fill: none; }
+    .ssd-grid-line { stroke: var(--ssd-grid); stroke-width: 1; stroke-dasharray: 2 3; fill: none; }
+    .ssd-tick-label { fill: var(--ssd-text-secondary); font-family: ui-sans-serif, system-ui, sans-serif; font-size: 11px; }
+    .ssd-axis-label { fill: var(--ssd-text-secondary); font-family: ui-sans-serif, system-ui, sans-serif; font-size: 11px; font-style: italic; }
+    .ssd-chart-bg { fill: var(--ssd-card-bg); stroke: var(--ssd-card-stroke); stroke-width: 1; }
+    .ssd-chart-title { fill: var(--ssd-text); font-family: ui-sans-serif, system-ui, sans-serif; font-size: 12.5px; font-weight: 600; }
+    .ssd-chart-formula { fill: var(--ssd-text-secondary); font-family: ui-monospace, SFMono-Regular, monospace; font-size: 11px; }
+    .ssd-trauma-curve { stroke: var(--ssd-trauma); stroke-width: 2.5; fill: none; stroke-linecap: round; }
+    .ssd-envelope-line { stroke: var(--ssd-offset); stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .ssd-envelope-fill { fill: var(--ssd-offset-fill); stroke: none; }
+    .ssd-jitter { stroke: var(--ssd-offset-jitter); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+    .ssd-compare-line { stroke: var(--ssd-compare); stroke-width: 1.5; stroke-dasharray: 4 3; fill: none; opacity: 0.85; }
+    .ssd-callout-text { fill: var(--ssd-text); font-family: ui-monospace, SFMono-Regular, monospace; font-size: 11.5px; font-weight: 600; }
+    .ssd-card-header { fill: var(--ssd-text); font-family: ui-monospace, SFMono-Regular, monospace; font-size: 12.5px; font-weight: 700; letter-spacing: 0.08em; }
+    .ssd-card-section { fill: var(--ssd-text-secondary); font-family: ui-sans-serif, system-ui, sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; }
+    .ssd-card-formula { fill: var(--ssd-text); font-family: ui-monospace, SFMono-Regular, monospace; font-size: 11.5px; }
+    .ssd-card-result { font-family: ui-monospace, SFMono-Regular, monospace; font-size: 12px; font-weight: 700; }
+    .ssd-card-bar-label { fill: var(--ssd-text-secondary); font-family: ui-sans-serif, system-ui, sans-serif; font-size: 10.5px; }
+    .ssd-card-bar-value { fill: var(--ssd-text); font-family: ui-monospace, SFMono-Regular, monospace; font-size: 11px; font-weight: 600; }
+    .ssd-card-footnote { fill: var(--ssd-text-secondary); font-family: ui-sans-serif, system-ui, sans-serif; font-size: 10.5px; font-style: italic; }
+    .ssd-strip-text { fill: var(--ssd-text); font-family: ui-sans-serif, system-ui, sans-serif; font-size: 11.5px; }
+    .ssd-strip-mono { fill: var(--ssd-text-secondary); font-family: ui-monospace, SFMono-Regular, monospace; font-size: 10.5px; }
+    .ssd-divider-line { stroke: var(--ssd-divider); stroke-width: 1; fill: none; }
+  </style>
+
+  <!-- ===== TOP CHART: trauma(t) ===== -->
+  <text class="ssd-chart-title" x="60" y="22">trauma(t) — linear decay</text>
+  <text class="ssd-chart-formula" x="440" y="22" text-anchor="end">trauma -= decay_rate &#xb7; dt</text>
+  <rect class="ssd-chart-bg" x="60" y="32" width="380" height="140" rx="4"/>
+  <!-- Internal grid -->
+  <line class="ssd-grid-line" x1="155" y1="32" x2="155" y2="172"/>
+  <line class="ssd-grid-line" x1="250" y1="32" x2="250" y2="172"/>
+  <line class="ssd-grid-line" x1="345" y1="32" x2="345" y2="172"/>
+  <line class="ssd-grid-line" x1="60" y1="102" x2="440" y2="102"/>
+  <!-- Axes -->
+  <line class="ssd-axis-line" x1="60" y1="172" x2="440" y2="172"/>
+  <line class="ssd-axis-line" x1="60" y1="32" x2="60" y2="172"/>
+  <!-- Y-axis tick labels -->
+  <text class="ssd-tick-label" x="55" y="36" text-anchor="end">1.0</text>
+  <text class="ssd-tick-label" x="55" y="106" text-anchor="end">0.5</text>
+  <text class="ssd-tick-label" x="55" y="176" text-anchor="end">0</text>
+  <!-- X-axis tick labels -->
+  <text class="ssd-tick-label" x="60" y="186" text-anchor="middle">0</text>
+  <text class="ssd-tick-label" x="155" y="186" text-anchor="middle">0.25</text>
+  <text class="ssd-tick-label" x="250" y="186" text-anchor="middle">0.5</text>
+  <text class="ssd-tick-label" x="345" y="186" text-anchor="middle">0.75</text>
+  <text class="ssd-tick-label" x="440" y="186" text-anchor="middle">1.0 s</text>
+  <!-- Y-axis label -->
+  <text class="ssd-axis-label" x="22" y="102" text-anchor="middle" transform="rotate(-90 22 102)">trauma (0–1)</text>
+  <!-- Trauma curve (linear) -->
+  <line class="ssd-trauma-curve" x1="60" y1="32" x2="440" y2="172"/>
+
+  <!-- ===== BOTTOM CHART: offset(t) ===== -->
+  <text class="ssd-chart-title" x="60" y="205">offset(t) — envelope = trauma² × max_offset</text>
+  <text class="ssd-chart-formula" x="440" y="205" text-anchor="end">offset_x = max &#xb7; trauma² &#xb7; rand(−1, +1)</text>
+  <rect class="ssd-chart-bg" x="60" y="215" width="380" height="140" rx="4"/>
+  <!-- Internal grid -->
+  <line class="ssd-grid-line" x1="155" y1="215" x2="155" y2="355"/>
+  <line class="ssd-grid-line" x1="250" y1="215" x2="250" y2="355"/>
+  <line class="ssd-grid-line" x1="345" y1="215" x2="345" y2="355"/>
+  <line class="ssd-grid-line" x1="60" y1="285" x2="440" y2="285"/>
+  <!-- Axes -->
+  <line class="ssd-axis-line" x1="60" y1="355" x2="440" y2="355"/>
+  <line class="ssd-axis-line" x1="60" y1="215" x2="60" y2="355"/>
+  <!-- Y-axis tick labels -->
+  <text class="ssd-tick-label" x="55" y="219" text-anchor="end">+max</text>
+  <text class="ssd-tick-label" x="55" y="289" text-anchor="end">0</text>
+  <text class="ssd-tick-label" x="55" y="359" text-anchor="end">−max</text>
+  <!-- Y-axis label -->
+  <text class="ssd-axis-label" x="22" y="285" text-anchor="middle" transform="rotate(-90 22 285)">offset / max</text>
+  <!-- Envelope fill (closed path: top env left-to-right, then bottom env right-to-left) -->
+  <path class="ssd-envelope-fill" d="M 60,215 L 75.2,220.49 L 90.4,225.75 L 105.6,230.79 L 120.8,235.61 L 136,240.20 L 151.2,244.57 L 166.4,248.71 L 181.6,252.63 L 196.8,256.33 L 212,259.80 L 227.2,263.05 L 242.4,266.07 L 257.6,268.87 L 272.8,271.45 L 288,273.80 L 303.2,275.93 L 318.4,277.83 L 333.6,279.51 L 348.8,280.97 L 364,282.20 L 379.2,283.21 L 394.4,283.99 L 409.6,284.55 L 424.8,284.89 L 440,285 L 424.8,285.11 L 409.6,285.45 L 394.4,286.01 L 379.2,286.79 L 364,287.80 L 348.8,289.03 L 333.6,290.49 L 318.4,292.17 L 303.2,294.07 L 288,296.20 L 272.8,298.55 L 257.6,301.13 L 242.4,303.93 L 227.2,306.95 L 212,310.20 L 196.8,313.67 L 181.6,317.37 L 166.4,321.29 L 151.2,325.43 L 136,329.80 L 120.8,334.39 L 105.6,339.21 L 90.4,344.25 L 75.2,349.51 L 60,355 Z"/>
+  <!-- Top envelope line -->
+  <polyline class="ssd-envelope-line" points="60,215 75.2,220.49 90.4,225.75 105.6,230.79 120.8,235.61 136,240.20 151.2,244.57 166.4,248.71 181.6,252.63 196.8,256.33 212,259.80 227.2,263.05 242.4,266.07 257.6,268.87 272.8,271.45 288,273.80 303.2,275.93 318.4,277.83 333.6,279.51 348.8,280.97 364,282.20 379.2,283.21 394.4,283.99 409.6,284.55 424.8,284.89 440,285"/>
+  <!-- Bottom envelope line -->
+  <polyline class="ssd-envelope-line" points="60,355 75.2,349.51 90.4,344.25 105.6,339.21 120.8,334.39 136,329.80 151.2,325.43 166.4,321.29 181.6,317.37 196.8,313.67 212,310.20 227.2,306.95 242.4,303.93 257.6,301.13 272.8,298.55 288,296.20 303.2,294.07 318.4,292.17 333.6,290.49 348.8,289.03 364,287.80 379.2,286.79 394.4,286.01 409.6,285.45 424.8,285.11 440,285"/>
+  <!-- Jitter polyline (deterministic pseudo-random samples within envelope, every 0.04s) -->
+  <polyline class="ssd-jitter" points="60,285 75.2,230.17 90.4,317.59 105.6,235.13 120.8,299.82 136,255.88 151.2,319.37 166.4,270.48 181.6,278.53 196.8,306.50 212,272.40 227.2,294.88 242.4,269.86 257.6,288.23 272.8,276.19 288,294.52 303.2,281.82 318.4,281.06 333.6,288.57 348.8,283.79 364,286.40 379.2,284.19 394.4,285.30 409.6,284.75 424.8,285.04 440,285"/>
+
+  <!-- ===== COMPARISON LINE through both charts at t=0.4s ===== -->
+  <line class="ssd-compare-line" x1="212" y1="32" x2="212" y2="355"/>
+  <!-- Top: trauma=0.6 callout -->
+  <circle cx="212" cy="88" r="4" fill="var(--ssd-card-bg)" stroke="var(--ssd-trauma)" stroke-width="2"/>
+  <text class="ssd-callout-text" x="220" y="84" fill="var(--ssd-trauma)">trauma = 0.6</text>
+  <!-- Bottom: envelope bracket and label -->
+  <line stroke="var(--ssd-offset)" stroke-width="2" stroke-linecap="round" x1="207" y1="259.8" x2="217" y2="259.8"/>
+  <line stroke="var(--ssd-offset)" stroke-width="2" stroke-linecap="round" x1="207" y1="310.2" x2="217" y2="310.2"/>
+  <text class="ssd-callout-text" x="220" y="289" fill="var(--ssd-offset)">envelope = ±0.36</text>
+
+  <!-- ===== RIGHT-SIDE ANNOTATION CARD ===== -->
+  <rect class="ssd-chart-bg" x="476" y="32" width="220" height="323" rx="6"/>
+  <!-- Header -->
+  <text class="ssd-card-header" x="586" y="56" text-anchor="middle">AT t = 0.4 s</text>
+  <line class="ssd-divider-line" x1="496" y1="68" x2="676" y2="68"/>
+  <!-- Trauma section -->
+  <text class="ssd-card-section" x="496" y="86">TRAUMA</text>
+  <text class="ssd-card-formula" x="496" y="106">trauma(t) = 1 − t</text>
+  <text class="ssd-card-result" x="496" y="128" fill="var(--ssd-trauma)">trauma(0.4) = 0.6</text>
+  <line class="ssd-divider-line" x1="496" y1="144" x2="676" y2="144"/>
+  <!-- Envelope section -->
+  <text class="ssd-card-section" x="496" y="162">OFFSET ENVELOPE</text>
+  <text class="ssd-card-formula" x="496" y="182">envelope = trauma² &#xb7; max</text>
+  <text class="ssd-card-result" x="496" y="204" fill="var(--ssd-offset)">envelope(0.4) = 0.36 &#xb7; max</text>
+  <line class="ssd-divider-line" x1="496" y1="220" x2="676" y2="220"/>
+  <!-- Side-by-side bars -->
+  <text class="ssd-card-section" x="496" y="238">SIDE BY SIDE</text>
+  <!-- trauma bar -->
+  <text class="ssd-card-bar-label" x="496" y="256">trauma</text>
+  <rect x="496" y="260" width="108" height="11" fill="var(--ssd-trauma)" rx="2"/>
+  <text class="ssd-card-bar-value" x="610" y="270" fill="var(--ssd-trauma)">0.60</text>
+  <!-- envelope bar -->
+  <text class="ssd-card-bar-label" x="496" y="288">envelope</text>
+  <rect x="496" y="292" width="64.8" height="11" fill="var(--ssd-offset)" rx="2"/>
+  <text class="ssd-card-bar-value" x="566.8" y="302" fill="var(--ssd-offset)">0.36</text>
+  <!-- Footnote -->
+  <text class="ssd-card-footnote" x="586" y="334" text-anchor="middle">shake fades faster than the</text>
+  <text class="ssd-card-footnote" x="586" y="348" text-anchor="middle">underlying trauma value</text>
+
+  <!-- ===== BOTTOM STRIP ===== -->
+  <!-- Strip expanded chat 18: was y=363 height=32 with single-line mono; mono overflowed past SVG x=720. Split into 2 mono lines, strip y=350 height=48. -->
+  <rect class="ssd-chart-bg" x="40" y="350" width="640" height="48" rx="6"/>
+  <text class="ssd-strip-text" x="60" y="368">Trauma decays linearly, but the visible offset envelope dies as trauma² — so shake fades faster than the underlying state.</text>
+  <text class="ssd-strip-mono" x="60" y="383">Lesson code: trauma -= decay_rate &#xb7; dt &#xa0;&#xb7;&#xa0; shake = trauma * trauma</text>
+  <text class="ssd-strip-mono" x="60" y="395">offset_x = max_offset &#xb7; shake &#xb7; rand(−1, +1)</text>
+</svg>

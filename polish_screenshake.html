@@ -100,10 +100,19 @@
         J --> K
     </div>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/screenshake-decay.svg" alt="Two stacked charts showing screen-shake trauma decaying linearly over time, and the resulting offset envelope dying as trauma squared, with a comparison line at t=0.4 seconds." class="responsive-svg" loading="lazy">
+        <figcaption>Screen-shake intensity over time: trauma decays linearly while the visible offset envelope dies as trauma² — so shake fades faster than the underlying trauma. The interactive demo lets you trigger shakes and tune decay curves; this diagram shows the decay vs envelope relationship side by side.</figcaption>
+    </figure>
+
     <h2 id="interactive-screen-shake-demo">Interactive Screen Shake Demo</h2>
     
     <div class="canvas-wrapper" style="text-align: center;">
         <canvas id="shakeCanvas" width="800" height="600" style="border: 1px solid #333; display: inline-block;"></canvas>
+        <figure class="canvas-fallback">
+            <img src="/images/components/screenshake-decay.svg" alt="Two stacked charts showing screen-shake trauma decay over time and the resulting offset envelope dying as trauma squared." class="responsive-svg" loading="lazy">
+            <figcaption>Screen-shake intensity over time: trauma decays linearly while the offset envelope dies as trauma². The interactive demo lets you click to create explosions, tune decay curves, and compare shake directions; this static diagram shows the decay vs envelope relationship at a glance.</figcaption>
+        </figure>
     </div>
     <div style="text-align: center; margin-top: 10px;">
         <p>Click to create explosions! Experience different screen shake techniques and visual effects!</p>

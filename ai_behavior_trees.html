@@ -99,10 +99,19 @@
         D --> L["Cooldown"]
     </div>
 
+    <figure class="svg-wrapper">
+        <img class="responsive-svg" src="/images/components/behavior-tree.svg" alt="Hierarchical behavior tree mid-tick: a Selector root with three children — a Combat sequence (Enemy?, Chase, Attack), a Survive sequence (HP low?, Flee), and a Wander leaf. An amber path highlights the currently running route from root through Survive to Flee. Border colors show each node's tick result." loading="lazy">
+        <figcaption>A behavior tree mid-tick: the Selector(?) tries Combat first, but Enemy? returns failure, so the whole Combat sequence fails. It then tries Survive(→), where HP low? succeeds and Flee runs. Wander is never tried — the Selector short-circuits at the first non-failure. Border colors show each node's tick result; the amber path traces the currently running route.</figcaption>
+    </figure>
+
     <h2 id="interactive-behavior-tree-demo">Interactive Behavior Tree Demo</h2>
     
     <div class="canvas-wrapper" style="text-align: center;">
         <canvas id="behaviorCanvas" width="600" height="400" style="border: 1px solid #333; background-color: #2C3E50; display: inline-block;"></canvas>
+        <figure class="canvas-fallback">
+            <img class="responsive-svg" src="/images/components/behavior-tree.svg" alt="Hierarchical behavior tree showing Selector and Sequence composite nodes with leaf actions." loading="lazy">
+            <figcaption>A behavior tree with Selector (?) and Sequence (→) composite nodes coordinating leaf actions. The interactive demo lets you watch ticks propagate through the tree; this static diagram shows the structure and one highlighted tick path.</figcaption>
+        </figure>
     </div>
     <div style="text-align: center; margin-top: 10px;">
         <p>Watch the AI make decisions using behavior trees! Control the environment to see different behaviors!</p>
@@ -163,6 +172,10 @@
         <!-- Behavior Tree Visualization -->
         <div id="treeView" style="display: none; margin-top: 10px; padding: 10px; background-color: rgba(0,0,0,0.7); border-radius: 5px;">
             <canvas id="treeCanvas" width="600" height="300" style="border: 1px solid #555;"></canvas>
+        <figure class="canvas-fallback">
+            <img class="responsive-svg" src="/images/components/behavior-tree.svg" alt="Hierarchical behavior tree showing Selector and Sequence composite nodes with leaf actions." loading="lazy">
+            <figcaption>A behavior tree with Selector (?) and Sequence (→) composite nodes coordinating leaf actions. The interactive demo lets you watch ticks propagate through the tree; this static diagram shows the structure and one highlighted tick path.</figcaption>
+        </figure>
             <div id="nodeInfo" style="color: white; margin-top: 10px; font-size: 12px;"></div>
         </div>
     </div>

@@ -84,7 +84,7 @@
     .pp-label-end { fill: var(--pp-end); }
     .pp-label-angle { fill: var(--pp-angle); }
 
-    .pp-sig { font: 500 10px ui-monospace, SFMono-Regular, "Menlo", monospace; fill: var(--pp-text-secondary); }
+    .pp-sig { font: 500 9.5px ui-monospace, SFMono-Regular, "Menlo", monospace; fill: var(--pp-text-secondary); }
     .pp-sig tspan.pos { fill: var(--pp-pos); font-weight: 700; }
     .pp-sig tspan.size { fill: var(--pp-size); font-weight: 700; }
     .pp-sig tspan.end { fill: var(--pp-end); font-weight: 700; }

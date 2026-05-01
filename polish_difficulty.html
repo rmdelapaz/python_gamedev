@@ -100,10 +100,25 @@
         D --> M["Assists"]
     </div>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/difficulty-curves.svg"
+             alt="Three difficulty-curve archetypes shown side by side over time. Linear ramp: a teal straight line rising at a constant slope. Plateau: an amber stairstep with four equal rises separated by five plateaus, where rest periods let players consolidate skills between spikes. Dynamic difficulty adjustment (DDA): a red oscillating curve that weaves around a dashed slate reference line representing the player's rising skill, sometimes above and sometimes below as the system continuously tracks performance. Below the three charts a strip describes each pattern's pedagogical use case."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>Three difficulty-curve archetypes &mdash; <strong>linear, plateau, and dynamic difficulty adjustment (DDA)</strong> &mdash; plotted as difficulty over time. Linear is predictable but ignores player skill; plateau builds in rest periods between spikes to tune pacing; DDA continuously tracks the player's real-time performance, weaving around their estimated skill curve. The interactive lab below lets you toggle between these modes (and three more) and watch the curves react to your play in real time.</figcaption>
+    </figure>
+
     <h2 id="interactive-difficulty-testing-lab">Interactive Difficulty Testing Lab</h2>
     
     <div class="canvas-wrapper" style="text-align: center;">
         <canvas id="difficultyCanvas" width="800" height="600" style="border: 1px solid #333; display: inline-block;"></canvas>
+        <figure class="canvas-fallback">
+            <img src="/images/components/difficulty-curves.svg"
+                 alt="Three difficulty curves shown side by side: linear ramp, plateau with rest periods, and dynamic difficulty adjustment."
+                 class="responsive-svg"
+                 loading="lazy">
+            <figcaption>Three difficulty curves over time: linear ramp, plateau (rest periods between spikes), and dynamic difficulty adjustment (DDA) that follows player performance. The interactive demo lets you tune curve parameters; this diagram shows the three patterns side by side.</figcaption>
+        </figure>
     </div>
     <div style="text-align: center; margin-top: 10px;">
         <p>Play the game and watch how difficulty adapts to your performance! See real-time metrics and adjustments!</p>

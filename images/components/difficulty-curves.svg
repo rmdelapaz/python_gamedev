@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- difficulty-curves.svg
+     Phase 7 SVG #24 for polish_difficulty.html (Phase 6 figure between mermaid
+     taxonomy + Interactive Difficulty Testing Lab h2 — convention B;
+     ALSO deployed as canvas-fallback for #difficultyCanvas per Phase 7).
+
+     Three sub-charts in a row showing three difficulty-curve archetypes:
+       Cell 1 (Linear)   — straight teal line, constant slope
+       Cell 2 (Plateau)  — amber stairstep: 4 rises separated by 5 plateaus
+       Cell 3 (DDA)      — red oscillating curve weaving around a dashed slate
+                           "player skill" reference line. Same start point so
+                           the DDA visibly emerges from skill and tracks it.
+
+     Layout:
+       Cells: x ∈ {16, 248, 480}, y=18, w=224, h=252 (rounded 6)
+       Plot area inside each cell: x ∈ [cell.x+28, cell.x+208], y ∈ [74, 220]
+                                   (180w × 164h, room for L-shaped axes)
+       Sub-label (per-cell): y=258
+       Bottom strip: x=16, y=288, w=688, h=60 (3 explanation lines)
+
+     Theme-aware via prefers-color-scheme. ID prefix `dc-`. ViewBox 720x360.
+
+     DDA curve sampling: 21 points at 9px x-spacing, ref y interpolated from
+     (508, 187.2) → (688, 88.8), oscillation = ref + 18*sin((x-508) * 4π/180).
+     Two full sine cycles span the plot width; stroke-linejoin=round smooths
+     the polyline corners. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 360" role="img"
+     aria-labelledby="dc-title dc-desc" preserveAspectRatio="xMidYMid meet">
+  <title id="dc-title">Three difficulty-curve archetypes plotted over time</title>
+  <desc id="dc-desc">Three small charts shown side by side, each plotting difficulty on the vertical axis against time on the horizontal axis. The first chart, labeled Linear ramp, shows a teal straight line rising at a constant slope from the lower-left to the upper-right of the plot. The second chart, labeled Plateau, shows an amber stairstep with four roughly equal rises separated by five horizontal plateaus, ending at the upper-right. The third chart, labeled Dynamic DDA, shows a dashed slate reference line representing the player's rising skill, with a red oscillating curve weaving around it — sometimes above, sometimes below — to illustrate how dynamic difficulty adjustment continuously tracks player performance. Below the three charts a bottom strip describes each pattern's pedagogical use case: linear is predictable but ignores player skill, plateau builds in rest periods between spikes to tune pacing, and DDA continuously adjusts to follow real-time performance.</desc>
+
+  <style>
+    svg {
+      --dc-card-fill: rgb(255, 255, 255);
+      --dc-card-stroke: rgb(203, 213, 225);
+      --dc-text-primary: rgb(15, 23, 42);
+      --dc-text-secondary: rgb(71, 85, 105);
+      --dc-text-muted: rgb(100, 116, 139);
+      --dc-strip-fill: rgb(248, 250, 252);
+      --dc-strip-stroke: rgb(226, 232, 240);
+      --dc-axis: rgb(148, 163, 184);
+
+      --dc-linear: rgb(13, 148, 136);   /* teal */
+      --dc-plateau: rgb(217, 119, 6);   /* amber */
+      --dc-dda: rgb(220, 38, 38);       /* red */
+      --dc-skill-ref: rgb(100, 116, 139); /* muted slate (dashed) */
+    }
+    @media (prefers-color-scheme: dark) {
+      svg {
+        --dc-card-fill: rgb(31, 41, 55);
+        --dc-card-stroke: rgb(51, 65, 85);
+        --dc-text-primary: rgb(229, 231, 235);
+        --dc-text-secondary: rgb(203, 213, 225);
+        --dc-text-muted: rgb(148, 163, 184);
+        --dc-strip-fill: rgb(15, 23, 42);
+        --dc-strip-stroke: rgb(51, 65, 85);
+        --dc-axis: rgb(100, 116, 139);
+
+        --dc-linear: rgb(45, 212, 191);
+        --dc-plateau: rgb(251, 191, 36);
+        --dc-dda: rgb(248, 113, 113);
+        --dc-skill-ref: rgb(148, 163, 184);
+      }
+    }
+
+    .dc-cell-bg { fill: var(--dc-card-fill); stroke: var(--dc-card-stroke); stroke-width: 1; }
+    .dc-cell-title { font: 600 13px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--dc-text-primary); }
+
+    .dc-axis { fill: none; stroke: var(--dc-axis); stroke-width: 1; stroke-linecap: round; }
+    .dc-axis-arrow { fill: var(--dc-axis); }
+    .dc-axis-label { font: 500 10px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--dc-text-muted); }
+
+    .dc-curve { fill: none; stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+    .dc-curve.linear  { stroke: var(--dc-linear); }
+    .dc-curve.plateau { stroke: var(--dc-plateau); }
+    .dc-curve.dda     { stroke: var(--dc-dda); }
+
+    .dc-skill-ref { fill: none; stroke: var(--dc-skill-ref); stroke-width: 1.25; stroke-dasharray: 4 3; }
+    .dc-skill-ref-label { font: 500 9px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--dc-text-muted); }
+
+    .dc-sub-label { font: 500 11px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--dc-text-secondary); }
+
+    .dc-strip { fill: var(--dc-strip-fill); stroke: var(--dc-strip-stroke); stroke-width: 1; }
+    .dc-strip-text { font: 500 11.5px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--dc-text-primary); }
+    .dc-strip-divider { stroke: var(--dc-strip-stroke); stroke-width: 1; }
+  </style>
+
+  <!-- ===== CELL 1: Linear ramp ===== -->
+  <g>
+    <rect class="dc-cell-bg" x="16" y="18" width="224" height="252" rx="6" />
+    <text class="dc-cell-title" x="128" y="38" text-anchor="middle">Linear ramp</text>
+
+    <!-- L-shaped axes (with arrowheads) -->
+    <path class="dc-axis" d="M 44 56 L 44 220 L 224 220" />
+    <path class="dc-axis-arrow" d="M 41 56 L 44 50 L 47 56 Z" />
+    <path class="dc-axis-arrow" d="M 224 217 L 230 220 L 224 223 Z" />
+    <text class="dc-axis-label" x="128" y="234" text-anchor="middle">time</text>
+
+    <!-- Curve: straight diagonal line -->
+    <line class="dc-curve linear" x1="44" y1="220" x2="224" y2="56" />
+
+    <text class="dc-sub-label" x="128" y="258" text-anchor="middle">constant slope</text>
+  </g>
+
+  <!-- ===== CELL 2: Plateau ===== -->
+  <g>
+    <rect class="dc-cell-bg" x="248" y="18" width="224" height="252" rx="6" />
+    <text class="dc-cell-title" x="360" y="38" text-anchor="middle">Plateau</text>
+
+    <path class="dc-axis" d="M 276 56 L 276 220 L 456 220" />
+    <path class="dc-axis-arrow" d="M 273 56 L 276 50 L 279 56 Z" />
+    <path class="dc-axis-arrow" d="M 456 217 L 462 220 L 456 223 Z" />
+    <text class="dc-axis-label" x="360" y="234" text-anchor="middle">time</text>
+
+    <!-- Stairstep: 4 rises × 41 px, 5 holds × 36 px = 180w × 164h -->
+    <path class="dc-curve plateau" d="M 276 220 L 312 220 L 312 179 L 348 179 L 348 138 L 384 138 L 384 97 L 420 97 L 420 56 L 456 56" />
+
+    <text class="dc-sub-label" x="360" y="258" text-anchor="middle">rest periods between rises</text>
+  </g>
+
+  <!-- ===== CELL 3: Dynamic (DDA) ===== -->
+  <g>
+    <rect class="dc-cell-bg" x="480" y="18" width="224" height="252" rx="6" />
+    <text class="dc-cell-title" x="592" y="38" text-anchor="middle">Dynamic (DDA)</text>
+
+    <path class="dc-axis" d="M 508 56 L 508 220 L 688 220" />
+    <path class="dc-axis-arrow" d="M 505 56 L 508 50 L 511 56 Z" />
+    <path class="dc-axis-arrow" d="M 688 217 L 694 220 L 688 223 Z" />
+    <text class="dc-axis-label" x="592" y="234" text-anchor="middle">time</text>
+
+    <!-- Player-skill reference line (dashed slate) — also the DDA curve's start point -->
+    <line class="dc-skill-ref" x1="508" y1="187.2" x2="688" y2="88.8" />
+    <text class="dc-skill-ref-label" x="512" y="178" text-anchor="start">player skill</text>
+
+    <!-- DDA curve: oscillates around the reference -->
+    <path class="dc-curve dda" d="M 508 187.2 L 517 192.9 L 526 194.5 L 535 189.5 L 544 178.1 L 553 162.6 L 562 147.0 L 571 135.6 L 580 130.7 L 589 132.2 L 598 137.9 L 607 143.6 L 616 145.1 L 625 140.2 L 634 128.8 L 643 113.3 L 652 97.7 L 661 86.3 L 670 81.4 L 679 82.9 L 688 88.6" />
+
+    <text class="dc-sub-label" x="592" y="258" text-anchor="middle">tracks player skill</text>
+  </g>
+
+  <!-- ===== BOTTOM STRIP ===== -->
+  <rect class="dc-strip" x="16" y="288" width="688" height="60" rx="6" />
+  <text class="dc-strip-text" x="32" y="308">Linear: difficulty rises at a fixed rate — predictable but ignores player skill.</text>
+  <line class="dc-strip-divider" x1="32" y1="318" x2="688" y2="318" />
+  <text class="dc-strip-text" x="32" y="332">Plateau: rest periods let players consolidate skills before the next spike — tunes pacing.</text>
+  <text class="dc-strip-text" x="32" y="346">Dynamic Difficulty Adjustment (DDA): the curve continuously adjusts to track real-time performance.</text>
+</svg>

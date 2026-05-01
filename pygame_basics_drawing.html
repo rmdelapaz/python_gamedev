@@ -140,11 +140,26 @@ points = [(300, 100), (400, 200), (200, 200)]
 pygame.draw.polygon(screen, PURPLE, points)
 # Parameters: surface, color, list_of_points</code></pre>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/pygame-primitives.svg"
+             alt="Six pygame drawing primitives shown in a 3-by-2 grid. Top row left to right: rect with top-left corner labeled x, y and width and height labeled w and h; circle with a center crosshair and a radius arrow labeled; polygon as a triangle with three vertices labeled p1, p2, and p3. Bottom row left to right: line with start and end endpoints labeled and a callout for width; ellipse drawn inside its bounding rectangle with top-left labeled x, y and width and height labeled w and h; arc as a partial outline drawn over a dashed bounding rect with the start and stop angle endpoints labeled. Each shape pairs with its pygame.draw function signature with argument names color-tinted to match the visual features."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>Pygame's six drawing primitives at a glance &mdash; <strong>rect, circle, polygon, line, ellipse, arc</strong> &mdash; each paired with its <code>pygame.draw</code> signature. Argument names are color-tinted to match the feature they control: <strong>position</strong> in teal, <strong>size</strong> in amber, the line's <strong>end</strong> point in blue, and arc <strong>angles</strong> in red. The interactive demo just below lets you tweak parameters live.</figcaption>
+    </figure>
+
     <h2 id="interactive-shape-drawing-demo">Interactive Shape Drawing Demo</h2>
     
     <div style="background-color: #f9f9f9; padding: 20px; border-radius: 10px; margin: 20px 0; text-align: center;">
         <h3 id="draw-shapes-interactively">🎨 Draw Shapes Interactively!</h3>
         <canvas id="shapesCanvas" width="600" height="400"></canvas>
+        <figure class="canvas-fallback">
+            <img src="/images/components/pygame-primitives.svg"
+                 alt="Six pygame drawing primitives — rect, circle, polygon, line, ellipse, arc — each labeled with their key arguments."
+                 class="responsive-svg"
+                 loading="lazy">
+            <figcaption>Pygame's drawing primitives: rect, circle, polygon, line, ellipse, arc — each shown with its key arguments labeled. The interactive demo lets you tweak parameters and see the result; this diagram pairs each shape with its pygame.draw signature.</figcaption>
+        </figure>
         <div>
             <button onclick="drawRandomShape()">Draw Random Shape</button>
             <button onclick="clearCanvas()">Clear Canvas</button>
@@ -414,6 +429,13 @@ flipped_image = pygame.transform.flip(original_image, True, False)
     <div style="background-color: #f9f9f9; padding: 20px; border-radius: 10px; margin: 20px 0; text-align: center;">
         <h3 id="control-the-bouncing-sprites">🎮 Control the Bouncing Sprites!</h3>
         <canvas id="spriteCanvas" width="600" height="400"></canvas>
+        <figure class="canvas-fallback">
+            <img src="/images/components/pygame-primitives.svg"
+                 alt="Six pygame drawing primitives — rect, circle, polygon, line, ellipse, arc — each labeled with their key arguments."
+                 class="responsive-svg"
+                 loading="lazy">
+            <figcaption>Pygame's drawing primitives: rect, circle, polygon, line, ellipse, arc — each shown with its key arguments labeled. The interactive demo lets you tweak parameters and see the result; this diagram pairs each shape with its pygame.draw signature.</figcaption>
+        </figure>
         <p>Click to add sprites! They'll bounce around automatically.</p>
         <button onclick="clearSprites()">Clear All Sprites</button>
     </div>

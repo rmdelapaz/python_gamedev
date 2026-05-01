@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- pygame-primitives.svg
+     Phase 6 / 7 SVG #23 for pygame_basics_drawing.html (Phase 6 figure between
+     coordinate-system mermaid + Interactive Shape Drawing Demo h2 — convention B;
+     ALSO deployed as canvas-fallback for #shapesCanvas + #spriteCanvas per Phase 7).
+
+     3x2 grid of pygame's six drawing primitives. Each cell shows the shape demo
+     with position/size/angle pointers, paired with its pygame.draw signature
+     where argument names are color-tinted to match the visual feature each controls:
+       teal  = position (x, y, center, polygon points, line start, bounding rect)
+       amber = size (w, h, radius, line width)
+       blue  = line end endpoint
+       red   = angles in radians (arc start, arc stop)
+
+     Layout:
+       Row 1 (y=18..170):  rect    | circle  | polygon
+       Row 2 (y=178..330): line    | ellipse | arc
+       Bottom strip (y=342..410):  shared semantics + width-arg note + arc-radians note
+
+     Theme-aware via prefers-color-scheme. ID prefix `pp-`. ViewBox 720x420. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 420" role="img"
+     aria-labelledby="pp-title pp-desc" preserveAspectRatio="xMidYMid meet">
+  <title id="pp-title">Pygame's six drawing primitives with their function signatures</title>
+  <desc id="pp-desc">A three-by-two grid of pygame drawing primitives. Top row left to right: rect with top-left corner labeled x, y and width and height labeled w and h, circle with a center crosshair and a radius arrow labeled, polygon as a triangle with three vertices labeled p1, p2, and p3. Bottom row left to right: line with start and end endpoints labeled and a callout for width, ellipse drawn inside its bounding rectangle with top-left labeled x, y and width and height labeled w and h, arc as a partial outline drawn over a dashed bounding rect with the start and stop angle endpoints labeled. Each cell pairs its visual demo with its monospace pygame.draw signature, with argument names color-tinted: teal for positions, amber for sizes, blue for the line end point, and red for arc angles. A bottom strip notes that every pygame.draw function takes surface and color first then shape arguments, that an optional integer width as the last argument draws an outline instead of filling, and that arc angles are in radians measured counter-clockwise from the positive x-axis.</desc>
+
+  <style>
+    svg {
+      --pp-card-fill: rgb(255, 255, 255);
+      --pp-card-stroke: rgb(203, 213, 225);
+      --pp-text-primary: rgb(15, 23, 42);
+      --pp-text-secondary: rgb(71, 85, 105);
+      --pp-text-muted: rgb(100, 116, 139);
+      --pp-strip-fill: rgb(248, 250, 252);
+      --pp-strip-stroke: rgb(226, 232, 240);
+
+      --pp-pos: rgb(13, 148, 136);
+      --pp-pos-fill: rgba(13, 148, 136, 0.16);
+      --pp-size: rgb(217, 119, 6);
+      --pp-end: rgb(59, 130, 246);
+      --pp-end-fill: rgba(59, 130, 246, 0.16);
+      --pp-angle: rgb(220, 38, 38);
+    }
+    @media (prefers-color-scheme: dark) {
+      svg {
+        --pp-card-fill: rgb(31, 41, 55);
+        --pp-card-stroke: rgb(51, 65, 85);
+        --pp-text-primary: rgb(229, 231, 235);
+        --pp-text-secondary: rgb(203, 213, 225);
+        --pp-text-muted: rgb(148, 163, 184);
+        --pp-strip-fill: rgb(15, 23, 42);
+        --pp-strip-stroke: rgb(51, 65, 85);
+
+        --pp-pos: rgb(45, 212, 191);
+        --pp-pos-fill: rgba(45, 212, 191, 0.20);
+        --pp-size: rgb(251, 191, 36);
+        --pp-end: rgb(96, 165, 250);
+        --pp-end-fill: rgba(96, 165, 250, 0.20);
+        --pp-angle: rgb(248, 113, 113);
+      }
+    }
+
+    .pp-cell-bg { fill: var(--pp-card-fill); stroke: var(--pp-card-stroke); stroke-width: 1; }
+    .pp-cell-title { font: 600 13px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--pp-text-primary); }
+
+    .pp-shape-fill { fill: var(--pp-pos-fill); stroke: var(--pp-pos); stroke-width: 2; }
+    .pp-shape-arc { fill: none; stroke: var(--pp-pos); stroke-width: 4; stroke-linecap: round; }
+    .pp-line-stroke { fill: none; stroke: var(--pp-pos); stroke-width: 5; stroke-linecap: round; }
+
+    .pp-bbox { fill: none; stroke: var(--pp-text-muted); stroke-width: 1; stroke-dasharray: 3 3; }
+    .pp-bbox-pos { fill: none; stroke: var(--pp-pos); stroke-width: 1; stroke-dasharray: 3 3; }
+
+    .pp-dim-line { fill: none; stroke: var(--pp-size); stroke-width: 1.25; }
+    .pp-dim-arrow { fill: var(--pp-size); stroke: none; }
+    .pp-radial { fill: none; stroke: var(--pp-angle); stroke-width: 1; stroke-dasharray: 2 2; }
+
+    .pp-dot-pos { fill: var(--pp-pos); stroke: var(--pp-card-fill); stroke-width: 1.5; }
+    .pp-dot-end { fill: var(--pp-end); stroke: var(--pp-card-fill); stroke-width: 1.5; }
+    .pp-dot-angle { fill: var(--pp-angle); stroke: var(--pp-card-fill); stroke-width: 1.5; }
+    .pp-crosshair { fill: none; stroke: var(--pp-pos); stroke-width: 1.5; stroke-linecap: round; }
+
+    .pp-label { font: 500 10.5px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .pp-label-pos { fill: var(--pp-pos); }
+    .pp-label-size { fill: var(--pp-size); }
+    .pp-label-end { fill: var(--pp-end); }
+    .pp-label-angle { fill: var(--pp-angle); }
+
+    .pp-sig { font: 500 10px ui-monospace, SFMono-Regular, "Menlo", monospace; fill: var(--pp-text-secondary); }
+    .pp-sig tspan.pos { fill: var(--pp-pos); font-weight: 700; }
+    .pp-sig tspan.size { fill: var(--pp-size); font-weight: 700; }
+    .pp-sig tspan.end { fill: var(--pp-end); font-weight: 700; }
+    .pp-sig tspan.angle { fill: var(--pp-angle); font-weight: 700; }
+
+    .pp-strip { fill: var(--pp-strip-fill); stroke: var(--pp-strip-stroke); stroke-width: 1; }
+    .pp-strip-text { font: 500 11.5px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--pp-text-primary); }
+    .pp-strip-divider { stroke: var(--pp-strip-stroke); stroke-width: 1; }
+  </style>
+
+  <!-- ===== CELL 1: rect (top-left) ===== -->
+  <g>
+    <rect class="pp-cell-bg" x="16" y="18" width="224" height="152" rx="6" />
+    <text class="pp-cell-title" x="128" y="36" text-anchor="middle">rect</text>
+
+    <!-- Demo: filled rectangle -->
+    <rect class="pp-shape-fill" x="72" y="70" width="88" height="42" />
+
+    <!-- Position dot at top-left + label -->
+    <circle class="pp-dot-pos" cx="72" cy="70" r="3.5" />
+    <text class="pp-label pp-label-pos" x="68" y="65" text-anchor="end">x, y</text>
+
+    <!-- Width dim arrow above shape -->
+    <line class="pp-dim-line" x1="76" y1="60" x2="156" y2="60" />
+    <path class="pp-dim-arrow" d="M 76,57 L 72,60 L 76,63 Z" />
+    <path class="pp-dim-arrow" d="M 156,57 L 160,60 L 156,63 Z" />
+    <text class="pp-label pp-label-size" x="116" y="55" text-anchor="middle">w</text>
+
+    <!-- Height dim arrow right of shape -->
+    <line class="pp-dim-line" x1="170" y1="74" x2="170" y2="108" />
+    <path class="pp-dim-arrow" d="M 167,74 L 170,70 L 173,74 Z" />
+    <path class="pp-dim-arrow" d="M 167,108 L 170,112 L 173,108 Z" />
+    <text class="pp-label pp-label-size" x="178" y="94">h</text>
+
+    <!-- Signature -->
+    <text class="pp-sig" x="128" y="158" text-anchor="middle">rect(surface, color, (<tspan class="pos">x</tspan>, <tspan class="pos">y</tspan>, <tspan class="size">w</tspan>, <tspan class="size">h</tspan>))</text>
+  </g>
+
+  <!-- ===== CELL 2: circle (top-mid) ===== -->
+  <g>
+    <rect class="pp-cell-bg" x="248" y="18" width="224" height="152" rx="6" />
+    <text class="pp-cell-title" x="360" y="36" text-anchor="middle">circle</text>
+
+    <!-- Demo: filled circle -->
+    <circle class="pp-shape-fill" cx="360" cy="84" r="26" />
+
+    <!-- Center crosshair -->
+    <line class="pp-crosshair" x1="354" y1="84" x2="366" y2="84" />
+    <line class="pp-crosshair" x1="360" y1="78" x2="360" y2="90" />
+
+    <!-- "center" label below circle -->
+    <text class="pp-label pp-label-pos" x="360" y="125" text-anchor="middle">center</text>
+
+    <!-- Radius arrow from center to right edge -->
+    <line class="pp-dim-line" x1="361" y1="84" x2="382" y2="84" />
+    <path class="pp-dim-arrow" d="M 382,81 L 386,84 L 382,87 Z" />
+    <text class="pp-label pp-label-size" x="374" y="78" text-anchor="middle">radius</text>
+
+    <!-- Signature -->
+    <text class="pp-sig" x="360" y="158" text-anchor="middle">circle(surface, color, <tspan class="pos">center</tspan>, <tspan class="size">radius</tspan>)</text>
+  </g>
+
+  <!-- ===== CELL 3: polygon (top-right) ===== -->
+  <g>
+    <rect class="pp-cell-bg" x="480" y="18" width="224" height="152" rx="6" />
+    <text class="pp-cell-title" x="592" y="36" text-anchor="middle">polygon</text>
+
+    <!-- Demo: filled triangle -->
+    <polygon class="pp-shape-fill" points="592,62 632,112 552,112" />
+
+    <!-- Vertex dots -->
+    <circle class="pp-dot-pos" cx="592" cy="62" r="3.5" />
+    <circle class="pp-dot-pos" cx="632" cy="112" r="3.5" />
+    <circle class="pp-dot-pos" cx="552" cy="112" r="3.5" />
+
+    <!-- Vertex labels -->
+    <text class="pp-label pp-label-pos" x="592" y="55" text-anchor="middle">p1</text>
+    <text class="pp-label pp-label-pos" x="640" y="118">p2</text>
+    <text class="pp-label pp-label-pos" x="544" y="118" text-anchor="end">p3</text>
+
+    <!-- Signature -->
+    <text class="pp-sig" x="592" y="158" text-anchor="middle">polygon(surface, color, [<tspan class="pos">p1</tspan>, <tspan class="pos">p2</tspan>, <tspan class="pos">p3</tspan>])</text>
+  </g>
+
+  <!-- ===== CELL 4: line (bottom-left) ===== -->
+  <g>
+    <rect class="pp-cell-bg" x="16" y="178" width="224" height="152" rx="6" />
+    <text class="pp-cell-title" x="128" y="196" text-anchor="middle">line</text>
+
+    <!-- Demo: thick teal line -->
+    <line class="pp-line-stroke" x1="60" y1="232" x2="196" y2="268" />
+
+    <!-- Endpoint dots: start (teal) + end (blue) -->
+    <circle class="pp-dot-pos" cx="60" cy="232" r="4" />
+    <circle class="pp-dot-end" cx="196" cy="268" r="4" />
+
+    <!-- Endpoint labels -->
+    <text class="pp-label pp-label-pos" x="54" y="228" text-anchor="end">start</text>
+    <text class="pp-label pp-label-end" x="202" y="280">end</text>
+
+    <!-- Width callout: arrow from below line midpoint, label "width" -->
+    <line class="pp-dim-line" x1="128" y1="288" x2="128" y2="261" />
+    <path class="pp-dim-arrow" d="M 125,261 L 128,256 L 131,261 Z" />
+    <text class="pp-label pp-label-size" x="128" y="300" text-anchor="middle">width</text>
+
+    <!-- Signature -->
+    <text class="pp-sig" x="128" y="318" text-anchor="middle">line(surface, color, <tspan class="pos">start</tspan>, <tspan class="end">end</tspan>, <tspan class="size">width</tspan>)</text>
+  </g>
+
+  <!-- ===== CELL 5: ellipse (bottom-mid) ===== -->
+  <g>
+    <rect class="pp-cell-bg" x="248" y="178" width="224" height="152" rx="6" />
+    <text class="pp-cell-title" x="360" y="196" text-anchor="middle">ellipse</text>
+
+    <!-- Bounding rect (dashed muted, indicates the (x, y, w, h) arg) -->
+    <rect class="pp-bbox" x="296" y="226" width="128" height="56" />
+
+    <!-- Demo: filled ellipse inside bounding rect -->
+    <ellipse class="pp-shape-fill" cx="360" cy="254" rx="64" ry="28" />
+
+    <!-- Position dot at top-left of bounding rect -->
+    <circle class="pp-dot-pos" cx="296" cy="226" r="3.5" />
+    <text class="pp-label pp-label-pos" x="292" y="221" text-anchor="end">x, y</text>
+
+    <!-- Width dim arrow above bounding rect -->
+    <line class="pp-dim-line" x1="300" y1="216" x2="420" y2="216" />
+    <path class="pp-dim-arrow" d="M 300,213 L 296,216 L 300,219 Z" />
+    <path class="pp-dim-arrow" d="M 420,213 L 424,216 L 420,219 Z" />
+    <text class="pp-label pp-label-size" x="360" y="211" text-anchor="middle">w</text>
+
+    <!-- Height dim arrow right of bounding rect -->
+    <line class="pp-dim-line" x1="434" y1="230" x2="434" y2="278" />
+    <path class="pp-dim-arrow" d="M 431,230 L 434,226 L 437,230 Z" />
+    <path class="pp-dim-arrow" d="M 431,278 L 434,282 L 437,278 Z" />
+    <text class="pp-label pp-label-size" x="442" y="256">h</text>
+
+    <!-- Signature -->
+    <text class="pp-sig" x="360" y="318" text-anchor="middle">ellipse(surface, color, (<tspan class="pos">x</tspan>, <tspan class="pos">y</tspan>, <tspan class="size">w</tspan>, <tspan class="size">h</tspan>))</text>
+  </g>
+
+  <!-- ===== CELL 6: arc (bottom-right) ===== -->
+  <g>
+    <rect class="pp-cell-bg" x="480" y="178" width="224" height="152" rx="6" />
+    <text class="pp-cell-title" x="592" y="196" text-anchor="middle">arc</text>
+
+    <!-- Bounding rect — IS the `rect` arg. Dashed teal. -->
+    <rect class="pp-bbox-pos" x="540" y="226" width="104" height="56" />
+    <text class="pp-label pp-label-pos" x="538" y="221" text-anchor="end">rect</text>
+
+    <!-- Center marker (small slate dot) -->
+    <circle cx="592" cy="254" r="2" fill="var(--pp-text-muted)" />
+
+    <!-- Radial dashed lines from center to start/stop endpoints -->
+    <line class="pp-radial" x1="592" y1="254" x2="637" y2="240" />
+    <line class="pp-radial" x1="592" y1="254" x2="547" y2="240" />
+
+    <!-- Arc: upper portion of ellipse from start (637, 240) to stop (547, 240).
+         start_angle = π/6, stop_angle = 5π/6 (in pygame radians, CCW from +x axis).
+         SVG sweep-flag=1 traces clockwise in screen coords (y down) which is the
+         CCW direction in math angles, so the arc goes UP-OVER from start to stop. -->
+    <path class="pp-shape-arc" d="M 637 240 A 52 28 0 0 1 547 240" />
+
+    <!-- Endpoint dots (red, indicating angle args) -->
+    <circle class="pp-dot-angle" cx="637" cy="240" r="3.5" />
+    <circle class="pp-dot-angle" cx="547" cy="240" r="3.5" />
+
+    <!-- Endpoint labels -->
+    <text class="pp-label pp-label-angle" x="646" y="236">start</text>
+    <text class="pp-label pp-label-angle" x="538" y="236" text-anchor="end">stop</text>
+
+    <!-- Signature -->
+    <text class="pp-sig" x="592" y="318" text-anchor="middle">arc(surface, color, <tspan class="pos">rect</tspan>, <tspan class="angle">start</tspan>, <tspan class="angle">stop</tspan>)</text>
+  </g>
+
+  <!-- ===== BOTTOM STRIP ===== -->
+  <rect class="pp-strip" x="16" y="342" width="688" height="68" rx="6" />
+  <text class="pp-strip-text" x="32" y="362">Every pygame.draw function takes a surface and color first, then shape-specific positional arguments.</text>
+  <line class="pp-strip-divider" x1="32" y1="372" x2="688" y2="372" />
+  <text class="pp-strip-text" x="32" y="388">An optional integer width as the last argument draws an outline instead of filling the shape.</text>
+  <text class="pp-strip-text" x="32" y="404">Angles in pygame.draw.arc are in radians, measured counter-clockwise from the positive x-axis.</text>
+</svg>

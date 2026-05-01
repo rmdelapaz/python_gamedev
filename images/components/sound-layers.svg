@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- sound-layers.svg
+     Phase 7 SVG #25 for polish_sound.html (Phase 6 figure between mermaid
+     audio-taxonomy + Interactive Sound Design Studio h2 — convention B;
+     ALSO deployed as canvas-fallback for #soundCanvas per Phase 7).
+
+     Five row-cells stacked vertically over a shared horizontal timeline:
+       Row 1 (Music)    — 8-cycle continuous sine, medium amplitude
+       Row 2 (Ambient)  — 2-cycle slow drone, low amplitude
+       Row 3 (SFX)      — 3 sparse damped-oscillation bursts at impact moments
+       Row 4 (UI)       — 4 narrow click-spikes at button events
+       Row 5 (Master)   — filled envelope summing all 4 layers, with a faint
+                          dashed centerline for "zero amplitude" reference
+
+     Layout:
+       Cells: x=16, w=688; rows at y∈{16,72,128,184,240}, h=50, rx=4
+       Internal columns (per cell):
+         Left label   x ∈ [16, 124]   — layer name (13px bold) + descriptor (10px)
+         Plot         x ∈ [124, 572]  — waveform (width 448)
+         Right gain   x ∈ [572, 704]  — dB label (12px tabular)
+       Bottom strip:  x=16, y=302, w=688, h=78 (3 explanation lines)
+
+     Theme-aware via prefers-color-scheme. ID prefix `sl-`. ViewBox 720x400.
+
+     Music wave:    Q-bezier sine, λ=56 (8 cycles in 448px), peak ±11 from cl=41
+     Ambient wave:  Q-bezier sine, λ=224 (2 cycles), peak ±4 from cl=97
+     SFX bursts:    polyline damped osc at x={178,304,460}, peak ±20 from cl=153,
+                    decay over ~18px each
+     UI clicks:     polyline single-pulse at x={168,246,348,522}, peak ±13 from
+                    cl=209, width ~4px each
+     Master:        closed-path filled envelope (top edge + mirrored bottom),
+                    base ±8 from cl=265, bulging to ±18 at SFX events and ±13
+                    at UI events; faint dashed centerline through middle. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 400" role="img"
+     aria-labelledby="sl-title sl-desc" preserveAspectRatio="xMidYMid meet">
+  <title id="sl-title">A game's audio mix in four stacked layers plus a master bus</title>
+  <desc id="sl-desc">Four stacked audio tracks over a shared timeline showing how a game's audio mix layers combine. The music track is a continuous medium-amplitude sine wave (the always-on melodic bed); ambient is a low-amplitude slow drone; SFX shows three sparse high-amplitude bursts at gameplay events, each followed by rapid decay; UI shows four narrow click-spikes at button events. A master-bus row at the bottom displays the summed envelope of all four layers, expanding around SFX and UI events. Right-side gain labels show typical mix levels: minus twelve decibels music, minus eighteen decibels ambient, minus six decibels SFX, minus ten decibels UI. A bottom strip explains the role of each layer in the mix.</desc>
+
+  <style>
+    svg {
+      --sl-card-fill: rgb(255, 255, 255);
+      --sl-card-stroke: rgb(203, 213, 225);
+      --sl-cell-divider: rgb(226, 232, 240);
+      --sl-text-primary: rgb(15, 23, 42);
+      --sl-text-secondary: rgb(71, 85, 105);
+      --sl-text-muted: rgb(100, 116, 139);
+      --sl-strip-fill: rgb(248, 250, 252);
+      --sl-strip-stroke: rgb(226, 232, 240);
+
+      --sl-music: rgb(37, 99, 235);     /* blue */
+      --sl-ambient: rgb(124, 58, 237);  /* violet */
+      --sl-sfx: rgb(217, 119, 6);       /* amber */
+      --sl-ui: rgb(13, 148, 136);       /* teal */
+      --sl-master: rgb(71, 85, 105);    /* slate */
+      --sl-master-fill: rgba(71, 85, 105, 0.18);
+      --sl-master-axis: rgba(100, 116, 139, 0.55);
+    }
+    @media (prefers-color-scheme: dark) {
+      svg {
+        --sl-card-fill: rgb(31, 41, 55);
+        --sl-card-stroke: rgb(51, 65, 85);
+        --sl-cell-divider: rgb(51, 65, 85);
+        --sl-text-primary: rgb(229, 231, 235);
+        --sl-text-secondary: rgb(203, 213, 225);
+        --sl-text-muted: rgb(148, 163, 184);
+        --sl-strip-fill: rgb(15, 23, 42);
+        --sl-strip-stroke: rgb(51, 65, 85);
+
+        --sl-music: rgb(96, 165, 250);
+        --sl-ambient: rgb(167, 139, 250);
+        --sl-sfx: rgb(251, 191, 36);
+        --sl-ui: rgb(45, 212, 191);
+        --sl-master: rgb(148, 163, 184);
+        --sl-master-fill: rgba(148, 163, 184, 0.22);
+        --sl-master-axis: rgba(148, 163, 184, 0.55);
+      }
+    }
+
+    .sl-cell-bg { fill: var(--sl-card-fill); stroke: var(--sl-card-stroke); stroke-width: 1; }
+    .sl-cell-divider { stroke: var(--sl-cell-divider); stroke-width: 1; }
+    .sl-layer-name { font: 600 13px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--sl-text-primary); }
+    .sl-layer-desc { font: 400 10px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--sl-text-muted); }
+    .sl-gain { font: 500 12px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; font-variant-numeric: tabular-nums; fill: var(--sl-text-secondary); }
+    .sl-gain-master { font: 700 14px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--sl-text-secondary); }
+
+    .sl-wave { fill: none; stroke-linejoin: round; stroke-linecap: round; }
+    .sl-wave.music   { stroke: var(--sl-music);   stroke-width: 2; }
+    .sl-wave.ambient { stroke: var(--sl-ambient); stroke-width: 1.5; }
+    .sl-wave.sfx     { stroke: var(--sl-sfx);     stroke-width: 2.25; }
+    .sl-wave.ui      { stroke: var(--sl-ui);      stroke-width: 2.25; }
+
+    .sl-master-env  { fill: var(--sl-master-fill); stroke: var(--sl-master); stroke-width: 1; stroke-linejoin: round; }
+    .sl-master-axis { stroke: var(--sl-master-axis); stroke-width: 0.75; stroke-dasharray: 3 3; }
+
+    .sl-strip { fill: var(--sl-strip-fill); stroke: var(--sl-strip-stroke); stroke-width: 1; }
+    .sl-strip-text { font: 500 11.5px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--sl-text-primary); }
+    .sl-strip-divider { stroke: var(--sl-strip-stroke); stroke-width: 1; }
+  </style>
+
+  <!-- ===== ROW 1: Music ===== -->
+  <g>
+    <rect class="sl-cell-bg" x="16" y="16" width="688" height="50" rx="4" />
+    <line class="sl-cell-divider" x1="124" y1="16" x2="124" y2="66" />
+    <line class="sl-cell-divider" x1="572" y1="16" x2="572" y2="66" />
+    <text class="sl-layer-name" x="70" y="38" text-anchor="middle">Music</text>
+    <text class="sl-layer-desc" x="70" y="54" text-anchor="middle">melodic bed</text>
+    <path class="sl-wave music" d="M 124 41 Q 138 19 152 41 Q 166 63 180 41 Q 194 19 208 41 Q 222 63 236 41 Q 250 19 264 41 Q 278 63 292 41 Q 306 19 320 41 Q 334 63 348 41 Q 362 19 376 41 Q 390 63 404 41 Q 418 19 432 41 Q 446 63 460 41 Q 474 19 488 41 Q 502 63 516 41 Q 530 19 544 41 Q 558 63 572 41" />
+    <text class="sl-gain" x="638" y="46" text-anchor="middle">−12 dB</text>
+  </g>
+
+  <!-- ===== ROW 2: Ambient ===== -->
+  <g>
+    <rect class="sl-cell-bg" x="16" y="72" width="688" height="50" rx="4" />
+    <line class="sl-cell-divider" x1="124" y1="72" x2="124" y2="122" />
+    <line class="sl-cell-divider" x1="572" y1="72" x2="572" y2="122" />
+    <text class="sl-layer-name" x="70" y="94" text-anchor="middle">Ambient</text>
+    <text class="sl-layer-desc" x="70" y="110" text-anchor="middle">atmosphere</text>
+    <path class="sl-wave ambient" d="M 124 97 Q 180 89 236 97 Q 292 105 348 97 Q 404 89 460 97 Q 516 105 572 97" />
+    <text class="sl-gain" x="638" y="102" text-anchor="middle">−18 dB</text>
+  </g>
+
+  <!-- ===== ROW 3: SFX ===== -->
+  <g>
+    <rect class="sl-cell-bg" x="16" y="128" width="688" height="50" rx="4" />
+    <line class="sl-cell-divider" x1="124" y1="128" x2="124" y2="178" />
+    <line class="sl-cell-divider" x1="572" y1="128" x2="572" y2="178" />
+    <text class="sl-layer-name" x="70" y="150" text-anchor="middle">SFX</text>
+    <text class="sl-layer-desc" x="70" y="166" text-anchor="middle">impact bursts</text>
+    <path class="sl-wave sfx" d="M 124 153 L 174 153 L 178 133 L 181 171 L 184 142 L 187 162 L 190 148 L 193 156 L 196 153 L 300 153 L 304 133 L 307 171 L 310 142 L 313 162 L 316 148 L 319 156 L 322 153 L 456 153 L 460 133 L 463 171 L 466 142 L 469 162 L 472 148 L 475 156 L 478 153 L 572 153" />
+    <text class="sl-gain" x="638" y="158" text-anchor="middle">−6 dB</text>
+  </g>
+
+  <!-- ===== ROW 4: UI ===== -->
+  <g>
+    <rect class="sl-cell-bg" x="16" y="184" width="688" height="50" rx="4" />
+    <line class="sl-cell-divider" x1="124" y1="184" x2="124" y2="234" />
+    <line class="sl-cell-divider" x1="572" y1="184" x2="572" y2="234" />
+    <text class="sl-layer-name" x="70" y="206" text-anchor="middle">UI</text>
+    <text class="sl-layer-desc" x="70" y="222" text-anchor="middle">click events</text>
+    <path class="sl-wave ui" d="M 124 209 L 166 209 L 168 196 L 170 222 L 172 209 L 244 209 L 246 196 L 248 222 L 250 209 L 346 209 L 348 196 L 350 222 L 352 209 L 520 209 L 522 196 L 524 222 L 526 209 L 572 209" />
+    <text class="sl-gain" x="638" y="214" text-anchor="middle">−10 dB</text>
+  </g>
+
+  <!-- ===== ROW 5: Master Bus ===== -->
+  <g>
+    <rect class="sl-cell-bg" x="16" y="240" width="688" height="50" rx="4" />
+    <line class="sl-cell-divider" x1="124" y1="240" x2="124" y2="290" />
+    <line class="sl-cell-divider" x1="572" y1="240" x2="572" y2="290" />
+    <text class="sl-layer-name" x="70" y="262" text-anchor="middle">Master</text>
+    <text class="sl-layer-desc" x="70" y="278" text-anchor="middle">summed output</text>
+    <!-- faint dashed zero-amplitude axis through middle of envelope -->
+    <line class="sl-master-axis" x1="124" y1="265" x2="572" y2="265" />
+    <!-- summed envelope: top edge L→R, then mirrored bottom edge R→L, closed -->
+    <path class="sl-master-env" d="M 124 257 L 166 257 L 168 252 L 170 257 L 174 257 L 178 247 L 184 254 L 192 257 L 244 257 L 246 252 L 248 257 L 300 257 L 304 247 L 310 254 L 318 257 L 346 257 L 348 252 L 350 257 L 456 257 L 460 247 L 466 254 L 474 257 L 520 257 L 522 252 L 524 257 L 572 257 L 572 273 L 524 273 L 522 278 L 520 273 L 474 273 L 466 276 L 460 283 L 456 273 L 350 273 L 348 278 L 346 273 L 318 273 L 310 274 L 304 283 L 300 273 L 248 273 L 246 278 L 244 273 L 192 273 L 184 276 L 178 283 L 174 273 L 170 273 L 168 278 L 166 273 L 124 273 Z" />
+    <text class="sl-gain-master" x="638" y="270" text-anchor="middle">Σ</text>
+  </g>
+
+  <!-- ===== BOTTOM STRIP ===== -->
+  <rect class="sl-strip" x="16" y="302" width="688" height="78" rx="6" />
+  <text class="sl-strip-text" x="32" y="324">Music: a continuous melodic bed; lower gain leaves headroom for impact transients.</text>
+  <line class="sl-strip-divider" x1="32" y1="334" x2="688" y2="334" />
+  <text class="sl-strip-text" x="32" y="352">Ambient: low-amplitude drones; SFX: sparse high-amplitude bursts at gameplay events.</text>
+  <text class="sl-strip-text" x="32" y="370">UI: sharp narrow clicks that confirm input. Master bus sums all four into the output.</text>
+</svg>

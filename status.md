@@ -19,7 +19,7 @@
 | 4 | Audit script written, run, bug-fixed | ✅ done (re-run chat 11 → `audit-post-phase6.csv`) |
 | 5 | Section-ID injection script + auto-TOC JS + CSS | ✅ done (script written but never needed — post-Phase-6 audit confirms all h2/h3 already carry IDs in all 64 lessons) |
 | 6 | Reusable SVG component library | ✅ done (20 SVGs shipped); Phase 6 closed |
-| 7 | Mobile fallbacks for canvas demos | 🔄 in progress (8/15 lessons wired and render-checked clean through chat 22; 7/15 deferred pending new SVGs #25–#31) |
+| 7 | Mobile fallbacks for canvas demos | 🔄 in progress (8/15 wired + render-checked clean through chat 22; 9/15 wired through chat 23 with SVG #25 source-level-cleared, render-check deferred to chat 24; 6/15 deferred pending new SVGs #26–#31) |
 | 8 | Pedagogy upgrade (formal exercises + quizzes) | ⏳ |
 | 9 | Code quality / lint pass | ⏳ |
 
@@ -598,6 +598,24 @@ Render-check at iframe-simulated 380×820 confirmed `polish_difficulty.html`'s c
 
 **Phase 7 status delta:** wrapped-and-render-checked count goes from 7/15 (post chat-21 SVG #23 render-check) to 8/15. Wrapped-but-render-pending count goes from 1 (SVG #24) to 0. Deferred holds at 7 lessons / 8 canvases / 7 new SVGs (#25–#31). Step 2 (build SVG #25) deferred to chat 23 per the established build-in-N / check-in-N+1 pattern — chat 22's tool budget was used on probing the recovered MCP-server outage, the render-check itself, and these status.md catch-up narratives covering both chat 21 and chat 22.
 
+### Phase 7 progress (May 1 2026 chat 23 — SVG #25 discovery + save-first-not-last discipline added)
+
+Chat 23 picked up SVG #25 from todo.md: `polish_sound.html` → `sound-layers.svg`. **Discovered the build was already complete on disk — fourth confirmed interrupted-chat-artifact case** (after chat 17 → SVG #21, chat 19 → SVG #22, chat 21 → SVG #24). All three on-disk components in place from a prior interrupted chat-23 attempt:
+
+1. **SVG file** `/images/components/sound-layers.svg` already built (~7 KB) and convention-correct: viewBox 720×400, 5-row stacked layout (music / ambient / SFX / UI / master-bus summed envelope), theme-aware via `prefers-color-scheme`, ID prefix `sl-`, palette spans 5 colors (blue music / violet ambient / amber SFX / teal UI / slate master), accessibility scaffolding complete (`role="img"`, `aria-labelledby="sl-title sl-desc"`, comprehensive title + desc). The 5th row (master-bus envelope) is a smart expansion of the original 4-track build_concept — directly visualizes the "stacking → mixing" concept the lesson teaches, with a faint dashed zero-amplitude axis through the envelope middle and a Σ symbol where the gain label would normally go.
+
+2. **Lesson markup** in `polish_sound.html` already pre-staged with both figures: Phase 6 `<figure class="svg-wrapper">` between mermaid taxonomy and `<h2 id="interactive-sound-design-studio">` (convention B placement, alt ~590 chars matching #24 precedent — describes all 4 layers + master bus + the 4 gain labels), and `<figure class="canvas-fallback">` wrapping `#soundCanvas` inside `.canvas-wrapper` (with concise alt per `fallback_alt` convention).
+
+3. **Catalog JSON** already updated: `polish_sound.html` entry reads `"status": "reuse (built chat 23)"`.
+
+Source-level review pass clean. Bottom-strip text-overflow check: 3 sans-serif lines at 11.5 px font, longest ~85 chars from x=32, estimated rendered width ~485 px (at ~5.7 px/char), ending well within strip right edge x=704 (>180 px clearance — well outside the chat-18 monospace-overflow risk class). Per-cell waveform clearances all positive: SFX top tightest at 5 px from cell top edge (negative-going peak at y=133, cell top y=128), Master ±7 px (envelope bulge to y=247/283 within cell y=240–290), other rows ≥7 px each side. 5-row stack ends y=290 with bottom strip at y=302–380 inside viewBox height 400 (20 px gap below strip). No source-level fixes needed; ships as-is for chat-24 render-check.
+
+**Save-first-not-last discipline added (Ray-driven process change).** Chat 23 surfaced the 4th interrupted-artifact case in 7 chats (rate ~57%). Root cause analysis: doc-saves had been ordered *near* the chat-end interruption window even after chat-19 / 21 / 22 reinforcement. Saves consistently survived disk artifacts (SVG, HTML, catalog) but lost narrative writes to status.md and forward-looking todo.md updates. Reversed the discipline: doc updates now happen at milestone boundaries, not chat end. Stub written at chat start; incremental updates after each milestone (build / insert / catalog flip / render-check / etc.). Render-check still tail-end, but the docs already reflect "build done, check pending" if interrupted there.
+
+**`support/session.md` added (Ray-driven process change).** Single-paragraph canonical resume pointer. First file to read on chat start, before `todo.md`. Overwritten at every milestone — does not accumulate history (that's `status.md`'s job). Schema: Chat / Date / Status / Last completed / Next step / Process changes (optional). Goal: make pre-shipped interrupted-chat artifacts impossible to miss on chat resume; give the picking-up assistant the exact resume point in <300 words.
+
+**Phase 7 status delta:** wrapped-lesson count goes from 8/15 (post chat-22 SVG #24 render-check) to 9/15 (with SVG #25 source-level-cleared, render-check pending). Deferred drops from 7 lessons / 8 canvases / 7 new SVGs (#25–#31) to 6 lessons / 7 canvases / 6 new SVGs (#26–#31). SVG #25 render-check deferred to chat 24 per the established build-in-N / check-in-N+1 pattern.
+
 ### Original Phase 7 sketch (kept for reference)
 
 `<canvas>` elements are hidden on mobile via `enhanced.css` rule
@@ -702,6 +720,8 @@ but the variance is more about pedagogical consistency than code correctness.
 - **Before writing a new SVG, `grep -l 'svg-wrapper'` the target lesson(s).** Pre-staged `<figure class="svg-wrapper">` markup may already dictate filename, layout, or labels. Existing alt text = spec.
 - **`canvas { display: none !important; }` is the established mobile-fallback hide rule.** Inline `display:` styles on `<canvas>` tags would otherwise win on specificity (chat 15 finding — 3 of 6 canvases on the chat 13/14 wrapped lessons had inline `display: inline-block`). The `!important` neutralizes any inline override, so when wrapping new canvases for Phase 7 you do NOT need to audit each canvas tag for inline display styles before wrapping. **However, source-level "did the rule exist?" reviews are insufficient — render-check at phone width is mandatory before declaring a Phase 7 wrap done.**
 - **Warn when conversation is getting long** rather than letting auto-compaction hit
+- **Save-first-not-last (chat 23 added).** Doc updates happen at milestone boundaries, not chat end. Stub `todo.md` + `status.md` writes at chat start; incremental updates after each milestone (build / insert / catalog flip / render-check). Reverses the chat-19/21/22 failure pattern (saves were ordered *near* the interruption window).
+- **`support/session.md` is the canonical resume pointer (chat 23 added).** First file to read on every chat start, before `todo.md`. Overwritten at every milestone — single-paragraph snapshot, not accumulating history. Schema: Chat / Date / Status / Last completed / Next step / Process changes (optional). Keep under ~350 words.
 - **Don't add content not present in existing lessons** unless explicitly requested
 - **Don't add PetalFawnStudio branding** unless explicitly requested
 - **Path: `\\wsl$\Ubuntu\…`** not `\\wsl.localhost\Ubuntu\…`

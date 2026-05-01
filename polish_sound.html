@@ -101,10 +101,25 @@
         D --> N["Crowd"]
     </div>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/sound-layers.svg"
+             alt="Four stacked audio tracks over a shared timeline showing how a game's audio mix layers combine. The music track is a continuous medium-amplitude sine wave (the always-on melodic bed); ambient is a low-amplitude slow drone; SFX shows three sparse high-amplitude bursts at gameplay events, each with rapid decay; UI shows four narrow click-spikes at input events. A master-bus row at the bottom displays the summed envelope of all four layers, expanding around SFX and UI events. Right-side gain labels show typical mix levels: −12 dB music, −18 dB ambient, −6 dB SFX, −10 dB UI."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>A game's audio mix in four stacked layers &mdash; <strong>music</strong> (continuous melodic bed), <strong>ambient</strong> (low-amplitude drone), <strong>SFX</strong> (sparse high-amplitude bursts at gameplay events), and <strong>UI</strong> (sharp narrow clicks at input events) &mdash; summed at a master-bus row at the bottom. Right-side gain labels (&minus;12 dB music, &minus;18 dB ambient, &minus;6 dB SFX, &minus;10 dB UI) show typical relative levels: music sits below SFX so impact transients cut through. The interactive sound design studio below lets you toggle each layer, mix them in real time, and trigger SFX events to hear how the layers combine.</figcaption>
+    </figure>
+
     <h2 id="interactive-sound-design-studio">Interactive Sound Design Studio</h2>
     
     <div class="canvas-wrapper" style="text-align: center;">
         <canvas id="soundCanvas" width="800" height="600" style="border: 1px solid #333; display: inline-block;"></canvas>
+        <figure class="canvas-fallback">
+            <img src="/images/components/sound-layers.svg"
+                 alt="Four stacked audio tracks: music bed, ambient loop, SFX bursts, UI clicks."
+                 class="responsive-svg"
+                 loading="lazy">
+            <figcaption>A game's audio mix in four stacked layers: music bed, ambient loop, SFX bursts, UI clicks. The interactive demo lets you toggle layers and adjust mix; this diagram shows how layers stack on the master bus with their typical character and gain ranges.</figcaption>
+        </figure>
     </div>
     <div style="text-align: center; margin-top: 10px;">
         <p>Click to trigger sounds! Experience layered music, spatial audio, and dynamic sound effects!</p>

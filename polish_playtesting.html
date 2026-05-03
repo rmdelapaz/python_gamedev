@@ -105,10 +105,25 @@
         E --> Q["Validate"]
     </div>
 
+    <figure class="svg-wrapper">
+        <img class="responsive-svg"
+             src="/images/components/playtesting-feedback-loop.svg"
+             alt="A circular feedback diagram in pentagon arrangement showing the five-step playtesting cycle. Five colored numbered nodes are arranged clockwise around a center, connected by dashed arrows that loop back to the start. The top node, numbered 1, is Build in blue. Clockwise next is node 2 Test in amber on the upper right, then node 3 Observe in teal on the lower right, node 4 Analyze in purple on the lower left, and node 5 Iterate in green on the upper left. Each node has a side callout panel listing three canonical artifacts: Build (Prototype, Vertical slice, Define goals); Test (Select testers, Create protocol, Run session); Observe (Heatmaps, Path tracking, Think-aloud); Analyze (Quantitative, Qualitative, Synthesis); Iterate (Prioritize, Implement, Validate). The center reads 'Tighten the loop' with a small iteration counter showing Iter 3, reinforcing the cyclical-improvement metaphor of the playtesting feedback process."
+             loading="lazy">
+        <figcaption>A circular five-step playtesting cycle &mdash; Build &rarr; Test &rarr; Observe &rarr; Analyze &rarr; Iterate &rarr; back to Build &mdash; shown as a frozen snapshot of the iteration loop driving the lesson's Playtesting Dashboard demo. Five colored numbered nodes are connected by dashed arrows that close into a loop, with side callouts listing the canonical artifacts produced at each step (Heatmaps and Path tracking under Observe; Quantitative, Qualitative, and Synthesis under Analyze; Prioritize, Implement, and Validate under Iterate &mdash; reused verbatim from the lesson's process mermaid). The interactive demo lets you start a session, choose a test type, and watch metrics populate live; this diagram shows the iterative feedback process that shapes every test plan and design revision without depending on JavaScript.</figcaption>
+    </figure>
+
     <h2 id="interactive-playtesting-dashboard">Interactive Playtesting Dashboard</h2>
     
     <div class="canvas-wrapper" style="text-align: center;">
         <canvas id="playtestCanvas" width="800" height="600" style="border: 1px solid #333; display: inline-block;"></canvas>
+        <figure class="canvas-fallback">
+            <img class="responsive-svg"
+                 src="/images/components/playtesting-feedback-loop.svg"
+                 alt="A circular feedback loop with five steps: build, test, observe, analyze, iterate."
+                 loading="lazy">
+            <figcaption>The playtesting feedback loop: build &rarr; test &rarr; observe &rarr; analyze &rarr; iterate. The interactive demo simulates running a session with feedback collection; this diagram shows the iteration cycle and the data collected at each step.</figcaption>
+        </figure>
     </div>
     <div style="text-align: center; margin-top: 10px;">
         <p>Simulate a playtesting session! Track player behavior, gather feedback, and analyze the data!</p>

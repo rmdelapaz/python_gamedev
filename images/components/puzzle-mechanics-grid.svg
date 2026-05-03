@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- puzzle-mechanics-grid.svg
+     Phase 7 SVG #26 for genres_puzzle.html (Phase 6 figure between input/rules/
+     feedback mermaid + Interactive Multi-Puzzle Demo h2 — convention B; ALSO
+     deployed as canvas-fallback for #puzzleCanvas per Phase 7).
+
+     Five puzzle mechanics in a 3+2 grid, mirroring the canvas demo's button
+     order (💎 Match-3, 🔢 Sliding, 🎯 Physics, 🎨 Pattern, ⚡ Logic Gates).
+     Cell labels match the canvas-demo button labels exactly.
+
+     Layout:
+       Top row (y=18..170):  Match-3 | Sliding | Physics
+       Bottom row centered (y=188..340):  Pattern | Logic Gates
+
+     Per-cell visuals (each is a static snapshot of one mid-play state):
+       Match-3       — 4×4 gem grid; one row of 3 amber gems highlighted
+                       green as a match in progress; one gem ringed amber
+                       as the player's selected swap candidate.
+       Sliding       — 4×4 numbered tile grid (1–15) with one empty slot;
+                       a small left-arrow on the tile next to the empty slot
+                       indicates the slide direction.
+       Physics       — Cannon at lower-left, dashed parabolic trajectory
+                       with projectile at apex, bullseye target on the right.
+       Pattern       — Simon-style 2×2 colored buttons; one button is "lit"
+                       (brighter fill + glow ring) showing the current step
+                       in the playback sequence.
+       Logic Gates   — AND gate D-shape; both inputs A and B are ON (green
+                       wires + dots); output Q is ON (green wire + LED + "1").
+
+     Theme-aware via prefers-color-scheme. ID prefix `pmg-`. ViewBox 720×400. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 400" role="img"
+     aria-labelledby="pmg-title pmg-desc" preserveAspectRatio="xMidYMid meet">
+  <title id="pmg-title">Five puzzle mechanics shown side by side: match-3 grid, sliding tiles, projectile physics, pattern memory, and an AND logic gate</title>
+  <desc id="pmg-desc">A grid of five puzzle game mechanics, each in its own card with a title above and a one-line caption below. Top row left to right. Match-3 shows a four by four grid of colored circular gems; one gem is ringed amber as the player's selection, and a horizontal row of three same-color gems is highlighted by a green pill as a match in progress. Sliding shows a four by four grid of numbered tiles one through fifteen with one empty slot on the third row; a small left-pointing arrow on the tile to the right of the empty slot indicates the next slide direction. Physics shows a small cannon at the lower left, a dashed parabolic trajectory with a red projectile drawn at its apex, and a three-ring bullseye target at the lower right where the arc lands. Bottom row left to right. Pattern shows four colored buttons arranged in a two by two grid (red, blue, green, yellow); the blue button in the top right is brightened and surrounded by a glow ring to indicate it is currently lit in the playback sequence. Logic Gates shows an AND gate as the canonical D-shaped symbol with two input wires on the left labeled A and B, and one output wire on the right labeled Q; both input wires and the output wire are colored green with green dot indicators to show all three signals are ON, with a small "= 1" annotation at the output confirming the gate evaluates to true.</desc>
+
+  <style>
+    svg {
+      --pmg-card-fill: rgb(255, 255, 255);
+      --pmg-card-stroke: rgb(203, 213, 225);
+      --pmg-text-primary: rgb(15, 23, 42);
+      --pmg-text-secondary: rgb(71, 85, 105);
+      --pmg-text-muted: rgb(100, 116, 139);
+
+      --pmg-select-ring: rgb(217, 119, 6);
+      --pmg-match-fill: rgba(22, 163, 74, 0.20);
+      --pmg-match-stroke: rgb(22, 163, 74);
+      --pmg-on: rgb(22, 163, 74);
+
+      --pmg-gem-red: rgb(239, 68, 68);
+      --pmg-gem-blue: rgb(59, 130, 246);
+      --pmg-gem-amber: rgb(217, 119, 6);
+      --pmg-gem-purple: rgb(147, 51, 234);
+
+      --pmg-tile-fill: rgb(241, 245, 249);
+      --pmg-tile-stroke: rgb(148, 163, 184);
+      --pmg-tile-text: rgb(15, 23, 42);
+      --pmg-tile-empty-stroke: rgb(148, 163, 184);
+      --pmg-tile-arrow: rgb(217, 119, 6);
+
+      --pmg-cannon: rgb(71, 85, 105);
+      --pmg-arc: rgb(217, 119, 6);
+      --pmg-projectile: rgb(220, 38, 38);
+      --pmg-target-outer: rgba(13, 148, 136, 0.30);
+      --pmg-target-mid: rgba(13, 148, 136, 0.55);
+      --pmg-target-bull: rgb(13, 148, 136);
+
+      --pmg-pat-red:    rgb(220, 38, 38);
+      --pmg-pat-blue:   rgb(37, 99, 235);
+      --pmg-pat-green:  rgb(22, 163, 74);
+      --pmg-pat-yellow: rgb(202, 138, 4);
+      --pmg-pat-lit-glow: rgba(96, 165, 250, 0.55);
+      --pmg-pat-dim: 0.45;
+
+      --pmg-gate-fill: rgb(241, 245, 249);
+      --pmg-gate-stroke: rgb(71, 85, 105);
+      --pmg-wire-off: rgb(148, 163, 184);
+    }
+    @media (prefers-color-scheme: dark) {
+      svg {
+        --pmg-card-fill: rgb(31, 41, 55);
+        --pmg-card-stroke: rgb(51, 65, 85);
+        --pmg-text-primary: rgb(229, 231, 235);
+        --pmg-text-secondary: rgb(203, 213, 225);
+        --pmg-text-muted: rgb(148, 163, 184);
+
+        --pmg-select-ring: rgb(251, 191, 36);
+        --pmg-match-fill: rgba(34, 197, 94, 0.30);
+        --pmg-match-stroke: rgb(34, 197, 94);
+        --pmg-on: rgb(34, 197, 94);
+
+        --pmg-gem-red: rgb(248, 113, 113);
+        --pmg-gem-blue: rgb(96, 165, 250);
+        --pmg-gem-amber: rgb(251, 191, 36);
+        --pmg-gem-purple: rgb(168, 85, 247);
+
+        --pmg-tile-fill: rgb(51, 65, 85);
+        --pmg-tile-stroke: rgb(148, 163, 184);
+        --pmg-tile-text: rgb(241, 245, 249);
+        --pmg-tile-empty-stroke: rgb(100, 116, 139);
+        --pmg-tile-arrow: rgb(251, 191, 36);
+
+        --pmg-cannon: rgb(148, 163, 184);
+        --pmg-arc: rgb(251, 191, 36);
+        --pmg-projectile: rgb(248, 113, 113);
+        --pmg-target-outer: rgba(45, 212, 191, 0.30);
+        --pmg-target-mid: rgba(45, 212, 191, 0.55);
+        --pmg-target-bull: rgb(45, 212, 191);
+
+        --pmg-pat-red:    rgb(248, 113, 113);
+        --pmg-pat-blue:   rgb(96, 165, 250);
+        --pmg-pat-green:  rgb(34, 197, 94);
+        --pmg-pat-yellow: rgb(234, 179, 8);
+        --pmg-pat-lit-glow: rgba(147, 197, 253, 0.65);
+
+        --pmg-gate-fill: rgb(51, 65, 85);
+        --pmg-gate-stroke: rgb(148, 163, 184);
+        --pmg-wire-off: rgb(100, 116, 139);
+      }
+    }
+
+    .pmg-cell-bg { fill: var(--pmg-card-fill); stroke: var(--pmg-card-stroke); stroke-width: 1; }
+    .pmg-cell-title { font: 600 13px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--pmg-text-primary); }
+    .pmg-caption { font: 500 10.5px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--pmg-text-secondary); }
+
+    /* Match-3 */
+    .pmg-gem-r { fill: var(--pmg-gem-red); }
+    .pmg-gem-b { fill: var(--pmg-gem-blue); }
+    .pmg-gem-a { fill: var(--pmg-gem-amber); }
+    .pmg-gem-p { fill: var(--pmg-gem-purple); }
+    .pmg-select-ring { fill: none; stroke: var(--pmg-select-ring); stroke-width: 2.25; stroke-dasharray: 3 2; }
+    .pmg-match-pill { fill: var(--pmg-match-fill); stroke: var(--pmg-match-stroke); stroke-width: 1.5; }
+
+    /* Sliding */
+    .pmg-tile { fill: var(--pmg-tile-fill); stroke: var(--pmg-tile-stroke); stroke-width: 1; }
+    .pmg-tile-empty { fill: none; stroke: var(--pmg-tile-empty-stroke); stroke-width: 1; stroke-dasharray: 3 2; }
+    .pmg-tile-num { font: 600 10px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--pmg-tile-text); }
+    .pmg-tile-arrow { fill: var(--pmg-tile-arrow); stroke: none; }
+
+    /* Physics */
+    .pmg-cannon { fill: var(--pmg-cannon); stroke: none; }
+    .pmg-arc { fill: none; stroke: var(--pmg-arc); stroke-width: 1.75; stroke-dasharray: 4 3; stroke-linecap: round; }
+    .pmg-projectile { fill: var(--pmg-projectile); stroke: var(--pmg-card-fill); stroke-width: 1.25; }
+    .pmg-target-outer { fill: var(--pmg-target-outer); stroke: var(--pmg-target-bull); stroke-width: 1; }
+    .pmg-target-mid   { fill: var(--pmg-target-mid);   stroke: none; }
+    .pmg-target-bull  { fill: var(--pmg-target-bull);  stroke: none; }
+
+    /* Pattern (Simon) */
+    .pmg-pat-btn { stroke: var(--pmg-card-stroke); stroke-width: 1; }
+    .pmg-pat-r { fill: var(--pmg-pat-red);    fill-opacity: var(--pmg-pat-dim); }
+    .pmg-pat-b { fill: var(--pmg-pat-blue);   fill-opacity: var(--pmg-pat-dim); }
+    .pmg-pat-g { fill: var(--pmg-pat-green);  fill-opacity: var(--pmg-pat-dim); }
+    .pmg-pat-y { fill: var(--pmg-pat-yellow); fill-opacity: var(--pmg-pat-dim); }
+    .pmg-pat-lit { fill: var(--pmg-pat-blue); fill-opacity: 1; stroke: var(--pmg-pat-lit-glow); stroke-width: 5; }
+
+    /* Logic gate */
+    .pmg-gate-body { fill: var(--pmg-gate-fill); stroke: var(--pmg-gate-stroke); stroke-width: 1.5; }
+    .pmg-gate-label { font: 700 10.5px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--pmg-text-primary); }
+    .pmg-wire-on { fill: none; stroke: var(--pmg-on); stroke-width: 2; stroke-linecap: round; }
+    .pmg-wire-dot-on { fill: var(--pmg-on); stroke: var(--pmg-card-fill); stroke-width: 1; }
+    .pmg-pin-label { font: 600 10px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--pmg-text-secondary); }
+    .pmg-out-val { font: 700 11px ui-monospace, SFMono-Regular, "Menlo", monospace; fill: var(--pmg-on); }
+  </style>
+
+  <!-- ===================================================================
+       CELL 1 — Match-3 (top-left)  x=16..240  y=18..170
+       =================================================================== -->
+  <g>
+    <rect class="pmg-cell-bg" x="16" y="18" width="224" height="152" rx="6" />
+    <text class="pmg-cell-title" x="128" y="36" text-anchor="middle">Match-3</text>
+
+    <!-- Match-pill BEHIND row 2 (y=108) cols 0..2 (x=98, 118, 138). Drawn first
+         so gems sit on top. Pill: x=86, y=98, w=64, h=20, rx=10. -->
+    <rect class="pmg-match-pill" x="86" y="98" width="64" height="20" rx="10" />
+
+    <!-- 4×4 grid of gems, radius 7, pitch 20.
+         Centers: x ∈ {98, 118, 138, 158}, y ∈ {68, 88, 108, 128}.
+         Layout (R=red B=blue A=amber P=purple):
+           Row 0:  R B A P
+           Row 1:  B A R P     ← gem at (138,88) is the SELECTED swap candidate
+           Row 2:  A A A B     ← cols 0–2 are the MATCH IN PROGRESS (3 ambers)
+           Row 3:  P R B A
+    -->
+    <!-- Row 0 -->
+    <circle class="pmg-gem-r" cx="98"  cy="68" r="7" />
+    <circle class="pmg-gem-b" cx="118" cy="68" r="7" />
+    <circle class="pmg-gem-a" cx="138" cy="68" r="7" />
+    <circle class="pmg-gem-p" cx="158" cy="68" r="7" />
+    <!-- Row 1 (selection at 138,88) -->
+    <circle class="pmg-gem-b" cx="98"  cy="88" r="7" />
+    <circle class="pmg-gem-a" cx="118" cy="88" r="7" />
+    <circle class="pmg-gem-r" cx="138" cy="88" r="7" />
+    <circle class="pmg-gem-p" cx="158" cy="88" r="7" />
+    <!-- Row 2 — match in progress -->
+    <circle class="pmg-gem-a" cx="98"  cy="108" r="7" />
+    <circle class="pmg-gem-a" cx="118" cy="108" r="7" />
+    <circle class="pmg-gem-a" cx="138" cy="108" r="7" />
+    <circle class="pmg-gem-b" cx="158" cy="108" r="7" />
+    <!-- Row 3 -->
+    <circle class="pmg-gem-p" cx="98"  cy="128" r="7" />
+    <circle class="pmg-gem-r" cx="118" cy="128" r="7" />
+    <circle class="pmg-gem-b" cx="138" cy="128" r="7" />
+    <circle class="pmg-gem-a" cx="158" cy="128" r="7" />
+
+    <!-- Selection ring around (138, 88) -->
+    <circle class="pmg-select-ring" cx="138" cy="88" r="10.5" />
+
+    <!-- Caption -->
+    <text class="pmg-caption" x="128" y="158" text-anchor="middle">Swap adjacent gems to make 3+ in a row</text>
+  </g>
+
+  <!-- ===================================================================
+       CELL 2 — Sliding (top-mid)  x=248..472  y=18..170
+       =================================================================== -->
+  <g>
+    <rect class="pmg-cell-bg" x="248" y="18" width="224" height="152" rx="6" />
+    <text class="pmg-cell-title" x="360" y="36" text-anchor="middle">Sliding</text>
+
+    <!-- 4×4 tile grid, tile 18×18, gap 2 → pitch 20. Total 78×78.
+         Top-left tile origin: (321, 50). Tile centers: (330, 59) etc.
+         Tiles laid out (15-puzzle near solved with tile 11 about to slide left):
+           Row 0:  1  2  3  4
+           Row 1:  5  6  7  8
+           Row 2:  9 10  _ 11   ← empty at col 2; tile 11 has left-arrow
+           Row 3: 13 14 15 12
+    -->
+    <!-- Row 0 -->
+    <rect class="pmg-tile" x="321" y="50" width="18" height="18" rx="2" />
+    <text class="pmg-tile-num" x="330" y="63" text-anchor="middle">1</text>
+    <rect class="pmg-tile" x="341" y="50" width="18" height="18" rx="2" />
+    <text class="pmg-tile-num" x="350" y="63" text-anchor="middle">2</text>
+    <rect class="pmg-tile" x="361" y="50" width="18" height="18" rx="2" />
+    <text class="pmg-tile-num" x="370" y="63" text-anchor="middle">3</text>
+    <rect class="pmg-tile" x="381" y="50" width="18" height="18" rx="2" />
+    <text class="pmg-tile-num" x="390" y="63" text-anchor="middle">4</text>
+    <!-- Row 1 -->
+    <rect class="pmg-tile" x="321" y="70" width="18" height="18" rx="2" />
+    <text class="pmg-tile-num" x="330" y="83" text-anchor="middle">5</text>
+    <rect class="pmg-tile" x="341" y="70" width="18" height="18" rx="2" />
+    <text class="pmg-tile-num" x="350" y="83" text-anchor="middle">6</text>
+    <rect class="pmg-tile" x="361" y="70" width="18" height="18" rx="2" />
+    <text class="pmg-tile-num" x="370" y="83" text-anchor="middle">7</text>
+    <rect class="pmg-tile" x="381" y="70" width="18" height="18" rx="2" />
+    <text class="pmg-tile-num" x="390" y="83" text-anchor="middle">8</text>
+    <!-- Row 2 — col 2 is the empty slot -->
+    <rect class="pmg-tile" x="321" y="90" width="18" height="18" rx="2" />
+    <text class="pmg-tile-num" x="330" y="103" text-anchor="middle">9</text>
+    <rect class="pmg-tile" x="341" y="90" width="18" height="18" rx="2" />
+    <text class="pmg-tile-num" x="350" y="103" text-anchor="middle">10</text>
+    <rect class="pmg-tile-empty" x="361" y="90" width="18" height="18" rx="2" />
+    <!-- Tile 11 (right of empty) — has left-arrow indicating the slide -->
+    <rect class="pmg-tile" x="381" y="90" width="18" height="18" rx="2" />
+    <!-- Left-pointing arrow centered on tile 11; small triangle -->
+    <path class="pmg-tile-arrow" d="M 386,99 L 391,95 L 391,103 Z" />
+    <!-- "11" digits, slightly right-shifted to not collide with the arrow -->
+    <text class="pmg-tile-num" x="394" y="103" text-anchor="middle">11</text>
+    <!-- Row 3 -->
+    <rect class="pmg-tile" x="321" y="110" width="18" height="18" rx="2" />
+    <text class="pmg-tile-num" x="330" y="123" text-anchor="middle">13</text>
+    <rect class="pmg-tile" x="341" y="110" width="18" height="18" rx="2" />
+    <text class="pmg-tile-num" x="350" y="123" text-anchor="middle">14</text>
+    <rect class="pmg-tile" x="361" y="110" width="18" height="18" rx="2" />
+    <text class="pmg-tile-num" x="370" y="123" text-anchor="middle">15</text>
+    <rect class="pmg-tile" x="381" y="110" width="18" height="18" rx="2" />
+    <text class="pmg-tile-num" x="390" y="123" text-anchor="middle">12</text>
+
+    <!-- Caption -->
+    <text class="pmg-caption" x="360" y="158" text-anchor="middle">Slide tiles into the empty slot</text>
+  </g>
+
+  <!-- ===================================================================
+       CELL 3 — Physics (top-right)  x=480..704  y=18..170
+       =================================================================== -->
+  <g>
+    <rect class="pmg-cell-bg" x="480" y="18" width="224" height="152" rx="6" />
+    <text class="pmg-cell-title" x="592" y="36" text-anchor="middle">Physics</text>
+
+    <!-- Cannon at (502, 132) — small wedge body + base -->
+    <rect class="pmg-cannon" x="494" y="132" width="20" height="6" rx="1" />
+    <!-- Cannon barrel angled up-right (~30° above horizontal) -->
+    <path class="pmg-cannon" d="M 504,132 L 522,118 L 525,121 L 507,135 Z" />
+
+    <!-- Parabolic dashed arc from launch (508, 128) to target (684, 110).
+         Quadratic with control point picked so apex is around y=58.
+         Apex at t=0.5: y_apex = 0.25*y0 + 0.5*y1 + 0.25*y2
+                              = 0.25*128 + 0.5*y1 + 0.25*110
+                              = 59.5 + 0.5*y1
+         Want y_apex ≈ 58  →  y1 ≈ -3 (control point above the cell, fine for Bezier). -->
+    <path class="pmg-arc" d="M 508 128 Q 596 -3 684 110" />
+
+    <!-- Projectile at the apex. t=0.5 → x = 596, y ≈ 58 -->
+    <circle class="pmg-projectile" cx="596" cy="58" r="4" />
+
+    <!-- Bullseye target at (684, 110) — three concentric circles -->
+    <circle class="pmg-target-outer" cx="684" cy="110" r="14" />
+    <circle class="pmg-target-mid"   cx="684" cy="110" r="9" />
+    <circle class="pmg-target-bull"  cx="684" cy="110" r="4" />
+
+    <!-- Caption -->
+    <text class="pmg-caption" x="592" y="158" text-anchor="middle">Aim and launch projectiles at targets</text>
+  </g>
+
+  <!-- ===================================================================
+       CELL 4 — Pattern (bottom-left, centered)  x=132..356  y=188..340
+       =================================================================== -->
+  <g>
+    <rect class="pmg-cell-bg" x="132" y="188" width="224" height="152" rx="6" />
+    <text class="pmg-cell-title" x="244" y="206" text-anchor="middle">Pattern</text>
+
+    <!-- 2×2 Simon-style buttons.
+         Each button 38×38 with 4px gap; grid total 80×80; centered around (244, 270).
+         Top-left button at (204, 230).
+         Buttons (clockwise from TL): R(red) B(blue, LIT) Y(yellow) G(green).
+    -->
+    <!-- Top-left: red (dim) -->
+    <rect class="pmg-pat-btn pmg-pat-r" x="204" y="230" width="38" height="38" rx="6" />
+    <!-- Top-right: blue (LIT — drawn LAST inside this group so its glow stroke sits on top) -->
+    <!-- Bottom-left: green (dim) -->
+    <rect class="pmg-pat-btn pmg-pat-g" x="204" y="272" width="38" height="38" rx="6" />
+    <!-- Bottom-right: yellow (dim) -->
+    <rect class="pmg-pat-btn pmg-pat-y" x="246" y="272" width="38" height="38" rx="6" />
+    <!-- Top-right LIT button (blue) — full opacity + glow ring stroke -->
+    <rect class="pmg-pat-lit" x="246" y="230" width="38" height="38" rx="6" />
+
+    <!-- Caption -->
+    <text class="pmg-caption" x="244" y="328" text-anchor="middle">Watch the sequence, then repeat it</text>
+  </g>
+
+  <!-- ===================================================================
+       CELL 5 — Logic Gates (bottom-right, centered)  x=364..588  y=188..340
+       =================================================================== -->
+  <g>
+    <rect class="pmg-cell-bg" x="364" y="188" width="224" height="152" rx="6" />
+    <text class="pmg-cell-title" x="476" y="206" text-anchor="middle">Logic Gates</text>
+
+    <!-- AND gate D-shape, body bbox roughly (440, 240)–(508, 290), centered on cell middle.
+         Shape: flat back from y=240 to y=290 along x=440; rounded right via half-arc
+         radius 25 at center (466, 265). -->
+    <path class="pmg-gate-body" d="M 440 240 H 466 A 25 25 0 0 1 466 290 H 440 Z" />
+    <!-- "&" / AND label inside body -->
+    <text class="pmg-gate-label" x="450" y="269" text-anchor="middle">&amp;</text>
+
+    <!-- Input wires (both ON, drawn green). Stop short of the gate body. -->
+    <line class="pmg-wire-on" x1="394" y1="251" x2="440" y2="251" />
+    <line class="pmg-wire-on" x1="394" y1="279" x2="440" y2="279" />
+    <!-- Input dots (green ON indicators) at the wire start -->
+    <circle class="pmg-wire-dot-on" cx="394" cy="251" r="4" />
+    <circle class="pmg-wire-dot-on" cx="394" cy="279" r="4" />
+    <!-- Pin labels -->
+    <text class="pmg-pin-label" x="388" y="254" text-anchor="end">A</text>
+    <text class="pmg-pin-label" x="388" y="282" text-anchor="end">B</text>
+
+    <!-- Output wire (ON). From gate-tip (491, 265) right to LED at (542, 265). -->
+    <line class="pmg-wire-on" x1="491" y1="265" x2="542" y2="265" />
+    <!-- Output LED -->
+    <circle class="pmg-wire-dot-on" cx="542" cy="265" r="5" />
+    <!-- Output pin label -->
+    <text class="pmg-pin-label" x="498" y="259">Q</text>
+    <!-- Output value annotation, slightly below the LED so it doesn't overlap -->
+    <text class="pmg-out-val" x="542" y="285" text-anchor="middle">= 1</text>
+
+    <!-- Caption -->
+    <text class="pmg-caption" x="476" y="328" text-anchor="middle">Wire inputs to satisfy the output</text>
+  </g>
+</svg>

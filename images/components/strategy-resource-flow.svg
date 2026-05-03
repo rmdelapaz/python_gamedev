@@ -1,0 +1,401 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- strategy-resource-flow.svg
+     Phase 7 SVG #27 for genres_strategy.html (Phase 6 figure between the
+     "Strategy Game Core" mermaid graph and the Interactive Strategy Game Demo
+     h2 — convention B; ALSO deployed as canvas-fallback for #strategyCanvas
+     per Phase 7).
+
+     A 3-column horizontal pipeline showing the resource → production → unit
+     flow that drives the lesson's RTS demo. Cell labels match the canvas-demo
+     button labels exactly (Build Menu + Unit Production + Resource Display).
+
+     Layout:
+       Header band (y=8..30):  RESOURCES | PRODUCTION | UNITS
+       Column 1  RESOURCES   (x=14..222):   Mine   / Farm   / Forest      (3 stacked)
+       Column 2  PRODUCTION  (x=242..478):  Barracks                      (1 large)
+       Column 3  UNITS       (x=498..706):  Soldier / Archer              (2 stacked)
+
+     Per-cell visuals:
+       Mine     — Mountain triangle with a gold nugget; "MINE" title;
+                  amber stat "Gold +10/s"; muted caption.
+       Farm     — Three wheat stalks with grain heads; "FARM" title;
+                  green stat "Food +8/s"; muted caption.
+       Forest   — Tree (green canopy + brown trunk); "FOREST" title;
+                  brown stat "Wood — gathered"; muted caption.
+       Barracks — Shield with crossed swords; "BARRACKS" title;
+                  build-cost pill ("Build: 300g + 100w"); divider;
+                  "Trains military units:" label; 4 monospace unit rows
+                  (Soldier 100g+20f, Archer 120g+20f, Cavalry 200g+50f,
+                  Siege 300g+100w).
+       Soldier  — Vertical sword glyph; "SOLDIER" title; HP 100 / ATK 15 stats;
+                  cost pill "100g + 20f".
+       Archer   — Bow + horizontal arrow glyph; "ARCHER" title;
+                  HP 60 / ATK 12 / RNG 5 stats; cost pill "120g + 20f".
+
+     Flow:
+       3 dashed Q-curves funnel from each resource right edge into the
+       Barracks left edge at its vertical midpoint (y=211) — color-coded gold,
+       green, and brown to match each resource's accent.
+       2 dashed blue Q-curves fan from the Barracks right edge to the
+       Soldier and Archer cells' left edges, each with an arrowhead.
+
+     Theme-aware via prefers-color-scheme. ID prefix `srf-`. ViewBox 720x400. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 400" role="img"
+     aria-labelledby="srf-title srf-desc" preserveAspectRatio="xMidYMid meet">
+  <title id="srf-title">A strategy game's resource-to-unit pipeline: Gold, Food, and Wood feed a Barracks that trains Soldiers and Archers</title>
+  <desc id="srf-desc">A three-column horizontal pipeline showing how an RTS resource economy feeds military production. A header band at the top labels the three columns RESOURCES, PRODUCTION, and UNITS. The left column has three stacked resource sources. Mine shows a mountain icon with a gold nugget and the stat Gold plus ten per second. Farm shows three wheat stalks with grain heads and the stat Food plus eight per second. Forest shows a small tree with a green canopy and brown trunk and the stat Wood gathered by worker. The center column has one large cell labeled BARRACKS with a shield-and-crossed-swords icon, a build cost pill reading three hundred gold plus one hundred wood, and a list of four units it can train: Soldier costing one hundred gold plus twenty food, Archer costing one hundred twenty gold plus twenty food, Cavalry costing two hundred gold plus fifty food, and Siege costing three hundred gold plus one hundred wood. The right column has two stacked unit cells. Soldier shows a vertical sword icon, stats of one hundred hit points and fifteen attack, and a cost pill of one hundred gold plus twenty food. Archer shows a curved bow with a horizontal arrow icon, stats of sixty hit points, twelve attack, and range five, and a cost pill of one hundred twenty gold plus twenty food. Three dashed colored curves funnel from each resource cell into the Barracks left edge: amber from Mine, green from Farm, and brown from Forest. Two dashed blue arrows fan from the Barracks right edge to the Soldier and Archer cells.</desc>
+
+  <style>
+    svg {
+      --srf-card-fill: rgb(255, 255, 255);
+      --srf-card-stroke: rgb(203, 213, 225);
+      --srf-text-primary: rgb(15, 23, 42);
+      --srf-text-secondary: rgb(71, 85, 105);
+      --srf-text-muted: rgb(100, 116, 139);
+
+      --srf-header-bg: rgb(241, 245, 249);
+      --srf-header-stroke: rgb(203, 213, 225);
+      --srf-header-text: rgb(71, 85, 105);
+
+      --srf-divider: rgb(203, 213, 225);
+
+      /* Resource accents */
+      --srf-gold: rgb(217, 119, 6);
+      --srf-gold-tint: rgba(217, 119, 6, 0.12);
+      --srf-food: rgb(22, 163, 74);
+      --srf-food-tint: rgba(22, 163, 74, 0.12);
+      --srf-wood: rgb(120, 72, 30);
+      --srf-wood-tint: rgba(120, 72, 30, 0.14);
+
+      /* Production accent */
+      --srf-build: rgb(59, 130, 246);
+      --srf-build-tint: rgba(59, 130, 246, 0.12);
+
+      /* Unit accent */
+      --srf-unit: rgb(220, 38, 38);
+      --srf-unit-tint: rgba(220, 38, 38, 0.10);
+
+      /* Tree foliage */
+      --srf-foliage: rgb(34, 139, 34);
+      --srf-foliage-tint: rgba(34, 139, 34, 0.18);
+
+      /* Cost pill */
+      --srf-pill-fill: rgb(248, 250, 252);
+      --srf-pill-stroke: rgb(203, 213, 225);
+    }
+    @media (prefers-color-scheme: dark) {
+      svg {
+        --srf-card-fill: rgb(31, 41, 55);
+        --srf-card-stroke: rgb(51, 65, 85);
+        --srf-text-primary: rgb(229, 231, 235);
+        --srf-text-secondary: rgb(203, 213, 225);
+        --srf-text-muted: rgb(148, 163, 184);
+
+        --srf-header-bg: rgb(51, 65, 85);
+        --srf-header-stroke: rgb(71, 85, 105);
+        --srf-header-text: rgb(203, 213, 225);
+
+        --srf-divider: rgb(71, 85, 105);
+
+        --srf-gold: rgb(251, 191, 36);
+        --srf-gold-tint: rgba(251, 191, 36, 0.20);
+        --srf-food: rgb(34, 197, 94);
+        --srf-food-tint: rgba(34, 197, 94, 0.20);
+        --srf-wood: rgb(180, 130, 80);
+        --srf-wood-tint: rgba(180, 130, 80, 0.22);
+
+        --srf-build: rgb(96, 165, 250);
+        --srf-build-tint: rgba(96, 165, 250, 0.18);
+
+        --srf-unit: rgb(248, 113, 113);
+        --srf-unit-tint: rgba(248, 113, 113, 0.16);
+
+        --srf-foliage: rgb(74, 222, 128);
+        --srf-foliage-tint: rgba(74, 222, 128, 0.22);
+
+        --srf-pill-fill: rgb(51, 65, 85);
+        --srf-pill-stroke: rgb(100, 116, 139);
+      }
+    }
+
+    .srf-cell-bg { fill: var(--srf-card-fill); stroke: var(--srf-card-stroke); stroke-width: 1; }
+    .srf-cell-title { font: 700 13px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--srf-text-primary); letter-spacing: 0.04em; }
+    .srf-stat { font: 600 12px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .srf-caption { font: 500 10px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--srf-text-muted); }
+    .srf-list-row { font: 500 10.5px ui-monospace, SFMono-Regular, "Menlo", monospace; fill: var(--srf-text-secondary); }
+    .srf-section { font: 600 10.5px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--srf-text-secondary); letter-spacing: 0.04em; }
+
+    /* Header band */
+    .srf-header-bg { fill: var(--srf-header-bg); stroke: var(--srf-header-stroke); stroke-width: 1; }
+    .srf-header { font: 700 11px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--srf-header-text); letter-spacing: 0.10em; }
+
+    /* Divider */
+    .srf-divider { stroke: var(--srf-divider); stroke-width: 1; }
+
+    /* Resource accents */
+    .srf-gold-fill   { fill: var(--srf-gold); }
+    .srf-gold-stroke { stroke: var(--srf-gold); fill: none; }
+    .srf-gold-text   { fill: var(--srf-gold); }
+    .srf-food-fill   { fill: var(--srf-food); }
+    .srf-food-stroke { stroke: var(--srf-food); fill: none; }
+    .srf-food-text   { fill: var(--srf-food); }
+    .srf-wood-fill   { fill: var(--srf-wood); }
+    .srf-wood-stroke { stroke: var(--srf-wood); fill: none; }
+    .srf-wood-text   { fill: var(--srf-wood); }
+
+    /* Mountain (mine) */
+    .srf-mountain { fill: var(--srf-gold-tint); stroke: var(--srf-gold); stroke-width: 1.5; stroke-linejoin: round; }
+
+    /* Foliage (forest) */
+    .srf-foliage { fill: var(--srf-foliage-tint); stroke: var(--srf-foliage); stroke-width: 1.5; stroke-linejoin: round; }
+    .srf-trunk { fill: var(--srf-wood); stroke: var(--srf-wood); stroke-width: 1; }
+
+    /* Production accent */
+    .srf-shield { fill: var(--srf-build-tint); stroke: var(--srf-build); stroke-width: 1.75; stroke-linejoin: round; }
+    .srf-sword-cross { stroke: var(--srf-build); stroke-width: 2.5; stroke-linecap: round; fill: none; }
+    .srf-build-text { fill: var(--srf-build); }
+
+    /* Unit accent */
+    .srf-unit-stroke-thick { stroke: var(--srf-unit); stroke-width: 2.5; stroke-linecap: round; fill: none; }
+    .srf-unit-stroke-thin  { stroke: var(--srf-unit); stroke-width: 1.75; fill: none; }
+    .srf-unit-fill { fill: var(--srf-unit); stroke: none; }
+    .srf-unit-text { fill: var(--srf-unit); }
+
+    /* Cost pill */
+    .srf-pill { fill: var(--srf-pill-fill); stroke: var(--srf-pill-stroke); stroke-width: 1; }
+    .srf-pill-text { font: 600 10.5px ui-monospace, SFMono-Regular, "Menlo", monospace; fill: var(--srf-text-secondary); }
+    .srf-pill-label { font: 500 9.5px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--srf-text-muted); letter-spacing: 0.04em; }
+
+    /* Flow curves */
+    .srf-curve-gold { fill: none; stroke: var(--srf-gold); stroke-width: 2; stroke-dasharray: 4 3; stroke-linecap: round; }
+    .srf-curve-food { fill: none; stroke: var(--srf-food); stroke-width: 2; stroke-dasharray: 4 3; stroke-linecap: round; }
+    .srf-curve-wood { fill: none; stroke: var(--srf-wood); stroke-width: 2; stroke-dasharray: 4 3; stroke-linecap: round; }
+    .srf-curve-prod { fill: none; stroke: var(--srf-build); stroke-width: 2; stroke-dasharray: 5 3; stroke-linecap: round; }
+  </style>
+
+  <!-- Arrowhead markers for the production curves -->
+  <defs>
+    <marker id="srf-arrow-prod" viewBox="0 0 10 10" refX="8" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--srf-build)" />
+    </marker>
+  </defs>
+
+  <!-- ===================================================================
+       Column headers (y=8..30)
+       =================================================================== -->
+  <g>
+    <rect class="srf-header-bg" x="14"  y="8" width="208" height="22" rx="4" />
+    <text class="srf-header"    x="118" y="23" text-anchor="middle">RESOURCES</text>
+
+    <rect class="srf-header-bg" x="242" y="8" width="236" height="22" rx="4" />
+    <text class="srf-header"    x="360" y="23" text-anchor="middle">PRODUCTION</text>
+
+    <rect class="srf-header-bg" x="498" y="8" width="208" height="22" rx="4" />
+    <text class="srf-header"    x="602" y="23" text-anchor="middle">UNITS</text>
+  </g>
+
+  <!-- ===================================================================
+       CELL R1 - MINE (top-left)   x=14..222  y=38..148  (208 x 110)
+       =================================================================== -->
+  <g>
+    <rect class="srf-cell-bg" x="14" y="38" width="208" height="110" rx="6" />
+    <text class="srf-cell-title" x="118" y="56" text-anchor="middle">MINE</text>
+
+    <!-- Mountain icon centered around (118, 85). -->
+    <path class="srf-mountain" d="M 100 99 L 118 71 L 136 99 Z" />
+    <!-- Inner mountain ridge for depth -->
+    <path class="srf-gold-stroke" d="M 113 88 L 118 81 L 123 88" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+    <!-- Gold nugget inside mountain base -->
+    <circle class="srf-gold-fill" cx="118" cy="93" r="3.5" />
+
+    <!-- Stat -->
+    <text class="srf-stat srf-gold-text" x="118" y="122" text-anchor="middle">Gold +10/s</text>
+
+    <!-- Caption -->
+    <text class="srf-caption" x="118" y="138" text-anchor="middle">Workers extract gold</text>
+  </g>
+
+  <!-- ===================================================================
+       CELL R2 - FARM (mid-left)   x=14..222  y=156..266  (208 x 110)
+       =================================================================== -->
+  <g>
+    <rect class="srf-cell-bg" x="14" y="156" width="208" height="110" rx="6" />
+    <text class="srf-cell-title" x="118" y="174" text-anchor="middle">FARM</text>
+
+    <!-- Three wheat stalks centered around cx=118, cy=200.
+         Stalks are vertical food-stroke lines; grain heads are food-fill ovals. -->
+    <line class="srf-food-stroke" x1="110" y1="200" x2="110" y2="220" stroke-width="2" />
+    <line class="srf-food-stroke" x1="118" y1="194" x2="118" y2="220" stroke-width="2" />
+    <line class="srf-food-stroke" x1="126" y1="200" x2="126" y2="220" stroke-width="2" />
+    <ellipse class="srf-food-fill" cx="110" cy="198" rx="2.5" ry="3.5" />
+    <ellipse class="srf-food-fill" cx="118" cy="192" rx="2.5" ry="3.5" />
+    <ellipse class="srf-food-fill" cx="126" cy="198" rx="2.5" ry="3.5" />
+    <!-- Ground line under stalks -->
+    <line class="srf-food-stroke" x1="102" y1="222" x2="134" y2="222" stroke-width="1.25" />
+
+    <!-- Stat -->
+    <text class="srf-stat srf-food-text" x="118" y="240" text-anchor="middle">Food +8/s</text>
+
+    <!-- Caption -->
+    <text class="srf-caption" x="118" y="256" text-anchor="middle">Workers harvest grain</text>
+  </g>
+
+  <!-- ===================================================================
+       CELL R3 - FOREST (bottom-left)  x=14..222  y=274..384  (208 x 110)
+       =================================================================== -->
+  <g>
+    <rect class="srf-cell-bg" x="14" y="274" width="208" height="110" rx="6" />
+    <text class="srf-cell-title" x="118" y="292" text-anchor="middle">FOREST</text>
+
+    <!-- Tree centered around cx=118, cy=320. Canopy triangle + small trunk.
+         Two-tier canopy for a recognisable evergreen silhouette. -->
+    <path class="srf-foliage" d="M 105 326 L 118 304 L 131 326 Z" />
+    <path class="srf-foliage" d="M 108 320 L 118 300 L 128 320 Z" />
+    <rect class="srf-trunk" x="115" y="326" width="6" height="9" />
+    <!-- Ground line under tree -->
+    <line class="srf-wood-stroke" x1="100" y1="337" x2="136" y2="337" stroke-width="1.25" />
+
+    <!-- Stat -->
+    <text class="srf-stat srf-wood-text" x="118" y="358" text-anchor="middle">Wood (gathered)</text>
+
+    <!-- Caption -->
+    <text class="srf-caption" x="118" y="374" text-anchor="middle">Workers chop trees</text>
+  </g>
+
+  <!-- ===================================================================
+       CELL P - BARRACKS (center)   x=242..478  y=38..384  (236 x 346)
+       =================================================================== -->
+  <g>
+    <rect class="srf-cell-bg" x="242" y="38" width="236" height="346" rx="6" />
+    <text class="srf-cell-title" x="360" y="60" text-anchor="middle">BARRACKS</text>
+
+    <!-- Shield + crossed swords icon, centered around (360, 122). -->
+    <!-- Shield outline (pentagonal, rounded bottom) -->
+    <path class="srf-shield" d="M 332 92
+                                 L 388 92
+                                 L 388 130
+                                 Q 388 152 360 162
+                                 Q 332 152 332 130
+                                 Z" />
+    <!-- Crossed swords -->
+    <line class="srf-sword-cross" x1="344" y1="104" x2="378" y2="148" />
+    <line class="srf-sword-cross" x1="378" y1="104" x2="344" y2="148" />
+    <!-- Sword pommels -->
+    <circle cx="344" cy="104" r="2.5" fill="var(--srf-build)" />
+    <circle cx="378" cy="104" r="2.5" fill="var(--srf-build)" />
+
+    <!-- Build cost pill, centered at (360, 192). w=160, h=22. -->
+    <rect class="srf-pill" x="280" y="181" width="160" height="22" rx="11" />
+    <text class="srf-pill-label" x="289" y="195">Build</text>
+    <text class="srf-pill-text"  x="430" y="196" text-anchor="end">300g + 100w</text>
+
+    <!-- Divider -->
+    <line class="srf-divider" x1="270" y1="218" x2="450" y2="218" />
+
+    <!-- "Trains military units:" section label -->
+    <text class="srf-section" x="360" y="236" text-anchor="middle">Trains military units</text>
+
+    <!-- 4 unit rows in monospace, left-aligned at x=276, right-aligned cost at x=444. -->
+    <text class="srf-list-row" x="276" y="260">Soldier</text>
+    <text class="srf-list-row" x="444" y="260" text-anchor="end">100g + 20f</text>
+
+    <text class="srf-list-row" x="276" y="280">Archer</text>
+    <text class="srf-list-row" x="444" y="280" text-anchor="end">120g + 20f</text>
+
+    <text class="srf-list-row" x="276" y="300">Cavalry</text>
+    <text class="srf-list-row" x="444" y="300" text-anchor="end">200g + 50f</text>
+
+    <text class="srf-list-row" x="276" y="320">Siege</text>
+    <text class="srf-list-row" x="444" y="320" text-anchor="end">300g + 100w</text>
+
+    <!-- Bottom divider + caption -->
+    <line class="srf-divider" x1="270" y1="338" x2="450" y2="338" />
+    <text class="srf-caption" x="360" y="356" text-anchor="middle">Each unit consumes resources from above</text>
+    <text class="srf-caption" x="360" y="372" text-anchor="middle">and joins your army on the right</text>
+  </g>
+
+  <!-- ===================================================================
+       CELL U1 - SOLDIER (top-right)  x=498..706  y=38..210  (208 x 172)
+       =================================================================== -->
+  <g>
+    <rect class="srf-cell-bg" x="498" y="38" width="208" height="172" rx="6" />
+    <text class="srf-cell-title" x="602" y="58" text-anchor="middle">SOLDIER</text>
+
+    <!-- Vertical sword icon centered around (602, 100).
+         Blade: long vertical line. Crossguard: short horizontal. Pommel: circle.
+         Hilt grip: small rect below crossguard. -->
+    <line class="srf-unit-stroke-thick" x1="602" y1="78" x2="602" y2="120" />
+    <!-- Blade tip triangle (small) -->
+    <path class="srf-unit-fill" d="M 599 78 L 602 72 L 605 78 Z" />
+    <!-- Crossguard -->
+    <line class="srf-unit-stroke-thick" x1="592" y1="118" x2="612" y2="118" />
+    <!-- Hilt grip -->
+    <rect class="srf-unit-fill" x="600" y="120" width="4" height="8" rx="1" />
+    <!-- Pommel circle -->
+    <circle class="srf-unit-fill" cx="602" cy="131" r="3" />
+
+    <!-- Stats -->
+    <text class="srf-stat srf-unit-text" x="602" y="156" text-anchor="middle">HP 100  |  ATK 15</text>
+
+    <!-- Cost pill -->
+    <rect class="srf-pill" x="538" y="174" width="128" height="22" rx="11" />
+    <text class="srf-pill-label" x="547" y="188">Cost</text>
+    <text class="srf-pill-text"  x="656" y="189" text-anchor="end">100g + 20f</text>
+  </g>
+
+  <!-- ===================================================================
+       CELL U2 - ARCHER (bottom-right)  x=498..706  y=218..390  (208 x 172)
+       =================================================================== -->
+  <g>
+    <rect class="srf-cell-bg" x="498" y="218" width="208" height="172" rx="6" />
+    <text class="srf-cell-title" x="602" y="238" text-anchor="middle">ARCHER</text>
+
+    <!-- Bow + horizontal arrow, centered around (602, 282).
+         Bow: curved arc on the LEFT, opening rightward (like a "C" rotated, but
+         drawn as a quadratic arc bulging left). String: vertical line.
+         Arrow: horizontal line passing through the bow, with a small triangle
+         arrowhead at the right end and fletching marks at the left end. -->
+    <!-- Bow arc (opens right) -->
+    <path class="srf-unit-stroke-thin" d="M 588 266 Q 576 282 588 298" />
+    <!-- Bowstring (vertical) -->
+    <line class="srf-unit-stroke-thin" x1="588" y1="266" x2="588" y2="298" />
+    <!-- Arrow shaft (horizontal) -->
+    <line class="srf-unit-stroke-thick" x1="585" y1="282" x2="624" y2="282" />
+    <!-- Arrowhead (triangle, pointing right) -->
+    <path class="srf-unit-fill" d="M 624 282 L 618 278 L 618 286 Z" />
+    <!-- Fletching marks at the back of the arrow (small angled lines) -->
+    <line class="srf-unit-stroke-thin" x1="585" y1="278" x2="582" y2="275" />
+    <line class="srf-unit-stroke-thin" x1="585" y1="286" x2="582" y2="289" />
+
+    <!-- Stats -->
+    <text class="srf-stat srf-unit-text" x="602" y="336" text-anchor="middle">HP 60  |  ATK 12  |  RNG 5</text>
+
+    <!-- Cost pill -->
+    <rect class="srf-pill" x="538" y="354" width="128" height="22" rx="11" />
+    <text class="srf-pill-label" x="547" y="368">Cost</text>
+    <text class="srf-pill-text"  x="656" y="369" text-anchor="end">120g + 20f</text>
+  </g>
+
+  <!-- ===================================================================
+       FLOW CURVES (drawn LAST so they sit on top of any cell strokes
+       they happen to cross at the cell edges)
+       =================================================================== -->
+
+  <!-- Resource - Barracks: three dashed Q-curves funneling into the
+       Barracks left edge at its vertical centerline (y=211). -->
+  <!-- Mine (right edge midpoint y=93) - Barracks left at y=211 -->
+  <path class="srf-curve-gold" d="M 222 93  Q 232 152 242 211" />
+  <!-- Farm (right edge midpoint y=211) - Barracks left at y=211 (straight horizontal) -->
+  <path class="srf-curve-food" d="M 222 211 L 242 211" />
+  <!-- Forest (right edge midpoint y=329) - Barracks left at y=211 -->
+  <path class="srf-curve-wood" d="M 222 329 Q 232 270 242 211" />
+
+  <!-- Barracks - Units: two dashed Q-curves with arrowheads.
+       Sourced from the Barracks right edge at its vertical centerline (y=211),
+       fanning out to the Soldier and Archer cells' left edge midpoints. -->
+  <!-- Barracks (right edge y=180) - Soldier left at (498, 124) -->
+  <path class="srf-curve-prod" d="M 478 180 Q 488 152 498 124" marker-end="url(#srf-arrow-prod)" />
+  <!-- Barracks (right edge y=240) - Archer left at (498, 304) -->
+  <path class="srf-curve-prod" d="M 478 240 Q 488 272 498 304" marker-end="url(#srf-arrow-prod)" />
+</svg>

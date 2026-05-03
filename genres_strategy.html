@@ -106,10 +106,25 @@
         E --> Q["Unlocks & Bonuses"]
     </div>
 
+    <figure class="svg-wrapper">
+        <img class="responsive-svg"
+             src="/images/components/strategy-resource-flow.svg"
+             alt="A strategy game's resource-to-unit pipeline shown in three columns. A header band labels each column RESOURCES, PRODUCTION, and UNITS. The left column has three stacked resource cells: Mine (a mountain icon with a gold nugget, stat 'Gold +10/s'); Farm (three wheat stalks with grain heads, stat 'Food +8/s'); Forest (a small evergreen tree with a green canopy and brown trunk, stat 'Wood (gathered)'). The center column is one tall Barracks cell: a shield with crossed swords, a build-cost pill reading 'Build: 300g + 100w', and a monospace list of trainable units with their costs (Soldier 100g+20f, Archer 120g+20f, Cavalry 200g+50f, Siege 300g+100w). The right column has two stacked unit cells: Soldier (a vertical sword icon, stats 'HP 100 | ATK 15', cost pill '100g + 20f') and Archer (a curved bow with a horizontal arrow, stats 'HP 60 | ATK 12 | RNG 5', cost pill '120g + 20f'). Three dashed colored curves funnel from each resource cell's right edge into the Barracks left edge: amber from Mine, green from Farm, brown from Forest. Two dashed blue arrows fan from the Barracks right edge to the Soldier and Archer cells."
+             loading="lazy">
+        <figcaption>A three-column resource pipeline — RESOURCES → PRODUCTION → UNITS — shown as a frozen snapshot of the lesson's RTS economy. Three resource sources (Mine, Farm, Forest) feed dashed colored flow lines into a central Barracks; the Barracks fans two dashed arrows out to the Soldier and Archer unit cells on the right, with example costs spelled out in monospace. The interactive demo lets you place these buildings, gather resources, and train any of the listed units; this diagram shows the economic pipeline that drives every decision in the live demo without depending on JavaScript.</figcaption>
+    </figure>
+
     <h2 id="interactive-strategy-game-demo">Interactive Strategy Game Demo</h2>
     
     <div class="canvas-wrapper" style="text-align: center;">
         <canvas id="strategyCanvas" width="800" height="600" style="border: 1px solid #333; display: inline-block;"></canvas>
+        <figure class="canvas-fallback">
+            <img class="responsive-svg"
+                 src="/images/components/strategy-resource-flow.svg"
+                 alt="A strategy game's resource → production → unit pipeline showing gold, wood, and food feeding production buildings that train units."
+                 loading="lazy">
+            <figcaption>A strategy game's resource flow: gold/wood/food sources feed production buildings that train units. The interactive demo lets you build a base and command armies; this diagram shows the resource → production → military pipeline with example flow rates.</figcaption>
+        </figure>
     </div>
     <div style="text-align: center; margin-top: 10px;">
         <p>Build your base, gather resources, train units, and defeat the enemy!</p>

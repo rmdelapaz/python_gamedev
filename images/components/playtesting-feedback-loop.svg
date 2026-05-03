@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- playtesting-feedback-loop.svg
+     Phase 7 SVG #28 for polish_playtesting.html (Phase 6 figure between the
+     "Playtesting Process" mermaid graph and the Interactive Playtesting
+     Dashboard h2 — convention B; ALSO deployed as canvas-fallback for
+     #playtestCanvas per Phase 7).
+
+     A circular 5-step pentagon flow showing the playtesting iteration cycle:
+     Build → Test → Observe → Analyze → Iterate → (back to Build).
+     First Phase 7 SVG to use a circular/pentagon visual genre — prior Phase 7
+     SVGs are grids (puzzle-mechanics-grid) and pipelines
+     (strategy-resource-flow).
+
+     Layout:
+       Pentagon center (360, 225), radius 90.
+       Vertices clockwise from top: V0 Build, V1 Test, V2 Observe,
+       V3 Analyze, V4 Iterate. Each node is a 22-radius colored circle
+       containing a step number badge (1..5).
+       Each pair of adjacent nodes is connected by a dashed slate quadratic
+       Bezier curve with an arrowhead. Control points pulled 15 units outward
+       from the pentagon center along each edge midpoint's radial vector
+       so the cycle reads as visibly outward-bowed, not inscribed lines.
+
+     Side callouts (each a 190-wide panel listing 3 canonical lesson
+     artifacts; title color matches its node's accent):
+       Build    (top, blue)         Prototype | Vertical slice | Define goals
+       Test     (upper-right,amber) Select testers | Create protocol | Run session
+       Observe  (lower-right,teal)  Heatmaps | Path tracking | Think-aloud
+       Analyze  (lower-left,purple) Quantitative | Qualitative | Synthesis
+       Iterate  (upper-left,green)  Prioritize | Implement | Validate
+
+     Build callout sits above the pentagon top vertex (centered, 265..455 x
+     8..84). Test/Observe panels stack on the right side (515..705 x 130..322).
+     Analyze/Iterate panels stack on the left (15..205 x 130..322), mirroring.
+
+     Center text reads "TIGHTEN / THE LOOP" with a small monospace
+     "↻ Iter 3" beneath in muted accent — concrete iteration counter
+     reinforces the cyclical-improvement metaphor.
+
+     Artifact terminology cross-checked against the lesson's own canonical
+     vocabulary: the mermaid Analysis sub-tree (Quantitative / Qualitative /
+     Synthesis) and Iteration sub-tree (Prioritize / Implement / Validate)
+     are reused verbatim; the Test sub-tree pulls "Select Testers" and
+     "Create Protocol" verbatim from the mermaid Planning sub-tree;
+     Observe artifacts come from the canvas demo's data-collection checkboxes
+     (Heatmap / Path Tracking / Think Aloud).
+
+     Theme-aware via prefers-color-scheme. ID prefix `pfl-`. ViewBox 720x420. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 420" role="img"
+     aria-labelledby="pfl-title pfl-desc" preserveAspectRatio="xMidYMid meet">
+  <title id="pfl-title">The playtesting feedback loop: a circular five-step process from Build to Test to Observe to Analyze to Iterate, then back to Build</title>
+  <desc id="pfl-desc">A circular feedback diagram in pentagon arrangement showing the five-step playtesting cycle. Five colored numbered nodes are arranged clockwise around a center, connected by dashed arrows that loop back to the start. The top node, numbered 1, is Build in blue. Clockwise next is node 2, Test in amber on the upper right, then node 3 Observe in teal on the lower right, node 4 Analyze in purple on the lower left, and node 5 Iterate in green on the upper left. Each node has a side callout panel listing three canonical artifacts. Build has Prototype, Vertical slice, and Define goals. Test has Select testers, Create protocol, and Run session. Observe has Heatmaps, Path tracking, and Think-aloud. Analyze has Quantitative, Qualitative, and Synthesis. Iterate has Prioritize, Implement, and Validate. The center of the pentagon reads Tighten the loop with a small iteration counter showing Iter 3, reinforcing the cyclical-improvement metaphor of the playtesting feedback process.</desc>
+
+  <style>
+    svg {
+      --pfl-card-fill: rgb(255, 255, 255);
+      --pfl-card-stroke: rgb(203, 213, 225);
+      --pfl-text-primary: rgb(15, 23, 42);
+      --pfl-text-secondary: rgb(71, 85, 105);
+      --pfl-text-muted: rgb(100, 116, 139);
+
+      --pfl-divider: rgb(203, 213, 225);
+
+      /* Step accents (light mode) */
+      --pfl-build: rgb(59, 130, 246);
+      --pfl-build-tint: rgba(59, 130, 246, 0.14);
+      --pfl-test: rgb(217, 119, 6);
+      --pfl-test-tint: rgba(217, 119, 6, 0.14);
+      --pfl-observe: rgb(13, 148, 136);
+      --pfl-observe-tint: rgba(13, 148, 136, 0.14);
+      --pfl-analyze: rgb(124, 58, 237);
+      --pfl-analyze-tint: rgba(124, 58, 237, 0.14);
+      --pfl-iterate: rgb(22, 163, 74);
+      --pfl-iterate-tint: rgba(22, 163, 74, 0.14);
+
+      /* Loop / arrow accent */
+      --pfl-arrow: rgb(100, 116, 139);
+    }
+    @media (prefers-color-scheme: dark) {
+      svg {
+        --pfl-card-fill: rgb(31, 41, 55);
+        --pfl-card-stroke: rgb(51, 65, 85);
+        --pfl-text-primary: rgb(229, 231, 235);
+        --pfl-text-secondary: rgb(203, 213, 225);
+        --pfl-text-muted: rgb(148, 163, 184);
+
+        --pfl-divider: rgb(71, 85, 105);
+
+        --pfl-build: rgb(96, 165, 250);
+        --pfl-build-tint: rgba(96, 165, 250, 0.18);
+        --pfl-test: rgb(251, 191, 36);
+        --pfl-test-tint: rgba(251, 191, 36, 0.18);
+        --pfl-observe: rgb(45, 212, 191);
+        --pfl-observe-tint: rgba(45, 212, 191, 0.18);
+        --pfl-analyze: rgb(167, 139, 250);
+        --pfl-analyze-tint: rgba(167, 139, 250, 0.18);
+        --pfl-iterate: rgb(74, 222, 128);
+        --pfl-iterate-tint: rgba(74, 222, 128, 0.18);
+
+        --pfl-arrow: rgb(148, 163, 184);
+      }
+    }
+
+    .pfl-callout {
+      fill: var(--pfl-card-fill);
+      stroke: var(--pfl-card-stroke);
+      stroke-width: 1;
+    }
+    .pfl-callout-title {
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-anchor: middle;
+    }
+    .pfl-callout-item {
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-size: 11px;
+      fill: var(--pfl-text-secondary);
+      text-anchor: middle;
+    }
+    .pfl-node-num {
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      fill: var(--pfl-text-primary);
+      text-anchor: middle;
+    }
+    .pfl-arrow-path {
+      fill: none;
+      stroke: var(--pfl-arrow);
+      stroke-width: 1.6;
+      stroke-dasharray: 5 4;
+      stroke-linecap: round;
+    }
+    .pfl-center-line {
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.10em;
+      fill: var(--pfl-text-secondary);
+      text-anchor: middle;
+    }
+    .pfl-center-iter {
+      font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      font-size: 11px;
+      font-weight: 600;
+      fill: var(--pfl-text-muted);
+      text-anchor: middle;
+    }
+  </style>
+
+  <defs>
+    <marker id="pfl-arrowhead" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--pfl-arrow)" />
+    </marker>
+  </defs>
+
+  <!-- Connector arrows (drawn first, behind nodes) -->
+  <!-- Build (V0 360,135) → Test (V1 446,197) -->
+  <path class="pfl-arrow-path" d="M 377.8 147.83 Q 411.84 153.88 428.2 184.17"
+        marker-end="url(#pfl-arrowhead)" />
+  <!-- Test → Observe (V1 446,197 → V2 413,298) -->
+  <path class="pfl-arrow-path" d="M 439.17 217.91 Q 443.77 252.12 419.83 277.09"
+        marker-end="url(#pfl-arrowhead)" />
+  <!-- Observe → Analyze (V2 413,298 → V3 307,298) -->
+  <path class="pfl-arrow-path" d="M 391 298 Q 360 313 329 298"
+        marker-end="url(#pfl-arrowhead)" />
+  <!-- Analyze → Iterate (V3 307,298 → V4 274,197) -->
+  <path class="pfl-arrow-path" d="M 300.17 277.09 Q 276.23 252.12 280.83 217.91"
+        marker-end="url(#pfl-arrowhead)" />
+  <!-- Iterate → Build (V4 274,197 → V0 360,135) -->
+  <path class="pfl-arrow-path" d="M 291.85 184.14 Q 308.16 153.88 342.15 147.86"
+        marker-end="url(#pfl-arrowhead)" />
+
+  <!-- Center label: TIGHTEN / THE LOOP / ↻ Iter 3 -->
+  <text x="360" y="218" class="pfl-center-line">TIGHTEN</text>
+  <text x="360" y="234" class="pfl-center-line">THE LOOP</text>
+  <text x="360" y="252" class="pfl-center-iter">↻ Iter 3</text>
+
+  <!-- ============== NODES ============== -->
+  <!-- V0 Build (360, 135) -->
+  <circle cx="360" cy="135" r="22" fill="var(--pfl-build-tint)" stroke="var(--pfl-build)" stroke-width="2" />
+  <text x="360" y="141" class="pfl-node-num">1</text>
+
+  <!-- V1 Test (446, 197) -->
+  <circle cx="446" cy="197" r="22" fill="var(--pfl-test-tint)" stroke="var(--pfl-test)" stroke-width="2" />
+  <text x="446" y="203" class="pfl-node-num">2</text>
+
+  <!-- V2 Observe (413, 298) -->
+  <circle cx="413" cy="298" r="22" fill="var(--pfl-observe-tint)" stroke="var(--pfl-observe)" stroke-width="2" />
+  <text x="413" y="304" class="pfl-node-num">3</text>
+
+  <!-- V3 Analyze (307, 298) -->
+  <circle cx="307" cy="298" r="22" fill="var(--pfl-analyze-tint)" stroke="var(--pfl-analyze)" stroke-width="2" />
+  <text x="307" y="304" class="pfl-node-num">4</text>
+
+  <!-- V4 Iterate (274, 197) -->
+  <circle cx="274" cy="197" r="22" fill="var(--pfl-iterate-tint)" stroke="var(--pfl-iterate)" stroke-width="2" />
+  <text x="274" y="203" class="pfl-node-num">5</text>
+
+  <!-- ============== CALLOUTS ============== -->
+  <!-- Build callout: top center, (265, 8, 190, 76) -->
+  <g>
+    <rect class="pfl-callout" x="265" y="8" width="190" height="76" rx="6" />
+    <line x1="285" y1="28" x2="435" y2="28" stroke="var(--pfl-divider)" stroke-width="0.7" />
+    <text x="360" y="22" class="pfl-callout-title" fill="var(--pfl-build)">BUILD</text>
+    <text x="360" y="43" class="pfl-callout-item">Prototype</text>
+    <text x="360" y="58" class="pfl-callout-item">Vertical slice</text>
+    <text x="360" y="73" class="pfl-callout-item">Define goals</text>
+  </g>
+
+  <!-- Test callout: upper right, (515, 130, 190, 76) -->
+  <g>
+    <rect class="pfl-callout" x="515" y="130" width="190" height="76" rx="6" />
+    <line x1="535" y1="150" x2="685" y2="150" stroke="var(--pfl-divider)" stroke-width="0.7" />
+    <text x="610" y="144" class="pfl-callout-title" fill="var(--pfl-test)">TEST</text>
+    <text x="610" y="165" class="pfl-callout-item">Select testers</text>
+    <text x="610" y="180" class="pfl-callout-item">Create protocol</text>
+    <text x="610" y="195" class="pfl-callout-item">Run session</text>
+  </g>
+
+  <!-- Observe callout: lower right, (515, 246, 190, 76) -->
+  <g>
+    <rect class="pfl-callout" x="515" y="246" width="190" height="76" rx="6" />
+    <line x1="535" y1="266" x2="685" y2="266" stroke="var(--pfl-divider)" stroke-width="0.7" />
+    <text x="610" y="260" class="pfl-callout-title" fill="var(--pfl-observe)">OBSERVE</text>
+    <text x="610" y="281" class="pfl-callout-item">Heatmaps</text>
+    <text x="610" y="296" class="pfl-callout-item">Path tracking</text>
+    <text x="610" y="311" class="pfl-callout-item">Think-aloud</text>
+  </g>
+
+  <!-- Analyze callout: lower left, (15, 246, 190, 76) -->
+  <g>
+    <rect class="pfl-callout" x="15" y="246" width="190" height="76" rx="6" />
+    <line x1="35" y1="266" x2="185" y2="266" stroke="var(--pfl-divider)" stroke-width="0.7" />
+    <text x="110" y="260" class="pfl-callout-title" fill="var(--pfl-analyze)">ANALYZE</text>
+    <text x="110" y="281" class="pfl-callout-item">Quantitative</text>
+    <text x="110" y="296" class="pfl-callout-item">Qualitative</text>
+    <text x="110" y="311" class="pfl-callout-item">Synthesis</text>
+  </g>
+
+  <!-- Iterate callout: upper left, (15, 130, 190, 76) -->
+  <g>
+    <rect class="pfl-callout" x="15" y="130" width="190" height="76" rx="6" />
+    <line x1="35" y1="150" x2="185" y2="150" stroke="var(--pfl-divider)" stroke-width="0.7" />
+    <text x="110" y="144" class="pfl-callout-title" fill="var(--pfl-iterate)">ITERATE</text>
+    <text x="110" y="165" class="pfl-callout-item">Prioritize</text>
+    <text x="110" y="180" class="pfl-callout-item">Implement</text>
+    <text x="110" y="195" class="pfl-callout-item">Validate</text>
+  </g>
+</svg>

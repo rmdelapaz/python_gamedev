@@ -147,10 +147,25 @@
         E --> Q["Progress Indicators"]
     </div>
 
+    <figure class="svg-wrapper">
+        <img class="responsive-svg"
+             src="/images/components/puzzle-mechanics-grid.svg"
+             alt="Five puzzle mechanics shown side by side as static mid-play snapshots. Top row: Match-3 (4×4 gem grid with one gem ringed amber as the selected swap and a row of three ambers highlighted by a green pill as a match in progress); Sliding (15-puzzle with one empty slot and a left-arrow on the next tile to slide); Physics (cannon, dashed parabolic arc with a red projectile at apex, three-ring bullseye target). Bottom row: Pattern (2×2 Simon-style buttons with the blue top-right button lit and ringed with a glow); Logic Gates (AND gate with both inputs A and B and the output Q all green, annotated &quot;= 1&quot;)."
+             loading="lazy">
+        <figcaption>Five core puzzle mechanics — match-3, sliding tiles, projectile physics, pattern memory, and logic gates — shown side by side as static snapshots. Each cell mirrors one of the canvas demo's interactive modes; the highlighted states (the selection ring, the match-in-progress pill, the lit Simon button, the green wires) freeze a single representative moment from each puzzle so the diagram can stand alongside the live demo without depending on JavaScript.</figcaption>
+    </figure>
+
     <h2 id="interactive-multi-puzzle-demo">Interactive Multi-Puzzle Demo</h2>
     
     <div class="canvas-wrapper" style="text-align: center;">
         <canvas id="puzzleCanvas" width="800" height="600" style="border: 2px solid #333; background: #2c3e50; display: inline-block;"></canvas>
+        <figure class="canvas-fallback">
+            <img class="responsive-svg"
+                 src="/images/components/puzzle-mechanics-grid.svg"
+                 alt="Five puzzle mechanics shown side by side: match-3, sliding tiles, projectile arc, pattern memory, and AND-gate logic."
+                 loading="lazy">
+            <figcaption>Five core puzzle mechanics shown side by side: match-3 grid, sliding tiles, projectile arc, pattern sequence, and an AND-gate. The interactive demo lets you switch between all five; this diagram shows representative states from each.</figcaption>
+        </figure>
     </div>
     
     <div class="game-controls" style="text-align: center; margin-top: 10px;">

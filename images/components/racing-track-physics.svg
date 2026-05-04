@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- racing-track-physics.svg
+     Phase 7 SVG #29 for genres_racing.html (Phase 6 figure between the
+     "Racing Game Core" mermaid graph and the Vehicle Physics Fundamentals
+     h2 — convention B; ALSO deployed as canvas-fallback for #racingCanvas
+     per Phase 7. The lesson's secondary 150x150 #minimap canvas lives in
+     a non-`.canvas-wrapper` div and is intentionally NOT wrapped.).
+
+     A two-panel diagram explaining tire grip and lateral force at the
+     cornering limit — the Tire Physics leaf of the lesson's mermaid graph
+     and the source of understeer/oversteer mechanics.
+
+     Layout:
+       Header band (y=8..30):    LEFT "TOP-DOWN VIEW — ENTRY TO TIGHT CORNER" |
+                                 RIGHT "FRICTION CIRCLE"
+       Panel 1 (track view)      x=14..488,  y=38..384
+       Panel 2 (friction circle) x=510..706, y=38..384
+
+     Panel 1 (track view):
+       - Asphalt Q-curve track from a checkered start/finish line (left),
+         curving 90 degrees through the apex, exiting south.
+       - One car at the apex, rotated 45 degrees to align with the tangent.
+       - Three labeled vectors from the car's center:
+           Velocity     (blue, tangent, length 70)
+           Grip max     (teal, perpendicular into corner, length 70 — ceiling)
+           Required lat (amber, same perpendicular direction, length 95 —
+                          exceeds grip; drawn dashed with arrowhead extending
+                          past teal's tip to make the saturation visual)
+       - Dashed amber skid-path arc continuing from the car past the corner
+         exit, drifting WIDE of the actual track — illustrates understeer.
+
+     Panel 2 (friction circle):
+       - One circle (center 608, 215, r 78) with cross axes (lateral,
+         longitudinal). Axis end labels: Accel / Brake / Turn L / Turn R.
+       - Teal force-vector arrow from circle center to the right edge
+         (saturated lateral force, no longitudinal).
+       - Dashed amber extension past the circle edge — same overshoot as
+         in Panel 1, geometrically tied so the two diagrams say one thing.
+       - Two short caption lines below the circle.
+
+     Theme-aware via prefers-color-scheme. ID prefix `rtp-`. ViewBox 720x400. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 400" role="img"
+     aria-labelledby="rtp-title rtp-desc" preserveAspectRatio="xMidYMid meet">
+  <title id="rtp-title">Top-down view of a car at a tight corner showing velocity, grip-max, and required-lateral-force vectors, plus a friction-circle inset.</title>
+  <desc id="rtp-desc">A two-panel diagram. The left panel shows a top-down racing track with one tight right-hand corner. The track enters from a checkered start-finish line on the left going east, curves through ninety degrees at the apex, and exits going south. A car sits at the apex of the corner, oriented southeast along the tangent. Three labeled vectors radiate from the car's center: a blue velocity arrow tangent to the path pointing southeast, a teal grip-max arrow perpendicular to velocity pointing into the inside of the corner toward the curve center, and an amber required-lateral-force arrow in the same perpendicular direction but longer, extending past the teal arrow's tip to indicate that the lateral force demanded by the corner exceeds the tires' grip ceiling. A dashed amber skid path continues from the car beyond the corner, drifting wide of the actual track to illustrate understeer. The right panel shows a friction-circle inset. A single circle has horizontal lateral and vertical longitudinal axes crossing at its center. Axis-end labels read Accel at top, Brake at bottom, Turn L at left, and Turn R at right. A teal force vector points right from the center to the circle's edge, marking the cornering force at saturation. A short dashed amber extension continues past the circle edge to mark the demand that exceeds the grip budget. Two short captions read each tire's force budget is finite, and lateral demand at the cornering limit exceeds the circle.</desc>
+
+  <style>
+    svg {
+      --rtp-card-fill: rgb(255, 255, 255);
+      --rtp-card-stroke: rgb(203, 213, 225);
+      --rtp-text-primary: rgb(15, 23, 42);
+      --rtp-text-secondary: rgb(71, 85, 105);
+      --rtp-text-muted: rgb(100, 116, 139);
+
+      --rtp-header-bg: rgb(241, 245, 249);
+      --rtp-header-stroke: rgb(203, 213, 225);
+      --rtp-header-text: rgb(71, 85, 105);
+
+      --rtp-divider: rgb(203, 213, 225);
+
+      /* Track */
+      --rtp-asphalt: rgb(71, 85, 105);
+      --rtp-asphalt-edge: rgb(148, 163, 184);
+      --rtp-track-center: rgb(248, 250, 252);
+
+      /* Car */
+      --rtp-car-fill: rgb(220, 38, 38);
+      --rtp-car-stroke: rgb(127, 29, 29);
+      --rtp-tire: rgb(15, 23, 42);
+      --rtp-window: rgba(255, 255, 255, 0.55);
+
+      /* Vectors */
+      --rtp-velocity: rgb(59, 130, 246);
+      --rtp-grip:     rgb(20, 184, 166);
+      --rtp-lateral:  rgb(217, 119, 6);
+      --rtp-skid:     rgb(217, 119, 6);
+
+      /* Friction circle */
+      --rtp-circle-fill: rgba(241, 245, 249, 0.6);
+      --rtp-circle-stroke: rgb(100, 116, 139);
+      --rtp-axis: rgb(148, 163, 184);
+    }
+    @media (prefers-color-scheme: dark) {
+      svg {
+        --rtp-card-fill: rgb(31, 41, 55);
+        --rtp-card-stroke: rgb(51, 65, 85);
+        --rtp-text-primary: rgb(229, 231, 235);
+        --rtp-text-secondary: rgb(203, 213, 225);
+        --rtp-text-muted: rgb(148, 163, 184);
+
+        --rtp-header-bg: rgb(51, 65, 85);
+        --rtp-header-stroke: rgb(71, 85, 105);
+        --rtp-header-text: rgb(203, 213, 225);
+
+        --rtp-divider: rgb(71, 85, 105);
+
+        --rtp-asphalt: rgb(51, 65, 85);
+        --rtp-asphalt-edge: rgb(100, 116, 139);
+        --rtp-track-center: rgb(203, 213, 225);
+
+        --rtp-car-fill: rgb(248, 113, 113);
+        --rtp-car-stroke: rgb(127, 29, 29);
+        --rtp-tire: rgb(15, 23, 42);
+        --rtp-window: rgba(15, 23, 42, 0.55);
+
+        --rtp-velocity: rgb(96, 165, 250);
+        --rtp-grip:     rgb(45, 212, 191);
+        --rtp-lateral:  rgb(251, 191, 36);
+        --rtp-skid:     rgb(251, 191, 36);
+
+        --rtp-circle-fill: rgba(51, 65, 85, 0.55);
+        --rtp-circle-stroke: rgb(148, 163, 184);
+        --rtp-axis: rgb(100, 116, 139);
+      }
+    }
+
+    .rtp-cell-bg { fill: var(--rtp-card-fill); stroke: var(--rtp-card-stroke); stroke-width: 1; }
+    .rtp-header-bg { fill: var(--rtp-header-bg); stroke: var(--rtp-header-stroke); stroke-width: 1; }
+    .rtp-header { font: 700 11px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--rtp-header-text); letter-spacing: 0.08em; }
+
+    .rtp-caption { font: 500 10.5px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--rtp-text-muted); }
+    .rtp-divider { stroke: var(--rtp-divider); stroke-width: 1; }
+
+    /* Track */
+    .rtp-asphalt { fill: none; stroke: var(--rtp-asphalt); stroke-width: 32; stroke-linecap: round; }
+    .rtp-asphalt-edge { fill: none; stroke: var(--rtp-asphalt-edge); stroke-width: 36; stroke-linecap: round; opacity: 0.55; }
+    .rtp-track-center { fill: none; stroke: var(--rtp-track-center); stroke-width: 1.5; stroke-dasharray: 5 5; stroke-linecap: round; }
+    .rtp-startline-light { fill: rgb(248, 250, 252); }
+    .rtp-startline-dark  { fill: rgb(15, 23, 42); }
+    .rtp-startline-stroke { stroke: var(--rtp-asphalt-edge); stroke-width: 1; fill: none; }
+    .rtp-startfinish-label { font: 700 9px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--rtp-text-secondary); letter-spacing: 0.10em; }
+
+    /* Car */
+    .rtp-car-body { fill: var(--rtp-car-fill); stroke: var(--rtp-car-stroke); stroke-width: 1.5; }
+    .rtp-tire { fill: var(--rtp-tire); }
+    .rtp-window { fill: var(--rtp-window); }
+
+    /* Vectors */
+    .rtp-vec-velocity { stroke: var(--rtp-velocity); stroke-width: 3; stroke-linecap: round; fill: none; }
+    .rtp-vec-grip     { stroke: var(--rtp-grip);     stroke-width: 3; stroke-linecap: round; fill: none; }
+    .rtp-vec-lateral  { stroke: var(--rtp-lateral);  stroke-width: 2.5; stroke-dasharray: 5 4; stroke-linecap: round; fill: none; }
+
+    .rtp-label-velocity { font: 700 11px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--rtp-velocity); }
+    .rtp-label-grip     { font: 700 11px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--rtp-grip); }
+    .rtp-label-lateral  { font: 700 11px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--rtp-lateral); }
+    .rtp-label-sub      { font: 500 9.5px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--rtp-text-muted); }
+
+    /* Skid arc */
+    .rtp-skid-arc { fill: none; stroke: var(--rtp-skid); stroke-width: 2; stroke-dasharray: 4 4; stroke-linecap: round; opacity: 0.85; }
+    .rtp-label-skid { font: 600 10.5px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--rtp-skid); }
+
+    /* Friction circle */
+    .rtp-circle { fill: var(--rtp-circle-fill); stroke: var(--rtp-circle-stroke); stroke-width: 1.5; }
+    .rtp-axis { stroke: var(--rtp-axis); stroke-width: 1; stroke-dasharray: 3 3; }
+    .rtp-axis-label { font: 600 9.5px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--rtp-text-secondary); letter-spacing: 0.04em; }
+    .rtp-fc-vec { stroke: var(--rtp-grip); stroke-width: 3; stroke-linecap: round; fill: none; }
+    .rtp-fc-overshoot { stroke: var(--rtp-lateral); stroke-width: 2.5; stroke-dasharray: 4 3; stroke-linecap: round; fill: none; }
+    .rtp-fc-origin { fill: var(--rtp-text-secondary); }
+  </style>
+
+  <!-- Arrowhead markers (one per vector color) -->
+  <defs>
+    <marker id="rtp-arrow-vel" viewBox="0 0 10 10" refX="8" refY="5"
+            markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--rtp-velocity)" />
+    </marker>
+    <marker id="rtp-arrow-grip" viewBox="0 0 10 10" refX="8" refY="5"
+            markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--rtp-grip)" />
+    </marker>
+    <marker id="rtp-arrow-lat" viewBox="0 0 10 10" refX="8" refY="5"
+            markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--rtp-lateral)" />
+    </marker>
+    <marker id="rtp-arrow-skid" viewBox="0 0 10 10" refX="8" refY="5"
+            markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--rtp-skid)" opacity="0.85" />
+    </marker>
+  </defs>
+
+  <!-- ===================================================================
+       Header band (y=8..30) — two panel labels
+       =================================================================== -->
+  <g>
+    <rect class="rtp-header-bg" x="14"  y="8" width="474" height="22" rx="4" />
+    <text class="rtp-header"    x="251" y="23" text-anchor="middle">TOP-DOWN VIEW — ENTRY TO TIGHT CORNER</text>
+
+    <rect class="rtp-header-bg" x="510" y="8" width="196" height="22" rx="4" />
+    <text class="rtp-header"    x="608" y="23" text-anchor="middle">FRICTION CIRCLE</text>
+  </g>
+
+  <!-- ===================================================================
+       PANEL 1 — Top-down track view  x=14..488, y=38..384
+       =================================================================== -->
+  <g>
+    <rect class="rtp-cell-bg" x="14" y="38" width="474" height="346" rx="6" />
+
+    <!-- Track centerline Q-bezier: M 60 130 Q 280 130 280 350.
+         Drawn three times for the asphalt look:
+           1) wide light edge (lighter halo for kerbs/runoff)
+           2) main asphalt body
+           3) dashed center line on top -->
+    <path class="rtp-asphalt-edge"  d="M 60 130 Q 280 130 280 350" />
+    <path class="rtp-asphalt"       d="M 60 130 Q 280 130 280 350" />
+    <path class="rtp-track-center"  d="M 60 130 Q 280 130 280 350" />
+
+    <!-- Start/finish line: a checkered band perpendicular to the entry,
+         placed across the track at x=60. Track halo radius is 18, so
+         the band runs from y=110 to y=150 (40 tall). 8 squares 5x10. -->
+    <g>
+      <!-- Background frame -->
+      <rect class="rtp-startline-stroke" x="55" y="111" width="10" height="38" />
+      <!-- Alternating squares — 4 rows x 2 cols, 5x10 each -->
+      <rect class="rtp-startline-light" x="55" y="111" width="5" height="10" />
+      <rect class="rtp-startline-dark"  x="60" y="111" width="5" height="10" />
+      <rect class="rtp-startline-dark"  x="55" y="121" width="5" height="10" />
+      <rect class="rtp-startline-light" x="60" y="121" width="5" height="10" />
+      <rect class="rtp-startline-light" x="55" y="131" width="5" height="10" />
+      <rect class="rtp-startline-dark"  x="60" y="131" width="5" height="10" />
+      <rect class="rtp-startline-dark"  x="55" y="141" width="5" height="8"  />
+      <rect class="rtp-startline-light" x="60" y="141" width="5" height="8"  />
+    </g>
+    <text class="rtp-startfinish-label" x="60" y="100" text-anchor="middle">START / FINISH</text>
+
+    <!-- Direction-of-travel arrow (small, gray) along the entry straight
+         to confirm the car is going east at entry. -->
+    <line x1="100" y1="130" x2="135" y2="130" stroke="var(--rtp-text-muted)" stroke-width="1.5" stroke-linecap="round" marker-end="url(#rtp-arrow-skid)" opacity="0.6" />
+
+    <!-- ===========================================
+         Skid arc (drawn BEFORE car so car sits on top)
+         Continues from car position past the corner
+         exit, going wider/outside the track:
+         M 225 185 Q 360 280 460 360
+         =========================================== -->
+    <path class="rtp-skid-arc" d="M 225 185 Q 360 280 460 360" marker-end="url(#rtp-arrow-skid)" />
+    <text class="rtp-label-skid" x="396" y="318">Skid path</text>
+    <text class="rtp-label-sub"  x="396" y="332">(understeer — wide)</text>
+
+    <!-- ===========================================
+         Vectors from the car's center at (225, 185).
+         Drawn before the car body so the car sits on
+         top of the vector tails for a clean look at
+         the origin point.
+         Velocity direction: (0.707, 0.707) — southeast.
+         Grip / lateral direction: (0.707, -0.707) — northeast (into the corner).
+         =========================================== -->
+
+    <!-- Required lateral force (amber, dashed, longest) — drawn FIRST so
+         the teal grip vector overlays its near portion and the amber
+         remains visible only past teal's tip.
+         tail (225, 185) -> tip (225 + 95*0.707, 185 - 95*0.707) = (292.2, 117.8) -->
+    <line class="rtp-vec-lateral" x1="225" y1="185" x2="292" y2="118" marker-end="url(#rtp-arrow-lat)" />
+
+    <!-- Tire grip max (teal, solid, the ceiling)
+         tail (225, 185) -> tip (225 + 70*0.707, 185 - 70*0.707) = (274.5, 135.5) -->
+    <line class="rtp-vec-grip" x1="225" y1="185" x2="274" y2="135" marker-end="url(#rtp-arrow-grip)" />
+
+    <!-- Velocity (blue, solid, tangent)
+         tail (225, 185) -> tip (225 + 70*0.707, 185 + 70*0.707) = (274.5, 234.5) -->
+    <line class="rtp-vec-velocity" x1="225" y1="185" x2="274" y2="234" marker-end="url(#rtp-arrow-vel)" />
+
+    <!-- Vector labels (small offsets so they don't overlap arrow tips) -->
+    <!-- Velocity label, near tip going SE -->
+    <text class="rtp-label-velocity" x="282" y="252">Velocity v</text>
+    <text class="rtp-label-sub"      x="282" y="265">tangent to path</text>
+
+    <!-- Grip max label, along the teal shaft on its left side (italic-ish via class) -->
+    <text class="rtp-label-grip" x="186" y="158">Grip max</text>
+    <text class="rtp-label-sub"  x="186" y="171">tire ceiling</text>
+
+    <!-- Required lateral label, past the amber tip going NE -->
+    <text class="rtp-label-lateral" x="298" y="106">Required lateral</text>
+    <text class="rtp-label-sub"     x="298" y="119">exceeds grip!</text>
+
+    <!-- ===========================================
+         Car at (225, 185) rotated 45 degrees so its
+         forward (+x in local coords) aligns with the
+         track tangent (0.707, 0.707).
+         Body 28 long (x) by 14 wide (y), centered.
+         =========================================== -->
+    <g transform="rotate(45 225 185)">
+      <!-- Body -->
+      <rect class="rtp-car-body" x="211" y="178" width="28" height="14" rx="2.5" />
+      <!-- Windshield (front quarter, suggesting direction) -->
+      <rect class="rtp-window" x="229" y="180" width="6" height="10" rx="1" />
+      <!-- Tires (4 small dark rects at corners) -->
+      <rect class="rtp-tire" x="213" y="175" width="5" height="3" rx="0.5" />
+      <rect class="rtp-tire" x="213" y="192" width="5" height="3" rx="0.5" />
+      <rect class="rtp-tire" x="232" y="175" width="5" height="3" rx="0.5" />
+      <rect class="rtp-tire" x="232" y="192" width="5" height="3" rx="0.5" />
+    </g>
+
+    <!-- Bottom caption inside the panel -->
+    <line class="rtp-divider" x1="34" y1="354" x2="468" y2="354" />
+    <text class="rtp-caption" x="251" y="370" text-anchor="middle">When required lateral force outruns tire grip, the car cannot follow the corner radius —</text>
+    <text class="rtp-caption" x="251" y="382" text-anchor="middle">it skids wide along the dashed amber path. This is understeer.</text>
+  </g>
+
+  <!-- ===================================================================
+       PANEL 2 — Friction circle  x=510..706, y=38..384
+       =================================================================== -->
+  <g>
+    <rect class="rtp-cell-bg" x="510" y="38" width="196" height="346" rx="6" />
+
+    <!-- Top caption -->
+    <text class="rtp-caption" x="608" y="62" text-anchor="middle">Each tire's force budget is finite —</text>
+    <text class="rtp-caption" x="608" y="76" text-anchor="middle">it must stay inside this circle.</text>
+
+    <!-- Friction circle.  Center (608, 215), radius 78. -->
+    <circle class="rtp-circle" cx="608" cy="215" r="78" />
+
+    <!-- Cross axes (longitudinal vertical, lateral horizontal) -->
+    <line class="rtp-axis" x1="608" y1="137" x2="608" y2="293" />
+    <line class="rtp-axis" x1="530" y1="215" x2="686" y2="215" />
+
+    <!-- Origin dot -->
+    <circle class="rtp-fc-origin" cx="608" cy="215" r="2.5" />
+
+    <!-- Axis end labels (just outside the circle) -->
+    <text class="rtp-axis-label" x="608" y="129" text-anchor="middle">Accel</text>
+    <text class="rtp-axis-label" x="608" y="306" text-anchor="middle">Brake</text>
+    <text class="rtp-axis-label" x="529" y="218" text-anchor="end">Turn L</text>
+    <text class="rtp-axis-label" x="685" y="218" text-anchor="start">Turn R</text>
+
+    <!-- Saturated lateral force vector (teal): from center to right edge -->
+    <line class="rtp-fc-vec" x1="608" y1="215" x2="686" y2="215" marker-end="url(#rtp-arrow-grip)" />
+
+    <!-- Overshoot extension (amber, dashed): past the circle edge -->
+    <line class="rtp-fc-overshoot" x1="686" y1="215" x2="700" y2="215" marker-end="url(#rtp-arrow-lat)" />
+
+    <!-- Inline labels for the two segments -->
+    <text class="rtp-label-grip"    x="610" y="206">Grip</text>
+    <text class="rtp-label-lateral" x="668" y="240">Excess</text>
+
+    <!-- Bottom captions -->
+    <line class="rtp-divider" x1="528" y1="320" x2="688" y2="320" />
+    <text class="rtp-caption" x="608" y="338" text-anchor="middle">Lateral demand at the</text>
+    <text class="rtp-caption" x="608" y="352" text-anchor="middle">cornering limit. The dashed</text>
+    <text class="rtp-caption" x="608" y="366" text-anchor="middle">amber tip is the slip you</text>
+    <text class="rtp-caption" x="608" y="380" text-anchor="middle">cannot get back.</text>
+  </g>
+</svg>

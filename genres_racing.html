@@ -106,6 +106,14 @@
         E --> Q["Difficulty Scaling"]
     </div>
 
+    <figure class="svg-wrapper">
+        <img class="responsive-svg"
+             src="/images/components/racing-track-physics.svg"
+             alt="A two-panel racing-physics diagram. The left panel shows a top-down racing track with one tight right-hand corner. The track runs east from a checkered start-finish line, curves through ninety degrees at the apex, then exits going south. A red car sits at the apex of the corner, oriented southeast along the tangent. Three labeled vectors radiate from the car's center. A blue velocity arrow points southeast tangent to the path. A teal grip-max arrow points northeast perpendicular into the inside of the corner toward the curve center. An amber dashed required-lateral-force arrow points the same northeast direction but extends past the teal arrow's tip, indicating that the lateral force the corner demands exceeds the tires' grip ceiling. A dashed amber skid path continues from the car wide of the actual track, illustrating understeer. The right panel shows a friction-circle inset: one circle with a horizontal lateral axis and vertical longitudinal axis crossing at its center, axis-end labels reading Accel, Brake, Turn L, and Turn R, a teal saturated force vector running from the center to the circle's right edge, and a short dashed amber overshoot extension continuing just past the circle edge. Captions explain that each tire's force budget is finite and that exceeding it produces slip you cannot get back."
+             loading="lazy">
+        <figcaption>The cornering limit at a glance. In the left panel, velocity is tangent to the path; tire grip can resist a perpendicular (centripetal) force only up to a ceiling; and when the corner demands more than that ceiling — as the longer amber arrow shows — the tires saturate and the car drifts wide along the dashed amber skid path. The right panel distills the same idea into a friction circle: every tire has a finite force budget, and the combined longitudinal-and-lateral demand must fit inside that circle. The interactive demo lets you drive a procedural track and feel understeer and oversteer first-hand; this static diagram captures the steering/grip relationship the live demo is built on.</figcaption>
+    </figure>
+
     <h2 id="vehicle-physics-fundamentals">Vehicle Physics Fundamentals</h2>
     
     <div style="background-color: #f9f9f9; padding: 20px; border-radius: 10px; margin: 20px 0;">
@@ -137,6 +145,13 @@ grip = max_grip * sin(C * atan(B * slip_angle))
     
     <div class="canvas-wrapper" style="text-align: center;">
         <canvas id="racingCanvas" width="900" height="600" style="border: 2px solid #333; display: inline-block; background: #1a1a1a;"></canvas>
+        <figure class="canvas-fallback">
+            <img class="responsive-svg"
+                 src="/images/components/racing-track-physics.svg"
+                 alt="Top-down racing track with a car at a corner showing velocity, grip-max, and required-lateral-force vectors plus a friction-circle inset."
+                 loading="lazy">
+            <figcaption>Top-down racing track showing the car at a turn with three labeled physics vectors — velocity, grip max, and required lateral force — plus a friction-circle inset. The interactive demo lets you drive a procedural track; this diagram shows the steering/grip relationship that produces understeer when the corner demands more lateral force than the tires can deliver.</figcaption>
+        </figure>
     </div>
     
     <div style="text-align: center; margin-top: 10px;">

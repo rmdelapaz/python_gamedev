@@ -10,7 +10,7 @@
 ## Current state
 
 - Phases 1–6: ✅ done. Phase 6 = 25 SVGs shipped, **all 25 render-checked clean as of chat 24** (#25 `sound-layers.svg` was the last open render-check; passed all 5 verification points at iframe-simulated 380×820 — 5th confirmation of the chat-15 `!important` hardening for inline-display canvases). #20 `game-loop-cycle.svg` (chat 14) eyeball-discharged out-of-band by Ray between chats 23 and 24 — **no "pending eyeball" items remain on any shipped SVG.**
-- Phase 7: 🔄 11/15 lessons wired AND render-checked clean (#27 `strategy-resource-flow.svg` for `genres_strategy.html` render-checked clean chat 28 — 7th confirmation of chat-15 `!important` hardening). 4/15 deferred pending new SVGs (`genres_racing` / `genres_rpg` / `genres_tower_defense` / `polish_playtesting`).
+- Phase 7: 🔄 **13/15 lessons wired AND render-checked clean through chat 32** (SVG #29 `racing-track-physics.svg` for `genres_racing.html` was render-checked clean chat 32 — 9th `!important` hardening confirmation; getBBox re-clear timing 4.6 ms validated the chat-31 rAF-removal finding at 68× speedup). **2/15 deferred** pending new SVGs (`genres_rpg` / `genres_tower_defense`). 0 wired-but-render-pending.
 - Phases 8–9: ⏳
 
 **Two new working disciplines added chat 23 (Ray-driven, in response to 4th interrupted-artifact case):**
@@ -29,56 +29,61 @@ Full rationale and pattern recognition in `status.md` → *Phase 7 progress (cha
 
 ---
 
-## Chat 29 — IN PROGRESS — build SVG #28 for one of 4 deferred Phase 7 lessons
+## Chat 33 — IN PROGRESS — build SVG #30 for next deferred lesson
 
-**Chat 29 in progress, plan = build SVG #28 for one of `genres_racing` / `genres_rpg` / `genres_tower_defense` / `polish_playtesting`.** Stub pre-staged at chat-28 close per save-first-compounding discipline (6th consecutive chat in the chat-23 discipline streak; **4th consecutive chat where chat-N close has pre-staged the chat-N+1 IN PROGRESS section** — chat 25 first, 26 second, 27 third, this chat-28→29 fourth).
+**Chat 33 in progress, plan = build + wire next Phase 7 SVG**. Two deferred lessons remain: `genres_rpg.html` (`rpg-stats-progression.svg`) or `genres_tower_defense.html` (`tower-defense-lane.svg`). Lesson pick happens in milestone 1 (region-scoped grep + visual-language fit). **Fourth test bed for the chat-30 streaming-narrative discipline** — chat 30 render-check / chat 31 build / chat 32 render-check / chat 33 second build-chat application. **Second exercise of the chat-27 `built_unwired_chat_N` intermediate catalog status** (first was chat 31).
 
-**Chat 28 closed clean.** Render-checked SVG #27 `strategy-resource-flow.svg` in `genres_strategy.html` at iframe-simulated 380×820. **All 5 verification points pass; 7th confirmation of the chat-15 `!important` hardening** (canvas inline `display: inline-block` → computed `display: none`). getBBox re-clear reproduced chat-27 numbers exactly (34 nodes / 0 overflows / 56.34 / 23.4 / 67.58 / 11.05). Visual gate via chat-26 parent-page inline-render workaround clean. Phase 7 wired-AND-render-checked count: 10/15 → **11/15**. Deferred unchanged at 4/15. **First chat under the four chat-27 conventions** — region-scoped reads landed (status.md was `head 120` + `tail 200`); status.md chat-28 narrative ~2 KB (close to 1.5 KB target); `built_unwired_chat_N` intermediate status first exercised this chat (chat 29); slim kickoff was the first to follow the rule.
+**Chat 32 closed clean** — render-check SVG #29 `racing-track-physics.svg` in `genres_racing.html` passed all 5 verification points at iframe-simulated 380×820. **9th confirmation of the chat-15 `!important` hardening** (canvas inline `display: inline-block` AND `background: #1a1a1a` both present). getBBox re-clear: 25 text/tspan nodes, 0 overflows, all four tightest margins byte-identical to chat-31 build-time (right 5.11 / bottom 15.4 / left 21.02 / top 11.05 px). **chat-31 rAF-removal finding strongly validated** — 4.6 ms vs chat-31's 315.2 ms (68× speedup). Streaming-narrative discipline held across all 6 milestones. Phase 7 status: 12/15 → 13/15 wired-AND-render-checked clean; deferred drops to 2/15.
 
-Phase 7 status now: **11/15 wired AND render-checked clean (chat 28), 4/15 deferred pending new SVGs.**
+**Read `support/session.md` first** for the precise resume state, then `support/next-chat-prompt.md` for the chat-33 task brief. **Don't default-read this todo.md** as the resume pointer.
 
-**Read `support/session.md` first** for the precise resume state, then `support/next-chat-prompt.md` for the chat-29 task brief. **Don't default-read this todo.md** as the resume pointer.
+### Step 0 — chat-start save-first stub validation (chat-23 discipline; chat-32 close = 11th consecutive)
 
-### Step 0 — chat-start save-first stub (chat-23 discipline; chat-24/25/26/27/28 all validated)
+First action at chat 33 start is to validate the pre-stage rather than rebuild it. Chat-32 close pre-staged all four files: `session.md` (chat-33-IN-PROGRESS state with task brief + process expectations), `status.md` chat-33 placeholder section (7 build-chat sub-headers pre-staged), `todo.md` chat-33 IN PROGRESS line (this section), and `support/next-chat-prompt.md` (slim build-chat kickoff per chat-27 ~500-byte target). At chat 33 start, no overwrites should be needed — just confirmation that all four files are in chat-33 state.
 
-First tool call updates `support/session.md` with the chat-29 in-progress state. The chat-29 placeholder section in `status.md` and the chat-29 IN PROGRESS line in this `todo.md` were both **pre-staged at chat-28 close** (save-first compounding). At chat 29 start, only the `session.md` overwrite is required — chat 29 inherits a fully primed save-state. **Continue the pattern at chat-29 close** (pre-stage chat-30 stubs as part of the chat-29 closing milestone).
+### Step 1 — build SVG #30 for next deferred lesson (primary chat-33 task)
 
-### Step 1 — build SVG #28 (primary chat-29 task)
+**Streaming-narrative discipline (chat-30 added; chat-31 first build-chat test bed; chat 32 second render-check; this is the fourth overall):** after each milestone, append a short prose paragraph to the chat-33 `status.md` section *immediately*, not at chat close. Use the milestone template already pre-staged in `status.md`.
 
-Pick one of the 4 deferred Phase 7 lessons. Catalog `build_concept` sketches in `support/phase7-canvas-fallback-catalog.json`. The build pipeline now runs through the new chat-27 intermediate-status convention:
+1. **Lesson pick + markup audit.** Region-scoped reads on both deferred lessons. Per chat-31 milestone-1: RPG has 4-panel crowding risk (stats + XP bar + inventory grid + equipment slots in one viewBox); tower defense's catalog tower types (arrow/cannon/freezer) diverge from the lesson's actual roster (basic/cannon/laser/slow/bank), forcing a build_concept rewrite. Pick on visual-language fit + complexity. Confirm `.canvas-wrapper` anchor + inline canvas styles (chat-15 hardening case expected). Note any wrinkles. → Append Milestone 1 paragraph.
+2. **build_concept refinement + SVG file write → catalog flip to `built_unwired_chat_33`.** Land SVG at `images/components/<filename>.svg` (viewBox ~720×400 typical, theme-aware via `prefers-color-scheme: dark`). Catalog status flipped immediately after file write — second exercise of the chat-27 intermediate status. → Append Milestone 2 paragraph.
+3. **getBBox text-overflow pre-clear (chat-20 mandatory).** Kicked-off-then-poll. **No `requestAnimationFrame` defensive wait** — chat-31 finding settled in chat 32 (4.6 ms vs 315.2 ms). Compare timing to chat-32's 4.6 ms baseline. → Append Milestone 3 paragraph.
+4. **Lesson HTML edits + catalog finalize to `built chat 33`.** Phase 6 svg-wrapper figure inserted (chat-30 convention B placement) + canvas-fallback figure inserted inside `.canvas-wrapper` immediately after primary `<canvas>` (chat-30 prevSibIsCanvas convention). Catalog flipped `built_unwired_chat_33 → built chat 33` and `fallback_alt`/`fallback_caption` tightened. → Append Milestone 4 paragraph.
+5. **Pre-stage chat-34 stubs** (session.md + status.md placeholder with render-check sub-headers + todo.md IN PROGRESS line + slim render-check kickoff in next-chat-prompt.md, longer than build-chat kickoff per chat-27 convention). → Append Milestone 5 paragraph.
+6. **Chat close** — short wrap-up: Phase 7 status delta (13/15 → 13/15 wired-AND-render-checked unchanged; +1 wired-but-render-pending = chat-33 SVG; deferred drops to 1/15), MCP outage observations, validate-or-revise notes on the streaming-narrative discipline now applied across 4 chats.
 
-1. **Region-scoped read** the target lesson HTML — grep for `svg-wrapper` and the canvas-wrapper anchor first, then `view_range` only the mermaid-and-canvas-wrapper region. Same for the precedent lesson HTML. For the precedent SVG, read header comment + `tail 5` only unless visual-language reuse is genuinely needed. Full-file reads are deliberate escalation, not the default.
-2. Refine `build_concept` from canonical lesson terminology (button labels in the canvas demo are the source of truth).
-3. Write the SVG file (`/images/components/<name>.svg`).
-4. **Flip catalog `status` to `built_unwired_chat_29`** *immediately after* the SVG file write — first chat to exercise this intermediate status. This records the build-on-disk milestone *before* the wire/save spike (the dominant interrupted-artifact failure window).
-5. Programmatic getBBox text-overflow pre-clear (chat-20 mandatory). `fetch` SVG → `DOMParser` parse → mount in off-screen 720×400 div → walk all `<text>` and `<tspan>` with `getBBox()` → compare each edge against viewBox edges. Aim for 0 overflows; tightest margin > 0 px on all four sides.
-6. Wire Phase 6 `<figure class="svg-wrapper">` between mermaid and the relevant h2, plus `<figure class="canvas-fallback">` inside `.canvas-wrapper` as a sibling of the lesson's `<canvas>` (chat-25/27 precedent).
-7. **Flip catalog `status` from `built_unwired_chat_29` to `built chat 29`** after wiring is complete.
-8. Pre-stage chat-30 stubs (`status.md` placeholder + this `todo.md` IN PROGRESS line + `support/next-chat-prompt.md`) before chat close — 5th consecutive save-first-compounding step.
+### Step 2 (chat 34 work) — render-check the chat-33 SVG
 
-### Step 2 (chat 30 work) — render-check SVG #28
+Standard 5-verification-point render-check pipeline at iframe-simulated 380×820. 10th confirmation of the chat-15 `!important` hardening expected (assuming the chat-33 lesson is also a hardening case — every Phase 7 wire so far has been).
 
-Build-in-N / check-in-N+1 pattern. Standard 5-verification-point pattern at iframe-simulated 380×820. Visual gate via chat-26 parent-page inline-render workaround until `Claude in Chrome:computer` `zoom` action coord-system quirk is confirmed reliable.
+### Pre-build-check checklist (chat-17 through chat-32 hard-won lessons + chat-27/30 conventions + chat-31 finding settled in chat 32)
 
-### Optional deeper context (only if something here is unclear)
+1. **Read `support/session.md` first** (chat-23; validated repeatedly).
+2. **Stub `todo.md` + `status.md` writes immediately at chat start** — for chat 33, only validation needed (chat-32 close pre-staged everything including session.md).
+3. **Default to region-scoped reads** (chat-27 added; chat-31 used; chat-32 used).
+4. **Programmatic getBBox text-overflow pre-clear** as part of build (chat-20 mandatory).
+5. **`Claude in Chrome:javascript_tool` does not accept top-level `await`** — kicked-off-then-poll. **Chat-31 finding (now settled in chat 32): do NOT use defensive `requestAnimationFrame()` waits before getBBox calls** (rAF stalls on backgrounded tabs; getBBox triggers layout itself; chat-32 timing of 4.6 ms vs chat-31's 315.2 ms made the verdict overwhelming).
+6. **Stream `status.md` narrative incrementally per milestone** (chat-30 added; chat-31 first build-chat application; chat-32 second render-check application; chat-33 will be second build-chat application).
+7. **Catalog flow `needs_new_svg → built_unwired_chat_33 → built chat 33`** with the intermediate status flipped immediately after SVG file write, before lesson HTML wiring (chat-27 convention; chat-31 first exercised; this is second).
+8. **Save `todo.md` + `status.md` + `session.md` updates at every milestone**, not at chat end.
 
-This todo is intended to be self-sufficient. **Don't default-read `status.md`** — it's deep history, not required reading. Pull individual sections only on demand:
+---
 
-- *Phase 7 progress (chat 28 — SVG #27 render-check)* in `status.md` — most recent narrative; documents the 7th confirmation of the chat-15 `!important` hardening + first execution under the four chat-27 conventions.
-- *Phase 7 progress (chat 27 — SVG #27 build + recovery from mid-pipeline interruption)* in `status.md` — closest precedent for SVG #28 build (full pipeline including the recovery procedure if compaction hits mid-build).
-- *Phase 7 progress (chat 25 — SVG #26 build: puzzle-mechanics-grid.svg)* in `status.md` — closest precedent for multi-cell-grid SVG style.
-- *Conventions / things to remember* in `status.md` — durable bullets including the four chat-27 conventions.
-- Any recent `/images/components/<svg>.svg` (e.g. `strategy-resource-flow.svg`, `puzzle-mechanics-grid.svg`, `sound-layers.svg`) is a self-contained reference for visual language conventions.
+## Chat 32 — ✅ closed clean
 
-### Pre-build checklist (chat-17/18/19/20/21/22/23/24/26/27 hard-won lessons + chat-27 conventions)
+**Chat 32 closed clean** — render-check SVG #29 `racing-track-physics.svg` in `genres_racing.html` was completed at iframe-simulated 380×820. All 5 verification points passed. **9th confirmation of the chat-15 `!important` hardening** (canvas inline `style="border: 2px solid #333; display: inline-block; background: #1a1a1a;"` — BOTH `display: inline-block` AND `background: #1a1a1a` patterns present; `enhanced.css` `!important` rule wins, computed display "none"). getBBox re-clear: 25 text/tspan nodes, 0 overflows, all four tightest margins byte-identical to chat-31 build-time (right 5.11 / bottom 15.4 / left 21.02 / top 11.05 px) — confirms no SVG drift. **chat-31 rAF-removal finding strongly validated** — elapsed 4.6 ms vs chat-31's 315.2 ms (68× speedup) and chat-30's 123.8 ms (27×); rAF was the bottleneck, not the bbox walk. Settled convention going forward. Streaming-narrative discipline held across all 6 milestones (Milestone 0 / 1 / 2 / 3 / 4 / 5 + Chat close), no interruption — third consecutive clean exercise (chat 30 + 31 + 32 = 3/3). Phase 7 status delta: 12/15 → **13/15 wired-AND-render-checked clean**; 0 wired-but-render-pending; deferred drops to 2/15 (`genres_rpg` / `genres_tower_defense` remaining). Detailed walkthrough lives in `status.md` → *Phase 7 progress (chat 32 — SVG #29 render-check: `racing-track-physics.svg` in `genres_racing.html`)*.
 
-1. **Read `support/session.md` first** (chat-23 added; chat-24/25/26/27/28 validated).
-2. **Stub `todo.md` + `status.md` writes immediately at chat start** (chat-23 added). For chat 29 only the `session.md` overwrite is required because chat 28 pre-staged the chat-29 stubs.
-3. **Default to region-scoped reads** (chat-27 added; first build chat to apply it). Use `head` / `tail` / `view_range` for lesson HTML, precedent lesson HTML, and precedent SVG. Full-file reads are deliberate escalation, not the default. The chat-28 read pattern (`status.md` was `head 120` + `tail 200`) is a working precedent.
-4. **Catalog status flow: `needs_new_svg` → `built_unwired_chat_29` → `built chat 29`** (chat-27 added; first build chat to exercise the intermediate status). Flip to `built_unwired_chat_29` *immediately after* SVG file write; flip to `built chat 29` *after* wiring is complete.
-5. **Programmatic getBBox text-overflow pre-clear is mandatory** before declaring the build done (chat-20 addition; reinforced through chat-28).
-6. **`Claude in Chrome:javascript_tool` does not accept top-level `await`** — kicked-off-then-poll pattern (chat-27 discovery; chat-28 reused uniformly across 3 async scripts).
-7. **Save `todo.md` + `status.md` + `session.md` updates at every milestone**, not at chat end.
+---
+
+## Chat 31 — ✅ closed clean
+
+**Chat 31 closed clean** — built and wired SVG #29 `racing-track-physics.svg` for `genres_racing.html` in one build chat (deferred → wired). Two-panel diagram: top-down track view with car-at-apex showing 3 labeled vectors (velocity / grip max / required lateral) plus a dashed skid path; friction-circle inset with cross axes and a saturated-plus-overshoot vector pair geometrically tied to panel 1. **First genuine exercise of the chat-27 `built_unwired_chat_N` intermediate catalog status** — flow `needs_new_svg → built_unwired_chat_31 → built chat 31` ran end-to-end with the SVG-on-disk-then-flip step happening before wiring. **First build-chat application of the chat-30 streaming-narrative discipline** — 5 milestone paragraphs appended incrementally to `status.md`, no interruption. getBBox pre-clear caught 1 overflow ("Turn R" axis label by 0.89 px); fixed via 2-edit symmetric label shift; re-run clean (0 overflows, tightest right margin 5.11 px). New chat-31 finding: do NOT use defensive `requestAnimationFrame()` waits before getBBox (rAF stalls on backgrounded tabs; getBBox triggers layout itself). Phase 7 status delta: 12/15 wired-AND-render-checked unchanged; +1 wired-but-render-pending = chat-31 SVG; deferred drops to 2/15. Detailed walkthrough lives in `status.md` → *Phase 7 progress (chat 31 — SVG #29 build: `racing-track-physics.svg` for `genres_racing.html`)*.
+
+---
+
+## Chat 30 — ✅ closed clean
+
+**Chat 30 closed clean** — render-check SVG #28 `playtesting-feedback-loop.svg` in `polish_playtesting.html` was completed at iframe-simulated 380×820. All 5 verification points passed; 8th confirmation of the chat-15 `!important` hardening; chat-30 streaming-narrative discipline successfully exercised end-to-end (6 milestone paragraphs appended incrementally to `status.md` as each step completed; chat-close write was just a short wrap-up). Phase 7 wired-AND-render-checked count went from 11/15 to 12/15. Deferred unchanged at 3/15 (`genres_racing` / `genres_rpg` / `genres_tower_defense`). Detailed walkthrough lives in `status.md` → *Phase 7 progress (chat 30 — SVG #28 render-check)*.
 
 ---
 

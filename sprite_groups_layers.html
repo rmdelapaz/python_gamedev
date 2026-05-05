@@ -1314,19 +1314,90 @@ if __name__ == "__main__":
             <h2 id="practice-exercise-build-sprite-groups-layers">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Wave Defender — Layered Draw + One-Line groupcollide Cleanup</h3>
+                <p><strong>Objective:</strong> Build a tiny shooter that exercises three of this lesson's pillar patterns in one ~50-line program: (1) <code>pygame.sprite.LayeredUpdates</code> with the <code>_layer</code> attribute set <em>before</em> add so a single <code>all_sprites.draw(screen)</code> call renders background → enemies/player → bullets in the right depth order; (2) one <code>pygame.sprite.groupcollide(bullets, enemies, True, True)</code> call per frame that handles <em>every</em> bullet-vs-enemy hit and removes the colliding sprites from <em>every</em> group they joined — replacing a nested for-loop and a per-sprite cleanup pass with one line; (3) the multi-group <code>kill()</code> property — every Bullet is added to BOTH <code>bullets</code> AND <code>all_sprites</code>, but the <code>True</code> dokill flags trigger <code>kill()</code> internally, which removes the bullet from <em>both</em> groups at once.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Subclass <code>pygame.sprite.Sprite</code> three times: <strong>Player</strong> (30×30 cyan square at the bottom-center, moves left/right with arrow keys via <code>pygame.key.get_pressed()</code> and <code>rect.clamp_ip(SCREEN.get_rect())</code>), <strong>Enemy</strong> (25×25 red square spawning at <code>y = 0</code> at a random x with <code>self.rect.y += 2</code> per frame), and <strong>Bullet</strong> (6×16 yellow rect with <code>self.rect.y -= 8</code> per frame, <code>self.kill()</code> when <code>self.rect.bottom &lt; 0</code>).</li>
+                    <li>Set <code>self._layer</code> in each sprite's <code>__init__</code> <em>before</em> any group adds: <code>0</code> for a single dark-gray <strong>Background</strong> sprite that fills the screen, <code>2</code> for Player and Enemy, <code>3</code> for Bullet. <strong>Order matters</strong> — <code>LayeredUpdates</code> reads <code>_layer</code> at add-time.</li>
+                    <li>Create one <code>all_sprites = pygame.sprite.LayeredUpdates()</code> for rendering AND two plain <code>pygame.sprite.Group()</code>s named <code>enemies</code> and <code>bullets</code> for collision targeting. Add each Enemy to BOTH <code>enemies</code> and <code>all_sprites</code>; add each Bullet to BOTH <code>bullets</code> and <code>all_sprites</code>.</li>
+                    <li>Use a 1-second <code>pygame.time.set_timer(USEREVENT + 1, 1000)</code> tick to spawn enemies. On <code>KEYDOWN</code> with <code>K_SPACE</code>, spawn a Bullet at the player's <code>rect.midtop</code> and add it to both groups.</li>
+                    <li>Once per frame, call <code>pygame.sprite.groupcollide(bullets, enemies, True, True)</code> — that single line walks every bullet × enemy pair, kills each colliding sprite from every group it joined, and returns a dict you don't need to read.</li>
+                    <li>Render with <code>screen.fill((20, 20, 30))</code> then <code>all_sprites.draw(screen)</code> — verify Bullets render <em>above</em> Enemies (layer 3 &gt; layer 2) and the gray Background sits beneath both.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p><code>pygame.sprite.groupcollide(g1, g2, dokill1, dokill2)</code> returns a <code>dict</code> mapping each colliding sprite from <code>g1</code> to the list of sprites from <code>g2</code> it hit — but you don't need that return value here. The two <code>True</code> flags trigger <code>kill()</code> on every colliding sprite as a side effect, which is what removes them from <em>every</em> group they joined (because that's what <code>kill()</code> does — it walks the sprite's internal group list and removes from each). That's the whole point: one line does what would otherwise take a nested loop, a hit list, and a separate cleanup pass.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame, random
+pygame.init()
+SCREEN = pygame.display.set_mode((480, 600))
+clock = pygame.time.Clock()
+
+class Background(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self._layer = 0  # set BEFORE add
+        self.image = pygame.Surface((480, 600)); self.image.fill((40, 40, 55))
+        self.rect = self.image.get_rect()
+
+class Player(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self._layer = 2
+        self.image = pygame.Surface((30, 30)); self.image.fill((100, 220, 230))
+        self.rect = self.image.get_rect(midbottom=(240, 580))
+    def update(self, dt):
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT]:  self.rect.x -= 5
+        if keys[pygame.K_RIGHT]: self.rect.x += 5
+        self.rect.clamp_ip(SCREEN.get_rect())
+
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self._layer = 2
+        self.image = pygame.Surface((25, 25)); self.image.fill((230, 80, 80))
+        self.rect = self.image.get_rect(topleft=(random.randint(0, 455), 0))
+    def update(self, dt): self.rect.y += 2
+
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self, pos):
+        super().__init__()
+        self._layer = 3  # above enemies AND player
+        self.image = pygame.Surface((6, 16)); self.image.fill((255, 230, 60))
+        self.rect = self.image.get_rect(midbottom=pos)
+    def update(self, dt):
+        self.rect.y -= 8
+        if self.rect.bottom &lt; 0: self.kill()
+
+all_sprites = pygame.sprite.LayeredUpdates()
+enemies = pygame.sprite.Group()
+bullets = pygame.sprite.Group()
+
+all_sprites.add(Background())
+player = Player(); all_sprites.add(player)
+SPAWN = pygame.USEREVENT + 1
+pygame.time.set_timer(SPAWN, 1000)
+
+running = True
+while running:
+    dt = clock.tick(60)
+    for ev in pygame.event.get():
+        if ev.type == pygame.QUIT: running = False
+        elif ev.type == SPAWN:
+            e = Enemy(); enemies.add(e); all_sprites.add(e)
+        elif ev.type == pygame.KEYDOWN and ev.key == pygame.K_SPACE:
+            b = Bullet(player.rect.midtop)
+            bullets.add(b); all_sprites.add(b)
+    all_sprites.update(dt)
+    pygame.sprite.groupcollide(bullets, enemies, True, True)  # one-line cleanup
+    SCREEN.fill((20, 20, 30))
+    all_sprites.draw(SCREEN)  # layered draw: bg → enemies/player → bullets
+    pygame.display.flip()
+pygame.quit()</code></pre>
                 </details>
             </div>
 
@@ -1334,31 +1405,31 @@ if __name__ == "__main__":
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> You add three sprites to a <code>pygame.sprite.LayeredUpdates()</code> group with <code>_layer</code> values of <code>0</code> (background), <code>2</code> (player), and <code>3</code> (bullet). When you call <code>all_sprites.draw(screen)</code>, which sprite ends up visually on top, and what determines that?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="LayeredUpdates is specifically NOT FIFO — that's plain Group's behavior. The whole point of LayeredUpdates is to override insertion order with an explicit per-sprite layer attribute.">A) The last sprite added — LayeredUpdates draws in insertion (FIFO) order, so the most recently added sprite paints on top.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Correct. LayeredUpdates sorts sprites by their _layer attribute and draws lowest first, highest last — so layer 3 (bullet) paints on top of layer 2 (player), which paints on top of layer 0 (background). _layer must be set on the sprite BEFORE it's added (or via change_layer() afterward), since the group reads it at add-time. This is exactly what makes the lesson's 'background → game objects → effects → UI' rendering pattern work with a single all_sprites.draw() call.">B) The bullet — LayeredUpdates draws sprites lowest <code>_layer</code> first and highest last, so layer 3 (bullet) paints over layer 2 (player) which paints over layer 0 (background).</button>
+                        <button class="quiz-option" data-correct="false" data-hint="There is no Z-axis in 2D Pygame surfaces. Depth is purely a draw-order convention controlled by the group type — plain Group is FIFO, LayeredUpdates sorts by _layer.">C) Whichever sprite has the largest <code>rect</code> — Pygame uses the rect area as a proxy Z-depth.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> You have <code>bullets</code> and <code>enemies</code> Groups and want every bullet that hits any enemy to vanish, every hit enemy to vanish, AND a record of which-bullet-hit-which-enemies for scoring. Which single Pygame call does all three?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Correct. groupcollide(g1, g2, dokill1, dokill2) walks the cross-product of g1 × g2, calls .kill() on every colliding sprite (which removes it from EVERY group it joined — exactly why adding bullets to both `bullets` and `all_sprites` is safe), and returns a dict mapping each colliding g1-sprite → list of g2-sprites it hit. The lesson's 'for bullet, enemy_list in hits.items(): score += enemy.points' pattern uses that return value for exactly this scoring case.">A) <code>pygame.sprite.groupcollide(bullets, enemies, True, True)</code> — returns a <code>dict</code> mapping each colliding bullet to the list of enemies it hit, and the <code>True</code> flags trigger <code>kill()</code> on every colliding sprite as a side effect.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="spritecollide takes a single sprite vs a group — it can't walk a group × group cross-product directly. You'd have to wrap it in a 'for bullet in bullets:' loop, which is exactly the nested-loop pattern groupcollide replaces.">B) <code>pygame.sprite.spritecollide(bullets, enemies, True)</code> — returns a list of every collision pair.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="There is no `bullets.collide(...)` method on Group. Group-vs-Group collision lives in the `pygame.sprite.groupcollide` module-level function, not as a method on Group instances.">C) <code>bullets.collide(enemies, kill_both=True)</code> — returns a bool indicating whether any pair collided.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> You add an enemy sprite to BOTH <code>enemies</code> (a plain Group, used for collision detection) AND <code>all_sprites</code> (a LayeredUpdates, used for rendering). The bullet hits it and you call <code>enemy.kill()</code>. What happens?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="kill() doesn't track 'most recent' — pygame.sprite.Sprite keeps an internal list of every group it's been added to (accessible via Sprite.groups()), and kill() walks that whole list. Otherwise the lesson's 'add to multiple groups' pattern would leak rendered-but-dead sprites everywhere.">A) The enemy is removed only from <code>enemies</code> (the most recently used group); it still appears in <code>all_sprites</code> and continues to be drawn until you manually call <code>all_sprites.remove(enemy)</code>.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="kill() does not modify the sprite's image or rect — those are still valid Surface and Rect objects after the call. It only removes the sprite from groups; the Python object itself stays alive in memory until nothing references it (typically the next garbage-collection pass after the local variable goes out of scope).">B) The enemy's <code>image</code> is set to <code>None</code> and its <code>rect</code> is zeroed, but it remains a member of every group; you have to clean up groups separately.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Correct. Sprite.kill() walks the sprite's internal list of groups it belongs to and removes itself from EVERY one in a single call — that's exactly why the lesson's 'add the same sprite to multiple groups' pattern is safe to use freely. Adding an enemy to `enemies` (for collision) AND `all_sprites` (for rendering) costs one .add() per group on the way in, and exactly one .kill() on the way out — pygame handles the rest. This is also what `groupcollide(..., dokill2=True)` triggers internally for every colliding sprite.">C) The enemy is removed from <em>every</em> group it was a member of in one call — both <code>enemies</code> and <code>all_sprites</code> — because <code>kill()</code> walks the sprite's internal group list.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

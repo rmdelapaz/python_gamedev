@@ -1073,22 +1073,121 @@ def fast_normalize(x, y):
 
 
         <section class="lesson-section">
-            <h2 id="practice-exercise-build-game-mathematics-vectors">🏋️‍♂️ Practice Exercise</h2>
+            <h2 id="practice-exercise-build-game-mathematics-vectors">🏋️‍♂️ Practice Exercise: Predator and Prey — Normalize, Dot, and Squared Distance</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Three Vector-Math Pillars in One Chase Loop</h3>
+                <p><strong>Objective:</strong> Build a small Pygame chase demo that exercises three pillar vector patterns from this lesson in one program: (1) <strong>normalize for constant speed</strong> &mdash; three predator enemies seek the WASD-controlled prey by computing <code>direction = prey_pos - enemy_pos</code>, NORMALIZING to a unit vector, then scaling by max_speed to get a velocity that doesn't depend on distance &mdash; without the normalize, distant predators rocket toward you while close ones crawl, the lesson's <code>move_towards_target</code> / <code>Enemy.update</code> pattern; (2) <strong>dot product as vision check</strong> &mdash; each predator has a facing unit vector (its current movement direction) and 'sees' the prey only when <code>(prey_pos - enemy_pos).dot(facing) &gt; 0</code> (target in the front 180° hemisphere); predators with the prey behind them turn yellow and wander randomly instead of chasing, exactly the lesson's <code>is_in_front</code> function; (3) <strong>squared distance for catch detection</strong> &mdash; collision-with-prey uses <code>dx*dx + dy*dy &lt; CATCH_R * CATCH_R</code> instead of <code>math.sqrt(dx*dx + dy*dy) &lt; CATCH_R</code>, the lesson's Performance Tips rule 'Use Squared Distance: Avoid sqrt when just comparing distances' &mdash; same correctness, 5–20× faster per check.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Open an 800×600 window and start a clean game loop with <code>dt = clock.tick(60) / 1000.0</code>.</li>
+                    <li>Plain 2-element lists or tuples for vectors are fine for this demo; define small <code>normalize(v)</code> and <code>dot(a, b)</code> helpers (the lesson teaches a Vector2 class but raw lists with explicit math also exercise the same concepts).</li>
+                    <li>Player (prey): position vector starting at center, controlled by WASD via <code>pygame.key.get_pressed()</code>. Build a movement vector from the keys, NORMALIZE it (so diagonals don't move √2 faster than cardinals — same normalize-for-consistent-speed rule), scale by 200 px/sec, and apply over <code>dt</code>.</li>
+                    <li>Predators (3 of them): each has <code>pos</code>, a <code>facing</code> unit vector starting at <code>(1, 0)</code>, and a <code>wander_timer</code>. Each frame compute <code>to_prey = prey_pos - pos</code> then <code>d = dot(to_prey, facing)</code> to decide vision.</li>
+                    <li>If <code>d &gt; 0</code> (prey in front 180° hemisphere): chase by computing <code>direction = normalize(to_prey)</code> then <code>vel = direction * MAX_SPEED</code> &mdash; canonical normalize-then-scale. Update <code>facing = direction</code> so vision-check uses the latest direction next frame. Render predator in red.</li>
+                    <li>If <code>d &lt;= 0</code> (prey behind or perpendicular): wander randomly. Tick <code>wander_timer</code> down; when it hits zero, roll a new random <code>facing</code> via <code>random.uniform(0, 2*pi)</code> then <code>(cos, sin)</code> and reset the timer. Render predator in yellow as a 'blind' indicator.</li>
+                    <li>Catch detection: every frame, for each predator compute <code>dx = predator.pos[0] - prey[0]</code> and <code>dy = predator.pos[1] - prey[1]</code>, then check <code>dx*dx + dy*dy &lt; CATCH_R * CATCH_R</code> with <code>CATCH_R = 25</code>. NO <code>math.sqrt</code> call. If caught, reset prey to center and increment a counter.</li>
+                    <li>Render a facing-line from each predator (length 30 px) so the front-vs-behind classification is visible — when the prey is on the long side of the line, predator is red and chasing; on the short side, predator is yellow and wandering blindly.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>Three traps: (1) Forgetting to normalize before scaling. <code>vel = (prey - enemy) * MAX_SPEED * dt</code> (no normalize) gives a chase speed PROPORTIONAL to distance &mdash; far ones rocket in, close ones crawl. <code>.normalize()</code> extracts pure direction (unit vector); multiplying that by <code>MAX_SPEED</code> gives a velocity whose magnitude is exactly <code>MAX_SPEED</code> regardless of how far the prey is. (2) The dot-product vision check works WITHOUT normalizing <code>to_prey</code> because we only care about the SIGN, not the value &mdash; <code>(non-unit a).dot(b) &gt; 0</code> and <code>a.normalize().dot(b) &gt; 0</code> always agree, since normalize only scales by a positive number (the magnitude), and that can't flip a sign. The lesson's <code>is_in_front</code> deliberately skips the normalize for this reason. (3) For squared-distance comparisons, square the THRESHOLD too: <code>dx*dx + dy*dy &lt; CATCH_R * CATCH_R</code>, NOT <code>&lt; CATCH_R</code>. Forgetting the squared threshold gives a much smaller effective radius (CATCH_R = 25 → effective radius ≈ 5).</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame, math, random
+
+pygame.init()
+WIDTH, HEIGHT = 800, 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Predator and Prey")
+font = pygame.font.SysFont(None, 22)
+clock = pygame.time.Clock()
+
+PLAYER_SPEED = 200
+PRED_SPEED = 140
+CATCH_R = 25
+CATCH_R_SQ = CATCH_R * CATCH_R                  # square once, reuse forever
+
+prey = [WIDTH / 2, HEIGHT / 2]
+predators = []
+for _ in range(3):
+    predators.append({
+        "pos": [random.uniform(60, WIDTH - 60), random.uniform(60, HEIGHT - 60)],
+        "facing": [1.0, 0.0],
+        "wander_t": 0.0,
+        "seeing": False,
+    })
+catches = 0
+
+def normalize(v):
+    m = math.hypot(v[0], v[1])
+    return [v[0] / m, v[1] / m] if m else [0.0, 0.0]
+
+def dot(a, b):
+    return a[0] * b[0] + a[1] * b[1]
+
+running = True
+while running:
+    dt = clock.tick(60) / 1000.0
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    # --- prey input ---
+    keys = pygame.key.get_pressed()
+    move = [0.0, 0.0]
+    if keys[pygame.K_w]: move[1] -= 1
+    if keys[pygame.K_s]: move[1] += 1
+    if keys[pygame.K_a]: move[0] -= 1
+    if keys[pygame.K_d]: move[0] += 1
+    if move != [0.0, 0.0]:
+        move = normalize(move)                  # diagonals don't go √2 faster
+        prey[0] += move[0] * PLAYER_SPEED * dt
+        prey[1] += move[1] * PLAYER_SPEED * dt
+
+    # --- predators ---
+    for p in predators:
+        to_prey = [prey[0] - p["pos"][0], prey[1] - p["pos"][1]]
+        # Vision: dot-product SIGN tells front (&gt;0) vs behind (&lt;=0).
+        # to_prey doesn't need to be normalized — magnitude can't flip a sign.
+        p["seeing"] = dot(to_prey, p["facing"]) &gt; 0
+        if p["seeing"]:
+            direction = normalize(to_prey)      # unit vector — strips distance
+            p["pos"][0] += direction[0] * PRED_SPEED * dt
+            p["pos"][1] += direction[1] * PRED_SPEED * dt
+            p["facing"] = direction             # facing tracks current chase
+        else:
+            p["wander_t"] -= dt
+            if p["wander_t"] &lt;= 0:
+                a = random.uniform(0, 2 * math.pi)
+                p["facing"] = [math.cos(a), math.sin(a)]
+                p["wander_t"] = random.uniform(0.5, 1.5)
+            p["pos"][0] += p["facing"][0] * (PRED_SPEED * 0.4) * dt
+            p["pos"][1] += p["facing"][1] * (PRED_SPEED * 0.4) * dt
+
+        # Catch detection — squared distance, NO sqrt.
+        dx = p["pos"][0] - prey[0]
+        dy = p["pos"][1] - prey[1]
+        if dx * dx + dy * dy &lt; CATCH_R_SQ:
+            prey[0], prey[1] = WIDTH / 2, HEIGHT / 2
+            catches += 1
+
+    # --- draw ---
+    screen.fill((20, 25, 35))
+    pygame.draw.circle(screen, (60, 180, 240), (int(prey[0]), int(prey[1])), 14)
+    for p in predators:
+        color = (220, 60, 60) if p["seeing"] else (220, 200, 60)
+        pygame.draw.circle(screen, color, (int(p["pos"][0]), int(p["pos"][1])), 12)
+        tip = (p["pos"][0] + p["facing"][0] * 30, p["pos"][1] + p["facing"][1] * 30)
+        pygame.draw.line(screen, color, p["pos"], tip, 2)
+    hud = font.render(
+        f"Catches: {catches}    Red = chasing (sees you), Yellow = wandering",
+        True, (240, 240, 240))
+    screen.blit(hud, (10, 10))
+    pygame.display.flip()
+
+pygame.quit()</code></pre>
                 </details>
             </div>
 
@@ -1096,31 +1195,31 @@ def fast_normalize(x, y):
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> An enemy chases the player with <code>velocity = (player_pos - enemy_pos) * 0.05</code>. The enemy crawls when close to the player but rockets when far away. What's the canonical fix?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Just bumping the multiplier doesn't fix the underlying bug — the speed is still PROPORTIONAL to distance. A larger multiplier makes the close-up crawl faster AND the long-distance rocket even faster. The relative speed-with-distance behavior is what needs to be flattened, not the overall scale.">A) Increase the multiplier from 0.05 to a larger value like 0.5.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="(player_pos - enemy_pos) returns a vector whose MAGNITUDE encodes the distance to the player. Multiplying that vector by a scalar gives a velocity proportional to distance — not constant. The fix is the lesson's move_towards_target / Enemy.update pattern: NORMALIZE the direction vector first to get a unit vector (length 1, pure direction, distance information stripped), then scale by the desired speed. velocity = (player_pos - enemy_pos).normalize() * speed gives a velocity with magnitude exactly `speed` regardless of how far the player is. Lesson's Key Takeaway 'Normalization gives pure direction (length 1)' lands here.">B) Normalize the direction vector first, then scale by the desired speed: velocity = (player_pos - enemy_pos).normalize() * speed.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="The subtraction order is correct as written. (player_pos - enemy_pos) gives a vector pointing FROM enemy TO player, which is what the enemy wants for chase. Swapping to (enemy_pos - player_pos) would point the opposite direction and the enemy would flee instead of chase. The bug is the missing normalization, not the subtraction order.">C) Swap the subtraction order to (enemy_pos - player_pos) so the direction is correct.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> An observer at position O has facing direction F (a unit vector pointing where it's looking). The lesson uses <code>(T - O).dot(F) &gt; 0</code> to check if a target T is in the front 180° hemisphere. What does the SIGN of the dot product tell us, and why does the check work even when (T - O) is NOT a unit vector?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="The dot product magnitude is NOT directly an angle in degrees. Dot product = |a| * |b| * cos(angle), so when both vectors are unit length the dot product equals cos(angle) — which ranges from −1 to +1, not 0 to 360. To get the actual angle in radians you'd need math.acos() on the normalized dot product, exactly what the lesson's angle_between() helper does.">A) The magnitude of the dot product directly gives the angle in degrees between F and (T − O).</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="The SIGN of the dot product reflects the cosine of the angle between the two vectors: cos(angle &lt; 90°) &gt; 0 (target in front, same hemisphere as facing); cos(90°) = 0 (target exactly perpendicular, at the side); cos(angle &gt; 90°) &lt; 0 (target behind, opposite hemisphere). This holds REGARDLESS of either vector's magnitude — only the sign matters for the hemisphere check. The lesson's is_in_front skips normalizing to_target precisely for this reason: normalization scales by a positive number (the magnitude), and a positive scalar can never flip the sign of a real number. So (raw to_target).dot(F) and (normalized to_target).dot(F) always agree on the sign, which is the only thing the check cares about. The math saves an unnecessary sqrt + division per frame.">B) Positive = target in front 180° hemisphere; zero = exactly perpendicular (90°); negative = target behind. Magnitude doesn't change the sign — normalization scales by a positive number so it can't flip the sign — so the sign-based check works on raw (T − O) without an extra normalize.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Dot product works for any vector lengths — the formula a·b = ax*bx + ay*by is well-defined regardless of whether either input is unit length. The lesson's is_in_front uses a non-unit to_target deliberately, and that's not a bug. Normalizing matters when you want the dot product VALUE to equal cos(angle) (e.g. for the angle_between helper), but for sign-based front/behind classification it's wasted work.">C) The dot product only gives meaningful results when both vectors are unit-length; the formula breaks otherwise.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> The lesson's Performance Tips include 'Use Squared Distance: Avoid sqrt when just comparing distances.' Why is <code>dx*dx + dy*dy &lt; 30*30</code> faster than <code>math.sqrt(dx*dx + dy*dy) &lt; 30</code>, and is it equally correct?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Both forms give the SAME boolean result for any non-negative dx, dy — comparing distances and comparing squared distances against squared thresholds always agree on which side of the threshold a point falls on. The squared form is not 'mathematically more accurate'; it's just faster. Both are equally correct for boolean range checks.">A) Squared distance is mathematically more accurate; the sqrt version drifts by floating-point error in a way that affects correctness.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="math.sqrt is one of the more expensive scalar operations on a CPU — typically 5–20× slower than a multiply-and-add depending on the architecture and pipeline. Skipping it makes every range check that much faster, which adds up dramatically in physics simulations, AI vision checks, particle systems, and anywhere the same check runs hundreds of times per frame. Correctness is preserved because squaring is monotonic on non-negative numbers: for any non-negative a and b, a &lt; b is true if and only if a² &lt; b² is true. Just remember to square the THRESHOLD too: dist_sq &lt; radius_sq, NOT dist_sq &lt; radius. The most common bug introducing this optimization is forgetting to square the threshold, which gives a much smaller effective radius (radius 30 → effective radius √30 ≈ 5.5).">B) math.sqrt is a comparatively expensive operation (5–20× slower than multiply-and-add); both forms give the same boolean result because squaring is monotonic on non-negative numbers — squared distance vs squared threshold gives the same comparison answer. Just remember to square the threshold too.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Distance is always non-negative — math.sqrt of a non-negative number is real and non-negative. There's no negative-distance case to handle. The optimization is purely about performance: same correctness, less work per check.">C) Squared distance handles negative-distance edge cases that the sqrt version mishandles.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

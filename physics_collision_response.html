@@ -1376,22 +1376,103 @@ if __name__ == "__main__":
 
 
         <section class="lesson-section">
-            <h2 id="practice-exercise-build-physics-collision-response">🏋️‍♂️ Practice Exercise</h2>
+            <h2 id="practice-exercise-build-physics-collision-response">🏋️‍♂️ Practice Exercise: Cushion-Bounce Billiards</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: One Reflection Formula, Four Walls</h3>
+                <p><strong>Objective:</strong> Build a Pygame demo where a single ball bounces around inside a rectangular play area using the <strong>vector reflection formula</strong> from chat-43 vectors lesson: <code>R = I &minus; 2(I&middot;N)N</code>, where <code>I</code> is the incident velocity vector and <code>N</code> is the wall's inward-pointing unit normal. Instead of the convenient-but-narrow shortcut <code>velocity.x *= -1</code> (which only works for axis-aligned walls), the dot-product reflection generalizes to arbitrary wall angles — the lesson's pool-table cushion bounces, polygon-wall collisions, and rotated bumper geometry all use this exact formula. To prove generalization, the demo includes a single 45° tilted bumper at the center of the play area: same formula, different N — <code>N = Vector2(sin(45°), -cos(45°))</code>. Restitution is applied as a post-reflection magnitude scale: <code>v_after = e * reflected</code>. This directly exercises the chat-43 vectors lesson's normalize-and-dot-product patterns (the formula needs N to be a unit vector for the algebra to cancel correctly, and <code>I&middot;N</code> is the same dot-product Q2 from chat-43 vectors quiz tested as the front/behind classifier).</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Reuse <code>PhysicsObject</code>: <code>position</code>, <code>velocity</code> (both <code>Vector2</code>), and <code>radius</code>; set <code>RESTITUTION = 0.95</code> for a near-elastic billiard feel.</li>
+                    <li>Define four wall normals as INWARD-pointing unit vectors (pointing into the play area): top <code>N = (0, 1)</code>, bottom <code>N = (0, -1)</code>, left <code>N = (1, 0)</code>, right <code>N = (-1, 0)</code> — Pygame Y grows down so 'down' is +y per chat-44 M2.</li>
+                    <li>Write a <code>reflect(I, N)</code> helper: <code>return I - 2 * I.dot(N) * N</code> — the chat-43 vectors lesson's formula verbatim, expressed in <code>pygame.math.Vector2</code> arithmetic.</li>
+                    <li>Each frame, integrate <code>position += velocity * dt</code>; then check each wall: if the ball is past the wall AND moving INTO the wall (Best Practice 'Check Velocity: Don't resolve if objects are already separating' — use <code>velocity.dot(N) &lt; 0</code> as the gate), reflect via the helper and scale by RESTITUTION.</li>
+                    <li>Add a 45° tilted bumper at center: a small filled triangle (just for display) plus a <code>BUMPER_N = Vector2(sin(π/4), -cos(π/4)).normalize()</code> wall normal. If <code>(ball.position - bumper_position).dot(BUMPER_N) &lt; ball.radius</code> AND <code>velocity.dot(BUMPER_N) &lt; 0</code>, the ball is inside the bumper's surface AND approaching — reflect with the same helper.</li>
+                    <li>Best Practice 'Separate First': after reflecting, push the ball back outside the wall by setting <code>position</code> just inside the playable region so the next frame doesn't re-trigger the same collision (the chat-44 M2 floor-clamp pattern, generalized).</li>
+                    <li>Spawn the ball with an initial diagonal velocity (e.g. <code>Vector2(280, -180)</code>) so all four walls and the bumper get hit within a few seconds.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>Three subtleties worth pre-stating: (a) the reflection formula <em>requires</em> N to be a unit vector — <code>I.dot(N)</code> measures the component of I along N, and <code>2 * (I&middot;N) * N</code> only cancels the perpendicular-to-wall component cleanly when N has length 1. The four axis-aligned walls satisfy this trivially, but the 45° bumper needs an explicit <code>.normalize()</code> call. (b) The 'don't resolve if separating' gate (<code>velocity.dot(N) &lt; 0</code>) prevents a classic pinball glitch where if the ball penetrates a wall by 1 px and the post-reflection velocity is small, the next frame's penetration check would re-fire the reflection AGAIN even though the ball is now moving AWAY — each redundant fire would push the ball BACK into the wall, trapping it in jitter. (c) For a perfectly horizontal floor (<code>N = (0, -1)</code>), the reflection formula reduces algebraically to <code>velocity.y *= -1</code> exactly, which is why chat-44 M2's gravity demo could use that simpler form — they're not different formulas, the simple one is a special case.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame
+import math
+from pygame.math import Vector2
+
+pygame.init()
+W, H = 600, 400
+RESTITUTION = 0.95
+RADIUS = 12
+screen = pygame.display.set_mode((W, H))
+pygame.display.set_caption("Cushion-Bounce Billiards")
+clock = pygame.time.Clock()
+font = pygame.font.SysFont(None, 20)
+
+def reflect(I, N):
+    """Vector reflection formula from chat-43 vectors lesson:
+       R = I - 2 * (I . N) * N    (N must be a unit vector)"""
+    return I - 2 * I.dot(N) * N
+
+# Wall normals point INWARD (into the play area)
+WALLS = [
+    ("top",    Vector2(0,  1), lambda b: b.position.y - RADIUS &lt; 0),
+    ("bottom", Vector2(0, -1), lambda b: b.position.y + RADIUS &gt; H),
+    ("left",   Vector2( 1, 0), lambda b: b.position.x - RADIUS &lt; 0),
+    ("right",  Vector2(-1, 0), lambda b: b.position.x + RADIUS &gt; W),
+]
+# 45-degree tilted bumper at center
+BUMPER_POS = Vector2(W // 2, H // 2)
+BUMPER_N = Vector2(math.sin(math.pi/4), -math.cos(math.pi/4)).normalize()
+BUMPER_R = 22
+
+class Ball:
+    def __init__(self):
+        self.position = Vector2(80, 80)
+        self.velocity = Vector2(280, -180)
+        self.bounces = 0
+
+    def update(self, dt):
+        self.position += self.velocity * dt
+        # Four walls
+        for name, N, hit in WALLS:
+            if hit(self) and self.velocity.dot(N) &lt; 0:
+                self.velocity = reflect(self.velocity, N) * RESTITUTION
+                # Best Practice 'Separate First': clamp position back inside
+                self.position.x = max(RADIUS, min(W - RADIUS, self.position.x))
+                self.position.y = max(RADIUS, min(H - RADIUS, self.position.y))
+                self.bounces += 1
+        # 45-degree bumper
+        offset = self.position - BUMPER_POS
+        if offset.dot(BUMPER_N) &lt; RADIUS and offset.length() &lt; BUMPER_R + RADIUS:
+            if self.velocity.dot(BUMPER_N) &lt; 0:
+                self.velocity = reflect(self.velocity, BUMPER_N) * RESTITUTION
+                # Push out along normal so next frame doesn't re-fire
+                self.position += BUMPER_N * (RADIUS - offset.dot(BUMPER_N))
+                self.bounces += 1
+
+ball = Ball()
+running = True
+while running:
+    dt = clock.tick(60) / 1000.0
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+    ball.update(dt)
+    screen.fill((20, 20, 30))
+    # Draw 45-degree bumper as a small triangle perpendicular to its normal
+    perp = Vector2(-BUMPER_N.y, BUMPER_N.x) * BUMPER_R
+    pygame.draw.polygon(screen, (255, 200, 80), [
+        (BUMPER_POS - perp), (BUMPER_POS + perp),
+        (BUMPER_POS + BUMPER_N * 8)])
+    pygame.draw.circle(screen, (100, 200, 255),
+                       (int(ball.position.x), int(ball.position.y)), RADIUS)
+    hud = font.render(f"bounces={ball.bounces}  |v|={ball.velocity.length():.0f}",
+                      True, (255, 255, 255))
+    screen.blit(hud, (10, 10))
+    pygame.display.flip()
+pygame.quit()</code></pre>
                 </details>
             </div>
 
@@ -1399,31 +1480,31 @@ if __name__ == "__main__":
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> The chat-43 vectors lesson's reflection formula is <code>R = I &minus; 2(I&middot;N)N</code> where <code>I</code> is the incident velocity and <code>N</code> is the wall's inward-pointing unit normal. What does the term <code>(I&middot;N)N</code> represent geometrically?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="That's I itself, not I projected onto N. The whole formula needs to do something with the projection — specifically, subtract twice it from I to flip the wall-perpendicular component.">A) The full incident velocity vector I</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="The component of I along N (the projection of I onto N). The dot product I&middot;N is a scalar measuring how much of I points along N (when N is a unit vector); multiplying that scalar back by N gives a vector pointing along N with that magnitude — i.e. the perpendicular-to-wall component of I. Subtracting 2 of these from I flips that component's sign while leaving the parallel-to-wall component unchanged — which is exactly what a wall bounce does: 'into the wall' velocity becomes 'out of the wall' velocity, sliding-along-the-wall velocity is preserved. This is why N must be a unit vector: the algebra only cancels cleanly when |N| = 1, since (I&middot;N)N has the right magnitude only in that case. The formula generalizes to ANY wall orientation — the four axis-aligned walls in the demo are special cases where it reduces to a simple sign flip on one axis.">B) The component of I perpendicular to the wall (parallel to N)</button>
+                        <button class="quiz-option" data-correct="false" data-hint="That's I &minus; (I&middot;N)N — the component of I parallel to the wall, NOT to N. The reflection formula subtracts twice the perpendicular component (parallel to N) from I, leaving the parallel-to-wall component untouched.">C) The component of I parallel to the wall (perpendicular to N)</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> The lesson's Best Practice 'Check Velocity: Don't resolve if objects are already separating' says to gate collision response on a sign condition before reflecting. For a wall with inward-pointing unit normal <code>N</code> and ball velocity <code>v</code>, what's the correct gate?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Penetration alone isn't enough. If the ball penetrates by 1 px, gets reflected, and now has post-reflection velocity carrying it AWAY from the wall — but the next frame's check still sees it 0.5 px past the wall — you'd reflect AGAIN, pushing it back INTO the wall. The gate has to combine geometry (penetration) with motion direction (approaching, not separating).">A) Reflect whenever the ball has penetrated the wall, regardless of velocity direction</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="v.dot(N) &lt; 0 — the ball is moving INTO the wall (approaching) when its velocity has a negative component along the inward-pointing normal. Same dot-product sign-as-classifier pattern as chat-43 vectors quiz Q2 (front/behind via dot product). If v.dot(N) &gt; 0 the ball is already moving away from the wall — reflecting again would push it back INTO the wall, trapping it in jitter (a classic pinball-physics bug). The gate isolates the one frame where the ball is still penetrating AND still approaching, which is exactly when reflection should fire.">B) v.dot(N) &lt; 0 — ball is approaching the wall (velocity has a component INTO the wall along N)</button>
+                        <button class="quiz-option" data-correct="false" data-hint="That gates on the WRONG sign. v.dot(N) &gt; 0 means the ball's velocity has a component pointing along N, away from the wall and into the play area — i.e. the ball is SEPARATING. The Best Practice says don't resolve when separating; this gate would only fire when separating, which is the opposite of what's needed.">C) v.dot(N) &gt; 0 — ball is separating from the wall</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> When two billiard balls collide head-on, the lesson's Best Practice 'Use Proper Mass: Heavier objects should move less' says to scale the impulse by inverse mass: <code>v1 += impulse / m1</code> and <code>v2 -= impulse / m2</code>. Why does dividing by mass make the heavier ball move less?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="It's not a special-case rule for collisions. The same F = ma rearrangement governs every force-velocity interaction in the lesson chain — thrust, gravity, friction, and now collision impulses all share this single principle.">A) Collision physics has its own rule unrelated to other force interactions</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Momentum conservation says total p stays constant, but that's a constraint on the SUM of velocity changes, not the individual ratio. The mass-weighted distribution comes from F = ma, not from p = mv.">B) Conservation of momentum directly requires the heavier ball to move less</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="It's the same F = ma rearrangement from chat-44 M1's velocity_acceleration lesson — a = F/m. An impulse is just a force integrated over a tiny time slice (J = F&middot;Δt), so the resulting velocity change is Δv = J/m — the heavier the object, the smaller the velocity change from the same impulse. This is why a 7-kg bowling ball barely flinches when hit by a 0.04-kg golf ball going 30 m/s, while the golf ball ricochets at high speed: same impulse magnitude, vastly different inverse-mass scales. The lesson's Best Practice 'Use Proper Mass' is just F = ma applied to the collision impulse, completing the trio of chat-44 lessons that all hinge on the F/m proportionality (M1 thrust, M2 gravity-as-force, M4 collision impulse).">C) F = ma rearranged for Δv: an impulse J produces Δv = J/m, so larger m gives smaller Δv</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

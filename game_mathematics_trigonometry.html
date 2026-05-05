@@ -486,22 +486,92 @@ def small_angle_cos(angle):
 
 
         <section class="lesson-section">
-            <h2 id="practice-exercise-build-game-mathematics-trigonometry">🏋️‍♂️ Practice Exercise</h2>
+            <h2 id="practice-exercise-build-game-mathematics-trigonometry">🏋️‍♂️ Practice Exercise: Turret Tracker — atan2 + Parametric Circle in One Loop</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Aim, Orbit, and Fire — Three Trig Patterns Together</h3>
+                <p><strong>Objective:</strong> Build a small Pygame demo that exercises three pillar trig patterns from this lesson in one program: (1) <strong>atan2 for aiming</strong> &mdash; a turret at screen center rotates to point at the mouse, computing its facing each frame as <code>angle = math.atan2(my - cy, mx - cx)</code> (the lesson's Common Problems #2 'atan vs atan2: Use atan2 for full 360° range' made concrete, and the same pattern as <code>RotatingObject.point_at</code>); (2) <strong>parametric-circle orbits</strong> &mdash; three planets orbit the turret at different radii and speeds, each computing its position via <code>x = cx + r*cos(θ); y = cy + r*sin(θ)</code> and advancing <code>θ</code> by <code>speed * dt</code> per frame (the lesson's <code>OrbitingObject.get_position</code> pattern); (3) <strong>facing-vector forward motion</strong> &mdash; pressing SPACE spawns a bullet at the turret tip with velocity <code>(BULLET_SPEED * cos(angle), BULLET_SPEED * sin(angle))</code>, sending it cleanly along whatever direction the turret was pointing at fire-time. The visual: the turret swivels smoothly to track the cursor; three planets sweep around it on circles of different sizes and rates; bullets streak outward at exactly the angle the turret had at SPACE-press.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Open an 800×600 window with center <code>(CX, CY) = (400, 300)</code>; start a clean game loop with <code>dt = clock.tick(60) / 1000.0</code> so all motion is frame-rate independent (lesson tail's Performance Tips 'Frame Independence: Use delta time').</li>
+                    <li>Each frame, read <code>pygame.mouse.get_pos()</code> as <code>(mx, my)</code> and compute the turret's facing as <code>angle = math.atan2(my - CY, mx - CX)</code>. Note the argument order: <code>(dy, dx)</code>, NOT <code>(dx, dy)</code> &mdash; atan2 takes Y first. If your turret aims 90° off, you've swapped the arguments.</li>
+                    <li>Draw the turret as a circle at center, plus a barrel line from <code>(CX, CY)</code> to <code>(CX + 40 * cos(angle), CY + 40 * sin(angle))</code> &mdash; same parametric-circle math, just at radius 40 instead of orbit radius. The turret tip and the orbit positions all use the same formula.</li>
+                    <li>Define three planets with <code>(radius, speed_rad_per_sec, color)</code>: e.g. <code>(80, 1.5, blue)</code>, <code>(140, 0.8, green)</code>, <code>(200, 0.4, orange)</code>. Maintain each planet's orbit angle <code>theta</code> as a float; advance by <code>speed * dt</code> each frame &mdash; NOT a fixed step per frame, or orbit speed gets tied to your frame rate.</li>
+                    <li>Draw each planet at <code>(CX + r * cos(theta), CY + r * sin(theta))</code> as an 8&nbsp;px circle.</li>
+                    <li>On <code>KEYDOWN</code> for <code>K_SPACE</code>: append a bullet dict to a bullets list with starting position at the turret tip <code>(CX + 40 * cos(angle), CY + 40 * sin(angle))</code> and velocity <code>(BULLET_SPEED * cos(angle), BULLET_SPEED * sin(angle))</code> with <code>BULLET_SPEED = 400</code> px/sec. The same <code>cos(angle)</code> / <code>sin(angle)</code> pair that placed the tip also gives the unit facing vector; the bullet velocity is just that unit vector scaled by speed.</li>
+                    <li>Each frame, advance every bullet by <code>(vx * dt, vy * dt)</code> and draw as a small white circle. Cull bullets that leave the screen so the list stays bounded.</li>
+                    <li>Render a HUD showing the turret's current angle in degrees (<code>math.degrees(angle):+6.1f</code>) so the wrap from −180° (pointing left), through 0° (pointing right), back up to +180° (pointing left again) is visible as you swing the mouse around &mdash; this is the full 360° range that atan2 returns and atan does not.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>Three places this commonly breaks: (1) <code>atan2(dy, dx)</code> takes Y FIRST. Swapping the arguments rotates the result by 90° &mdash; the turret will aim perpendicular to the mouse instead of at it. (2) For orbits, advance <code>theta</code> by <code>speed * dt</code>, not by a fixed step per frame. Without dt, a 30 FPS machine and a 60 FPS machine orbit at different speeds. (3) The bullet's velocity vector and the turret's barrel-tip offset are computed from the SAME <code>(cos(angle), sin(angle))</code> pair, just scaled differently &mdash; tip uses radius 40, velocity uses speed 400. If you accidentally compute these with a stale angle (e.g. you read the mouse twice and use a fresh angle for the tip but a frame-old one for the velocity), the bullet visibly drifts away from the barrel direction. Capture <code>angle</code> ONCE per SPACE-press and use it for both.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame, math
+
+pygame.init()
+WIDTH, HEIGHT = 800, 600
+CX, CY = WIDTH // 2, HEIGHT // 2
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Turret Tracker")
+font = pygame.font.SysFont(None, 24)
+clock = pygame.time.Clock()
+
+PLANETS = [
+    {"r":  80, "speed": 1.5, "theta": 0.0, "color": (60, 120, 230)},
+    {"r": 140, "speed": 0.8, "theta": 0.0, "color": (60, 200, 60)},
+    {"r": 200, "speed": 0.4, "theta": 0.0, "color": (220, 150, 60)},
+]
+BULLET_SPEED = 400
+bullets = []
+
+running = True
+while running:
+    dt = clock.tick(60) / 1000.0
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+            mx, my = pygame.mouse.get_pos()
+            angle = math.atan2(my - CY, mx - CX)        # Y FIRST
+            bullets.append({
+                "x":  CX + 40 * math.cos(angle),         # turret tip
+                "y":  CY + 40 * math.sin(angle),
+                "vx": BULLET_SPEED * math.cos(angle),    # facing vector × speed
+                "vy": BULLET_SPEED * math.sin(angle),
+            })
+
+    mx, my = pygame.mouse.get_pos()
+    angle = math.atan2(my - CY, mx - CX)                # facing this frame
+
+    for p in PLANETS:                                   # advance orbits
+        p["theta"] += p["speed"] * dt                   # speed × dt, not fixed step
+    for b in bullets:                                   # advance bullets
+        b["x"] += b["vx"] * dt
+        b["y"] += b["vy"] * dt
+    bullets = [b for b in bullets
+               if 0 &lt;= b["x"] &lt;= WIDTH and 0 &lt;= b["y"] &lt;= HEIGHT]
+
+    screen.fill((20, 20, 35))
+    # planets — parametric circle: (cx + r*cos(θ), cy + r*sin(θ))
+    for p in PLANETS:
+        px = CX + p["r"] * math.cos(p["theta"])
+        py = CY + p["r"] * math.sin(p["theta"])
+        pygame.draw.circle(screen, p["color"], (int(px), int(py)), 8)
+    # turret — barrel uses same parametric circle at radius 40
+    pygame.draw.circle(screen, (200, 200, 200), (CX, CY), 18)
+    tip = (CX + 40 * math.cos(angle), CY + 40 * math.sin(angle))
+    pygame.draw.line(screen, (240, 240, 240), (CX, CY), tip, 4)
+    for b in bullets:
+        pygame.draw.circle(screen, (255, 255, 255), (int(b["x"]), int(b["y"])), 3)
+    hud = font.render(
+        f"Aim: {math.degrees(angle):+6.1f}°    SPACE to fire    Bullets: {len(bullets)}",
+        True, (240, 240, 240))
+    screen.blit(hud, (10, 10))
+    pygame.display.flip()
+
+pygame.quit()</code></pre>
                 </details>
             </div>
 
@@ -509,31 +579,31 @@ def small_angle_cos(angle):
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> A turret needs to aim at any point around it (full 360° range). Given the displacement <code>(dx, dy)</code> from the turret to the target, which Python math function gives the correct angle?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="math.atan(dy / dx) only returns angles in (−90°, +90°) because it can't tell which quadrant the target is in — (dx=1, dy=1) and (dx=−1, dy=−1) both give atan(1) = +45°, but they point in OPPOSITE directions. It also blows up with ZeroDivisionError when dx=0 (target directly above or below the turret). Lesson Common Problems #2 calls this out: 'atan vs atan2: Use atan2 for full 360° range.'">A) math.atan(dy / dx)</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="math.atan2(dy, dx) — note the argument order, Y FIRST then X — uses the SIGNS of dy and dx together to return an angle across the full (−π, +π] range, correctly distinguishing all four quadrants. Where atan(dy/dx) collapses (dx=1, dy=1) and (dx=−1, dy=−1) to the same +45°, atan2 returns +45° vs −135° respectively. It also handles the dx=0 case cleanly (returns +π/2 or −π/2 instead of dividing by zero). Lesson Common Problems #2 'atan vs atan2: Use atan2 for full 360° range' + the lesson's RotatingObject.point_at code uses exactly this pattern: self.angle = math.atan2(dy, dx).">B) math.atan2(dy, dx)</button>
+                        <button class="quiz-option" data-correct="false" data-hint="math.tan goes the wrong direction — it takes an angle and returns a ratio (sin/cos). You need the INVERSE direction: a function that takes a coordinate pair (or a ratio) and returns an angle. The inverse of tan is atan/atan2, not tan itself. tan(dy/dx) doesn't even type-check semantically — dy/dx is a ratio, not an angle.">C) math.tan(dy / dx)</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> A planet orbits a sun at center <code>(400, 300)</code> with orbit radius 100. The planet is currently at orbit angle <code>θ</code> radians. What is the planet's screen position?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="sin and cos are swapped. The standard parametric-circle convention used by the lesson's OrbitingObject (and standard math) is x uses cos, y uses sin — because at θ=0 the orbiting object should be at the rightmost point of the orbit (max x, y unchanged from center), which requires cos for x. With sin/cos swapped, θ=0 puts the planet directly below the sun instead of to its right.">A) (400 + 100 * sin(θ), 300 + 100 * cos(θ))</button>
+                        <button class="quiz-option" data-correct="false" data-hint="That formula MULTIPLIES the center coordinates by cos and sin instead of ADDING the parametric circle to the center. With θ=0 the planet would be at (400 * 1, 300 * 0) = (400, 0) — completely detached from the (400, 300) sun. The center is an OFFSET (added) not a SCALE (multiplied).">B) (400 * cos(θ), 300 * sin(θ))</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="The parametric-circle formula is x = cx + r*cos(θ), y = cy + r*sin(θ) — the lesson's OrbitingObject.get_position() returns exactly this pair. The center is the OFFSET; r*cos(θ) and r*sin(θ) generate the on-circle position relative to the center. Sanity-check by plugging in known angles: θ=0 gives (cx + r, cy) — rightmost point of the orbit. θ=π/2 gives (cx, cy + r) — directly below center on a Y-down screen (which is 'top' in math-class Y-up convention; the screen and the math just disagree on which direction is which). θ=π gives (cx − r, cy) — leftmost. Same formula generalizes to ellipses by using different radii on the two axes: x = cx + a*cos(θ), y = cy + b*sin(θ).">C) (400 + 100 * cos(θ), 300 + 100 * sin(θ))</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> The lesson's RotatingObject calls <code>pygame.transform.rotate(self.original_image, -angle_degrees)</code> with a NEGATIVE sign on the angle. Why?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="pygame.transform.rotate accepts any float — positive, negative, fractional, even values past 360. The negation is not a Pygame requirement; it's a coordinate-system correction. If positive angles were rejected, calling rotate(img, +30) would error, and it doesn't.">A) Because pygame.transform.rotate only accepts negative angle values; positive angles raise an error.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="pygame.transform.rotate is documented as 'positive angle rotates counter-clockwise' using the standard math convention with Y pointing UP — but Pygame's screen coordinate system has Y pointing DOWN (lesson coordinates Common Problems #1 'Y-Axis Confusion: Screen Y goes down, math Y goes up'). The result: a positive math-angle stored in self.angle (e.g. computed from math.atan2 against a target that is BELOW the rotator on the Y-down screen) needs its sign flipped before being passed to pygame.transform.rotate, or the sprite ends up facing the OPPOSITE direction from where the math says the target is. The minus sign reconciles the two conventions. Note the OrbitingObject's parametric-circle math (x = cx + r*cos(θ), y = cy + r*sin(θ)) does NOT need this negation — when the screen Y-flip and the sin Y-output 'flip' together, they self-cancel and the planet ends up where you expect. Only the sprite-rotation API needs the explicit fix.">B) Because Pygame's screen Y points DOWN while pygame.transform.rotate's positive-is-counter-clockwise convention assumes math-class Y pointing UP, so positive math-angles must be negated to make the sprite rotate the same visual direction as the math-frame rotation.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="pygame.transform.rotate's angle parameter is in DEGREES, not radians (per the Pygame docs and the lesson's call site, which converts to degrees one line earlier with math.degrees()). The negation has nothing to do with unit conversion — degree/radian conversion is handled by math.degrees() before the rotate call. The minus sign is a coordinate-system Y-axis correction.">C) Because pygame.transform.rotate uses radians by default and the negative sign is part of converting math-radians to Pygame-radians.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

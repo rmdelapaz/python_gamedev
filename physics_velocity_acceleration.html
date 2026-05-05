@@ -1152,22 +1152,77 @@ if __name__ == "__main__":
 
 
         <section class="lesson-section">
-            <h2 id="practice-exercise-build-physics-velocity-acceleration">🏋️‍♂️ Practice Exercise</h2>
+            <h2 id="practice-exercise-build-physics-velocity-acceleration">🏋️‍♂️ Practice Exercise: Apply Force, See Motion</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: F = ma + Euler Integration in 30 Lines</h3>
+                <p><strong>Objective:</strong> Build a tiny Pygame demo that exercises the three pillar patterns from this lesson in one program: <strong>F = ma</strong> via <code>apply_force(force)</code> dividing the input force by the object's mass to produce an acceleration delta; <strong>Euler integration</strong> via <code>velocity += acceleration * dt; position += velocity * dt</code> to advance state by one frame; and the critical <strong>reset-acceleration-each-frame</strong> rule (<code>acceleration = Vector2(0, 0)</code> at the end of <code>update()</code>) so accumulated forces don't carry into the next frame and exponentially launch the object off-screen. Hold ARROW keys to apply a 200-unit thrust force in that direction; release and the object drifts on inertia (proving velocity persists when no force is applied) — exactly the behavior of the lesson's <code>PhysicsObject.update()</code> made interactive.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Initialize a <code>pygame.math.Vector2</code> for <code>position</code> (screen center), <code>velocity</code> (0, 0), and <code>acceleration</code> (0, 0); set <code>mass = 1.0</code>.</li>
+                    <li>In the game loop, read <code>dt = clock.tick(60) / 1000.0</code> in seconds — the lesson's frame-rate-independence rule.</li>
+                    <li>Poll <code>pygame.key.get_pressed()</code> and for each held arrow key, call <code>apply_force(Vector2(±200, 0))</code> or <code>Vector2(0, ±200)</code>.</li>
+                    <li>Inside <code>apply_force(force)</code>, do <code>self.acceleration += force / self.mass</code> — the F = ma rearrangement the lesson teaches.</li>
+                    <li>Inside <code>update(dt)</code>, integrate Euler-style: <code>velocity += acceleration * dt</code> then <code>position += velocity * dt</code>.</li>
+                    <li>At the very end of <code>update()</code>, reset <code>self.acceleration = Vector2(0, 0)</code> — Best Practice 'Force Accumulation' from this lesson.</li>
+                    <li>Draw the object as a circle at <code>position</code>, plus a HUD line showing live velocity magnitude so inertia is visible.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The two easy ways to break this demo are both instructive: (a) skip the <code>dt</code> multiplications and the object moves the same number of pixels per <em>frame</em> instead of per <em>second</em> — try it on a 30 FPS machine vs 60 FPS and the object literally moves twice as fast on the faster machine; (b) skip the acceleration reset at the end of <code>update()</code> and the acceleration accumulates across frames — hold the arrow key for one second and the object launches off-screen exponentially (acceleration grows, velocity grows from acceleration, so velocity grows quadratically). Both bugs appear in real codebases.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame
+from pygame.math import Vector2
+
+pygame.init()
+W, H = 600, 400
+screen = pygame.display.set_mode((W, H))
+pygame.display.set_caption("Apply Force, See Motion")
+clock = pygame.time.Clock()
+font = pygame.font.SysFont(None, 24)
+
+class PhysicsObject:
+    def __init__(self, x, y):
+        self.position = Vector2(x, y)
+        self.velocity = Vector2(0, 0)
+        self.acceleration = Vector2(0, 0)
+        self.mass = 1.0
+
+    def apply_force(self, force):
+        # F = ma  =&gt;  a += F / m
+        self.acceleration += force / self.mass
+
+    def update(self, dt):
+        # Euler integration: v += a*dt; x += v*dt
+        self.velocity += self.acceleration * dt
+        self.position += self.velocity * dt
+        # Critical: reset acceleration each frame
+        # (forces are re-applied per frame, not persistent)
+        self.acceleration = Vector2(0, 0)
+
+obj = PhysicsObject(W // 2, H // 2)
+THRUST = 200  # units of force per axis
+running = True
+while running:
+    dt = clock.tick(60) / 1000.0  # seconds since last frame
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_LEFT]:  obj.apply_force(Vector2(-THRUST, 0))
+    if keys[pygame.K_RIGHT]: obj.apply_force(Vector2( THRUST, 0))
+    if keys[pygame.K_UP]:    obj.apply_force(Vector2(0, -THRUST))
+    if keys[pygame.K_DOWN]:  obj.apply_force(Vector2(0,  THRUST))
+    obj.update(dt)
+    screen.fill((20, 20, 30))
+    pygame.draw.circle(screen, (100, 200, 255),
+                       (int(obj.position.x), int(obj.position.y)), 12)
+    hud = font.render(f"|v| = {obj.velocity.length():.1f}", True, (255, 255, 255))
+    screen.blit(hud, (10, 10))
+    pygame.display.flip()
+pygame.quit()</code></pre>
                 </details>
             </div>
 
@@ -1175,31 +1230,31 @@ if __name__ == "__main__":
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> Inside <code>apply_force(force)</code>, the lesson's <code>PhysicsObject</code> does <code>self.acceleration += force / self.mass</code>. Which physical law does this implement?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="That's momentum (p = mv), not force. Momentum measures how hard an object is to stop given its current velocity; force is what changes velocity.">A) p = mv solved for velocity</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Newton's second law F = ma rearranged for a: a = F/m. A heavier object (larger m) experiences less acceleration from the same force, which is why a 1-ton car needs a much bigger engine than a 100-kg motorcycle to reach the same speed in the same time. The lesson's apply_force divides the input force by mass exactly so heavier objects feel sluggish without any extra logic.">B) Newton's second law F = ma rearranged for acceleration</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Kinetic energy is KE = ½mv². The acceleration formula doesn't square anything and isn't measuring energy — it's measuring how velocity is changing per second.">C) Conservation of kinetic energy</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> The lesson's <code>update(dt)</code> does <code>velocity += acceleration * dt; position += velocity * dt</code>. Why multiply by <code>dt</code> instead of just doing <code>velocity += acceleration; position += velocity</code>?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Multiplication isn't slower than addition in any meaningful way — modern CPUs do both in roughly one cycle. This isn't a performance choice.">A) Multiplication is faster than addition on modern hardware</button>
+                        <button class="quiz-option" data-correct="false" data-hint="It's about time, not display. Vector2 arithmetic doesn't depend on screen refresh in any way.">B) Pygame's display buffer needs floating-point coordinates to render smoothly</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Frame-rate independence — the lesson's Best Practice 'Use Delta Time' + Key Takeaway 'Always use delta time for consistent physics'. acceleration is in units-per-second², velocity is in units-per-second; multiplying by dt (seconds since last frame) converts the per-second rates into the actual change for THIS frame. Without dt, an object moves the same number of units per frame regardless of frame rate, so on a 60 FPS machine it goes 2× faster than the same code on a 30 FPS machine. With dt the wall-clock motion stays identical across frame rates.">C) Without dt, motion is tied to frame rate — same code runs faster on faster machines</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> The lesson's <code>PhysicsObject.update()</code> ends with <code>self.acceleration = Vector2(0, 0)</code> after integrating velocity and position. What goes wrong if you remove that reset line?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Acceleration accumulates across frames and the object launches off-screen exponentially — Best Practice 'Force Accumulation: Reset acceleration after each update' verbatim. The intended pattern is: each frame, forces are RE-applied (gravity + thrust + friction + ...), they sum into acceleration, the integrator advances velocity and position, then acceleration is zeroed so the next frame starts clean. Without the reset, hold an arrow key for one second and acceleration grows linearly each frame, velocity grows quadratically, position grows cubically — by frame 60 the object is far past the screen edge and still accelerating.">A) Acceleration accumulates each frame, so velocity grows quadratically and the object launches away exponentially</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Velocity persisting after force release is correct and intended — that's inertia, the foundation of game-feel for thrust-based controls (asteroids ship, lunar lander, etc.). The reset doesn't affect this behavior at all; it only governs whether NEW frames start from a zero-acceleration baseline.">B) Velocity stays at zero forever even when arrow keys are held</button>
+                        <button class="quiz-option" data-correct="false" data-hint="The reset is the same on every frame regardless of frame rate. dt and acceleration-reset are independent disciplines — one converts per-second rates to per-frame, the other prevents force accumulation. The lesson teaches both as separate Best Practices.">C) Frame-rate independence breaks; the object moves at different speeds on different machines</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

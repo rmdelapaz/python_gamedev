@@ -830,22 +830,73 @@ class Transform2D:
 
 
         <section class="lesson-section">
-            <h2 id="practice-exercise-build-game-mathematics-coordinates">🏋️‍♂️ Practice Exercise</h2>
+            <h2 id="practice-exercise-build-game-mathematics-coordinates">🏋️‍♂️ Practice Exercise: Pan, Click, Convert</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Camera Pan + Click-to-World — Three Coordinate Conversions in 30 Lines</h3>
+                <p><strong>Objective:</strong> Build a small Pygame program that exercises the screen ↔ world conversion in BOTH directions in one game loop. Hold arrow keys to pan a virtual camera over an unbounded world that contains a handful of fixed world-space markers; world-to-screen converts them every frame so they slide as the camera moves. Click anywhere on the screen and screen-to-world converts the click back into the world to drop a new persistent marker at that point — then keep panning, and the new marker stays put in the world while the screen position scrolls past. A small HUD reports the mouse position in BOTH screen coordinates (top-left origin, Y down) AND math-class Cartesian coordinates (centered origin, Y up) simultaneously so the Y-axis flip stays in your face.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Open an 800×600 window and start a clean game loop (event-pump, fill, draw, flip, <code>clock.tick(60)</code>) using the <code>pygame_basics_game_loop</code> skeleton.</li>
+                    <li>Track the camera as two ints <code>cam_x, cam_y</code>, both starting at 0 (think "camera offset in world units").</li>
+                    <li>Keep a list of world-space markers seeded with 4–6 fixed positions like <code>(100, 80)</code>, <code>(550, 320)</code>, <code>(-200, 450)</code> — some negative on purpose so panning the camera the other way reveals them.</li>
+                    <li>Each frame, read <code>pygame.key.get_pressed()</code>; on left/right/up/down keys nudge <code>cam_x</code> / <code>cam_y</code> by ±5 px. (Continuous polling, not events — this is movement, the canonical state-polling case from the input lesson.)</li>
+                    <li>Draw each marker by converting world to screen with <code>screen_x = world_x - cam_x</code> and <code>screen_y = world_y - cam_y</code>, then <code>pygame.draw.circle(screen, COLOR, (screen_x, screen_y), 8)</code>. Markers off-screen don't need to be culled — Pygame simply doesn't draw them.</li>
+                    <li>On <code>MOUSEBUTTONDOWN</code>, convert the click's screen position back to world with <code>world_x = mouse_x + cam_x</code> and <code>world_y = mouse_y + cam_y</code>, then append <code>(world_x, world_y)</code> to the marker list.</li>
+                    <li>Render a HUD line each frame using <code>pygame.font.SysFont</code>: "Screen: ({mouse_x}, {mouse_y})  Cartesian: ({mouse_x - 400}, {300 - mouse_y})" — the Cartesian conversion centers (0,0) at the screen center AND flips the Y so positive Y means "up" the way math class taught it.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The two conversions are NOT the same operation — they're inverses. World-to-screen <em>subtracts</em> the camera (a marker at world (1000, 0) with the camera at (300, 0) renders at screen x=700); screen-to-world <em>adds</em> the camera (a click at screen x=700 with the camera at (300, 0) lands at world x=1000). To convince yourself the two are inverses: drop a marker right at the mouse position with screen-to-world, then immediately verify that the world-to-screen redraw that very frame puts a circle exactly under the mouse. The sign-flip is the single most common bug here — if your dropped markers move when you didn't pan, you've got a sign wrong somewhere.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame
+
+pygame.init()
+WIDTH, HEIGHT = 800, 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Pan, Click, Convert")
+font = pygame.font.SysFont(None, 22)
+clock = pygame.time.Clock()
+
+cam_x, cam_y = 0, 0
+markers = [(100, 80), (550, 320), (-200, 450), (900, 150), (300, -100)]
+WHITE, RED, GREEN, GRAY = (240, 240, 240), (220, 60, 60), (60, 200, 60), (40, 40, 40)
+
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            mx, my = event.pos
+            world_x = mx + cam_x          # screen → world: ADD camera
+            world_y = my + cam_y
+            markers.append((world_x, world_y))
+
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_LEFT]:  cam_x -= 5
+    if keys[pygame.K_RIGHT]: cam_x += 5
+    if keys[pygame.K_UP]:    cam_y -= 5
+    if keys[pygame.K_DOWN]:  cam_y += 5
+
+    screen.fill(GRAY)
+    for wx, wy in markers:
+        sx = wx - cam_x                   # world → screen: SUBTRACT camera
+        sy = wy - cam_y
+        pygame.draw.circle(screen, RED, (sx, sy), 8)
+
+    mx, my = pygame.mouse.get_pos()
+    cart_x, cart_y = mx - WIDTH // 2, HEIGHT // 2 - my   # centered + Y-flip
+    hud = font.render(
+        f"Screen: ({mx}, {my})   Cartesian: ({cart_x}, {cart_y})   Cam: ({cam_x}, {cam_y})",
+        True, WHITE)
+    screen.blit(hud, (10, 10))
+    pygame.display.flip()
+    clock.tick(60)
+
+pygame.quit()</code></pre>
                 </details>
             </div>
 
@@ -853,31 +904,31 @@ class Transform2D:
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> Where is the origin (0, 0) of Pygame's screen coordinate system, and which direction does the Y axis grow?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="That's standard math-class Cartesian, not Pygame screen coordinates. Pygame's origin is in a corner, not the center, and the Y direction is the opposite of what you'd expect from math class.">A) Center of the screen with Y growing upward, the same as a standard math graph.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Pygame's screen origin is the top-left pixel and Y grows DOWNWARD — 'unlike math class!' as the lesson explicitly calls out. This is the single biggest tripping point for new game devs and the lesson's first Common Coordinate Problem (Y-Axis Confusion: 'Screen Y goes down, math Y goes up').">B) Top-left corner with Y growing downward (so larger Y values are further down the screen).</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Top-left is correct, but the Y direction is the opposite. In Pygame and most other 2D screen-space systems, Y increases as you go DOWN the screen, not up.">C) Top-left corner with Y growing upward (so larger Y values are further up the screen).</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> A marker sits at world position (1000, 0). The camera is at world position (300, 0). At what screen-X does the marker draw, and what is the formula?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="World-to-screen SUBTRACTS the camera: screen_x = world_x − camera_x = 1000 − 300 = 700. The intuition: the camera is the window into the world, so the marker's screen position is 'how far the marker is from the camera', not 'how far the marker is from the world origin.'">A) screen_x = 700; formula is screen_x = world_x − camera_x.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Adding gives the wrong direction — you'd get 1300, but the visible screen is only 800 px wide. World-to-screen subtracts the camera; addition is for the inverse direction (screen-to-world, where you're recovering a world position from a click).">B) screen_x = 1300; formula is screen_x = world_x + camera_x.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Multiplication is for scaling/zoom, not panning. Camera offset is a translation: it shifts the visible window over the world, so the relationship is additive (subtract for world-to-screen, add for screen-to-world), not multiplicative.">C) screen_x = 300000; formula is screen_x = world_x × camera_x.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> Your screen is 800 pixels wide. What is the largest valid X coordinate you can use to draw a single pixel that lands on-screen?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="800 is one past the last valid index. The lesson's Common Coordinate Problems list calls this out explicitly: 'Off-by-One: Screen width 800 means pixels 0-799.' A pixel drawn at x=800 lands one column off the right edge and isn't visible.">A) 800 — the screen is 800 wide, so x=800 is the rightmost pixel.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="x=801 is two pixels past the right edge — even further off-screen than 800. The boundary is one less than the width, not one more.">B) 801 — since pixels are 1-indexed, you go up to width plus one.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Valid pixel indices on an 800-wide screen are 0–799 inclusive (800 pixels, zero-indexed). Drawing at x=800 puts the pixel one column off the right edge. Same off-by-one applies to the Y axis (height 600 → valid Y is 0–599) and to ANY zero-indexed range in programming — the lesson's Common Coordinate Problems list flags this as 'Off-by-One: Screen width 800 means pixels 0-799.'">C) 799 — valid pixel indices are 0 to width−1.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

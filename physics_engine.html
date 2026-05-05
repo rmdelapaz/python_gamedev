@@ -1526,22 +1526,133 @@ if __name__ == "__main__":
 
 
         <section class="lesson-section">
-            <h2 id="practice-exercise-build-physics-engine">🏋️‍♂️ Practice Exercise</h2>
+            <h2 id="practice-exercise-build-physics-engine">🏋️‍♂️ Practice Exercise: Mini Physics Engine</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: World + Body + Step in ~80 Lines</h3>
+                <p><strong>Objective:</strong> Build a tiny self-contained physics engine that integrates everything from the four prior physics lessons into one cohesive system. The engine has just two classes — <code>Body</code> (M1's <code>PhysicsObject</code> shape: position / velocity / acceleration / mass / restitution) and <code>World</code> (a list of bodies + a gravity vector + a step method) — and exposes one method, <code>World.step(dt)</code>, that runs the canonical physics-engine update order: <strong>(1)</strong> apply per-frame forces (gravity from M2: <code>body.apply_force(world.gravity * body.mass)</code>); <strong>(2)</strong> integrate Euler (M1: <code>velocity += acceleration * dt; position += velocity * dt</code>); <strong>(3)</strong> resolve wall collisions using the M4 reflection formula <code>R = I &minus; 2(I&middot;N)N</code> with M3 restitution applied as a magnitude scale; <strong>(4)</strong> reset acceleration to zero (M1 Best Practice 'Force Accumulation'). Drop 5 balls simultaneously with random initial velocities; the engine handles gravity, wall bounces, friction-on-ground decay, and the M3 resting threshold all in one place. The exercise embodies Key Takeaway 'Separate concerns: bodies, shapes, constraints, forces' by keeping Body's inertial state cleanly separated from World's update logic, and Key Takeaway 'Physics engines combine all physics concepts' by reusing the four prior lessons' formulas verbatim.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Define a <code>Body</code> class with <code>position</code>, <code>velocity</code>, <code>acceleration</code> (all <code>Vector2</code>), <code>mass</code>, <code>restitution</code>, <code>radius</code>, <code>color</code>. One <code>apply_force(force)</code> method does <code>self.acceleration += force / self.mass</code> (M1).</li>
+                    <li>Define a <code>World</code> class that holds <code>self.bodies</code> (list), <code>self.gravity</code> (<code>Vector2(0, 980)</code> per chat-44 M2: positive y because Pygame Y grows down), and a <code>self.size</code> tuple for the playable rect.</li>
+                    <li>Write <code>World.step(dt)</code>: loop over <code>self.bodies</code> doing the canonical update order — (a) apply gravity; (b) integrate <code>velocity += acceleration * dt; position += velocity * dt</code>; (c) resolve walls via reflect-and-clamp; (d) <code>acceleration = Vector2(0, 0)</code>.</li>
+                    <li>Write a <code>reflect(I, N)</code> helper at module scope: <code>return I - 2 * I.dot(N) * N</code> (M4 / chat-43 vectors).</li>
+                    <li>Wall collision per body: for each of the 4 walls (top/bottom/left/right), if the body has crossed AND <code>velocity.dot(N) &lt; 0</code> (M4 Best Practice 'Check Velocity'), set <code>velocity = reflect(velocity, N) * restitution</code> and clamp <code>position</code> back inside the playable rect (M4 Best Practice 'Separate First').</li>
+                    <li>On-ground friction: if a body is on the bottom (<code>position.y + radius &gt;= H - 1</code>), decay <code>velocity.x *= (1 - 1.5 * dt)</code> (M3 friction pattern).</li>
+                    <li>M3 resting threshold for stability: <code>if abs(velocity.y) &lt; 5 and on_ground: velocity.y = 0</code>; <code>if abs(velocity.x) &lt; 1: velocity.x = 0</code>.</li>
+                    <li>Spawn 5 bodies in a single list comprehension with random initial positions and velocities; press R to respawn the lot.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The canonical update order matters — forces first, then integrate, then resolve, then reset. If you reset acceleration BEFORE integrating, the gravity force you just applied gets thrown away and the bodies float (the lesson's 'Integrator' building block depends on accumulated acceleration being readable when it runs). If you resolve collisions BEFORE integrating, you're checking penetration against last frame's positions and last frame's velocities — the resolution will fix already-correct bodies and miss this frame's new penetrations. The four-step order — forces, integrate, resolve, reset — is the sequence that all real physics engines (Box2D, Chipmunk, Bullet) use, just at vastly larger scale. The 'Separate concerns' Key Takeaway from this lesson IS the engine architecture: Body holds state that integration mutates, World holds the orchestration logic. Adding new force types (springs, drag, wind) means adding new <code>apply_force</code> calls in the World.step preamble; adding new collision shapes means changing the wall-collision step; the rest stays untouched. That orthogonality is why this 80-line engine extends naturally to thousands of lines without rewriting.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame
+import random
+from pygame.math import Vector2
+
+pygame.init()
+W, H = 600, 400
+screen = pygame.display.set_mode((W, H))
+pygame.display.set_caption("Mini Physics Engine")
+clock = pygame.time.Clock()
+font = pygame.font.SysFont(None, 20)
+
+def reflect(I, N):
+    """M4 / chat-43 vectors: R = I - 2 * (I . N) * N (N must be unit)"""
+    return I - 2 * I.dot(N) * N
+
+class Body:
+    def __init__(self, x, y, vx, vy, restitution, color):
+        self.position = Vector2(x, y)
+        self.velocity = Vector2(vx, vy)
+        self.acceleration = Vector2(0, 0)
+        self.mass = 1.0
+        self.restitution = restitution
+        self.radius = 12
+        self.color = color
+
+    def apply_force(self, force):
+        self.acceleration += force / self.mass  # M1: F = ma
+
+class World:
+    WALLS = [
+        (Vector2(0,  1), "top"),
+        (Vector2(0, -1), "bottom"),
+        (Vector2( 1, 0), "left"),
+        (Vector2(-1, 0), "right"),
+    ]
+
+    def __init__(self, size):
+        self.bodies = []
+        self.gravity = Vector2(0, 980)  # M2: positive y because Pygame Y grows down
+        self.size = size               # (W, H)
+
+    def step(self, dt):
+        Wp, Hp = self.size
+        for b in self.bodies:
+            # 1. Apply forces (M2 gravity as F = m * g)
+            b.apply_force(self.gravity * b.mass)
+            # 2. Integrate (M1 Euler)
+            b.velocity += b.acceleration * dt
+            b.position += b.velocity * dt
+            # 3. Resolve walls (M4 reflection + M3 restitution)
+            for N, name in self.WALLS:
+                penetrated = (
+                    (name == "top"    and b.position.y - b.radius &lt; 0) or
+                    (name == "bottom" and b.position.y + b.radius &gt; Hp) or
+                    (name == "left"   and b.position.x - b.radius &lt; 0) or
+                    (name == "right"  and b.position.x + b.radius &gt; Wp)
+                )
+                if penetrated and b.velocity.dot(N) &lt; 0:
+                    b.velocity = reflect(b.velocity, N) * b.restitution
+                    # Best Practice 'Separate First': clamp inside
+                    b.position.x = max(b.radius, min(Wp - b.radius, b.position.x))
+                    b.position.y = max(b.radius, min(Hp - b.radius, b.position.y))
+            # On-ground friction (M3)
+            on_ground = b.position.y + b.radius &gt;= Hp - 1
+            if on_ground:
+                b.velocity.x *= (1 - 1.5 * dt)
+                # M3 resting threshold
+                if abs(b.velocity.y) &lt; 5: b.velocity.y = 0
+                if abs(b.velocity.x) &lt; 1: b.velocity.x = 0
+            # 4. Reset acceleration each frame (M1 Best Practice 'Force Accumulation')
+            b.acceleration = Vector2(0, 0)
+
+def spawn_bodies(world):
+    world.bodies = [
+        Body(
+            random.randint(50, W - 50), random.randint(40, 120),
+            random.randint(-200, 200), random.randint(-100, 0),
+            random.uniform(0.6, 0.9),
+            (random.randint(120, 255),
+             random.randint(120, 255),
+             random.randint(120, 255)))
+        for _ in range(5)
+    ]
+
+world = World((W, H))
+spawn_bodies(world)
+running = True
+while running:
+    dt = clock.tick(60) / 1000.0
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_r:
+            spawn_bodies(world)
+    world.step(dt)
+    screen.fill((20, 20, 30))
+    for b in world.bodies:
+        pygame.draw.circle(screen, b.color,
+                           (int(b.position.x), int(b.position.y)), b.radius)
+    hud = font.render(
+        f"R = respawn 5 bodies · gravity={world.gravity.y:.0f}",
+        True, (255, 255, 255))
+    screen.blit(hud, (10, 10))
+    pygame.display.flip()
+pygame.quit()</code></pre>
                 </details>
             </div>
 
@@ -1549,31 +1660,31 @@ if __name__ == "__main__":
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> The lesson's Best Practice 'Fixed Timestep: Use fixed timestep for deterministic physics' contradicts chat-44 M1's variable-<code>dt</code> pattern (<code>dt = clock.tick(60) / 1000.0</code>). Why does a real physics engine want a FIXED timestep instead of the variable one?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="That's exactly what variable-dt achieves — multiplying by the per-frame dt makes the per-second velocity rate independent of frame rate. The fixed-timestep Best Practice is solving a DIFFERENT problem: not frame-rate independence, but reproducibility.">A) Fixed timestep is needed for frame-rate independence</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Determinism — the same initial state plus the same input sequence MUST produce the same final state, byte-for-byte, every time. Variable dt makes that impossible: a frame that takes 16.7 ms produces slightly different floating-point integration results than a frame that takes 17.2 ms (the per-step rounding errors compound differently), so two players in a networked game running the same physics from the same start state would diverge within seconds. Fixed timestep (typically 1/60 s) is decoupled from rendering: the simulation runs in fixed-dt 'physics ticks' (with sub-stepping if a render frame is delayed), and the renderer interpolates between the two most recent ticks. This is essential for networked lockstep multiplayer (RTS games, fighting games), replay systems, and any regression testing of physics. The chat-44 lessons used variable dt because the focus was teaching frame-rate independence; an engine adds a second discipline on top.">B) Determinism — same starting state and inputs must produce byte-identical results across runs</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Performance is the OPPOSITE direction. Variable dt is cheaper per frame because it runs exactly one physics step per render frame; fixed timestep with sub-stepping can run multiple physics ticks per render frame on a slow machine to keep the simulation real-time, costing MORE CPU. The Best Practice trades performance for determinism, not the other way around.">C) Performance — fixed timestep is faster than computing dt every frame</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> The lesson's Key Takeaway 'Separate concerns: bodies, shapes, constraints, forces' shows up in the architecture as Body (mass, position, velocity) decoupled from Shape (radius, vertices). Why is this separation valuable rather than just stuffing everything into one Body class?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="It's not primarily about memory — the byte savings from sharing one Shape across multiple Bodies are real but secondary. The deeper reason is conceptual: the engine has TWO different update phases that each need only one of these concerns, not both.">A) Memory savings — multiple bodies can share one Shape instance</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="The engine has TWO different update phases that each need only one of the concerns. Integration mutates Body's inertial state (acceleration → velocity → position) but never touches geometry. Collision detection reads Body's position to position the Shape in world space, then queries Shape against other Shapes to find overlaps — it never touches mass or velocity. Decoupling means: (a) you can swap collision geometry mid-simulation without losing momentum (turn a circle into a polygon-bag-of-fragments on impact); (b) you can re-skin a Body's visual appearance without recomputing inertia (visual mesh ≠ collision shape, a common AAA-game pattern); (c) you can re-use one Shape across many Bodies of identical geometry (the AAA shared-mesh pattern). Same separation-of-concerns principle as Entity-Component Systems (architecture_component_systems lesson): a Body 'has a' Shape rather than 'is a' geometric thing. The decoupling pays off as the engine grows; a stuffed-everything-in-Body design ossifies after the first refactor.">B) Two update phases — integration mutates Body state, collision detection queries Shape — each phase needs only one concern</button>
+                        <button class="quiz-option" data-correct="false" data-hint="That's true historically (Python OOP supports both inheritance and composition), but it's not the design driver here. The driver is functional: the integrator and collision detector are two separate algorithms with separate inputs, and the Body/Shape split lines up with that algorithmic split.">C) Python's class system requires inheritance and composition to be used together</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> The lesson's Best Practice 'Sleep States: Don't simulate resting objects' pairs with chat-44 M3's Best Practice 'Threshold Values'. What's the optimization, and how does it compose with M3's threshold?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Visual frame skipping is unrelated. Sleep is about skipping the SIMULATION step (integration + collision detection) for bodies that have come to rest, not about skipping rendering them — sleeping bodies still need to be drawn at their last position.">A) Skip rendering of bodies that haven't moved this frame</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="A body whose velocity stays below the M3 threshold for N consecutive frames is flagged 'sleeping'; sleeping bodies skip the World.step inner loop entirely — no force application, no integration, no collision detection — until something wakes them (an impact from another body, an external force like wind, or the body's support disappearing). Composes with M3 directly: M3's threshold is what DETECTS rest (velocity below epsilon), Sleep States is what EXPLOITS that detection (skip work for resting bodies). The savings scale with how many objects are at rest at any given time — a stack of 100 boxes that has settled costs 0 simulation work per frame instead of 100, a gigantic win for any scene with persistent piles, debris, or set-dressing physics objects. M3 alone snaps individual velocities to zero (so they don't drift); Sleep States additionally short-circuits the entire loop body for those objects, freeing CPU for the moving ones. Box2D, Chipmunk, and PhysX all implement this; it's table stakes for any engine that handles 100+ bodies in a scene.">B) Bodies at rest skip the entire World.step inner loop — M3's threshold detects rest, Sleep States short-circuits work for resting bodies</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Object pooling and preallocation are real engine optimizations (the lesson's Best Practice 'Memory Pooling' covers them), but they're orthogonal to Sleep States. Pooling is about ALLOCATION cost; Sleep States is about per-frame SIMULATION cost on already-allocated bodies that simply aren't moving.">C) Preallocate body objects in a memory pool to avoid garbage collection</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

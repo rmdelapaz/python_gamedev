@@ -1197,22 +1197,109 @@ if __name__ == "__main__":
 
 
         <section class="lesson-section">
-            <h2 id="practice-exercise-build-physics-bounce-friction">🏋️‍♂️ Practice Exercise</h2>
+            <h2 id="practice-exercise-build-physics-bounce-friction">🏋️‍♂️ Practice Exercise: Three Balls, One Floor</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Restitution Fights Friction in 50 Lines</h3>
+                <p><strong>Objective:</strong> Build a Pygame demo that drops three balls simultaneously from the same height onto a single floor and lets you watch the lesson's two surface-physics rules play against each other in real time. Each ball has its own <strong>restitution</strong> (the bounce-response coefficient e in the lesson's <code>velocity.y *= -restitution</code> floor-collision formula) — rubber 0.8 (lots of bounces), steel 0.6 (a few), putty 0.1 (essentially dead on first contact, matching the lesson's material table). Each frame a ball is on the ground, the floor's <strong>kinetic friction</strong> decays its horizontal velocity via <code>velocity.x *= (1 - friction * dt)</code> — the lesson's surface-friction pattern. A <strong>resting threshold</strong> (<code>if abs(velocity) &lt; 5: velocity = 0</code>) is non-negotiable here: friction decay is asymptotic and would jitter forever without it (Best Practice 'Threshold Values: Stop objects when velocity is very small'). Press R to drop a fresh trio with a small horizontal nudge so the friction decay is visible too. Couples directly to chat-44 M1's <code>PhysicsObject.update()</code> shape and chat-44 M2's bounce reflection, with the new ingredient being per-material restitution and per-surface friction working together.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Reuse the <code>PhysicsObject</code> shape from the velocity_acceleration lesson: <code>position</code>, <code>velocity</code>, <code>acceleration</code> (all <code>Vector2</code>), <code>mass</code>; add <code>restitution</code> (float) and a <code>color</code> for visual identity.</li>
+                    <li>Create three balls in a list: rubber (<code>e=0.8</code>, red), steel (<code>e=0.6</code>, gray), putty (<code>e=0.1</code>, brown) — values from the lesson's material table.</li>
+                    <li>Define one floor <code>FRICTION = 1.5</code> (per-second friction coefficient — values 0.5–3 feel right for kinetic friction in pixels-per-second-squared scale).</li>
+                    <li>Each frame: apply gravity via <code>apply_force(Vector2(0, 980 * mass))</code> (chat-44 M2 pattern), integrate Euler, reset acceleration.</li>
+                    <li>On floor hit (<code>position.y &gt;= floor_y</code>): clamp <code>position.y = floor_y</code>, reflect Y velocity with energy loss as <code>velocity.y *= -restitution</code> — the lesson's core bounce formula.</li>
+                    <li>If the ball is touching the floor (<code>position.y &gt;= floor_y - 1</code>), apply kinetic friction to horizontal velocity each frame: <code>velocity.x *= (1 - FRICTION * dt)</code>.</li>
+                    <li>Resting threshold: <code>if abs(velocity.y) &lt; 5: velocity.y = 0</code> AND <code>if abs(velocity.x) &lt; 1: velocity.x = 0</code> — without these, the asymptotic friction decay never zeroes out and the balls jitter forever (Best Practice 'Threshold Values' verbatim).</li>
+                    <li>Press R to reset all three balls to the start height with a small <code>velocity.x = 150</code> kick so horizontal-friction decay is visible alongside vertical restitution-bounce decay.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>Three sign / formula gotchas show up: (a) the bounce formula is <code>velocity.y *= -restitution</code> (multiplied, not subtracted) — multiplying by a negative reflects direction AND scales magnitude in one operation, which is why <code>e=0</code> kills the bounce (multiplies to zero) and <code>e=1</code> preserves it (a perfectly elastic bounce); (b) friction decay is exponential, not linear: <code>v *= (1 - f*dt)</code> halves velocity every <code>ln(2)/f</code> seconds, so it gets tiny but never reaches zero — that's exactly why the Best Practice 'Threshold Values' rule exists; (c) putty looks broken at first because <code>e=0.1</code> with v_y=−400 px/s on impact gives v_y=+40 after the bounce, dropping back to 0 within one frame at 60 FPS — that <em>is</em> the correct putty behavior (the lesson's material table calls it 'No bounce, sticks').</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame
+from pygame.math import Vector2
+
+pygame.init()
+W, H = 600, 400
+FLOOR_Y = H - 30
+GRAVITY = 980      # chat-44 M2 pattern: positive y because Pygame Y grows down
+FRICTION = 1.5     # per-second kinetic friction coefficient
+screen = pygame.display.set_mode((W, H))
+pygame.display.set_caption("Three Balls, One Floor")
+clock = pygame.time.Clock()
+font = pygame.font.SysFont(None, 20)
+
+class Ball:
+    def __init__(self, x, y, restitution, color, label):
+        self.position = Vector2(x, y)
+        self.velocity = Vector2(150, 0)  # small horizontal kick
+        self.acceleration = Vector2(0, 0)
+        self.mass = 1.0
+        self.restitution = restitution
+        self.color = color
+        self.label = label
+        self.bounces = 0
+
+    def apply_force(self, force):
+        self.acceleration += force / self.mass
+
+    def update(self, dt):
+        # Gravity each frame (chat-44 M2 pattern)
+        self.apply_force(Vector2(0, GRAVITY * self.mass))
+        # Euler integration
+        self.velocity += self.acceleration * dt
+        self.position += self.velocity * dt
+        # Floor collision: reflect Y velocity with energy loss
+        if self.position.y &gt;= FLOOR_Y:
+            self.position.y = FLOOR_Y
+            if abs(self.velocity.y) &gt; 5:
+                self.velocity.y *= -self.restitution
+                self.bounces += 1
+            else:
+                self.velocity.y = 0  # threshold: stop micro-bounces
+            # Kinetic friction decays horizontal velocity
+            self.velocity.x *= (1 - FRICTION * dt)
+            # Threshold for horizontal too
+            if abs(self.velocity.x) &lt; 1:
+                self.velocity.x = 0
+        # Reset acceleration each frame
+        self.acceleration = Vector2(0, 0)
+
+def make_balls():
+    return [
+        Ball(80,  60, 0.8, (255, 100, 100), "rubber e=0.8"),
+        Ball(80, 100, 0.6, (192, 192, 192), "steel  e=0.6"),
+        Ball(80, 140, 0.1, (139, 115,  85), "putty  e=0.1"),
+    ]
+
+balls = make_balls()
+running = True
+while running:
+    dt = clock.tick(60) / 1000.0
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_r:
+            balls = make_balls()
+    for b in balls:
+        b.update(dt)
+    screen.fill((20, 20, 30))
+    pygame.draw.line(screen, (120, 120, 150), (0, FLOOR_Y), (W, FLOOR_Y), 2)
+    for i, b in enumerate(balls):
+        pygame.draw.circle(screen, b.color,
+                           (int(b.position.x), int(b.position.y)), 12)
+        hud = font.render(
+            f"{b.label}  bounces={b.bounces}  vx={b.velocity.x:+.0f}",
+            True, b.color)
+        screen.blit(hud, (10, 10 + i * 22))
+    tip = font.render("R = reset · watch rubber bounce, steel settle, putty die",
+                      True, (200, 200, 200))
+    screen.blit(tip, (10, H - 24))
+    pygame.display.flip()
+pygame.quit()</code></pre>
                 </details>
             </div>
 
@@ -1220,31 +1307,31 @@ if __name__ == "__main__":
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> The lesson's bounce formula is <code>velocity.y *= -restitution</code> on floor contact. What does a restitution value of <code>e = 1.0</code> mean physically?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="That's e = 0, not e = 1. With e = 0, multiplying flips the sign but scales magnitude to zero, so the ball stops on first contact — that's the 'putty' / 'sticks' end of the spectrum. e = 1 is the OTHER extreme.">A) The ball stops dead on first contact (no bounce)</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Perfectly elastic bounce — Key Takeaway 'Restitution controls bounce height (0=dead, 1=perfect)' verbatim. With e=1, velocity.y *= -1 just flips the sign with no magnitude change, so the ball returns to its original drop height every bounce — kinetic energy is fully conserved (½mv² is the same before and after because |v| is the same). This is the ideal-physics-textbook case; real materials are always e &lt; 1 (the lesson's superball at e=0.95 is the closest practical material). Best Practice 'Energy Conservation' notes that 'Perfect bounce (e=1) is rare in reality.'">B) Perfectly elastic bounce — the ball returns to its original drop height every time</button>
+                        <button class="quiz-option" data-correct="false" data-hint="e is the bounce coefficient, not the friction coefficient. Friction is a separate property that decays HORIZONTAL velocity each frame; restitution governs the VERTICAL velocity at the moment of impact. The lesson treats them as orthogonal axes of surface physics.">C) The ball has 100% friction with the floor (sticks like Velcro)</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> A rubber ball (<code>e = 0.8</code>) bounces off a floor coated with putty (<code>e = 0.1</code>). According to the lesson's Best Practice 'Material Pairs', what restitution value governs the actual bounce?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="The average (0.45) sounds plausible but isn't what the lesson says. The Best Practice is more pessimistic than averaging — collision energy is constrained by whichever material is LESS able to bounce, not by the mean of the two.">A) The average — (0.8 + 0.1) / 2 = 0.45</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Multiplying gives 0.08 — even less than the minimum. That's not the Best Practice either. The lesson's rule is simpler: take the smaller of the two values directly.">B) The product — 0.8 × 0.1 = 0.08</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="The MINIMUM — Best Practice 'Material Pairs: Use minimum restitution of colliding objects' verbatim. Here that's 0.1 (the putty surface dominates), so the rubber ball barely bounces off the putty floor. Physical intuition: the bounce can only be as elastic as the less-elastic material in the collision allows; energy that goes into deforming a putty surface stays in the putty as heat and never returns to the ball as kinetic energy. This is why putty surfaces deaden any ball that hits them, regardless of how bouncy the ball itself is.">C) The minimum — min(0.8, 0.1) = 0.1</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> The lesson's friction decay pattern is <code>velocity.x *= (1 - friction * dt)</code> each frame on the ground, and Best Practice 'Threshold Values: Stop objects when velocity is very small' says to also do <code>if abs(velocity.x) &lt; THRESHOLD: velocity.x = 0</code>. Why is the threshold rule essential rather than optional?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Floats don't underflow at gameplay-relevant magnitudes. v=0.001 is a perfectly representable double-precision number; the issue is gameplay correctness, not numeric representation.">A) Float underflow — small velocities lose precision and become NaN</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Friction decay is exponential and asymptotic — multiplying by (1 - f*dt) every frame approaches zero but never reaches it. After enough frames velocity is 0.001, then 0.00001, then 0.0000001, but always non-zero — and any non-zero velocity continues advancing position by velocity*dt each frame, producing visible sub-pixel jitter that never resolves (the object 'breathes' against the floor forever). The threshold short-circuits the asymptote: once velocity is below a perceptual threshold (~1 px/s for horizontal motion is the rule of thumb), snap it to exactly zero so the object truly comes to rest. Best Practice 'Threshold Values' verbatim: 'Stop objects when velocity is very small.'">B) Multiplicative friction is asymptotic — velocity approaches zero but never reaches it, causing perpetual sub-pixel jitter</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Memory isn't the issue — Vector2 objects don't grow or leak based on the magnitude of stored values. The threshold protects gameplay correctness (objects coming to rest when they should look at rest), not memory.">C) Memory leak — accumulated tiny velocity values eventually exhaust available RAM</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

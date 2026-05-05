@@ -1234,22 +1234,82 @@ if __name__ == "__main__":
 
 
         <section class="lesson-section">
-            <h2 id="practice-exercise-build-game-mathematics-random">🏋️‍♂️ Practice Exercise</h2>
+            <h2 id="practice-exercise-build-game-mathematics-random">🏋️‍♂️ Practice Exercise: Loot Drops with a Loaded Deck</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Loot Drop Generator — Weighted Choices on a Seeded RNG</h3>
+                <p><strong>Objective:</strong> Build a small Pygame loot-drop demo that exercises three core randomness ideas in one program: (1) <strong>seeded pseudo-random</strong> via <code>random.seed(42)</code> at startup so the same SPACE-press sequence reproduces the same drop sequence on every run — reproducibility for debugging and replays, the lesson's Best Practice #1 'Always Use Seeds'; (2) <strong>weighted distribution</strong> via <code>random.choices(items, weights=[70, 20, 8, 2])</code> for a Diablo-style rarity table (Common 70% / Uncommon 20% / Rare 8% / Epic 2%) — lesson Best Practice 'Control Distribution: Don't use uniform for everything'; (3) <strong>running tally</strong> displayed on screen so the empirical distribution converges visibly toward the declared weights as the player presses SPACE many times — makes the abstract weight values concrete. Press R to re-seed with a different value (e.g. 7) to verify the seed actually matters — different seed → different sequence; same seed → same sequence every run.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Open an 800×600 window and start a clean game loop. Import <code>random</code> and call <code>random.seed(42)</code> ONCE at startup before any other random calls.</li>
+                    <li>Define rarity tiers as parallel lists: <code>RARITIES = ["Common", "Uncommon", "Rare", "Epic"]</code> and <code>WEIGHTS = [70, 20, 8, 2]</code> (the weights don't have to sum to 100; they're relative).</li>
+                    <li>Maintain a running tally dict <code>tally = {r: 0 for r in RARITIES}</code> and a list of recent drops (the last ~8 to display visually, oldest fading out).</li>
+                    <li>On <code>KEYDOWN</code> for <code>K_SPACE</code>: roll one drop with <code>rarity = random.choices(RARITIES, weights=WEIGHTS, k=1)[0]</code>; increment <code>tally[rarity]</code> and append to the recent-drops list (drop the head if >8 items).</li>
+                    <li>On <code>KEYDOWN</code> for <code>K_R</code>: re-seed with a different value (e.g. <code>random.seed(7)</code>), reset the tally and recent-drops list. The next press of SPACE should produce a DIFFERENT sequence than the seed-42 sequence — visible proof that the seed drives the output.</li>
+                    <li>Render the recent drops as a horizontal row of colored chips (Common gray, Uncommon green, Rare blue, Epic purple) along with the item name; render the tally as a bar chart on the right side of the screen so the empirical distribution converges visibly toward 70/20/8/2 over many presses.</li>
+                    <li>Render a HUD with the current seed value and total drop count so the seeded-reproducibility claim is verifiable: close the program, restart it with seed 42, press SPACE the same number of times — you should see the IDENTICAL sequence of drops.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The two big traps: (1) <code>random.seed()</code> seeds the global random module, but if you instead do <code>rng = random.Random(); rng.seed(42)</code> you get an isolated generator — either is fine but DON'T mix them, and DON'T re-seed mid-loop unless you intentionally want the sequence to restart. The lesson's framing is to seed ONCE at startup. (2) <code>random.choices</code> (with the 's', plural) returns a LIST of size <code>k</code>, even when <code>k=1</code>. Don't confuse with <code>random.choice</code> (singular, no weights, returns the item directly). The canonical idiom for one weighted pick is <code>random.choices(items, weights=W, k=1)[0]</code> — the <code>[0]</code> unwraps the single-item list. The weights are RELATIVE, not absolute probabilities, so [70, 20, 8, 2] and [7, 2, 0.8, 0.2] produce identical sampling.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame, random
+
+pygame.init()
+WIDTH, HEIGHT = 800, 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Loot Drops")
+font = pygame.font.SysFont(None, 28)
+clock = pygame.time.Clock()
+
+RARITIES = ["Common", "Uncommon", "Rare", "Epic"]
+WEIGHTS = [70, 20, 8, 2]
+COLORS = {
+    "Common":   (180, 180, 180),
+    "Uncommon": (60, 200, 60),
+    "Rare":     (60, 120, 230),
+    "Epic":     (180, 80, 220),
+}
+
+seed = 42
+random.seed(seed)
+tally = {r: 0 for r in RARITIES}
+recent = []
+
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                rarity = random.choices(RARITIES, weights=WEIGHTS, k=1)[0]
+                tally[rarity] += 1
+                recent.append(rarity)
+                if len(recent) &gt; 8:
+                    recent.pop(0)
+            elif event.key == pygame.K_r:
+                seed = 7 if seed == 42 else 42
+                random.seed(seed)
+                tally = {r: 0 for r in RARITIES}
+                recent = []
+
+    screen.fill((25, 25, 35))
+    total = sum(tally.values())
+    screen.blit(font.render(f"Seed: {seed}   Drops: {total}   (SPACE drop, R reseed)",
+                            True, (240, 240, 240)), (10, 10))
+    for i, r in enumerate(recent):
+        pygame.draw.rect(screen, COLORS[r], (40 + i * 70, 100, 60, 60))
+    for i, r in enumerate(RARITIES):
+        bar_w = tally[r] * 4
+        pygame.draw.rect(screen, COLORS[r], (450, 220 + i * 50, bar_w, 36))
+        screen.blit(font.render(f"{r}: {tally[r]}", True, COLORS[r]), (460, 226 + i * 50))
+    pygame.display.flip()
+    clock.tick(60)
+
+pygame.quit()</code></pre>
                 </details>
             </div>
 
@@ -1257,31 +1317,31 @@ if __name__ == "__main__":
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> What does calling `random.seed(42)` at the start of your game accomplish, and why does the lesson recommend always seeding?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Seeding doesn't make the output 'more random' — the underlying generator is exactly as random with or without an explicit seed. What seeding does is make the sequence REPRODUCIBLE, not better. Without an explicit seed, Python uses the system time, which gives a different (not better) sequence each run.">A) It makes the output more uniformly distributed and reduces sampling bias.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="random.seed(N) initializes the pseudo-random generator's internal state so the SAME seed produces the SAME sequence of subsequent random calls every run. The lesson's Casino Analogy frames this as 'Seeded Random: Like using the same deck — reproducible results' and Best Practice #1 ('Always Use Seeds: For debugging and reproducibility') makes it the lead rule. Critical for: debugging (a bug in level 7 reproduces if you re-run with the same seed); replays (record only the seed + inputs, not the random outputs); deterministic procedural generation (the same seed grows the same dungeon every time — think Minecraft world seeds).">B) It initializes the pseudo-random generator's internal state so the same seed produces the same sequence of subsequent calls — enabling reproducible debugging, replays, and procedural generation.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Seeds aren't for security — in fact, predictable seeds are the opposite of secure. Python's `random` module is explicitly NOT cryptographically secure (the docs warn against it); for security-sensitive randomness use the `secrets` module. The lesson's framing is reproducibility for game logic, not security.">C) It encrypts the random output stream so save files can't be tampered with by players.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> You want to pick a loot rarity from `["Common", "Uncommon", "Rare", "Epic"]` with rarity weights `[70, 20, 8, 2]`. Which call does this correctly?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="random.choices(items, weights=[70, 20, 8, 2], k=1)[0] is the canonical weighted-pick idiom. The 's' in 'choices' is the weighted-and-list-returning version (vs the unweighted singular 'choice'). It returns a LIST of length k even when k=1, so the [0] unwraps the single result. The weights are RELATIVE, not absolute probabilities — [70, 20, 8, 2] and [0.7, 0.2, 0.08, 0.02] produce identical sampling. Lesson's Distributions section + Best Practice 'Control Distribution: Don't use uniform for everything' lands here.">A) random.choices(RARITIES, weights=[70, 20, 8, 2], k=1)[0]</button>
+                        <button class="quiz-option" data-correct="false" data-hint="random.choice (singular, no 's') has no weights argument — it picks UNIFORMLY from the list, giving every item 25% probability regardless of intent. That makes Epic items equally as common as Common items, which is exactly the opposite of a loot table. The 's'/'no-s' distinction is a tiny but critical API detail in Python's random module.">B) random.choice(RARITIES, weights=[70, 20, 8, 2])</button>
+                        <button class="quiz-option" data-correct="false" data-hint="random.randint(70, 2) is invalid — randint requires lower≤upper, and even if you swapped to randint(2, 70) it returns an integer in that range, not an item from a list. Weighted picking from a labeled list needs the choices/weights API specifically; numeric range generation is a different problem.">C) random.randint(70, 2) and use the result to index into RARITIES.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> The lesson's Best Practices include 'Player Psychology: Fair ≠ Fun (use controlled random).' What does this mean in practice for game design?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Cheating against the player isn't what 'controlled random' means — it's the opposite of the lesson's intent. Modern controlled-random patterns are typically designed to bias TOWARD better player experience (e.g. pity timers that GUARANTEE a rare drop after N misses), not to bias against them.">A) Game RNG should be subtly biased AGAINST the player so wins feel earned and rare.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Disabling RNG entirely loses all the variety and replayability the lesson opens with ('the spice of gaming! It creates variety, replayability, and surprise'). Controlled random is about SHAPING the random output, not removing it.">B) RNG should be disabled in competitive games so outcomes are pure skill with no luck factor.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="True uniform random can have long unfair-feeling streaks: a 50% hit chance can miss 10 times in a row (probability ~0.1%, but happens to ~1 in 1000 players) which feels broken even though it's mathematically fair. Controlled-random patterns shape the distribution to feel better: PITY TIMERS guarantee a rare drop after N failed rolls (XCOM, gacha games); BAG/PERMUTATION SYSTEMS draw from a shuffled finite set so you can't get the same Tetris piece 7 times in a row; HEDGING tilts probabilities toward 'feels right' over 'is uniform'. Lesson Best Practice 'Player Psychology: Fair ≠ Fun (use controlled random)' + Key Takeaway 'Controlled random feels more fair' codify exactly this gap between mathematical fairness and perceived fairness.">C) True uniform RNG can produce streaks (10 misses in a row from 50% accuracy) that feel unfair even though they're mathematically valid; controlled random patterns like pity timers and bag/permutation systems shape the distribution toward perceived fairness.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

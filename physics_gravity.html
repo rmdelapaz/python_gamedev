@@ -1242,22 +1242,103 @@ if __name__ == "__main__":
 
 
         <section class="lesson-section">
-            <h2 id="practice-exercise-build-physics-gravity">🏋️‍♂️ Practice Exercise</h2>
+            <h2 id="practice-exercise-build-physics-gravity">🏋️‍♂️ Practice Exercise: Bouncy Ball, Two Worlds</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Earth, Moon, and a Floor That Bounces</h3>
+                <p><strong>Objective:</strong> Build a platformer-style 'bouncy ball with tunable gravity' demo (~50 lines) that exercises three pillar gravity patterns in one program: <strong>constant down-gravity</strong> applied as a force every frame via <code>apply_force(Vector2(0, GRAVITY * mass))</code> with POSITIVE y because Pygame's screen Y grows down (the lesson's Earth-mode pattern + chat-43 coordinates Y-axis-flip rule); <strong>one-shot jump impulse</strong> via <code>velocity.y = -JUMP_SPEED</code> on SPACEBAR <code>KEYDOWN</code> ONLY when <code>on_ground</code> is True (the lesson's <code>JumpingCharacter.jump()</code> on-ground guard — without it, holding spacebar re-launches the ball every frame); and <strong>terminal velocity</strong> via <code>if velocity.y &gt; MAX_FALL_SPEED: velocity.y = MAX_FALL_SPEED</code> (Best Practice 'Terminal Velocity: Cap fall speed for better control' + Key Takeaway 'Terminal velocity prevents uncontrollable falling'). Press M to toggle between Earth gravity (980 px/s²) and Moon gravity (~162 px/s² = Earth · 0.165) per the lesson's Moon mode; the floor reflects velocity with energy loss (<code>velocity.y *= -0.6</code>) so the ball settles after a few bounces — a preview of next lesson's bounce_friction.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Reuse the <code>PhysicsObject</code> shape from the previous lesson: <code>position</code>, <code>velocity</code>, <code>acceleration</code> (all <code>Vector2</code>), <code>mass</code>; plus an <code>on_ground</code> bool.</li>
+                    <li>Define <code>EARTH_G = 980</code>, <code>MOON_G = 162</code> (Earth · 0.165 per the lesson's Moon Gravity mode), <code>JUMP_SPEED = 500</code>, <code>MAX_FALL = 800</code>; start with <code>gravity = EARTH_G</code>.</li>
+                    <li>Each frame, <code>apply_force(Vector2(0, gravity * mass))</code> — <strong>POSITIVE</strong> y, because Pygame Y grows down so 'down' is +y (chat-43 coordinates Common Problems #1).</li>
+                    <li>Handle SPACE in the <code>KEYDOWN</code> event branch: <code>if on_ground: velocity.y = -JUMP_SPEED; on_ground = False</code> — negative because 'up' is −y; one-shot to avoid the rocket-launch foot-gun.</li>
+                    <li>Handle M in the <code>KEYDOWN</code> branch to toggle <code>gravity</code> between EARTH_G and MOON_G — the difference is dramatic: jump arcs roughly 6× higher on Moon.</li>
+                    <li>After the integrator runs (<code>velocity += accel * dt; position += velocity * dt</code>), clamp fall speed: <code>if velocity.y &gt; MAX_FALL: velocity.y = MAX_FALL</code>.</li>
+                    <li>Floor collision: if <code>position.y &gt;= floor_y</code>, set <code>position.y = floor_y</code>, <code>velocity.y *= -0.6</code> (bounce with energy loss), and <code>on_ground = True</code> when <code>abs(velocity.y) &lt; 5</code> (resting threshold).</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>Three sign conventions trip people up: (a) gravity is <code>+y</code> not <code>−y</code> — your math-class instinct says 'down is negative' but Pygame is screen-space, top-left origin, Y down; (b) jump impulse is <code>−y</code> not <code>+y</code> — 'up' is screen-up which is decreasing y; (c) when the ball lands, multiply <code>velocity.y</code> by a negative reflection factor (<code>-0.6</code>) NOT subtract a constant — reflection flips direction AND scales magnitude in one step. If the ball drifts through the floor at high speed, your <code>MAX_FALL</code> cap is too high (or absent) and a single frame moves more pixels than the floor is thick — classic tunneling bug from skipping terminal velocity.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame
+from pygame.math import Vector2
+
+pygame.init()
+W, H = 600, 400
+FLOOR_Y = H - 30
+screen = pygame.display.set_mode((W, H))
+pygame.display.set_caption("Bouncy Ball, Two Worlds")
+clock = pygame.time.Clock()
+font = pygame.font.SysFont(None, 22)
+
+class Ball:
+    def __init__(self, x, y):
+        self.position = Vector2(x, y)
+        self.velocity = Vector2(0, 0)
+        self.acceleration = Vector2(0, 0)
+        self.mass = 1.0
+        self.on_ground = False
+
+    def apply_force(self, force):
+        self.acceleration += force / self.mass
+
+    def update(self, dt, gravity):
+        # Constant down-gravity: POSITIVE y (Pygame Y grows down)
+        self.apply_force(Vector2(0, gravity * self.mass))
+        # Euler integration
+        self.velocity += self.acceleration * dt
+        self.position += self.velocity * dt
+        # Terminal velocity cap (Best Practice)
+        if self.velocity.y &gt; MAX_FALL:
+            self.velocity.y = MAX_FALL
+        # Floor collision: bounce with energy loss
+        if self.position.y &gt;= FLOOR_Y:
+            self.position.y = FLOOR_Y
+            self.velocity.y *= -0.6
+            if abs(self.velocity.y) &lt; 5:
+                self.velocity.y = 0
+                self.on_ground = True
+        else:
+            self.on_ground = False
+        # Reset acceleration each frame
+        self.acceleration = Vector2(0, 0)
+
+EARTH_G = 980
+MOON_G  = int(EARTH_G * 0.165)  # ~162 px/s²
+JUMP_SPEED = 500
+MAX_FALL = 800
+ball = Ball(W // 2, FLOOR_Y - 20)
+gravity = EARTH_G
+world = "EARTH"
+running = True
+while running:
+    dt = clock.tick(60) / 1000.0
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE and ball.on_ground:
+                # One-shot jump impulse: NEGATIVE y (up = −y)
+                ball.velocity.y = -JUMP_SPEED
+                ball.on_ground = False
+            elif event.key == pygame.K_m:
+                gravity = MOON_G if gravity == EARTH_G else EARTH_G
+                world = "MOON" if gravity == MOON_G else "EARTH"
+    ball.update(dt, gravity)
+    screen.fill((20, 20, 30))
+    pygame.draw.line(screen, (120, 120, 150), (0, FLOOR_Y), (W, FLOOR_Y), 2)
+    pygame.draw.circle(screen, (255, 180, 80),
+                       (int(ball.position.x), int(ball.position.y)), 14)
+    hud = font.render(
+        f"World: {world}  g={gravity}  vy={ball.velocity.y:+.0f}  "
+        f"M=toggle gravity  SPACE=jump",
+        True, (255, 255, 255))
+    screen.blit(hud, (10, 10))
+    pygame.display.flip()
+pygame.quit()</code></pre>
                 </details>
             </div>
 
@@ -1265,31 +1346,31 @@ if __name__ == "__main__":
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> When you apply Earth-like gravity each frame in Pygame via <code>apply_force(Vector2(0, g * mass))</code>, what's the SIGN of <code>g</code>?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="POSITIVE. Pygame's screen origin is top-left with Y growing DOWN (chat-43 coordinates lesson, Common Coordinate Problems #1 'Y-Axis Confusion: Screen Y goes down, math Y goes up'), so 'down' on screen is the +y direction. A gravity force vector pointing toward the bottom of the screen is therefore (0, +g), not (0, \u2212g). The lesson's Earth mode uses gravityStrength = 980 (positive) and applies it as +mass*gravity in the y component. Math-class instinct says 'down is negative,' but that's only true with math-Y-up conventions; in screen space, gravity literally adds to y.">A) Positive \u2014 because Pygame Y grows down, 'down' is +y</button>
+                        <button class="quiz-option" data-correct="false" data-hint="That's the math-class convention where Y points up so down is negative. Pygame is screen space, top-left origin, Y down \u2014 the same Y-flip you handled in the chat-43 trigonometry lesson when calling pygame.transform.rotate(-angle).">B) Negative \u2014 gravity pulls things 'down' which is mathematically \u2212y</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Sign matters. A zero force does nothing. The whole point of gravity is to add a non-zero downward acceleration each frame.">C) Zero \u2014 gravity is a constant offset, not a force</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> The lesson's planetary gravity mode computes the force from a gravity well as <code>force = (G * source_mass * obj_mass) / distSq</code>. Which physical law is this, and how does the force change as the object moves twice as far from the source?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Linear distance would mean force halves at twice the distance. The lesson's formula divides by distance SQUARED (distSq), so doubling the distance reduces force by a factor of 4, not 2.">A) Linear-distance gravity: doubling distance halves the force</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Newton's law of universal gravitation, F = G*m1*m2 / r\u00b2 \u2014 inverse SQUARE law. The lesson's planet/binary modes implement exactly this with `force = (gravityStrength * source.mass * this.mass) / distSq`, and Best Practice 'Gravity Wells: Use inverse square law for realistic planets' calls it out by name. At twice the distance, force is 1/4; at three times, 1/9. This is what makes orbital mechanics work \u2014 close orbits are tight and fast, distant orbits are loose and slow, all from the same single formula.">B) Newton's inverse-square law: doubling distance reduces force by a factor of 4</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Distance-independent gravity is what 'constant gravity' modes (Earth/Moon in the lesson) use \u2014 a flat downward force regardless of position. The planet/binary modes are different: they use distSq in the denominator, making the force fall off with distance.">C) Distance-independent gravity: force is the same at any distance</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> The lesson's Best Practice 'Terminal Velocity' says to cap fall speed via <code>if velocity.y &gt; MAX_FALL: velocity.y = MAX_FALL</code>. What problem does this prevent in a Pygame platformer?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Velocity is just a float; large numbers don't leak memory. The cap protects gameplay, not memory.">A) Memory leaks from velocity values exceeding the float range</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Frame rate doesn't depend on the magnitude of numbers \u2014 a multiply takes the same time whether velocity.y is 50 or 50,000. The cap protects gameplay correctness, not performance.">B) Frame rate degradation as numbers in the integrator grow</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Tunneling through thin floors (and out-of-control fall speed for game-feel) \u2014 Key Takeaway 'Terminal velocity prevents uncontrollable falling' verbatim. After 2\u20133 seconds of falling under 980 px/s\u00b2, velocity.y reaches ~2000+ px/s; one frame at 60 FPS advances the ball ~33 px, which can skip OVER a 20-px-thick floor in a single integrator step (the position jumps from above the floor to below it without ever satisfying position.y &gt;= floor_y). Capping at, say, 800 px/s bounds the per-frame jump to ~13 px so floor collision detection always catches the landing. The cap also makes fall trajectories predictable and controllable, which is the bigger game-feel reason.">C) Tunneling through thin floors when fall speed exceeds floor-thickness per frame</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

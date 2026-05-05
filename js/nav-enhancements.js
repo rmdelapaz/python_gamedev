@@ -29,6 +29,7 @@
         initThemeToggle();
         initMobileMenu();
         initAutoTOC();
+        initQuizInteractivity();
     });
 
     /* -----------------------------------------------------------
@@ -248,6 +249,41 @@
                 const top = target.getBoundingClientRect().top + window.scrollY - offset;
                 window.scrollTo({ top: top, behavior: 'smooth' });
                 history.pushState(null, '', '#' + id);
+            });
+        });
+    }
+
+    /* -----------------------------------------------------------
+     * Quiz interactivity (Phase 8, ported from python_intro
+     *   js/course-enhancements.js lines ~328-345 verbatim)
+     *
+     * Markup contract:
+     *   <div class="quiz-question">
+     *     <p>…question…</p>
+     *     <div class="quiz-options">
+     *       <button class="quiz-option" data-correct="true|false"
+     *               data-hint="…" data-explanation="…">…</button>
+     *       …
+     *     </div>
+     *     <div class="quiz-feedback"></div>
+     *   </div>
+     * ----------------------------------------------------------- */
+
+    function initQuizInteractivity() {
+        document.querySelectorAll('.quiz-question').forEach(q => {
+            const options = q.querySelectorAll('.quiz-option');
+            const feedback = q.querySelector('.quiz-feedback');
+            options.forEach(opt => {
+                opt.addEventListener('click', () => {
+                    options.forEach(o => o.classList.remove('selected', 'correct', 'incorrect'));
+                    opt.classList.add('selected');
+                    const ok = opt.dataset.correct === 'true';
+                    opt.classList.add(ok ? 'correct' : 'incorrect');
+                    if (feedback) {
+                        feedback.textContent = ok ? ('Correct! ' + (opt.dataset.explanation || '')) : ('Try again. ' + (opt.dataset.hint || ''));
+                        feedback.className = 'quiz-feedback ' + (ok ? 'correct' : 'incorrect');
+                    }
+                });
             });
         });
     }

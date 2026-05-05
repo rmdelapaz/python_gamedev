@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- tower-defense-lane.svg
+     Phase 7 SVG #31 for genres_tower_defense.html (Phase 6 figure between
+     the "Tower Defense Core" mermaid graph and the Tower Defense
+     Mathematics h2 — convention B with intervening h2 like chat-31 racing;
+     ALSO deployed as canvas-fallback for #towerDefenseCanvas per Phase 7).
+
+     A top-down lane diagram showing tower coverage and enemy routing —
+     the core decision the interactive demo asks the player to optimize.
+     Tower types match the lesson's actual 5-roster (Basic / Cannon /
+     Laser / Slow / Bank) — NOT the 3-type arrow / cannon / freezer the
+     original catalog build_concept sketched. Only 4 towers draw range
+     circles; the Bank is an economy tower with range 0 and gets a "+5g/s"
+     income tag instead.
+
+     Layout:
+       Header band  (y=8..30):    TOWER DEFENSE LANE — TOWER COVERAGE & ENEMY ROUTING
+       Lane         (x=14..538):  Top-down playfield with S-curve path,
+                                  5 towers, and 3 enemies
+       Legend       (x=550..706): TOWERS (5 entries) + ENEMIES (3 entries)
+                                  + flying-mechanic footnote
+
+     Path (8 waypoints, mirroring the lesson's PATH array shape, scaled
+     to fit the 524×380 lane area):
+       Spawn (24,230) → (140,230) → (140,110) → (300,110) → (300,360) →
+       (430,360) → (430,200) → Base (528,200)
+
+     Tower placements (matching the lesson's TOWER_TYPES stat block):
+       Basic   🏹 at (90,170),  range r=68 px (lesson r=100, scaled)
+       Cannon  💣 at (218,178), range r=58 px (lesson r=80) +
+                                splash AOE shown as inner dashed ring
+       Slow    ❄️ at (368,290), range r=64 px (lesson r=90, cool blue tint)
+       Laser   ⚡ at (478,288), range r=78 px (lesson r=120 — longest;
+                                only tower hitting flying enemies)
+       Bank    💰 at (60,388),  no range circle (range 0); "+5 g/s"
+                                income tag below
+
+     Enemies on path (3 of 5 lesson types — flying / boss called out in
+     legend instead of placed):
+       Fast  (small  yellow #FFD93D, r=6)  at (224,110) — leading
+       Basic (medium red    #FF6B6B, r=8)  at (300,242) — descending
+                                                          vertical drop
+       Tank  (large  green  #6BCB77, r=11) at (388,360) — tail with
+                                                          armor pip
+
+     Theme-aware via prefers-color-scheme: dark — card / lane / path /
+     text darken; tower fills and enemy fills stay constant since they
+     are identifiers carried over from the lesson's canvas demo.
+-->
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 720 440"
+     role="img"
+     aria-labelledby="tdl-title tdl-desc"
+     font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif">
+  <title id="tdl-title">Tower defense lane: tower coverage and enemy routing</title>
+  <desc id="tdl-desc">A top-down tower defense lane on the left and a tower-and-enemy legend on the right. The lane shows an S-curve path winding from a spawn point on the left edge through eight waypoints to a fortified base on the right edge. Five towers are placed in safe zones beside the path: a basic arrow tower with a warm range circle covering the entry, a cannon tower with a tighter red-orange range and an inner dashed splash radius, a slow tower with a cool cyan zone covering the bottom run, a laser tower with the largest indigo range covering the upper exit, and a Bank economy tower with no range circle (it generates five gold per second instead). Three enemies are on the path at different points: a small fast enemy leading, a medium basic enemy descending the long drop, and a large armored tank trailing. The legend on the right identifies each tower with its cost and key stat and each enemy with its size relative to the others, plus a footnote noting that flying enemies appear in later waves and can only be hit by laser towers.</desc>
+
+  <style>
+    .tdl-card-fill { fill: #ffffff; }
+    .tdl-lane-fill { fill: #4c6b40; }
+    .tdl-lane-grid { stroke: rgba(255, 255, 255, 0.08); }
+    .tdl-path-stroke { stroke: #b89968; }
+    .tdl-path-edge   { stroke: #8a6f48; }
+    .tdl-text       { fill: #1e293b; }
+    .tdl-text-light { fill: #f8fafc; }
+    .tdl-text-sub   { fill: #475569; }
+    .tdl-divider    { stroke: #cbd5e1; }
+    .tdl-card-stroke { stroke: #cbd5e1; }
+    .tdl-base-fill   { fill: #cbd5e1; }
+    .tdl-spawn-fill  { fill: #c084fc; }
+    @media (prefers-color-scheme: dark) {
+      .tdl-card-fill { fill: #1f2937; }
+      .tdl-lane-fill { fill: #1e2e1e; }
+      .tdl-lane-grid { stroke: rgba(255, 255, 255, 0.05); }
+      .tdl-path-stroke { stroke: #6f5b3e; }
+      .tdl-path-edge   { stroke: #4a3d28; }
+      .tdl-text       { fill: #d4d4d4; }
+      .tdl-text-sub   { fill: #94a3b8; }
+      .tdl-divider    { stroke: #334155; }
+      .tdl-card-stroke { stroke: #334155; }
+      .tdl-base-fill   { fill: #475569; }
+    }
+  </style>
+
+  <!-- ============================================================== -->
+  <!-- Card background                                                  -->
+  <!-- ============================================================== -->
+  <rect class="tdl-card-fill tdl-card-stroke" x="0.5" y="0.5" width="719" height="439" rx="6" ry="6" stroke-width="1" fill-opacity="1"/>
+
+  <!-- ============================================================== -->
+  <!-- Header band                                                      -->
+  <!-- ============================================================== -->
+  <text x="360" y="22" text-anchor="middle" font-size="11" font-weight="700" letter-spacing="0.5" class="tdl-text">TOWER DEFENSE LANE — TOWER COVERAGE &amp; ENEMY ROUTING</text>
+
+  <!-- Dashed vertical divider between lane and legend -->
+  <line x1="544" y1="40" x2="544" y2="420" class="tdl-divider" stroke-width="1" stroke-dasharray="4 3"/>
+
+  <!-- ============================================================== -->
+  <!-- Lane background card + subtle grid                               -->
+  <!-- ============================================================== -->
+  <rect class="tdl-lane-fill" x="14" y="40" width="524" height="380" rx="4" ry="4"/>
+
+  <!-- Lane grid (every 30 px to echo the lesson's GRID_SIZE) -->
+  <g stroke-width="0.6" class="tdl-lane-grid" fill="none">
+    <line x1="44"  y1="40" x2="44"  y2="420"/>
+    <line x1="74"  y1="40" x2="74"  y2="420"/>
+    <line x1="104" y1="40" x2="104" y2="420"/>
+    <line x1="134" y1="40" x2="134" y2="420"/>
+    <line x1="164" y1="40" x2="164" y2="420"/>
+    <line x1="194" y1="40" x2="194" y2="420"/>
+    <line x1="224" y1="40" x2="224" y2="420"/>
+    <line x1="254" y1="40" x2="254" y2="420"/>
+    <line x1="284" y1="40" x2="284" y2="420"/>
+    <line x1="314" y1="40" x2="314" y2="420"/>
+    <line x1="344" y1="40" x2="344" y2="420"/>
+    <line x1="374" y1="40" x2="374" y2="420"/>
+    <line x1="404" y1="40" x2="404" y2="420"/>
+    <line x1="434" y1="40" x2="434" y2="420"/>
+    <line x1="464" y1="40" x2="464" y2="420"/>
+    <line x1="494" y1="40" x2="494" y2="420"/>
+    <line x1="524" y1="40" x2="524" y2="420"/>
+    <line x1="14"  y1="70"  x2="538" y2="70"/>
+    <line x1="14"  y1="100" x2="538" y2="100"/>
+    <line x1="14"  y1="130" x2="538" y2="130"/>
+    <line x1="14"  y1="160" x2="538" y2="160"/>
+    <line x1="14"  y1="190" x2="538" y2="190"/>
+    <line x1="14"  y1="220" x2="538" y2="220"/>
+    <line x1="14"  y1="250" x2="538" y2="250"/>
+    <line x1="14"  y1="280" x2="538" y2="280"/>
+    <line x1="14"  y1="310" x2="538" y2="310"/>
+    <line x1="14"  y1="340" x2="538" y2="340"/>
+    <line x1="14"  y1="370" x2="538" y2="370"/>
+    <line x1="14"  y1="400" x2="538" y2="400"/>
+  </g>
+
+  <!-- ============================================================== -->
+  <!-- Path (8 waypoints — S-curve)                                     -->
+  <!-- Drawn as outer edge stroke + inner path stroke for a tan road    -->
+  <!-- with subtle border, matching the lesson's drawing order.         -->
+  <!-- ============================================================== -->
+  <path d="M 24 230 L 140 230 L 140 110 L 300 110 L 300 360 L 430 360 L 430 200 L 528 200"
+        class="tdl-path-edge" fill="none" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 24 230 L 140 230 L 140 110 L 300 110 L 300 360 L 430 360 L 430 200 L 528 200"
+        class="tdl-path-stroke" fill="none" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Direction-of-travel chevrons along the path (small, low-contrast) -->
+  <g fill="rgba(255, 255, 255, 0.45)">
+    <polygon points="74,225 80,230 74,235"/>
+    <polygon points="135,170 140,176 145,170"/>
+    <polygon points="222,105 228,110 222,115"/>
+    <polygon points="295,250 300,256 305,250"/>
+    <polygon points="367,355 373,360 367,365"/>
+    <polygon points="425,272 430,278 435,272"/>
+    <polygon points="493,195 499,200 493,205"/>
+  </g>
+
+  <!-- Spawn marker (left edge) -->
+  <circle cx="24" cy="230" r="9" class="tdl-spawn-fill" stroke="#7c3aed" stroke-width="1.5"/>
+  <text x="14" y="208" text-anchor="start" font-size="8" font-weight="700" class="tdl-text-light">SPAWN</text>
+
+  <!-- Base marker (right edge): castle battlements -->
+  <rect x="514" y="184" width="22" height="32" class="tdl-base-fill" stroke="#475569" stroke-width="1"/>
+  <rect x="514" y="180" width="5" height="6" class="tdl-base-fill" stroke="#475569" stroke-width="1"/>
+  <rect x="522" y="180" width="5" height="6" class="tdl-base-fill" stroke="#475569" stroke-width="1"/>
+  <rect x="530" y="180" width="5" height="6" class="tdl-base-fill" stroke="#475569" stroke-width="1"/>
+  <rect x="522" y="200" width="6" height="16" fill="#475569"/>
+  <text x="525" y="232" text-anchor="middle" font-size="8" font-weight="700" class="tdl-text-light">BASE</text>
+
+  <!-- ============================================================== -->
+  <!-- Range circles (drawn before towers so towers sit on top)         -->
+  <!-- Translucent fills + dashed strokes — overlap is the headline.    -->
+  <!-- ============================================================== -->
+
+  <!-- Basic 🏹 range — warm amber, range r=68 (lesson 100 scaled) -->
+  <circle cx="90" cy="170" r="68" fill="rgba(217, 165, 75, 0.18)" stroke="rgba(217, 165, 75, 0.65)" stroke-width="1.2" stroke-dasharray="3 3"/>
+
+  <!-- Cannon 💣 range r=58 (lesson 80) + inner dashed splash AOE r=30 -->
+  <circle cx="218" cy="178" r="58" fill="rgba(220, 90, 60, 0.18)" stroke="rgba(220, 90, 60, 0.65)" stroke-width="1.2" stroke-dasharray="3 3"/>
+  <circle cx="218" cy="178" r="30" fill="none" stroke="rgba(255, 80, 50, 0.85)" stroke-width="1" stroke-dasharray="2 2"/>
+
+  <!-- Slow ❄️ range r=64 (lesson 90) — cool cyan, slow zone is the headline -->
+  <circle cx="368" cy="290" r="64" fill="rgba(135, 206, 235, 0.26)" stroke="rgba(135, 206, 235, 0.75)" stroke-width="1.2" stroke-dasharray="3 3"/>
+
+  <!-- Laser ⚡ range r=78 (lesson 120, longest range) — indigo tint -->
+  <circle cx="478" cy="288" r="78" fill="rgba(99, 102, 241, 0.18)" stroke="rgba(99, 102, 241, 0.65)" stroke-width="1.2" stroke-dasharray="3 3"/>
+
+  <!-- ============================================================== -->
+  <!-- Enemies on path (3 of 5 lesson types)                            -->
+  <!-- Drawn before towers so towers sit on top if any tile overlaps.   -->
+  <!-- ============================================================== -->
+
+  <!-- Fast enemy (small, yellow) at (224, 110) — leading, on top horizontal segment -->
+  <circle cx="224" cy="110" r="6" fill="#FFD93D" stroke="#000" stroke-width="1.2"/>
+
+  <!-- Basic enemy (medium, red) at (300, 242) — descending the long vertical drop -->
+  <circle cx="300" cy="242" r="8" fill="#FF6B6B" stroke="#000" stroke-width="1.2"/>
+
+  <!-- Tank enemy (large, green) at (388, 360) — tail end with armor pip -->
+  <circle cx="388" cy="360" r="11" fill="#6BCB77" stroke="#000" stroke-width="1.5"/>
+  <!-- Armor pip (slate ring overlay) -->
+  <circle cx="388" cy="360" r="11" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="3 2"/>
+  <!-- Tank health bar -->
+  <rect x="378" y="345" width="20" height="3" fill="#333"/>
+  <rect x="378" y="345" width="14" height="3" fill="#4CAF50"/>
+
+  <!-- ============================================================== -->
+  <!-- Towers (5 placements; 1 economy with no range circle)            -->
+  <!-- Each tower = rounded base square + tower-specific accent + icon  -->
+  <!-- text drawn at absolute coords (no transform group around text).  -->
+  <!-- ============================================================== -->
+
+  <!-- Basic 🏹 at (90, 170) -->
+  <rect x="78" y="158" width="24" height="24" rx="3" ry="3" fill="#8B7355" stroke="#000" stroke-width="1"/>
+  <rect x="80" y="152" width="3" height="3" fill="#FFD700"/>
+  <text x="90" y="178" text-anchor="middle" font-size="14" dominant-baseline="middle">🏹</text>
+
+  <!-- Cannon 💣 at (218, 178) -->
+  <rect x="206" y="166" width="24" height="24" rx="3" ry="3" fill="#696969" stroke="#000" stroke-width="1"/>
+  <rect x="208" y="160" width="3" height="3" fill="#FFD700"/>
+  <text x="218" y="186" text-anchor="middle" font-size="14" dominant-baseline="middle">💣</text>
+
+  <!-- Slow ❄️ at (368, 290) -->
+  <rect x="356" y="278" width="24" height="24" rx="3" ry="3" fill="#87CEEB" stroke="#000" stroke-width="1"/>
+  <rect x="358" y="272" width="3" height="3" fill="#FFD700"/>
+  <text x="368" y="298" text-anchor="middle" font-size="14" dominant-baseline="middle">❄️</text>
+
+  <!-- Laser ⚡ at (478, 288) -->
+  <rect x="466" y="276" width="24" height="24" rx="3" ry="3" fill="#4169E1" stroke="#000" stroke-width="1"/>
+  <rect x="468" y="270" width="3" height="3" fill="#FFD700"/>
+  <text x="478" y="296" text-anchor="middle" font-size="14" dominant-baseline="middle">⚡</text>
+
+  <!-- Bank 💰 at (60, 388) — no range circle; "+5 g/s" income tag below -->
+  <rect x="48" y="376" width="24" height="24" rx="3" ry="3" fill="#FFD700" stroke="#000" stroke-width="1"/>
+  <rect x="50" y="370" width="3" height="3" fill="#FFD700"/>
+  <text x="60" y="396" text-anchor="middle" font-size="14" dominant-baseline="middle">💰</text>
+  <!-- Income tag pill -->
+  <rect x="38" y="406" width="44" height="12" rx="6" ry="6" fill="rgba(255, 215, 0, 0.95)" stroke="#a16207" stroke-width="0.8"/>
+  <text x="60" y="415" text-anchor="middle" font-size="8" font-weight="700" fill="#7c4a03">+5 g/s</text>
+
+  <!-- ============================================================== -->
+  <!-- Lane labels                                                      -->
+  <!-- ============================================================== -->
+  <!-- "S-CURVE PATH" annotation along the bottom horizontal segment    -->
+  <text x="365" y="385" text-anchor="middle" font-size="8" font-style="italic" class="tdl-text-light" opacity="0.85">8-waypoint S-curve · spawn → base</text>
+
+  <!-- ============================================================== -->
+  <!-- Legend column (x=550..706)                                       -->
+  <!-- ============================================================== -->
+
+  <!-- TOWERS header -->
+  <text x="554" y="58" text-anchor="start" font-size="10" font-weight="700" letter-spacing="0.4" class="tdl-text">TOWERS</text>
+  <line x1="554" y1="62" x2="706" y2="62" class="tdl-divider" stroke-width="0.8"/>
+
+  <!-- Tower 1 — Basic -->
+  <rect x="556" y="70" width="14" height="14" rx="2" ry="2" fill="#8B7355" stroke="#000" stroke-width="0.8"/>
+  <text x="563" y="80" text-anchor="middle" font-size="9" dominant-baseline="middle">🏹</text>
+  <text x="576" y="78" text-anchor="start" font-size="9" font-weight="600" class="tdl-text">Basic</text>
+  <text x="576" y="88" text-anchor="start" font-size="7.5" class="tdl-text-sub">$100 · dmg 10 · r 100</text>
+
+  <!-- Tower 2 — Cannon -->
+  <rect x="556" y="98" width="14" height="14" rx="2" ry="2" fill="#696969" stroke="#000" stroke-width="0.8"/>
+  <text x="563" y="108" text-anchor="middle" font-size="9" dominant-baseline="middle">💣</text>
+  <text x="576" y="106" text-anchor="start" font-size="9" font-weight="600" class="tdl-text">Cannon</text>
+  <text x="576" y="116" text-anchor="start" font-size="7.5" class="tdl-text-sub">$200 · dmg 30 · splash 40</text>
+
+  <!-- Tower 3 — Laser -->
+  <rect x="556" y="126" width="14" height="14" rx="2" ry="2" fill="#4169E1" stroke="#000" stroke-width="0.8"/>
+  <text x="563" y="136" text-anchor="middle" font-size="9" dominant-baseline="middle">⚡</text>
+  <text x="576" y="134" text-anchor="start" font-size="9" font-weight="600" class="tdl-text">Laser</text>
+  <text x="576" y="144" text-anchor="start" font-size="7.5" class="tdl-text-sub">$300 · instant · anti-air</text>
+
+  <!-- Tower 4 — Slow -->
+  <rect x="556" y="154" width="14" height="14" rx="2" ry="2" fill="#87CEEB" stroke="#000" stroke-width="0.8"/>
+  <text x="563" y="164" text-anchor="middle" font-size="9" dominant-baseline="middle">❄️</text>
+  <text x="576" y="162" text-anchor="start" font-size="9" font-weight="600" class="tdl-text">Slow</text>
+  <text x="576" y="172" text-anchor="start" font-size="7.5" class="tdl-text-sub">$150 · 50% slow · 2s</text>
+
+  <!-- Tower 5 — Bank -->
+  <rect x="556" y="182" width="14" height="14" rx="2" ry="2" fill="#FFD700" stroke="#000" stroke-width="0.8"/>
+  <text x="563" y="192" text-anchor="middle" font-size="9" dominant-baseline="middle">💰</text>
+  <text x="576" y="190" text-anchor="start" font-size="9" font-weight="600" class="tdl-text">Bank</text>
+  <text x="576" y="200" text-anchor="start" font-size="7.5" class="tdl-text-sub">$250 · +5 g/s · range 0</text>
+
+  <!-- Range-circle key footnote -->
+  <text x="554" y="222" text-anchor="start" font-size="7" font-style="italic" class="tdl-text-sub">Circles = tower coverage</text>
+
+  <!-- ENEMIES header -->
+  <text x="554" y="252" text-anchor="start" font-size="10" font-weight="700" letter-spacing="0.4" class="tdl-text">ENEMIES</text>
+  <line x1="554" y1="256" x2="706" y2="256" class="tdl-divider" stroke-width="0.8"/>
+
+  <!-- Enemy 1 — Fast -->
+  <circle cx="563" cy="272" r="5" fill="#FFD93D" stroke="#000" stroke-width="0.8"/>
+  <text x="576" y="270" text-anchor="start" font-size="9" font-weight="600" class="tdl-text">Fast</text>
+  <text x="576" y="280" text-anchor="start" font-size="7.5" class="tdl-text-sub">hp 75 · spd 100</text>
+
+  <!-- Enemy 2 — Basic -->
+  <circle cx="563" cy="296" r="7" fill="#FF6B6B" stroke="#000" stroke-width="0.8"/>
+  <text x="576" y="294" text-anchor="start" font-size="9" font-weight="600" class="tdl-text">Basic</text>
+  <text x="576" y="304" text-anchor="start" font-size="7.5" class="tdl-text-sub">hp 100 · spd 50</text>
+
+  <!-- Enemy 3 — Tank (with armor) -->
+  <circle cx="563" cy="320" r="9" fill="#6BCB77" stroke="#000" stroke-width="0.8"/>
+  <circle cx="563" cy="320" r="9" fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="2 1.5"/>
+  <text x="576" y="318" text-anchor="start" font-size="9" font-weight="600" class="tdl-text">Tank</text>
+  <text x="576" y="328" text-anchor="start" font-size="7.5" class="tdl-text-sub">hp 300 · armor 5</text>
+
+  <!-- Flying enemy callout (5th lesson type, not on the path) -->
+  <text x="554" y="354" text-anchor="start" font-size="8" font-weight="700" class="tdl-text">+ Flying ✈️</text>
+  <text x="554" y="364" text-anchor="start" font-size="7.5" class="tdl-text-sub">Late waves only · only Laser hits.</text>
+
+  <!-- Boss callout (6th type, not on the path) -->
+  <text x="554" y="382" text-anchor="start" font-size="8" font-weight="700" class="tdl-text">+ Boss</text>
+  <text x="554" y="392" text-anchor="start" font-size="7.5" class="tdl-text-sub">hp 1000 · wave 10+</text>
+
+  <!-- Footer caption (centered across full SVG width) -->
+  <text x="280" y="426" text-anchor="middle" font-size="8" font-style="italic" class="tdl-text-sub">Range overlap and enemy mix drive tower placement choices.</text>
+</svg>

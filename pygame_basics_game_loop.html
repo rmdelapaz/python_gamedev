@@ -458,6 +458,93 @@ while running:
             </ul>
         </div>
 
+        <section class="lesson-section">
+            <h2 id="practice-exercise-build-game-loop">🏋️‍♂️ Practice Exercise: Build a Complete Game Loop</h2>
+
+            <div class="card card-info">
+                <h3>🏋️‍♂️ Exercise 1: A Minimal Pygame Skeleton</h3>
+                <p><strong>Objective:</strong> Write a minimal Pygame program that opens a window, runs a clean game loop with proper event handling, frame-rate control, and the three core phases (input → update → render), and exits cleanly when the user closes the window.</p>
+                <h4>Instructions:</h4>
+                <ol>
+                    <li>Initialize Pygame and create an 800×600 window with a descriptive caption.</li>
+                    <li>Create a <code>pygame.time.Clock()</code> object and start a <code>while running:</code> game loop.</li>
+                    <li>Inside the loop, iterate <code>pygame.event.get()</code> and set <code>running = False</code> when you see <code>pygame.QUIT</code>.</li>
+                    <li>Clear the screen each frame with a solid colour using <code>screen.fill()</code>.</li>
+                    <li>Call <code>pygame.display.flip()</code> at the end of the render phase to present the frame.</li>
+                    <li>Cap the frame rate at 60 FPS with <code>clock.tick(60)</code>.</li>
+                    <li>After the loop exits, call <code>pygame.quit()</code> and <code>sys.exit()</code> for a clean shutdown.</li>
+                </ol>
+                <details>
+                    <summary>💡 Hint</summary>
+                    <p>The skeleton has three “before the loop” lines (init, screen, clock), one <code>while</code> condition, four “inside the loop” steps in a strict order (events → fill → draw → flip → tick), and two “after the loop” cleanup calls. Don’t forget <code>import sys</code> at the top alongside <code>import pygame</code>.</p>
+                </details>
+                <details>
+                    <summary>✅ Example Solution</summary>
+                    <pre><code>import sys
+import pygame
+
+pygame.init()
+screen = pygame.display.set_mode((800, 600))
+pygame.display.set_caption("My First Game Loop")
+clock = pygame.time.Clock()
+
+running = True
+while running:
+    # 1. Handle events
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    # 2. Update state (placeholder — next lesson adds movement)
+
+    # 3. Render
+    screen.fill((30, 30, 40))   # Clear back buffer with dark blue-grey
+    # (drawing calls go here)
+    pygame.display.flip()       # Swap back buffer onto the screen
+
+    # 4. Cap frame rate at 60 FPS
+    clock.tick(60)
+
+pygame.quit()
+sys.exit()</code></pre>
+                </details>
+            </div>
+
+            <div class="card quiz-container">
+                <h3>🎯 Quick Quiz</h3>
+
+                <div class="quiz-question">
+                    <p><strong>Question 1:</strong> Inside a Pygame game loop, why is it essential to call <code>pygame.event.get()</code> (or <code>pygame.event.pump()</code>) every frame?</p>
+                    <div class="quiz-options">
+                        <button class="quiz-option" data-correct="false" data-hint="Drawing happens in the render phase, not the input phase. Try again.">A) It draws the next frame onto the screen.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Pygame buffers events from the operating system internally. If you don’t pump them every frame the queue fills up and the OS treats your window as unresponsive — Windows will literally show “Not Responding” on the title bar.">B) It tells the OS your window is alive and processes the event queue so the game can react to input.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Frame-rate limiting is what clock.tick() does, not event handling.">C) It limits the frame rate to a steady 60 FPS.</button>
+                    </div>
+                    <div class="quiz-feedback"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <p><strong>Question 2:</strong> What is the difference between <code>screen.fill()</code> and <code>pygame.display.flip()</code> within a single frame?</p>
+                    <div class="quiz-options">
+                        <button class="quiz-option" data-correct="false" data-hint="They are different operations that happen at different stages of one frame.">A) They are two names for the same operation.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="screen.fill() paints the back buffer with a solid colour, erasing the previous frame’s drawings. After everything else is drawn onto the back buffer, pygame.display.flip() swaps that finished back buffer onto the visible window — that’s how Pygame avoids tearing and flicker.">B) screen.fill() erases the back buffer at the start of the frame; pygame.display.flip() swaps the finished back buffer onto the visible window at the end.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Neither call ends the loop — only setting running = False does that.">C) screen.fill() ends the current frame and pygame.display.flip() starts the next one.</button>
+                    </div>
+                    <div class="quiz-feedback"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <p><strong>Question 3:</strong> What does <code>clock.tick(60)</code> actually do at the end of each loop iteration?</p>
+                    <div class="quiz-options">
+                        <button class="quiz-option" data-correct="false" data-hint="Pygame is single-threaded by default — Clock doesn’t run anything in parallel.">A) It starts a background thread that calls the loop body 60 times per second.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="60 in tick(60) is FPS, not seconds. A 60-second sleep per frame would freeze the game.">B) It pauses the program for 60 seconds before continuing the next iteration.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="tick(60) measures how long the current iteration took and sleeps for the leftover time so the total frame duration is at least 1/60 of a second (~16.67 ms). It also returns the actual elapsed milliseconds since the previous tick(), which you can use as delta-time for frame-rate-independent movement.">C) It sleeps just long enough so the loop runs at most 60 times per second, and returns the milliseconds elapsed since the previous call.</button>
+                    </div>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
+        </section>
+
         <h2 id="what-s-next">What's Next?</h2>
         
         <p>Now that you understand the heartbeat of games, next we'll learn how to draw shapes and sprites to bring your game world to life! You'll create colorful graphics, load images, and make things move smoothly across the screen.</p>

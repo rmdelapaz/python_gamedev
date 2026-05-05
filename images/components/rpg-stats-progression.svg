@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- rpg-stats-progression.svg
+     Phase 7 SVG #30 for genres_rpg.html (Phase 6 figure between the
+     "RPG Systems" mermaid graph and the Interactive RPG System Demo h2 —
+     convention B; ALSO deployed as canvas-fallback for #rpgCanvas per
+     Phase 7).
+
+     A 3-column character-sheet panel showing the core RPG progression
+     systems that drive the lesson's demo. Stat names match the lesson's
+     actual roster (STR / INT / DEX / VIT) and the 3-slot equipment system
+     (Weapon / Armor / Accessory) the lesson code displays — NOT the
+     STR/DEX/INT plus 6-slot paper-doll the original catalog build_concept
+     sketched.
+
+     Layout:
+       Header band (y=8..30):  STATS & VITALS | INVENTORY | EQUIPMENT
+       Column 1  STATS         (x=14..238):  Attributes / Vitals / Progression / Class
+       Column 2  INVENTORY     (x=252..468): 4x4 representative grid + carried legend + gold
+       Column 3  EQUIPMENT     (x=482..706): Weapon / Armor / Accessory slots
+
+     Per-section visuals:
+       Attributes — STR 12 (+2) / INT 14 (+0) / DEX 8 (+0) / VIT 12 (+1).
+                    Bonuses match the lesson code's bonusSTR/INT/DEX/VIT fields
+                    populated by equipment.
+       Vitals     — Three horizontal bars: HP 95/100 (green), MP 30/50 (blue),
+                    Stamina 80/100 (amber). Match the lesson's three vitals.
+       Progression — XP bar at 60% with "Lvl 5" / "Lvl 6" end-labels above,
+                     "240 / 400 XP" caption below, "+1 unspent skill point"
+                     footnote, and a "Class: Warrior" footer.
+       Inventory  — 4x4 grid representation of the 40-slot inventory the
+                    lesson actually uses (caption "Showing 16 of 40 slots").
+                    Three filled cells: Health Potion (top-left, green flask, x3),
+                    Iron Ore (mid, gray triangle, x5), Wolf Pelt (bottom-right,
+                    brown blob, x2). All three appear in lesson init code.
+                    Below the grid: a small CARRIED legend and a gold counter.
+       Equipment  — Three stacked slots, paper-doll-styled but only 3 deep:
+                    Weapon (Iron Sword filled, +5 ATK +2 STR — matches lesson
+                    init), Armor (Leather Armor filled, +3 DEF +1 VIT — matches
+                    lesson init), Accessory (empty, dashed outline + dash glyph).
+
+     Theme-aware via prefers-color-scheme. ID prefix `rsp-`. ViewBox 720x440. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 440" role="img"
+     aria-labelledby="rsp-title rsp-desc" preserveAspectRatio="xMidYMid meet">
+  <title id="rsp-title">An RPG character sheet showing core progression systems: stats and vitals on the left, a four-by-four inventory grid in the center, and three equipment slots on the right</title>
+  <desc id="rsp-desc">A three-column RPG character sheet diagram. A header band at the top labels the three columns STATS AND VITALS, INVENTORY, and EQUIPMENT. The left column has four stacked sub-sections. Attributes lists four core stats with their base value plus bonus modifier from equipment: Strength twelve plus two, Intelligence fourteen plus zero, Dexterity eight plus zero, Vitality twelve plus one. Vitals shows three horizontal bars: Hit Points at ninety-five out of one hundred in green, Mana Points at thirty out of fifty in blue, Stamina at eighty out of one hundred in amber. Progression shows an experience bar approximately sixty percent filled with the labels Level five on the left and Level six on the right above the bar, the caption two hundred forty out of four hundred experience points below, and a footnote noting one unspent skill point. A Class footer at the bottom of the column reads Warrior. The center column is a four-by-four inventory grid representation of the lesson's forty-slot inventory, with the caption Showing sixteen of forty slots. Three slots are filled: a green Health Potion flask in the top-left with quantity three, a gray Iron Ore triangle in the middle row with quantity five, and a brown Wolf Pelt patch in the bottom-right with quantity two. Below the grid a Carried legend repeats the three items with their counts, and a gold counter shows one hundred gold. The right column has three stacked equipment slots in paper-doll layout. The Weapon slot at top shows an Iron Sword icon with the stats plus five attack and plus two strength, marked Common one-hand. The Armor slot in the middle shows a Leather Armor chest icon with the stats plus three defense and plus one vitality, marked Common chest. The Accessory slot at the bottom is empty showing a dashed outline ring with a dash glyph and the labels Empty and Slot unequipped.</desc>
+
+  <style>
+    svg {
+      --rsp-card-fill: rgb(255, 255, 255);
+      --rsp-card-stroke: rgb(203, 213, 225);
+      --rsp-text-primary: rgb(15, 23, 42);
+      --rsp-text-secondary: rgb(71, 85, 105);
+      --rsp-text-muted: rgb(100, 116, 139);
+
+      --rsp-header-bg: rgb(241, 245, 249);
+      --rsp-header-stroke: rgb(203, 213, 225);
+      --rsp-header-text: rgb(71, 85, 105);
+
+      --rsp-divider: rgb(203, 213, 225);
+
+      /* Stats accent — indigo */
+      --rsp-stats: rgb(79, 70, 229);
+
+      /* Vitals accents — match lesson semantic colors */
+      --rsp-hp: rgb(22, 163, 74);
+      --rsp-hp-tint: rgba(22, 163, 74, 0.18);
+      --rsp-mp: rgb(59, 130, 246);
+      --rsp-mp-tint: rgba(59, 130, 246, 0.18);
+      --rsp-sta: rgb(217, 119, 6);
+      --rsp-sta-tint: rgba(217, 119, 6, 0.18);
+
+      /* XP bar — amber, matching the lesson's gold-colored level-up FX */
+      --rsp-xp: rgb(217, 119, 6);
+      --rsp-xp-tint: rgba(217, 119, 6, 0.18);
+      --rsp-xp-on-bar: rgb(255, 255, 255);
+
+      /* Inventory cell */
+      --rsp-inv-cell: rgb(248, 250, 252);
+      --rsp-inv-cell-stroke: rgb(203, 213, 225);
+
+      /* Equipment slot accents */
+      --rsp-weapon: rgb(220, 38, 38);
+      --rsp-weapon-tint: rgba(220, 38, 38, 0.08);
+      --rsp-armor: rgb(59, 130, 246);
+      --rsp-armor-tint: rgba(59, 130, 246, 0.08);
+      --rsp-empty: rgb(148, 163, 184);
+      --rsp-empty-tint: rgba(148, 163, 184, 0.06);
+
+      /* Item rendering */
+      --rsp-potion: rgb(22, 163, 74);
+      --rsp-ore: rgb(120, 113, 108);
+      --rsp-pelt: rgb(120, 72, 30);
+      --rsp-iron: rgb(148, 163, 184);
+      --rsp-iron-edge: rgb(71, 85, 105);
+      --rsp-leather: rgb(180, 115, 70);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      svg {
+        --rsp-card-fill: rgb(31, 41, 55);
+        --rsp-card-stroke: rgb(71, 85, 105);
+        --rsp-text-primary: rgb(241, 245, 249);
+        --rsp-text-secondary: rgb(148, 163, 184);
+        --rsp-text-muted: rgb(100, 116, 139);
+
+        --rsp-header-bg: rgb(15, 23, 42);
+        --rsp-header-stroke: rgb(71, 85, 105);
+        --rsp-header-text: rgb(148, 163, 184);
+
+        --rsp-divider: rgb(71, 85, 105);
+
+        --rsp-inv-cell: rgb(15, 23, 42);
+        --rsp-inv-cell-stroke: rgb(71, 85, 105);
+
+        --rsp-iron: rgb(203, 213, 225);
+        --rsp-iron-edge: rgb(148, 163, 184);
+      }
+    }
+
+    .rsp-card { fill: var(--rsp-card-fill); stroke: var(--rsp-card-stroke); stroke-width: 1; }
+    .rsp-header-bg { fill: var(--rsp-header-bg); stroke: var(--rsp-header-stroke); stroke-width: 1; }
+    .rsp-header-text { fill: var(--rsp-header-text); font: 600 11px system-ui, sans-serif; letter-spacing: 0.08em; }
+    .rsp-section-title { fill: var(--rsp-text-secondary); font: 600 10px system-ui, sans-serif; letter-spacing: 0.06em; }
+    .rsp-stat-name { fill: var(--rsp-text-primary); font: 600 14px system-ui, sans-serif; letter-spacing: 0.04em; }
+    .rsp-stat-value { fill: var(--rsp-text-primary); font: 600 14px ui-monospace, monospace; }
+    .rsp-stat-bonus { fill: var(--rsp-stats); font: 600 12px ui-monospace, monospace; }
+    .rsp-bar-label { fill: var(--rsp-text-secondary); font: 600 10px system-ui, sans-serif; letter-spacing: 0.04em; }
+    .rsp-bar-value { fill: var(--rsp-text-primary); font: 600 10px ui-monospace, monospace; }
+    .rsp-divider { stroke: var(--rsp-divider); stroke-width: 1; fill: none; }
+    .rsp-caption { fill: var(--rsp-text-muted); font: 400 10px system-ui, sans-serif; }
+    .rsp-item-qty { fill: var(--rsp-text-primary); font: 700 9px ui-monospace, monospace; }
+    .rsp-equip-name { fill: var(--rsp-text-primary); font: 600 12px system-ui, sans-serif; }
+    .rsp-equip-stat { fill: var(--rsp-text-secondary); font: 500 10px ui-monospace, monospace; }
+    .rsp-inv-cell { fill: var(--rsp-inv-cell); stroke: var(--rsp-inv-cell-stroke); stroke-width: 1; }
+    .rsp-empty-glyph { fill: var(--rsp-empty); font: 600 18px system-ui, sans-serif; }
+  </style>
+
+  <!-- Background card -->
+  <rect class="rsp-card" x="1" y="1" width="718" height="438" rx="10" ry="10"/>
+
+  <!-- Header band -->
+  <rect class="rsp-header-bg" x="14" y="8" width="692" height="22" rx="4" ry="4"/>
+  <text class="rsp-header-text" x="125" y="24" text-anchor="middle">STATS &amp; VITALS</text>
+  <text class="rsp-header-text" x="360" y="24" text-anchor="middle">INVENTORY</text>
+  <text class="rsp-header-text" x="595" y="24" text-anchor="middle">EQUIPMENT</text>
+
+  <!-- Column dividers (dashed) -->
+  <line class="rsp-divider" x1="245" y1="38" x2="245" y2="430" stroke-dasharray="2,3"/>
+  <line class="rsp-divider" x1="475" y1="38" x2="475" y2="430" stroke-dasharray="2,3"/>
+
+  <!-- =========================================================
+       COLUMN 1 :: STATS &amp; VITALS  (x=14..238)
+       ========================================================= -->
+
+  <!-- Section: Attributes -->
+  <text class="rsp-section-title" x="22" y="50">ATTRIBUTES</text>
+  <line class="rsp-divider" x1="22" y1="56" x2="232" y2="56"/>
+
+  <text class="rsp-stat-name"  x="22"  y="76">STR</text>
+  <text class="rsp-stat-value" x="166" y="76" text-anchor="end">12</text>
+  <text class="rsp-stat-bonus" x="226" y="76" text-anchor="end">+2</text>
+
+  <text class="rsp-stat-name"  x="22"  y="98">INT</text>
+  <text class="rsp-stat-value" x="166" y="98" text-anchor="end">14</text>
+  <text class="rsp-stat-bonus" x="226" y="98" text-anchor="end">+0</text>
+
+  <text class="rsp-stat-name"  x="22"  y="120">DEX</text>
+  <text class="rsp-stat-value" x="166" y="120" text-anchor="end">8</text>
+  <text class="rsp-stat-bonus" x="226" y="120" text-anchor="end">+0</text>
+
+  <text class="rsp-stat-name"  x="22"  y="142">VIT</text>
+  <text class="rsp-stat-value" x="166" y="142" text-anchor="end">12</text>
+  <text class="rsp-stat-bonus" x="226" y="142" text-anchor="end">+1</text>
+
+  <!-- Section: Vitals -->
+  <text class="rsp-section-title" x="22" y="172">VITALS</text>
+  <line class="rsp-divider" x1="22" y1="178" x2="232" y2="178"/>
+
+  <!-- HP (95/100, ~95% fill of 198 inner = 188) -->
+  <text class="rsp-bar-label" x="22"  y="194">HP</text>
+  <text class="rsp-bar-value" x="232" y="194" text-anchor="end">95 / 100</text>
+  <rect x="22" y="200" width="210" height="8" rx="2" ry="2" fill="var(--rsp-hp-tint)" stroke="var(--rsp-divider)" stroke-width="1"/>
+  <rect x="23" y="201" width="198" height="6" rx="1" ry="1" fill="var(--rsp-hp)"/>
+
+  <!-- MP (30/50, 60% fill of 198 = 119) -->
+  <text class="rsp-bar-label" x="22"  y="226">MP</text>
+  <text class="rsp-bar-value" x="232" y="226" text-anchor="end">30 / 50</text>
+  <rect x="22" y="232" width="210" height="8" rx="2" ry="2" fill="var(--rsp-mp-tint)" stroke="var(--rsp-divider)" stroke-width="1"/>
+  <rect x="23" y="233" width="119" height="6" rx="1" ry="1" fill="var(--rsp-mp)"/>
+
+  <!-- Stamina (80/100, 80% fill of 198 = 158) -->
+  <text class="rsp-bar-label" x="22"  y="258">STAMINA</text>
+  <text class="rsp-bar-value" x="232" y="258" text-anchor="end">80 / 100</text>
+  <rect x="22" y="264" width="210" height="8" rx="2" ry="2" fill="var(--rsp-sta-tint)" stroke="var(--rsp-divider)" stroke-width="1"/>
+  <rect x="23" y="265" width="158" height="6" rx="1" ry="1" fill="var(--rsp-sta)"/>
+
+  <!-- Section: Progression -->
+  <text class="rsp-section-title" x="22" y="294">PROGRESSION</text>
+  <line class="rsp-divider" x1="22" y1="300" x2="232" y2="300"/>
+
+  <text class="rsp-bar-label" x="22"  y="320">Lvl 5</text>
+  <text class="rsp-bar-label" x="232" y="320" text-anchor="end">Lvl 6</text>
+
+  <!-- XP bar (60% fill: 198 * 0.6 = 119) -->
+  <rect x="22" y="328" width="210" height="14" rx="3" ry="3" fill="var(--rsp-xp-tint)" stroke="var(--rsp-divider)" stroke-width="1"/>
+  <rect x="23" y="329" width="119" height="12" rx="2" ry="2" fill="var(--rsp-xp)"/>
+
+  <text class="rsp-caption" x="127" y="358" text-anchor="middle">240 / 400 XP</text>
+  <text class="rsp-caption" x="22"  y="378">+1 unspent skill point</text>
+
+  <!-- Class footer -->
+  <line class="rsp-divider" x1="22" y1="394" x2="232" y2="394"/>
+  <text class="rsp-section-title" x="22"  y="412">CLASS</text>
+  <text class="rsp-equip-name"   x="232" y="412" text-anchor="end">Warrior</text>
+
+  <!-- =========================================================
+       COLUMN 2 :: INVENTORY  (x=252..468)
+       ========================================================= -->
+
+  <text class="rsp-section-title" x="260" y="50">SLOTS</text>
+  <line class="rsp-divider" x1="260" y1="56" x2="468" y2="56"/>
+
+  <!-- 4x4 grid: cells 40px, gap 6px, total 178px wide.
+       Col is 216px wide (252..468); offset = (216-178)/2 = 19; grid_x0 = 271 -->
+
+  <!-- Row 1 (y=72..112) -->
+  <rect class="rsp-inv-cell" x="271" y="72" width="40" height="40" rx="3" ry="3"/>
+  <!-- Health Potion: green flask (rounded body + neck) -->
+  <rect x="288" y="80"  width="6"  height="5" fill="var(--rsp-potion)"/>
+  <ellipse cx="291" cy="93" rx="7" ry="9" fill="var(--rsp-potion)"/>
+  <text class="rsp-item-qty" x="307" y="108" text-anchor="end">x3</text>
+
+  <rect class="rsp-inv-cell" x="317" y="72" width="40" height="40" rx="3" ry="3"/>
+  <rect class="rsp-inv-cell" x="363" y="72" width="40" height="40" rx="3" ry="3"/>
+  <rect class="rsp-inv-cell" x="409" y="72" width="40" height="40" rx="3" ry="3"/>
+
+  <!-- Row 2 (y=118..158) -->
+  <rect class="rsp-inv-cell" x="271" y="118" width="40" height="40" rx="3" ry="3"/>
+  <rect class="rsp-inv-cell" x="317" y="118" width="40" height="40" rx="3" ry="3"/>
+  <!-- Iron Ore: gray triangle (mountain) -->
+  <polygon points="337,128 327,148 347,148" fill="var(--rsp-ore)" stroke="var(--rsp-text-secondary)" stroke-width="0.6"/>
+  <text class="rsp-item-qty" x="353" y="154" text-anchor="end">x5</text>
+
+  <rect class="rsp-inv-cell" x="363" y="118" width="40" height="40" rx="3" ry="3"/>
+  <rect class="rsp-inv-cell" x="409" y="118" width="40" height="40" rx="3" ry="3"/>
+
+  <!-- Row 3 (y=164..204) -->
+  <rect class="rsp-inv-cell" x="271" y="164" width="40" height="40" rx="3" ry="3"/>
+  <rect class="rsp-inv-cell" x="317" y="164" width="40" height="40" rx="3" ry="3"/>
+  <rect class="rsp-inv-cell" x="363" y="164" width="40" height="40" rx="3" ry="3"/>
+  <rect class="rsp-inv-cell" x="409" y="164" width="40" height="40" rx="3" ry="3"/>
+
+  <!-- Row 4 (y=210..250) -->
+  <rect class="rsp-inv-cell" x="271" y="210" width="40" height="40" rx="3" ry="3"/>
+  <rect class="rsp-inv-cell" x="317" y="210" width="40" height="40" rx="3" ry="3"/>
+  <rect class="rsp-inv-cell" x="363" y="210" width="40" height="40" rx="3" ry="3"/>
+  <rect class="rsp-inv-cell" x="409" y="210" width="40" height="40" rx="3" ry="3"/>
+  <!-- Wolf Pelt: brown ellipse with stitch -->
+  <ellipse cx="429" cy="231" rx="11" ry="8" fill="var(--rsp-pelt)" stroke="var(--rsp-text-secondary)" stroke-width="0.6"/>
+  <line x1="421" y1="231" x2="437" y2="231" stroke="var(--rsp-text-secondary)" stroke-width="0.5" stroke-dasharray="1.5,1.5"/>
+  <text class="rsp-item-qty" x="445" y="246" text-anchor="end">x2</text>
+
+  <!-- Caption -->
+  <text class="rsp-caption" x="360" y="268" text-anchor="middle">Showing 16 of 40 slots</text>
+
+  <!-- Carried legend -->
+  <text class="rsp-section-title" x="260" y="294">CARRIED</text>
+  <line class="rsp-divider" x1="260" y1="300" x2="468" y2="300"/>
+
+  <ellipse cx="270" cy="318" rx="3.5" ry="5" fill="var(--rsp-potion)"/>
+  <rect x="268" y="310" width="4" height="3" fill="var(--rsp-potion)"/>
+  <text class="rsp-equip-stat" x="282" y="322">Health Potion x3</text>
+
+  <polygon points="270,348 264,358 276,358" fill="var(--rsp-ore)"/>
+  <text class="rsp-equip-stat" x="282" y="354">Iron Ore x5</text>
+
+  <ellipse cx="270" cy="382" rx="6" ry="4" fill="var(--rsp-pelt)"/>
+  <text class="rsp-equip-stat" x="282" y="386">Wolf Pelt x2</text>
+
+  <!-- Gold counter (pinned to bottom of column) -->
+  <rect x="260" y="404" width="208" height="22" rx="3" ry="3" fill="var(--rsp-xp-tint)" stroke="var(--rsp-xp)" stroke-width="1"/>
+  <circle cx="276" cy="415" r="5" fill="var(--rsp-xp)" stroke="var(--rsp-iron-edge)" stroke-width="0.5"/>
+  <text class="rsp-bar-label" x="290" y="419">Gold</text>
+  <text class="rsp-stat-value" x="456" y="419" text-anchor="end">100g</text>
+
+  <!-- =========================================================
+       COLUMN 3 :: EQUIPMENT  (x=482..706)
+       ========================================================= -->
+
+  <text class="rsp-section-title" x="490" y="50">EQUIPPED</text>
+  <line class="rsp-divider" x1="490" y1="56" x2="700" y2="56"/>
+
+  <!-- Weapon slot (y=68..173, height 105) -->
+  <rect x="490" y="68" width="210" height="105" rx="6" ry="6" fill="var(--rsp-weapon-tint)" stroke="var(--rsp-weapon)" stroke-width="1.5"/>
+  <text class="rsp-section-title" x="502" y="86" fill="var(--rsp-weapon)">WEAPON</text>
+  <!-- Iron Sword glyph (vertical, hilt down) -->
+  <g transform="translate(530, 130)">
+    <polygon points="-3,-30 3,-30 4,15 -4,15" fill="var(--rsp-iron)" stroke="var(--rsp-iron-edge)" stroke-width="0.7"/>
+    <rect x="-12" y="13" width="24" height="5" fill="var(--rsp-iron-edge)"/>
+    <rect x="-2" y="18" width="4" height="10" fill="var(--rsp-leather)"/>
+    <circle cx="0" cy="30" r="3" fill="var(--rsp-iron-edge)"/>
+  </g>
+  <text class="rsp-equip-name" x="558" y="104">Iron Sword</text>
+  <text class="rsp-equip-stat" x="558" y="124">+5 ATK</text>
+  <text class="rsp-equip-stat" x="558" y="138">+2 STR</text>
+  <text class="rsp-caption"    x="558" y="158">Common · 1H</text>
+
+  <!-- Armor slot (y=183..288, height 105) -->
+  <rect x="490" y="183" width="210" height="105" rx="6" ry="6" fill="var(--rsp-armor-tint)" stroke="var(--rsp-armor)" stroke-width="1.5"/>
+  <text class="rsp-section-title" x="502" y="201" fill="var(--rsp-armor)">ARMOR</text>
+  <!-- Leather Armor glyph (chest plate silhouette) -->
+  <g transform="translate(530, 245)">
+    <path d="M -18,-22 L 18,-22 L 22,-12 L 22,8 L 0,22 L -22,8 L -22,-12 Z"
+          fill="var(--rsp-leather)" stroke="var(--rsp-iron-edge)" stroke-width="0.7"/>
+    <line x1="-18" y1="-12" x2="18" y2="-12" stroke="var(--rsp-iron-edge)" stroke-width="0.5" stroke-dasharray="2,2"/>
+    <line x1="0" y1="-22" x2="0" y2="22" stroke="var(--rsp-iron-edge)" stroke-width="0.5" stroke-dasharray="2,2"/>
+  </g>
+  <text class="rsp-equip-name" x="558" y="219">Leather Armor</text>
+  <text class="rsp-equip-stat" x="558" y="239">+3 DEF</text>
+  <text class="rsp-equip-stat" x="558" y="253">+1 VIT</text>
+  <text class="rsp-caption"    x="558" y="273">Common · Chest</text>
+
+  <!-- Accessory slot (empty, y=298..403, height 105) -->
+  <rect x="490" y="298" width="210" height="105" rx="6" ry="6"
+        fill="var(--rsp-empty-tint)" stroke="var(--rsp-empty)" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <text class="rsp-section-title" x="502" y="316" fill="var(--rsp-empty)">ACCESSORY</text>
+  <!-- Empty placeholder ring with dash glyph (text outside transform so getBBox
+       returns viewBox-coord bounds; the chat-33 finding) -->
+  <circle cx="530" cy="358" r="20" fill="none" stroke="var(--rsp-empty)" stroke-width="1.5" stroke-dasharray="3,3"/>
+  <text class="rsp-empty-glyph" x="530" y="364" text-anchor="middle">—</text>
+  <text class="rsp-equip-name" x="558" y="334" fill="var(--rsp-text-muted)">Empty</text>
+  <text class="rsp-caption"    x="558" y="354">Slot unequipped</text>
+  <text class="rsp-caption"    x="558" y="372">Visit a merchant</text>
+
+  <!-- Footer note (centered under col 3) -->
+  <text class="rsp-caption" x="595" y="423" text-anchor="middle">Stats include equipment bonuses</text>
+
+</svg>

@@ -106,10 +106,25 @@
         E --> Q["Classes"]
     </div>
 
+    <figure class="svg-wrapper">
+        <img class="responsive-svg"
+             src="/images/components/rpg-stats-progression.svg"
+             alt="A three-column RPG character sheet diagram showing the core progression systems that drive the lesson's interactive demo. The header band labels the columns STATS AND VITALS, INVENTORY, and EQUIPMENT. The left column shows four stacked sub-sections. Attributes lists four core stats with a base value plus an equipment-bonus modifier in indigo: Strength twelve plus two, Intelligence fourteen plus zero, Dexterity eight plus zero, Vitality twelve plus one. Vitals shows three horizontal bars: Hit Points at ninety-five out of one hundred in green, Mana Points at thirty out of fifty in blue, Stamina at eighty out of one hundred in amber. Progression shows an amber experience bar approximately sixty percent filled, labeled Level five on the left and Level six on the right, with the caption two hundred forty out of four hundred experience points below and a footnote noting one unspent skill point. A Class footer reads Warrior. The center column is a four-by-four representative slice of the lesson's forty-slot inventory with the caption Showing sixteen of forty slots; three slots are filled, a green Health Potion flask with quantity three, a gray Iron Ore triangle with quantity five, and a brown Wolf Pelt patch with quantity two, and a Carried legend below repeats the three items, with an amber-bordered gold counter showing one hundred gold. The right column has three stacked equipment slots in paper-doll layout. The Weapon slot has a red accent and shows an Iron Sword with the stats plus five attack and plus two strength. The Armor slot has a blue accent and shows Leather Armor with the stats plus three defense and plus one vitality. The Accessory slot at the bottom is empty: a dashed-outline box contains a dashed ring with a dash glyph, labeled Empty and Slot unequipped. A footnote reads Stats include equipment bonuses."
+             loading="lazy">
+        <figcaption>A snapshot of the lesson's RPG character sheet at level 5. The left column shows attributes (STR/INT/DEX/VIT with equipment bonuses), three vitals bars (HP/MP/Stamina), and progression (an XP bar partway from level 5 to 6 with one unspent skill point). The center column shows a four-by-four representative slice of the forty-slot inventory with three carried items. The right column shows the three-slot equipment system &mdash; weapon and armor filled, contributing the visible attribute bonuses; accessory empty. The interactive demo lets you level up, equip items, fight, and trade; this static diagram shows how stats, vitals, inventory, and equipment compose the character state the demo manipulates.</figcaption>
+    </figure>
+
     <h2 id="interactive-rpg-system-demo">Interactive RPG System Demo</h2>
     
     <div class="canvas-wrapper" style="text-align: center;">
         <canvas id="rpgCanvas" width="800" height="600" style="border: 1px solid #333; display: inline-block;"></canvas>
+        <figure class="canvas-fallback">
+            <img class="responsive-svg"
+                 src="/images/components/rpg-stats-progression.svg"
+                 alt="An RPG character sheet showing attribute stats, HP/MP/Stamina vitals, an XP bar, a representative inventory grid, and three equipment slots."
+                 loading="lazy">
+            <figcaption>An RPG character sheet: STR/INT/DEX/VIT stats with equipment bonuses, HP/MP/Stamina vitals bars, an XP bar at level 5 partway to level 6, a four-by-four representative slice of the forty-slot inventory with three filled items, and three equipment slots &mdash; weapon and armor filled, accessory empty. The interactive demo lets you level up, equip items, and battle; this diagram shows the core progression systems.</figcaption>
+        </figure>
     </div>
     <div style="text-align: center; margin-top: 10px;">
         <p>Experience a complete RPG system with inventory, stats, skills, quests, and dialogue!</p>

@@ -106,6 +106,11 @@
         E --> Q["Upgrade Pricing"]
     </div>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/tower-defense-lane.svg" alt="A three-region tower-defense diagram showing tower coverage and enemy routing. The left side is a top-down lane: a tan S-curve path with 8 waypoints winds from a purple Spawn marker on the left edge through six 90-degree turns to a battlemented Base on the right edge, drawn over a faint olive-green grid. Five towers sit in safe zones beside the path, each a small 24-pixel base in the lesson's tower color with a level-1 gold pip and an emoji glyph: a Basic arrow tower covered by a translucent amber range circle near the entry, a Cannon tower with a tighter red-orange range plus an inner dashed splash radius marking its area-of-effect, a Slow tower with a more opaque cool cyan zone covering the long bottom run, a Laser tower with the largest indigo range covering the upper-right exit segment (the only tower color that reaches the right turn), and a Bank economy tower in the safe lower-left corner with no range circle but a yellow plus-five-gold-per-second income tag. Three enemies are placed at different points along the path: a small yellow Fast enemy on the top horizontal segment leading the wave, a medium red Basic enemy descending the long vertical drop in the middle of the wave, and a large green Tank enemy with a slate dashed armor-pip overlay and a partially-depleted health-bar nub at the bottom-right turn at the tail of the wave. The right column is a legend: a TOWERS heading lists all five towers with their cost and key stat, then an ENEMIES heading lists Fast, Basic, and Tank with health and speed plus a smaller callout for Flying enemies marked late-waves-only and Laser-only and a Boss callout marked wave ten plus. A footer caption reads, range overlap and enemy mix drive tower placement choices." class="responsive-svg" loading="lazy">
+        <figcaption>A top-down tower defense lane diagram showing the lesson's full 5-tower roster (Basic, Cannon, Laser, Slow, and the economy Bank) covering an S-curve path with 4 translucent range circles plus a dashed splash AOE on the Cannon. Three enemies (Fast leading, Basic descending the drop, Tank trailing with armor and a damaged health bar) appear on the path, while Flying and Boss enemies are called out in the legend (Flying is laser-only; Boss appears in late waves). The interactive demo lets you place towers and watch waves; this diagram shows the range overlap and enemy mix that drive placement choices.</figcaption>
+    </figure>
+
     <h2 id="tower-defense-mathematics">Tower Defense Mathematics</h2>
     
     <div style="background-color: #f9f9f9; padding: 20px; border-radius: 10px; margin: 20px 0;">
@@ -140,6 +145,10 @@ enemy_count = base_count + floor(wave_number / 5)
     
     <div class="canvas-wrapper" style="text-align: center;">
         <canvas id="towerDefenseCanvas" width="900" height="600" style="border: 2px solid #333; display: inline-block; background: #2d4a2b;"></canvas>
+        <figure class="canvas-fallback">
+            <img src="/images/components/tower-defense-lane.svg" alt="A tower defense lane with a winding path, five tower types showing range coverage, three enemies in motion, and a legend listing all towers and enemies." loading="lazy">
+            <figcaption>This diagram replaces the interactive demo on mobile. Five towers (Basic, Cannon, Laser, Slow, Bank) cover an S-curve path with 4 translucent range circles plus a dashed splash zone on the Cannon. Three enemies (Fast, Basic, Tank) appear at different points; Flying and Boss are noted in the legend. Range overlap is the headline visual — the placement decision the demo asks you to optimize.</figcaption>
+        </figure>
     </div>
     
     <div style="text-align: center; margin-top: 10px;">

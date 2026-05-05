@@ -673,6 +673,111 @@ pygame.quit()</code></pre>
         </ul>
     </div>
 
+
+        <section class="lesson-section">
+            <h2 id="practice-exercise-build-pygame-basics-drawing">🏋️‍♂️ Practice Exercise: Draw a Simple Scene</h2>
+
+            <div class="card card-info">
+                <h3>🏋️‍♂️ Exercise 1: A Sun, a Hill, and a House</h3>
+                <p><strong>Objective:</strong> Combine several <code>pygame.draw</code> primitives into a single still scene — a sun above a green hill with a small house in front of it — to practise the top-left-origin coordinate system, the surface-color-shape argument pattern that every drawing function follows, and the optional <code>width</code> argument that flips a shape from filled to outlined.</p>
+                <h4>Instructions:</h4>
+                <ol>
+                    <li>Initialize Pygame and create an 800×600 window with a descriptive caption.</li>
+                    <li>Fill the background (sky) with a light blue colour using <code>screen.fill((135, 206, 235))</code> at the start of every frame.</li>
+                    <li>Draw the ground as a green filled rectangle covering the bottom third of the screen with <code>pygame.draw.rect</code>.</li>
+                    <li>Draw a yellow sun as a filled circle near the top-right of the screen with <code>pygame.draw.circle</code>.</li>
+                    <li>Draw a brown house body as a filled rectangle on the ground with <code>pygame.draw.rect</code>.</li>
+                    <li>Draw a darker outline around the same house body by re-drawing the rectangle with a non-zero integer <code>width</code> as the last argument.</li>
+                    <li>Draw a triangular roof on top of the house with <code>pygame.draw.polygon</code> by passing a list of three vertex tuples.</li>
+                    <li>Call <code>pygame.display.flip()</code> at the end of the frame, then run a minimal event loop that exits on <code>pygame.QUIT</code> and caps the frame rate with <code>clock.tick(60)</code>.</li>
+                </ol>
+                <details>
+                    <summary>💡 Hint</summary>
+                    <p>Remember Pygame's Y-axis grows <em>downward</em> from <code>(0, 0)</code> at the top-left, so the sun's centre needs a small <code>y</code> value (e.g. 120) and the ground rect should start at a large <code>y</code> (e.g. 400). For the roof, the polygon points are three <code>(x, y)</code> tuples — the apex sits above the house body and the two base points sit at the body's top-left and top-right corners. To turn the house outline from filled to hollow, add a non-zero integer (e.g. 4) as the last argument of <code>pygame.draw.rect</code>.</p>
+                </details>
+                <details>
+                    <summary>✅ Example Solution</summary>
+                    <pre><code>import sys
+import pygame
+
+pygame.init()
+screen = pygame.display.set_mode((800, 600))
+pygame.display.set_caption("My First Scene")
+clock = pygame.time.Clock()
+
+# Colour tuples (R, G, B)
+SKY     = (135, 206, 235)
+GROUND  = ( 76, 175,  80)
+SUN     = (255, 215,   0)
+HOUSE   = (139,  90,  43)
+OUTLINE = ( 60,  30,  10)
+ROOF    = (165,  42,  42)
+
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    # 1. Sky background (clears the back buffer)
+    screen.fill(SKY)
+
+    # 2. Ground: bottom third of the screen
+    pygame.draw.rect(screen, GROUND, (0, 400, 800, 200))
+
+    # 3. Sun: filled circle near the top-right
+    pygame.draw.circle(screen, SUN, (650, 120), 60)
+
+    # 4. House body: filled rect, then outline (width=4)
+    pygame.draw.rect(screen, HOUSE,   (300, 320, 200, 160))
+    pygame.draw.rect(screen, OUTLINE, (300, 320, 200, 160), 4)
+
+    # 5. Roof: triangle polygon — apex above the body's top edge
+    pygame.draw.polygon(screen, ROOF, [(290, 320), (510, 320), (400, 240)])
+
+    pygame.display.flip()
+    clock.tick(60)
+
+pygame.quit()
+sys.exit()</code></pre>
+                </details>
+            </div>
+
+            <div class="card quiz-container">
+                <h3>🎯 Quick Quiz</h3>
+
+                <div class="quiz-question">
+                    <p><strong>Question 1:</strong> In Pygame's coordinate system, where is <code>(0, 0)</code> and which direction does the Y-axis grow?</p>
+                    <div class="quiz-options">
+                        <button class="quiz-option" data-correct="false" data-hint="Pygame's origin is at a corner of the window, not the centre — think about how pixels are stored in memory.">A) At the centre of the window, with Y growing upward like a math-class graph.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Pygame surfaces put (0, 0) at the top-left corner with X growing to the right and Y growing DOWN the screen. This feels backwards if you're used to math-class graphs, but it matches how pixels are laid out in memory and how screens historically scanned from top to bottom. The lesson's Common Mistakes calls this out explicitly: 'Wrong coordinate system: Remember Y increases downward!'">B) At the top-left corner of the window, with Y growing downward.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="You have the right edge instinct, but reconsider which corner pixel buffers usually start from.">C) At the bottom-left corner of the window, with Y growing upward.</button>
+                    </div>
+                    <div class="quiz-feedback"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <p><strong>Question 2:</strong> What does the optional integer <code>width</code> argument do at the end of <code>pygame.draw.rect(surface, color, rect, width)</code>?</p>
+                    <div class="quiz-options">
+                        <button class="quiz-option" data-correct="false" data-hint="The rect tuple already controls position and size — the trailing width argument has a different job.">A) It overrides the rectangle's pixel width from the rect tuple.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Every pygame.draw shape (rect, circle, polygon, ellipse, arc) accepts an optional integer width as its last argument. When the argument is omitted or 0, the shape is filled solid. When it's 1 or greater, only the outline is drawn at that line thickness — same shape, hollow instead of solid. That's how the example solution turns one rectangle into a filled house body and then re-draws it as a darker outline.">B) When omitted or 0 the shape is filled; when 1 or greater only the outline is drawn at that line thickness.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="The argument is measured in pixels, not as a colour channel — transparency in pygame is set on the colour tuple itself, not here.">C) It sets the transparency of the rectangle from 0 (transparent) to 255 (opaque).</button>
+                    </div>
+                    <div class="quiz-feedback"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <p><strong>Question 3:</strong> After loading an image with <code>pygame.image.load(...)</code>, why is calling <code>.convert()</code> or <code>.convert_alpha()</code> on the result strongly recommended before you blit it every frame?</p>
+                    <div class="quiz-options">
+                        <button class="quiz-option" data-correct="false" data-hint="These methods don't touch the file on disk — they only affect the in-memory Surface returned by load.">A) It changes the image's file format on disk to PNG so future loads from disk are faster.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="pygame.image.load returns a Surface in the file's native pixel format, which often doesn't match the display's format. Without conversion, every blit has to translate pixels on the fly — a huge per-frame cost that can drop your FPS dramatically. Calling .convert() (opaque image) or .convert_alpha() (per-pixel transparency) once after load re-stores the surface in the display's format, so blits become a fast direct memory copy. The lesson's Common Mistakes flags 'Forgetting convert(): Huge performance impact' for exactly this reason.">B) It re-stores the Surface in the display's native pixel format so blits become a fast direct memory copy instead of a per-pixel conversion.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="These methods don't add any randomness — pygame leaves transformations like flip and rotate to separate explicit calls.">C) It randomly flips and rotates the image to add visual variety to your scene.</button>
+                    </div>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
+        </section>
+
     <h2 id="what-s-next">What's Next?</h2>
     
     <p>Now that you can draw shapes and sprites, next we'll learn how to handle keyboard and mouse input to make your games interactive. You'll create games that respond to player actions!</p>

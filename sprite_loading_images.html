@@ -889,6 +889,107 @@ if __name__ == "__main__":
         </ul>
     </div>
 
+
+        <section class="lesson-section">
+            <h2 id="practice-exercise-build-sprite-loading-images">🏋️‍♂️ Practice Exercise: Cache the Spin, Skip the Tax</h2>
+
+            <div class="card card-info">
+                <h3>🏋️‍♂️ Exercise 1: Spinning Sprite — Pre-Rotate Once, Blit Forever</h3>
+                <p><strong>Objective:</strong> Load a single PNG sprite with <code>pygame.image.load(...).convert_alpha()</code>, pre-compute <strong>36</strong> rotated copies of it ONCE at startup (one per 10° step), then in the game loop simply blit the right cached frame each tick — the canonical fix for the lesson's <em>Slow Performance: transforming every frame</em> pitfall, demonstrated alongside the alpha-preserving load that prevents the <em>Black Boxes</em> pitfall.</p>
+                <h4>Instructions:</h4>
+                <ol>
+                    <li>Initialize Pygame, create an 800×600 window with a descriptive caption, and create a <code>pygame.time.Clock()</code>.</li>
+                    <li>Place any small PNG with transparency in your project folder (e.g. <code>star.png</code>), then load it with <code>pygame.image.load("star.png").convert_alpha()</code> — the <code>.convert_alpha()</code> call preserves per-pixel transparency AND re-stores the surface in the display's native pixel format for fast blits.</li>
+                    <li>Build a list <code>frames = []</code> of 36 pre-rotated copies of the sprite. Loop <code>for angle in range(0, 360, 10):</code> and append <code>pygame.transform.rotate(original, angle)</code> to the list. This rotation cost is paid <strong>once</strong>, before the game loop starts.</li>
+                    <li>Inside the game loop, compute the current frame index from elapsed time: <code>index = (pygame.time.get_ticks() // 50) % 36</code> — the sprite advances one cache slot every 50&nbsp;ms (~7 full rotations per second).</li>
+                    <li>Each frame, fill the screen with a solid background colour, then blit the cached frame centred on the screen using its <code>get_rect(center=(400, 300))</code> so the rotated image's bounding box stays visually centred even when rotation expands it.</li>
+                    <li>Render the live FPS in the corner with a <code>pygame.font.Font(None, 28)</code> and <code>clock.get_fps()</code> — this is the proof: cached frames keep the loop pinned at 60 FPS.</li>
+                    <li>Cap the frame rate with <code>clock.tick(60)</code>, exit cleanly on <code>pygame.QUIT</code>, and confirm that <code>pygame.transform.rotate()</code> is called <strong>zero</strong> times per frame in your finished loop — every rotation is pre-cooked.</li>
+                </ol>
+                <details>
+                    <summary>💡 Hint</summary>
+                    <p>The two pitfalls this exercise specifically defuses are both called out in the lesson's Common Image Problems list. <em>Black Boxes</em> happens when you call plain <code>.convert()</code> on a PNG with transparency — the alpha channel is dropped and every transparent pixel renders as solid black; <code>.convert_alpha()</code> is the fix. <em>Slow Performance</em> happens when <code>pygame.transform.rotate()</code> runs every frame — rotation is a per-pixel CPU operation, so a single sprite at 60&nbsp;FPS is 60 full re-rasters per second, and a dozen rotating enemies will tank your frame rate. The cache-list pattern moves all 36 rotations to startup and reduces the per-frame cost to a list-index lookup plus a blit. If you have no PNG handy, a quick way to make one is to draw a polygon onto a transparent <code>pygame.Surface((64, 64), pygame.SRCALPHA)</code> and call <code>pygame.image.save(surface, "star.png")</code> from a one-off script.</p>
+                </details>
+                <details>
+                    <summary>✅ Example Solution</summary>
+                    <pre><code>import sys
+import pygame
+
+pygame.init()
+screen = pygame.display.set_mode((800, 600))
+pygame.display.set_caption("Spinning Sprite — Cached Rotations")
+clock = pygame.time.Clock()
+font  = pygame.font.Font(None, 28)
+
+# Load ONCE with alpha preserved + display-native pixel format
+original = pygame.image.load("star.png").convert_alpha()
+
+# Pre-compute every rotation we'll ever need (36 copies, every 10°)
+frames = [pygame.transform.rotate(original, angle)
+          for angle in range(0, 360, 10)]
+
+BG = (24, 24, 36)
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    # Pick the cached frame for this moment in time — no rotation cost
+    index = (pygame.time.get_ticks() // 50) % 36
+    frame = frames[index]
+    rect  = frame.get_rect(center=(400, 300))
+
+    screen.fill(BG)
+    screen.blit(frame, rect)
+
+    fps_text = font.render(f"{clock.get_fps():5.1f} FPS  |  cache size: {len(frames)}",
+                           True, (220, 220, 220))
+    screen.blit(fps_text, (10, 10))
+
+    pygame.display.flip()
+    clock.tick(60)
+
+pygame.quit()
+sys.exit()</code></pre>
+                </details>
+            </div>
+
+            <div class="card quiz-container">
+                <h3>🎯 Quick Quiz</h3>
+
+                <div class="quiz-question">
+                    <p><strong>Question 1:</strong> You've just called <code>image = pygame.image.load("hero.png")</code> on a PNG sprite with transparent edges. Before blitting it every frame, which method should you call on the result, and why?</p>
+                    <div class="quiz-options">
+                        <button class="quiz-option" data-correct="false" data-hint="A plain .convert() works fine for opaque JPGs and BMPs, but it discards a piece of information PNGs specifically carry — think about what gets lost when alpha disappears.">A) <code>image.convert()</code> — it's the fastest converter and works for any image format.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation=".convert_alpha() does two things at once: it preserves the per-pixel alpha (transparency) channel that PNG carries, AND it re-stores the surface in the display's native pixel format so future blits are a fast direct memory copy. Plain .convert() also re-formats for display speed, but DROPS the alpha channel — the lesson's Common Image Problems list names this exact failure mode 'Black Boxes: Forgot to set colorkey or use convert_alpha()' because every transparent pixel renders as solid black instead of letting the background show through. For any PNG sprite with smooth or feathered edges, .convert_alpha() is the right call.">B) <code>image.convert_alpha()</code> — it preserves the per-pixel alpha channel AND re-formats for fast blitting; plain <code>.convert()</code> drops the alpha and renders transparent pixels as solid black (“Black Boxes”).</button>
+                        <button class="quiz-option" data-correct="false" data-hint="The lesson's 'Slow Performance' and 'Forgetting convert(): Huge performance impact' notes exist precisely because skipping conversion is NOT a no-op — Pygame won't re-format your surfaces unprompted.">C) Neither — Pygame automatically converts loaded images into the optimal format the first time you blit them.</button>
+                    </div>
+                    <div class="quiz-feedback"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <p><strong>Question 2:</strong> A spinning power-up sprite needs to display at a different rotation every frame at 60&nbsp;FPS. Which implementation pattern does the lesson recommend?</p>
+                    <div class="quiz-options">
+                        <button class="quiz-option" data-correct="false" data-hint="The lesson explicitly flags this as the 'Slow Performance: ... transforming every frame' pitfall — think about what pygame.transform.rotate actually does under the hood every time it's called.">A) Call <code>pygame.transform.rotate(image, current_angle)</code> inside the game loop each frame; it's just one function call and Pygame caches the result internally.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="pygame.transform.rotate is a per-pixel CPU operation that re-rasters the entire source surface into a freshly-allocated destination surface every time it's called. At 60 FPS on a single sprite that's 60 full re-rasters per second; multiply by a dozen rotating enemies and your frame rate collapses. The lesson's Performance Tips entry 'Cache Transformations: Don't rotate/scale every frame' and Key Takeaways entry 'Cache transformed images instead of recreating' both prescribe the same fix: pre-rotate to a list of N copies (e.g. 36 copies at 10° steps) ONCE at startup, then index into the list during the loop. The per-frame cost drops from 'rotate plus blit' to just 'list-index lookup plus blit'.">B) Pre-rotate the sprite into a list of (say) 36 copies at 10° steps ONCE at startup, then index into the list each frame; <code>pygame.transform.rotate</code> is a per-pixel CPU operation, far too expensive to run per frame.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Threading rotation across cores doesn't help here — the bottleneck is the per-pixel work itself, not parallelism, and pygame.transform isn't thread-safe on shared surfaces anyway.">C) Spawn a worker thread that calls <code>pygame.transform.rotate</code> in parallel and posts each rotated frame back to the main thread when ready.</button>
+                    </div>
+                    <div class="quiz-feedback"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <p><strong>Question 3:</strong> Your game spawns 50 enemies at level start, every one drawn from <code>enemy.png</code>. Where should the <code>pygame.image.load("enemy.png")</code> call live?</p>
+                    <div class="quiz-options">
+                        <button class="quiz-option" data-correct="false" data-hint="Look at what disk I/O + image decoding 50 times in quick succession costs, and notice that all 50 enemies render the same pixels — they don't actually need 50 separate Surfaces.">A) Inside <code>Enemy.__init__</code> so each enemy owns its own freshly-loaded copy of the image.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="pygame.image.load reads from disk and decodes the image format, so calling it 50 times for the same file is 50× the disk I/O and decode work — and it allocates 50 separate Surfaces holding identical pixel data, which is the exact 'Memory Issues: Loading same image multiple times' pitfall in the lesson's Common Image Problems list. The standard pattern is to load once at startup (typically inside an asset-loading function or as a module-level / class-level constant) and have every Enemy instance reference the same shared Surface — Pygame's blit doesn't mutate the source, so sharing is safe. The lesson's Performance Tips entry 'Preload: Load all images at startup, not during gameplay' and Key Takeaways entry 'Implement proper image loading and caching system' point at the same pattern.">B) Load it ONCE at startup (e.g. as a module-level constant or class variable) and have every <code>Enemy</code> instance reference the same shared Surface — load is disk I/O plus image decode, and 50 enemies don't need 50 identical pixel buffers.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Pygame doesn't deduplicate file paths internally — every load() call really does hit the disk and allocate a fresh Surface, so re-calling it inside __init__ won't be magically free.">C) Inside <code>Enemy.__init__</code>; Pygame deduplicates loads by filename automatically, so the second through 50th calls are free.</button>
+                    </div>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
+        </section>
+
     <h2 id="what-s-next">What's Next?</h2>
     
     <p>Now that you can load and display images, next we'll learn how to animate sprites - bringing your characters to life with smooth animations and sprite sheets!</p>

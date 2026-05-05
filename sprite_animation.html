@@ -1184,6 +1184,121 @@ if __name__ == "__main__":
         </ul>
     </div>
 
+
+        <section class="lesson-section">
+            <h2 id="practice-exercise-build-sprite-animation">🏋️‍♂️ Practice Exercise: Two States, One dt</h2>
+
+            <div class="card card-info">
+                <h3>🏋️‍♂️ Exercise 1: Idle ↔ Walk — A Frame-Rate-Independent Cycle</h3>
+                <p><strong>Objective:</strong> Build a two-state animation (Idle: 4 frames @ 200&nbsp;ms each; Walk: 6 frames @ 100&nbsp;ms each) driven by held arrow keys, using the lesson's <em>time-based</em> timing pattern (<code>timer += dt</code> against a <code>frame_duration</code> in milliseconds) so the animation runs at the same wall-clock speed on a 60&nbsp;FPS machine and a 30&nbsp;FPS machine — and exercise the <em>state-change reset</em> pattern from <code>AnimationStateMachine.change_state()</code> so switching idle → walk always starts walk at frame&nbsp;0, not wherever it happened to be left last time.</p>
+                <h4>Instructions:</h4>
+                <ol>
+                    <li>Initialize Pygame, create a 600×400 window with a descriptive caption, and create a <code>clock = pygame.time.Clock()</code> — <code>clock.tick(60)</code> will both cap the loop at 60&nbsp;FPS AND return <code>dt</code> in milliseconds, the time source for animation.</li>
+                    <li>Write a small helper <code>frames(n, color)</code> that programmatically builds <code>n</code> Surfaces (64×96 with <code>SRCALPHA</code>) showing a small character with a vertical bob varying per frame — no external image assets needed. The bob makes frame transitions visible.</li>
+                    <li>Define an <code>anims</code> dict with two states: <code>idle</code> = <code>frames(4, blue)</code> at <code>ms_per_frame: 200</code>, and <code>walk</code> = <code>frames(6, green)</code> at <code>ms_per_frame: 100</code>. Both <code>loop: True</code>. Each state also carries its own <code>i</code> (current frame index) and <code>t</code> (accumulated milliseconds since last frame change).</li>
+                    <li>Inside the game loop, read <code>dt = clock.tick(60)</code> at the top — milliseconds since the last frame, the wall-clock time source.</li>
+                    <li>Read <code>pygame.key.get_pressed()</code>. If <code>K_LEFT</code> or <code>K_RIGHT</code> is held, the target state is <code>walk</code>; otherwise <code>idle</code>. If the target state differs from the current one, switch states AND reset the NEW state's <code>i</code> and <code>t</code> both to&nbsp;0 — this is the critical state-change-reset step from the lesson's <code>change_state()</code> method.</li>
+                    <li>Advance the active animation: <code>a["t"] += dt</code>. If <code>a["t"] &gt;= a["ms_per_frame"]</code>, reset <code>t&nbsp;=&nbsp;0</code>, increment <code>i</code>, and when <code>i</code> reaches <code>len(frames)</code> wrap back to&nbsp;0 (because <code>loop=True</code>) — the lesson's <code>AnimationStateMachine.update()</code> uses the same wrap-or-clamp logic for looping vs non-looping cases.</li>
+                    <li>Each frame, fill the screen, then blit the current frame Surface centred at (300,&nbsp;200) using <code>frame.get_rect(center=(300, 200))</code>. <code>pygame.display.flip()</code> at end of frame; the <code>clock.tick(60)</code> from step&nbsp;4 caps the rate.</li>
+                </ol>
+                <details>
+                    <summary>💡 Hint</summary>
+                    <p>The two patterns this exercise drills are both grounded in lesson code. <em>Frame-rate independence</em> comes from using <code>dt</code> (real wall-clock milliseconds since last frame, returned by <code>clock.tick</code>) rather than a fixed counter increment per update — a counter pattern like <code>counter += 0.15</code> ties animation speed to frame rate, so a 30&nbsp;FPS machine runs the animation at half speed. The lesson's <code>TimedAnimation</code> class uses the dt-and-frame_duration pattern explicitly. <em>State-change reset</em> matters because each animation state keeps its own <code>current_frame</code> and <code>timer</code> — if you switch from <code>walk</code> mid-cycle (say at frame&nbsp;3 with 70&nbsp;ms accumulated) and later switch back, it will start at frame&nbsp;3 with 70&nbsp;ms accumulated unless you reset both. <code>AnimationStateMachine.change_state()</code> does exactly this. Watch the units: <code>clock.tick(60)</code> returns milliseconds (not seconds), so <code>ms_per_frame</code> values are 200 / 100, not 0.2 / 0.1.</p>
+                </details>
+                <details>
+                    <summary>✅ Example Solution</summary>
+                    <pre><code>import sys, math
+import pygame
+
+pygame.init()
+screen = pygame.display.set_mode((600, 400))
+pygame.display.set_caption("Idle ↔ Walk — Two States, One dt")
+clock = pygame.time.Clock()
+
+def frames(n, color):
+    """Programmatically build n Surfaces with a per-frame vertical bob — no assets needed."""
+    out = []
+    for i in range(n):
+        s = pygame.Surface((64, 96), pygame.SRCALPHA)
+        bob = int(math.sin(i / n * math.tau) * 4)
+        pygame.draw.rect(s, color, (16, 24 + bob, 32, 56))                  # body
+        pygame.draw.circle(s, (255, 220, 180), (32, 16 + bob), 12)          # head
+        out.append(s)
+    return out
+
+anims = {
+    "idle": {"frames": frames(4, ( 80, 130, 220)), "ms_per_frame": 200, "loop": True, "i": 0, "t": 0},
+    "walk": {"frames": frames(6, ( 80, 200, 130)), "ms_per_frame": 100, "loop": True, "i": 0, "t": 0},
+}
+state = "idle"
+
+running = True
+while running:
+    dt = clock.tick(60)  # ms since last frame — the time source for animation
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    keys = pygame.key.get_pressed()
+    target = "walk" if (keys[pygame.K_LEFT] or keys[pygame.K_RIGHT]) else "idle"
+    if target != state:                       # state change → RESET the new animation
+        state = target
+        anims[state]["i"] = anims[state]["t"] = 0
+
+    a = anims[state]
+    a["t"] += dt
+    if a["t"] &gt;= a["ms_per_frame"]:
+        a["t"] = 0
+        a["i"] += 1
+        if a["i"] &gt;= len(a["frames"]):
+            a["i"] = 0 if a["loop"] else len(a["frames"]) - 1
+
+    screen.fill((24, 24, 36))
+    f = a["frames"][a["i"]]
+    screen.blit(f, f.get_rect(center=(300, 200)))
+    pygame.display.flip()
+
+pygame.quit()
+sys.exit()</code></pre>
+                </details>
+            </div>
+
+            <div class="card quiz-container">
+                <h3>🎯 Quick Quiz</h3>
+
+                <div class="quiz-question">
+                    <p><strong>Question 1:</strong> A walk animation should run at the same wall-clock speed on a 60&nbsp;FPS machine and a 30&nbsp;FPS machine — same speed, just different smoothness. Which timing approach achieves this frame-rate independence?</p>
+                    <div class="quiz-options">
+                        <button class="quiz-option" data-correct="false" data-hint="Think about what 'each update' means at different frame rates — does that increment happen the same number of times per second on a fast and a slow machine?">A) Increment <code>counter += 0.15</code> each update; advance the frame when <code>counter &gt;= 1</code>.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="dt is real wall-clock milliseconds since the last frame — on a 30 FPS machine dt is ~33 ms per call; on a 60 FPS machine, ~16.67 ms per call. Either way, accumulating 200 ms takes the same real-world time, so a frame_duration of 200 ms means the animation plays at the same SPEED on both machines, just with different smoothness. The lesson's TimedAnimation class is built around exactly this pattern: 'self.time_since_last_frame += dt; if self.time_since_last_frame &gt;= self.frame_duration: ... advance frame'. The Performance Tips entry 'Frame Rate Independence: Use delta time for timing' calls this out as a core animation principle.">B) Accumulate elapsed time each update (<code>timer += dt</code>); advance the frame when <code>timer &gt;= frame_duration</code> (in milliseconds).</button>
+                        <button class="quiz-option" data-correct="false" data-hint="clock.tick(60) caps the maximum frame rate, but a slow machine that can't hit 60 FPS will still run slower than a fast one that does — the cap alone doesn't make animation speed independent of actual achieved frame rate.">C) Just call <code>clock.tick(60)</code> at the end of every frame.</button>
+                    </div>
+                    <div class="quiz-feedback"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <p><strong>Question 2:</strong> The player presses LEFT and your character switches from <code>idle</code> to <code>walk</code>. Inside your <code>change_state(new_state)</code> logic, what MUST happen for the walk animation to play cleanly from its first frame?</p>
+                    <div class="quiz-options">
+                        <button class="quiz-option" data-correct="false" data-hint="Each animation state in the lesson's pattern carries its own current_frame and timer fields — those don't reset themselves just because you stopped using them last time.">A) Just set <code>current_state = new_state</code>. The new animation will automatically resume from frame&nbsp;0.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Each animation state keeps its own current_frame index and ms accumulator. If you stopped using walk halfway through (say at frame 3 with the accumulator at 70 ms toward the next 100-ms tick), those values are still sitting there the next time you switch back to walk. Without an explicit reset, the new walk cycle starts at frame 3 with 70 ms already accumulated — visible as a 'jumped-into-the-middle' first frame. The lesson's AnimationStateMachine.change_state() does exactly this reset: '# Reset new animation' followed by setting current_frame = 0 and timer = 0. The pattern is essential whenever a single animation can be entered from multiple paths or repeated.">B) Set <code>current_state = new_state</code> AND reset the new animation's <code>current_frame = 0</code> and <code>timer = 0</code>.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Updating animations you're not displaying wastes work and doesn't address the start-from-frame-0 problem at all — switching BACK to idle would still show idle mid-cycle.">C) Keep both animations running in parallel and just toggle which one is drawn each frame.</button>
+                    </div>
+                    <div class="quiz-feedback"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <p><strong>Question 3:</strong> Looking at the lesson's <code>AnimationStateMachine.update()</code> method, what's the difference between a <code>loop=True</code> animation (like a walk cycle) and a <code>loop=False</code> animation (like a one-shot attack swing) when the LAST frame is reached?</p>
+                    <div class="quiz-options">
+                        <button class="quiz-option" data-correct="true" data-explanation="The lesson's update method handles the end-of-animation branch like this: 'if current_frame &gt;= len(frames): if loop: current_frame = 0; else: current_frame = len(frames) - 1' — wrap or clamp. The looping branch keeps walk and idle cycling indefinitely; the clamping branch holds the last frame of an attack swing or jump-land pose visible until something else triggers a state change. The comment in the lesson code 'Could trigger animation complete event here' even suggests where you'd hook the back-to-idle transition for non-looping animations.">A) <code>loop=True</code> wraps <code>current_frame</code> back to&nbsp;0 and keeps cycling; <code>loop=False</code> clamps at <code>len(frames) - 1</code> and typically signals completion so the state machine can transition back to idle.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Ping-pong animation IS a thing in some engines, but the lesson's loop flag has a simpler binary meaning — ping-pong would be a separate parameter, not what loop controls.">B) <code>loop=True</code> plays forwards then backwards (ping-pong); <code>loop=False</code> plays forwards only.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="If both behaved the same way, a non-looping attack animation would visibly restart and keep attacking forever — the loop flag exists specifically to stop that.">C) There's no difference; both restart from frame&nbsp;0 when the end is reached.</button>
+                    </div>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
+        </section>
+
     <h2 id="what-s-next">What's Next?</h2>
     
     <p>Now that you can animate individual sprites, next we'll learn about sprite sheets - the efficient way to store and manage multiple animation frames in a single image!</p>

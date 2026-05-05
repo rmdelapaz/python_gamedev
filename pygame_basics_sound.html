@@ -896,6 +896,113 @@ if __name__ == "__main__":
         </ul>
     </div>
 
+
+        <section class="lesson-section">
+            <h2 id="practice-exercise-build-pygame-basics-sound">🏋️‍♂️ Practice Exercise: Sound Board</h2>
+
+            <div class="card card-info">
+                <h3>🏋️‍♂️ Exercise 1: SFX, Music, and Volume Together</h3>
+                <p><strong>Objective:</strong> Build a small 'sound board' that plays three preloaded sound effects when the user presses <code>1</code>, <code>2</code>, or <code>3</code>, and toggles a looping background-music track on/off with <code>M</code>. The exercise practises both halves of <code>pygame.mixer</code>: the <code>Sound</code> object API for short, multi-instance SFX, and the separate <code>pygame.mixer.music</code> module for streamed background music — plus per-source volume balancing (Pro Tip 'Music quieter than SFX').</p>
+                <h4>Instructions:</h4>
+                <ol>
+                    <li>Initialize Pygame AND the mixer separately: <code>pygame.init()</code> followed by <code>pygame.mixer.init()</code>. Optionally call <code>pygame.mixer.set_num_channels(8)</code> so up to 8 sound effects can play simultaneously without cutting each other off.</li>
+                    <li>Drop three short audio files (e.g. <code>jump.wav</code>, <code>coin.ogg</code>, <code>explosion.wav</code>) and one music track (e.g. <code>music.ogg</code>) into the same folder as your script. Free SFX are easy to find on freesound.org or jsfxr.me.</li>
+                    <li>BEFORE the game loop, preload each effect once: <code>jump_sfx = pygame.mixer.Sound("jump.wav")</code>, etc. Set per-effect volume with <code>jump_sfx.set_volume(0.6)</code> so each sits properly in the mix.</li>
+                    <li>Also before the loop, load and start the background music with <code>pygame.mixer.music.load("music.ogg")</code>, <code>pygame.mixer.music.set_volume(0.3)</code> (lower than the SFX), and <code>pygame.mixer.music.play(-1)</code> (the <code>-1</code> argument loops forever).</li>
+                    <li>Inside the event loop, on <code>KEYDOWN</code>, branch on <code>event.key</code>: K_1 calls <code>jump_sfx.play()</code>, K_2 plays the coin sound, K_3 plays the explosion. Pressing K_M toggles a <code>music_paused</code> bool and calls <code>pygame.mixer.music.pause()</code> or <code>pygame.mixer.music.unpause()</code> accordingly.</li>
+                    <li>Run a minimal render loop (clear screen, flip, tick 60). The window itself is just a focus target so the keyboard works — the audio IS the output.</li>
+                </ol>
+                <details>
+                    <summary>💡 Hint</summary>
+                    <p>Two things separate good audio code from janky audio code in Pygame. **First, preload.** Putting <code>pygame.mixer.Sound("jump.wav")</code> inside the event handler means the file is read off disk and decoded every single time you press 1 — the lesson's Common Pitfall #1 ('Lag/Delay: Increase buffer size or preload sounds'). Construct each Sound object ONCE before the loop and just call <code>.play()</code> on the cached object to trigger it. **Second, music is a different API.** <code>pygame.mixer.Sound</code> loads the whole file into memory — fast for short clips, but a 5-minute soundtrack would chew up RAM. <code>pygame.mixer.music</code> STREAMS from disk one track at a time, with its own <code>load</code> / <code>play</code> / <code>pause</code> / <code>unpause</code> / <code>set_volume</code> functions. Key Takeaway #2 in the lesson states this directly.</p>
+                </details>
+                <details>
+                    <summary>✅ Example Solution</summary>
+                    <pre><code>import sys
+import pygame
+
+pygame.init()
+pygame.mixer.init()                  # Initialise the audio subsystem
+pygame.mixer.set_num_channels(8)     # Up to 8 simultaneous SFX voices
+
+screen = pygame.display.set_mode((640, 360))
+pygame.display.set_caption("Sound Board — 1/2/3 for SFX, M toggles music")
+clock = pygame.time.Clock()
+
+# 1. Preload Sound objects ONCE before the loop
+jump_sfx    = pygame.mixer.Sound("jump.wav")
+coin_sfx    = pygame.mixer.Sound("coin.ogg")
+explode_sfx = pygame.mixer.Sound("explosion.wav")
+
+# 2. Tune each SFX volume independently
+jump_sfx.set_volume(0.6)
+coin_sfx.set_volume(0.5)
+explode_sfx.set_volume(0.8)
+
+# 3. Background music: separate API, STREAMS from disk
+pygame.mixer.music.load("music.ogg")
+pygame.mixer.music.set_volume(0.3)   # Music quieter than SFX (Pro Tip)
+pygame.mixer.music.play(-1)          # -1 = loop forever
+music_paused = False
+
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.KEYDOWN:
+            if   event.key == pygame.K_1: jump_sfx.play()
+            elif event.key == pygame.K_2: coin_sfx.play()
+            elif event.key == pygame.K_3: explode_sfx.play()
+            elif event.key == pygame.K_m:
+                if music_paused: pygame.mixer.music.unpause()
+                else:            pygame.mixer.music.pause()
+                music_paused = not music_paused
+
+    screen.fill((20, 20, 30))    # The audio IS the output
+    pygame.display.flip()
+    clock.tick(60)
+
+pygame.quit()
+sys.exit()</code></pre>
+                </details>
+            </div>
+
+            <div class="card quiz-container">
+                <h3>🎯 Quick Quiz</h3>
+
+                <div class="quiz-question">
+                    <p><strong>Question 1:</strong> The lesson teaches two distinct APIs for game audio: <code>pygame.mixer.Sound</code> objects and the <code>pygame.mixer.music</code> module. What's the architectural difference between them?</p>
+                    <div class="quiz-options">
+                        <button class="quiz-option" data-correct="false" data-hint="They genuinely are different APIs — the lesson's Key Takeaway #2 says 'Sound effects use Sound objects, music uses the music module.' The split exists for a reason.">A) They're aliases for the same underlying API — you can use either one for any audio file, the names are just for clarity.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="pygame.mixer.Sound loads the ENTIRE audio file into memory and gives you back an object you can .play() many times in parallel — perfect for short SFX (gunshots, footsteps, UI clicks) where multiple instances overlap and instant playback matters. pygame.mixer.music STREAMS audio from disk one track at a time, with its own play / pause / unpause / set_volume API — perfect for a multi-minute soundtrack that would chew up RAM if loaded as a Sound. Only ONE music stream plays at a time, but it can run alongside any number of Sound effects on the mixer's parallel channels. Key Takeaway #2 calls this out directly.">B) Sound loads the whole file into memory for fast, multi-instance playback (short SFX); pygame.mixer.music streams from disk one track at a time (long background music).</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Both APIs handle the standard formats just fine — lag is fixed by preload + buffer settings, not by switching between Sound and music.">C) Sound is for uncompressed WAV only; pygame.mixer.music handles compressed formats (OGG, MP3) so it's used to avoid playback lag.</button>
+                    </div>
+                    <div class="quiz-feedback"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <p><strong>Question 2:</strong> Why does the lesson recommend constructing your <code>pygame.mixer.Sound</code> objects ONCE before the game loop instead of inside the event handler that triggers playback?</p>
+                    <div class="quiz-options">
+                        <button class="quiz-option" data-correct="false" data-hint="Sound objects don't fight each other for resources — the mixer has parallel channels exactly so multiple Sounds can coexist in memory. Look at what `pygame.mixer.Sound(...)` itself costs.">A) Multiple Sound objects pointing at the same file conflict with each other on the mixer, so only the first one you construct works.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Constructing a Sound object reads the file off disk and decodes it into a raw audio buffer in memory — cheap if you do it once at startup, expensive if you do it on every key press. Inside the event handler, that disk-and-decode hit lands right at the moment of input, which is exactly when the player notices stutter. The lesson's Key Takeaway #4 ('Preload audio files to avoid gameplay stuttering') and the Common Pitfall 'Lag/Delay: Increase buffer size or preload sounds' both point to the same fix: build the Sound once, cache it in a variable, then just call .play() on the cached object every time you want to hear the effect.">B) Building a Sound reads and decodes the file from disk; doing it per-event causes audible lag at the moment of playback, while preloading caches the decoded buffer for instant repeat plays.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Sound objects don't auto-play — they need explicit .play() calls. Construction location doesn't change that.">C) Sound objects auto-play the moment they're constructed, so building one inside the handler would play it twice (once on construction, once on .play()).</button>
+                    </div>
+                    <div class="quiz-feedback"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <p><strong>Question 3:</strong> The setup snippet calls <code>pygame.mixer.set_num_channels(8)</code>. What are these channels, and what happens if your game tries to play a 9th sound while all 8 are busy?</p>
+                    <div class="quiz-options">
+                        <button class="quiz-option" data-correct="false" data-hint="Mixer channels and stereo channels are different concepts. Stereo (left/right) is about how a single sound is spatialised; mixer channels are about how many sounds play at once.">A) They're the stereo output channels (left/right), so 8 means 8-speaker surround sound; a 9th sound would fail because there's nowhere for it to come out.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="pygame.mixer maintains N parallel 'voices' (default 8) where each Sound.play() takes one. While all 8 are occupied, a new .play() doesn't fail — it CUTS OFF the oldest currently-playing sound to free up its channel. In a busy game (machine-gun fire, multiple particle systems, simultaneous explosions) 8 channels can run out fast and you'll hear sounds get clipped. Calling set_num_channels(16) or 32 raises the cap. Note this is completely independent of pygame.mixer.music, which has its own dedicated streaming pipeline — the music never competes with SFX for these channels.">B) They're parallel SFX voices on the mixer; the default is 8. When all are busy, a new .play() steals the oldest channel — sounds get cut off mid-playback, which is audible.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="It's not a hard cap — the mixer doesn't refuse the call. Think about what 'busy channels' would force the mixer to do.">C) They're a hard cap on total Sound objects you can construct; the 9th call to <code>pygame.mixer.Sound(...)</code> would raise an exception.</button>
+                    </div>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
+        </section>
+
     <h2 id="what-s-next">What's Next?</h2>
     
     <p>Congratulations! You've completed the Pygame Basics module! You now know how to create game loops, draw graphics, handle input, detect collisions, and add audio. Next, we'll dive into Game Mathematics where you'll learn about 2D coordinate systems, vectors, and the math that makes games work!</p>

@@ -679,6 +679,117 @@ pygame.quit()</code></pre>
         </ul>
     </div>
 
+
+        <section class="lesson-section">
+            <h2 id="practice-exercise-build-pygame-basics-collision">🏋️‍♂️ Practice Exercise: Coin Collector</h2>
+
+            <div class="card card-info">
+                <h3>🏋️‍♂️ Exercise 1: AABB Collision in 30 Lines</h3>
+                <p><strong>Objective:</strong> Build a top-down 'coin collector' demo where a player square moves with the arrow keys and collects scattered coins by touching them. Use <code>pygame.Rect</code> objects for both the player and the coins, and lean on Pygame's built-in <code>rect.colliderect()</code> for the actual collision test — the canonical AABB pattern that the lesson calls out as 'fast, simple, and works for most 2D games.'</p>
+                <h4>Instructions:</h4>
+                <ol>
+                    <li>Initialize Pygame and create an 800×600 window. Build the player as <code>player = pygame.Rect(380, 280, 40, 40)</code> — a Rect object, not just <code>(x, y)</code> coordinates — so you get <code>colliderect</code> and <code>clamp_ip</code> for free.</li>
+                    <li>Build a list of five coin Rects at fixed scattered positions, each 20×20 — e.g. <code>pygame.Rect(120, 90, 20, 20)</code>, plus four others around the field.</li>
+                    <li>In the game loop, handle <code>pygame.QUIT</code>, then use <code>pygame.key.get_pressed()</code> to move the player (this is the state-based input pattern from the previous lesson — update <code>player.x</code> / <code>player.y</code> by a small <code>SPEED</code> for each arrow key held).</li>
+                    <li>Clamp the player to the screen with <code>player.clamp_ip(screen.get_rect())</code> so it can't leave the playfield.</li>
+                    <li>Test collisions with a single list-comprehension: <code>coins = [c for c in coins if not player.colliderect(c)]</code>. Any coin that overlaps the player is filtered out of the list — it stops being drawn and stops being checked next frame.</li>
+                    <li>Render: clear the screen, draw each remaining coin as a gold rect, draw the player on top as a blue rect, then <code>pygame.display.flip()</code> and <code>clock.tick(60)</code>.</li>
+                    <li>Run it. Walk over each coin in turn — they should disappear the moment your player rect overlaps theirs.</li>
+                </ol>
+                <details>
+                    <summary>💡 Hint</summary>
+                    <p>Two pieces of <code>pygame.Rect</code> API do the heavy lifting. <code>a.colliderect(b)</code> returns <code>True</code> if Rect <code>a</code> and Rect <code>b</code> overlap on both axes — it's pure axis-aligned bounding-box math (fast, branch-free, no square roots). <code>rect.clamp_ip(other_rect)</code> moves <code>rect</code> in-place so it stays fully inside <code>other_rect</code> — perfect for keeping the player on-screen. You can also tweak the player's hitbox vs visual by drawing a 40×40 blue rect but using a slightly inset <code>player.inflate(-8, -8)</code> Rect for the collision test — the lesson's Pro Tip 'make hitboxes slightly smaller than sprites for better game feel' in two lines of code.</p>
+                </details>
+                <details>
+                    <summary>✅ Example Solution</summary>
+                    <pre><code>import sys
+import pygame
+
+pygame.init()
+screen = pygame.display.set_mode((800, 600))
+pygame.display.set_caption("Coin Collector")
+clock = pygame.time.Clock()
+
+# Player as a pygame.Rect — gets colliderect / clamp_ip for free
+player = pygame.Rect(380, 280, 40, 40)
+SPEED  = 4
+
+# Five coins scattered around the field
+coins = [
+    pygame.Rect(120,  90, 20, 20),
+    pygame.Rect(640, 140, 20, 20),
+    pygame.Rect(220, 460, 20, 20),
+    pygame.Rect(560, 480, 20, 20),
+    pygame.Rect(700, 320, 20, 20),
+]
+
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    # Movement (state polling — recap from the input lesson)
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_LEFT]:  player.x -= SPEED
+    if keys[pygame.K_RIGHT]: player.x += SPEED
+    if keys[pygame.K_UP]:    player.y -= SPEED
+    if keys[pygame.K_DOWN]:  player.y += SPEED
+
+    # Stay inside the playfield
+    player.clamp_ip(screen.get_rect())
+
+    # Collision: drop any coin whose rect overlaps the player's
+    coins = [c for c in coins if not player.colliderect(c)]
+
+    # Render
+    screen.fill((20, 30, 50))
+    for c in coins:
+        pygame.draw.rect(screen, (255, 215, 0), c)
+    pygame.draw.rect(screen, (80, 200, 240), player)
+    pygame.display.flip()
+    clock.tick(60)
+
+pygame.quit()
+sys.exit()</code></pre>
+                </details>
+            </div>
+
+            <div class="card quiz-container">
+                <h3>🎯 Quick Quiz</h3>
+
+                <div class="quiz-question">
+                    <p><strong>Question 1:</strong> The lesson teaches several collision detection methods (AABB rectangles, circles, pixel-perfect, polygons). Why does it recommend reaching for AABB rectangles first — and only swapping in something more precise when you actually need to?</p>
+                    <div class="quiz-options">
+                        <button class="quiz-option" data-correct="false" data-hint="The lesson actually says the opposite — pixel-perfect is described as 'precise but slow', not the default starting point.">A) Pixel-perfect is more accurate, but rectangles render faster on the GPU so they look smoother on the screen.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="The lesson's Pro Tip #1 is literally 'Start Simple: Use rectangles first, optimize later if needed.' AABB rectangle collision is the cheapest possible test — just six comparisons between the two rects' x / y / width / height, no square roots, no per-pixel scans — so it scales to hundreds of objects per frame on any hardware. Most 2D games never need anything more accurate; the few that do (bullet hell, fighting games with detailed hitboxes) can swap in pixel-perfect or polygon collision JUST for the objects that need it. The Security Check Analogy frames it as 'metal detector gate' (rectangle, fast) vs 'full body scan' (pixel-perfect, slow) — you don't body-scan everyone, you body-scan only when the metal detector flags something.">B) Rectangle collision is fast and simple enough to run on every pair every frame, and most 2D games never feel the lack of precision — you can always upgrade specific objects later.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Rotation is a real limit of axis-aligned bounding boxes (the AA in AABB), but it's not why the lesson recommends starting here — most 2D games don't need rotation either.">C) Rectangles handle rotation cleanly while circles and polygons don't, so they cover more game types out of the box.</button>
+                    </div>
+                    <div class="quiz-feedback"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <p><strong>Question 2:</strong> Given two <code>pygame.Rect</code> objects <code>a</code> and <code>b</code>, what does <code>a.colliderect(b)</code> return?</p>
+                    <div class="quiz-options">
+                        <button class="quiz-option" data-correct="false" data-hint="colliderect is intentionally cheap — it doesn't compute geometry like overlap area, just whether overlap exists at all.">A) A new Rect describing the overlapping region between <code>a</code> and <code>b</code> (zero-sized if they don't touch).</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="a.colliderect(b) returns a bool: True if the two rectangles overlap on BOTH axes (any amount of overlap counts), False otherwise. That's all it does — four comparisons, no allocation, no geometry. If you need the actual overlap region, use a.clip(b) which DOES return a Rect (and is empty when there's no overlap). For testing whether a single point is inside a Rect, use rect.collidepoint((x, y)) instead — same idea, point against rect rather than rect against rect.">B) <code>True</code> if the two rectangles overlap on both axes, <code>False</code> otherwise — a simple boolean.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="That description matches a different API — rect.collidepoint((x, y)) takes a point and returns a bool. colliderect takes another Rect.">C) <code>True</code> if a given point <code>(x, y)</code> falls inside <code>a</code>; the <code>b</code> argument is the point coordinates.</button>
+                    </div>
+                    <div class="quiz-feedback"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <p><strong>Question 3:</strong> The lesson's Pro Tips list includes 'make hitboxes slightly smaller than sprites for better game feel.' What does that actually buy you?</p>
+                    <div class="quiz-options">
+                        <button class="quiz-option" data-correct="false" data-hint="Smaller rects are barely faster to test — colliderect is already O(1) and the rect dimensions don't change the cost. Performance isn't the reason.">A) A noticeable performance gain, because smaller rects are cheaper for <code>colliderect</code> to test.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Players read 'a hit' visually — if a bullet sprite barely grazes the player's pixels and still triggers damage, it FEELS unfair even though the math is correct. Shrinking the hitbox a few pixels inside the visual sprite means near-misses LOOK like near-misses; only clear visual overlaps register as hits. This is what experienced game devs mean by 'game feel' — the game's behaviour matches the player's perception. Easiest implementation: keep the visual sprite as drawn, but use rect.inflate(-N, -N) (negative inflate = shrink) to get the slightly-smaller hitbox you actually pass to colliderect.">B) The game feels fairer — near-misses look like near-misses, and only clear visual overlaps register as hits.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Hitbox size doesn't affect rendering — the visual sprite is drawn separately. Tearing/flicker has other causes (e.g. forgetting display.flip()).">C) It eliminates visual tearing and flicker by reducing the area that needs to be repainted each frame.</button>
+                    </div>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
+        </section>
+
     <h2 id="what-s-next">What's Next?</h2>
     
     <p>Now that you can detect when objects collide, next we'll add sound and music to make your games come alive with audio feedback! You'll learn how to play sound effects for collisions, background music, and create an immersive audio experience.</p>

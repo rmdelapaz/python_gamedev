@@ -662,6 +662,113 @@ if __name__ == "__main__":
         </ul>
     </div>
 
+
+        <section class="lesson-section">
+            <h2 id="practice-exercise-build-sprite-sheets">🏋️‍♂️ Practice Exercise: Slice, Don't Copy</h2>
+
+            <div class="card card-info">
+                <h3>🏋️‍♂️ Exercise 1: Walk Cycle from a Single Sheet — with <code>subsurface()</code></h3>
+                <p><strong>Objective:</strong> Build a tiny 4-frame walk-cycle demo from a single sprite sheet, using <code>pygame.Surface.subsurface(rect)</code> to extract each frame WITHOUT copying its pixels — the lesson's Best Practices entry &ldquo;Subsurfaces: Use <code>subsurface()</code> instead of copying&rdquo; demonstrated against a grid-addressed sheet. The exercise drills two patterns at once: the (col, row) → pixel-rect arithmetic that turns a logical cell coordinate into a <code>pygame.Rect</code>, and the memory-sharing semantics of <code>subsurface</code> that let one loaded sheet back N animation frames without N× the pixel-buffer cost.</p>
+                <h4>Instructions:</h4>
+                <ol>
+                    <li>Initialize Pygame, create a 480×320 window with a descriptive caption, create a <code>pygame.time.Clock()</code>, and define <code>CELL = 64</code> and <code>COLS = 4</code> (a single-row strip of four 64×64 cells — a 256×64 sheet).</li>
+                    <li>Write a <code>make_strip()</code> helper that programmatically builds the 256×64 sheet Surface in memory: for each column, draw a tinted background rect plus a body rect and head circle whose vertical position varies with column index, so the four cells each show a slightly different walk-cycle pose. (In production you'd replace this helper with one <code>pygame.image.load("walk.png").convert_alpha()</code> call — the rest of the code is unchanged.)</li>
+                    <li>Call <code>sheet = make_strip()</code> ONCE before the game loop — a single Surface holds all 4 cells.</li>
+                    <li>Extract the 4 frames as a list comprehension: <code>frames = [sheet.subsurface(pygame.Rect(col * CELL, 0, CELL, CELL)) for col in range(COLS)]</code>. Each entry is a sub-Surface whose pixel memory is SHARED with <code>sheet</code> — no per-frame Surface allocations, no per-frame pixel copies. The grid arithmetic <code>(col, row) → (col * cell_w, row * cell_h)</code> is the lesson's canonical addressing pattern.</li>
+                    <li>In the game loop, compute the current frame index by elapsed time: <code>index = (pygame.time.get_ticks() // 120) % COLS</code> — the cycle advances one cell every 120&nbsp;ms.</li>
+                    <li>Each frame, fill the screen, then draw two things: (a) the full sheet at the top of the window so you can SEE what's being indexed into, and (b) the current frame scaled 2× (via <code>pygame.transform.scale</code>) and centred at (240,&nbsp;200) so the active cell is obvious at a glance.</li>
+                    <li>Cap at 60&nbsp;FPS with <code>clock.tick(60)</code>, exit cleanly on <code>pygame.QUIT</code>, and confirm via inspection that <code>pygame.Surface.copy()</code> is called <strong>zero</strong> times in your finished code — every frame in <code>frames</code> is a subsurface, not a copy.</li>
+                </ol>
+                <details>
+                    <summary>💡 Hint</summary>
+                    <p>The two patterns this exercise drills are both grounded in lesson code. The complete demo's frame-loading loop computes <code>x = col * 32; y = row * 32; rect = pygame.Rect(x, y, 32, 32); sprite = self.sheet_surface.subsurface(rect)</code> — multiplication, not direct (col, row) coordinates. <code>subsurface(rect)</code> returns a new Surface object that points to the SAME pixel memory as the parent (it's a view, not a copy), so 4 subsurfaces of a 256×64 sheet still cost just one 256×64 pixel buffer. The lesson's Best Practices entry &ldquo;Subsurfaces: Use <code>subsurface()</code> instead of copying&rdquo; calls this out specifically. The contrasting pattern is the <code>SpriteSheet.get_sprite()</code> method earlier in the lesson, which creates a new Surface and blits the cropped region into it — a full pixel copy. <code>subsurface()</code> is preferred unless you specifically need an independent Surface (e.g. you plan to mutate the frame without affecting the sheet).</p>
+                </details>
+                <details>
+                    <summary>✅ Example Solution</summary>
+                    <pre><code>import sys, math
+import pygame
+
+pygame.init()
+screen = pygame.display.set_mode((480, 320))
+pygame.display.set_caption("Sprite Sheet — Slice with subsurface")
+clock = pygame.time.Clock()
+
+CELL = 64
+COLS = 4
+
+def make_strip():
+    """Build a 4-cell walk strip in memory — in production, replace with pygame.image.load()."""
+    strip = pygame.Surface((CELL * COLS, CELL), pygame.SRCALPHA)
+    for col in range(COLS):
+        bob = int(math.sin(col / COLS * math.tau) * 4)
+        pygame.draw.rect(strip, (40, 50 + col * 20, 60), (col * CELL, 0, CELL, CELL))   # cell bg
+        pygame.draw.rect(strip, ( 80, 200, 130), (col * CELL + 18, 14 + bob, 28, 36))   # body
+        pygame.draw.circle(strip, (255, 220, 180), (col * CELL + 32, 12 + bob), 10)     # head
+    return strip
+
+sheet = make_strip()
+
+# Extract 4 frames as SUBSURFACES — each shares pixel memory with `sheet` (no copies)
+frames = [sheet.subsurface(pygame.Rect(col * CELL, 0, CELL, CELL))
+          for col in range(COLS)]
+
+MS_PER_FRAME = 120
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    index = (pygame.time.get_ticks() // MS_PER_FRAME) % COLS
+
+    screen.fill((24, 24, 36))
+    screen.blit(sheet, ((480 - sheet.get_width()) // 2, 20))           # show source sheet
+    big = pygame.transform.scale(frames[index], (CELL * 2, CELL * 2))
+    screen.blit(big, big.get_rect(center=(240, 210)))                  # show active frame
+
+    pygame.display.flip()
+    clock.tick(60)
+
+pygame.quit()
+sys.exit()</code></pre>
+                </details>
+            </div>
+
+            <div class="card quiz-container">
+                <h3>🎯 Quick Quiz</h3>
+
+                <div class="quiz-question">
+                    <p><strong>Question 1:</strong> You've loaded a sprite sheet with <code>sheet = pygame.image.load("sheet.png").convert_alpha()</code> and need to extract 64 individual cells for use in your game. Which approach is more memory-efficient?</p>
+                    <div class="quiz-options">
+                        <button class="quiz-option" data-correct="false" data-hint="Allocating 64 fresh Surfaces and blitting each cell's pixels into them duplicates pixel data 64× — the lesson's Best Practices entry on subsurfaces flags this as the suboptimal path.">A) Create a new <code>pygame.Surface</code> for each cell and <code>blit</code> the cropped region from the sheet into the new Surface.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="sheet.subsurface(rect) returns a new Surface object that points to the SAME pixel memory as the parent sheet — it's a view, not a copy. 64 subsurfaces of one 256-pixel-wide sheet still cost just one 256-pixel-wide pixel buffer in memory. The lesson's Best Practices entry 'Subsurfaces: Use subsurface() instead of copying' and Key Takeaway 'Use subsurfaces to avoid memory duplication' both prescribe this pattern. The complete demo's frame-loading loop uses exactly this: 'sprite = self.sheet_surface.subsurface(rect)'. The contrasting SpriteSheet.get_sprite() method earlier in the lesson creates a fresh Surface and blits into it — a full pixel copy — which is the path you take only when you specifically need an independent buffer (e.g. to mutate the frame without affecting the sheet).">B) Call <code>sheet.subsurface(rect)</code> for each cell; the returned Surface shares pixel memory with the parent sheet (no copy, no per-cell pixel buffer).</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Re-loading from disk pays the I/O + decode cost on every call AND defeats the whole point of using a sheet — it's strictly worse than option A, not better.">C) Re-load the sheet PNG once per cell so each cell gets a freshly-allocated independent Surface.</button>
+                    </div>
+                    <div class="quiz-feedback"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <p><strong>Question 2:</strong> A sprite sheet contains a 4×2 grid of 32×32 cells (8 frames total — frame 0 top-left, frame 7 bottom-right). To extract frame&nbsp;5 (column&nbsp;1 of row&nbsp;1) via <code>sheet.subsurface(rect)</code>, what should <code>rect</code> be?</p>
+                    <div class="quiz-options">
+                        <button class="quiz-option" data-correct="false" data-hint="Surfaces use pixel coordinates, not cell coordinates — (col, row) values must be multiplied by the cell dimensions before being passed to a Rect.">A) <code>pygame.Rect(1, 1, 32, 32)</code> — use the (col, row) coordinates directly as x, y.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="The grid-addressing arithmetic in the lesson's complete demo is exactly this: 'x = col * 32; y = row * 32; rect = pygame.Rect(x, y, 32, 32); sprite = self.sheet_surface.subsurface(rect)'. The pixel coordinates of cell (col, row) in a uniform grid are (col * cell_width, row * cell_height); the rect's width and height are simply the cell dimensions. For frame 5 = (col=1, row=1) with 32×32 cells, that's pygame.Rect(32, 32, 32, 32). The pre-calculated rect list in SpriteSheetAnimation.__init__ uses the same formula: 'x = (i % cols) * frame_width; y = (i // cols) * frame_height'.">B) <code>pygame.Rect(32, 32, 32, 32)</code> — (col × cell_width, row × cell_height, cell_width, cell_height).</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Treating the linear frame index as x assumes the sheet is one row deep — it would only be correct for a 1×N animation strip, not a 4×2 grid.">C) <code>pygame.Rect(5, 0, 32, 32)</code> — use the linear frame index as x, y = 0.</button>
+                    </div>
+                    <div class="quiz-feedback"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <p><strong>Question 3:</strong> The lesson's Best Practices recommend &ldquo;Padding: Add 1–2 pixel padding to prevent bleeding&rdquo; around each sprite in a sheet. What problem does this padding actually solve?</p>
+                    <div class="quiz-options">
+                        <button class="quiz-option" data-correct="false" data-hint="PNG compression is built around runs of similar colors; transparent padding doesn't make compression more efficient — if anything it adds bytes the format has to encode, not fewer.">A) PNGs compress more efficiently when each sprite has padding around it.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="When a sprite is rendered with non-integer scaling (e.g. pygame.transform.smoothscale, or via a GPU texture sampler in OpenGL/SDL2), the renderer interpolates colours between adjacent pixels at the sprite's edge. Without padding, that interpolation can reach into the NEXT cell of the sheet, pulling the neighbour's edge pixels into the rendered frame as a thin colour halo — the 'bleeding' the lesson is naming. A 1-2 pixel transparent padding gutter around each cell ensures the sampler only ever interpolates against transparency, not against the next sprite. This is also why the lesson's other Best Practice 'Subsurfaces: Use subsurface() instead of copying' is compatible with padding: the subsurface rect just skips over the padding region by starting at a non-zero offset within the cell stride.">B) When the sprite is rendered with non-integer scaling (e.g. <code>pygame.transform.smoothscale</code> or a GPU sampler), the renderer interpolates edge pixels and can reach into adjacent cells; transparent padding stops neighbours' edge pixels from bleeding into the rendered frame.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="subsurface() is just memory pointer arithmetic on a rect; it doesn't read pixel values, so padding has no effect on its speed.">C) It makes <code>pygame.Surface.subsurface()</code> faster by giving it more aligned memory.</button>
+                    </div>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
+        </section>
+
     <h2 id="what-s-next">What's Next?</h2>
     
     <p>Now that you can manage sprite sheets efficiently, next we'll learn about sprite groups and layers - organizing multiple sprites for complex scenes and gameplay!</p>

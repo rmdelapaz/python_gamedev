@@ -625,6 +625,115 @@ if joystick_count > 0:
         </ul>
     </div>
 
+
+        <section class="lesson-section">
+            <h2 id="practice-exercise-build-pygame-basics-input">🏋️‍♂️ Practice Exercise: Move and Jump</h2>
+
+            <div class="card card-info">
+                <h3>🏋️‍♂️ Exercise 1: Two Input Styles in One Program</h3>
+                <p><strong>Objective:</strong> Build a tiny game where a square moves horizontally with the arrow keys (continuous — state-based input via <code>pygame.key.get_pressed()</code>) and jumps once per spacebar tap (discrete — event-based input via a <code>KEYDOWN</code> event), so you can feel the difference between the two input styles inside a single game loop.</p>
+                <h4>Instructions:</h4>
+                <ol>
+                    <li>Initialize Pygame and create an 800×600 window. Track the player's position as <code>x, y</code>, vertical velocity <code>vy</code>, and constants for movement <code>SPEED</code>, <code>JUMP_VELOCITY</code>, <code>GRAVITY</code>, and <code>GROUND_Y</code>.</li>
+                    <li>In the event loop, handle <code>pygame.QUIT</code> as usual. Add an <code>elif event.type == pygame.KEYDOWN</code> branch and inside it check <code>event.key == pygame.K_SPACE</code>. Set <code>vy = JUMP_VELOCITY</code> only if the player is on the ground (<code>y == GROUND_Y</code>) so they can't double-jump.</li>
+                    <li>After the event loop, call <code>keys = pygame.key.get_pressed()</code> and decrement <code>x</code> by <code>SPEED</code> when <code>keys[pygame.K_LEFT]</code> is true; increment <code>x</code> when <code>keys[pygame.K_RIGHT]</code> is true. This is the state-based path — it runs every frame the key is held.</li>
+                    <li>Apply simple gravity: add <code>GRAVITY</code> to <code>vy</code> every frame, then add <code>vy</code> to <code>y</code>. Clamp <code>y</code> to <code>GROUND_Y</code> and zero out <code>vy</code> when the player lands.</li>
+                    <li>Render: clear the screen, draw a horizontal ground line at <code>GROUND_Y + 40</code>, and draw the player as a 40×40 rectangle at <code>(x, y)</code>. Call <code>pygame.display.flip()</code> and <code>clock.tick(60)</code> at the end of the frame.</li>
+                    <li>Run it. Hold left/right — the square should glide smoothly. Tap space — the square should jump exactly once per tap, even if you keep holding the spacebar.</li>
+                </ol>
+                <details>
+                    <summary>💡 Hint</summary>
+                    <p>The two input styles are doing fundamentally different jobs in this program. <code>pygame.event.get()</code> only returns NEW events that happened since the last frame — a <code>KEYDOWN</code> for spacebar fires once when you press the key, then NOT AGAIN even if you hold it down. That's why jumping goes inside the event loop. <code>pygame.key.get_pressed()</code> returns the CURRENT state of every key right now — if you're still holding K_LEFT, <code>keys[pygame.K_LEFT]</code> is true every single frame. That's why movement goes outside the event loop. Try moving the jump logic into the get_pressed() block to feel why it's wrong: the square will fly off the top of the screen because vy gets reset every frame the spacebar is held.</p>
+                </details>
+                <details>
+                    <summary>✅ Example Solution</summary>
+                    <pre><code>import sys
+import pygame
+
+pygame.init()
+screen = pygame.display.set_mode((800, 600))
+pygame.display.set_caption("Move and Jump")
+clock = pygame.time.Clock()
+
+# Player state + tuning constants
+x, y = 400, 500
+vy = 0
+SPEED          = 5
+JUMP_VELOCITY  = -15
+GRAVITY        = 1
+GROUND_Y       = 500
+
+running = True
+while running:
+    # 1. Event loop — DISCRETE actions (one-shot)
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE and y == GROUND_Y:
+                vy = JUMP_VELOCITY   # Fires ONCE per spacebar press
+
+    # 2. State polling — CONTINUOUS actions (every frame)
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_LEFT]:
+        x -= SPEED
+    if keys[pygame.K_RIGHT]:
+        x += SPEED
+
+    # 3. Gravity + ground clamp
+    vy += GRAVITY
+    y  += vy
+    if y &gt; GROUND_Y:
+        y  = GROUND_Y
+        vy = 0
+
+    # 4. Render
+    screen.fill((20, 20, 30))
+    pygame.draw.line(screen, (120, 120, 120), (0, GROUND_Y + 40), (800, GROUND_Y + 40), 2)
+    pygame.draw.rect(screen, (80, 200, 240), (x, y, 40, 40))
+    pygame.display.flip()
+    clock.tick(60)
+
+pygame.quit()
+sys.exit()</code></pre>
+                </details>
+            </div>
+
+            <div class="card quiz-container">
+                <h3>🎯 Quick Quiz</h3>
+
+                <div class="quiz-question">
+                    <p><strong>Question 1:</strong> The lesson's Restaurant Analogy distinguishes <em>event-based</em> from <em>state-based</em> input. Which of the following is the canonical event-based use case?</p>
+                    <div class="quiz-options">
+                        <button class="quiz-option" data-correct="false" data-hint="Smooth continuous motion is the signature use case for the OTHER style — think about what you want firing every frame the key is held.">A) Moving a player smoothly while the left arrow is held down.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Event-based input handles DISCRETE one-shot actions — jump, shoot, open menu, dash. The event fires once when the key is pressed and then NOT AGAIN even if the key is held; that's exactly what you want for actions that should only happen once per intentional press. The Restaurant Analogy in the lesson frames it as a waiter taking individual orders ('Table 3 wants pizza!'). Continuous actions like movement use state polling instead.">B) Triggering a one-shot jump when the spacebar is pressed.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Following the cursor every frame is a continuous action and uses the OTHER style — you'd ask 'where is the mouse RIGHT NOW?', not wait for a discrete event.">C) Following the mouse cursor with a crosshair every frame.</button>
+                    </div>
+                    <div class="quiz-feedback"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <p><strong>Question 2:</strong> What does <code>pygame.key.get_pressed()</code> return, and how is it typically used inside the game loop?</p>
+                    <div class="quiz-options">
+                        <button class="quiz-option" data-correct="false" data-hint="That description matches pygame.event.get(), which is a different API — get_pressed() doesn't return events at all.">A) A list of new key-press events that happened since the last frame, iterated like the event loop.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="pygame.key.get_pressed() returns a sequence-like object indexed by keycode constants (e.g. pygame.K_LEFT, pygame.K_SPACE). Each entry is True if that key is currently held down RIGHT NOW, False otherwise. You call it once per frame and read the slots you care about — keys[pygame.K_LEFT] is true every frame the left arrow is held, which is exactly the trigger you want for continuous actions like movement.">B) A sequence-like object indexed by keycode (keys[pygame.K_LEFT], etc.) where each entry is True while that key is currently held down.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Single-key checks come from event.key inside a KEYDOWN event branch — get_pressed() is a different API designed for polling the entire keyboard state at once.">C) The single keycode of the most recently pressed key, which you compare with == pygame.K_LEFT.</button>
+                    </div>
+                    <div class="quiz-feedback"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <p><strong>Question 3:</strong> Why does a one-shot jump belong inside the <code>KEYDOWN</code> event branch instead of inside a <code>pygame.key.get_pressed()</code> check?</p>
+                    <div class="quiz-options">
+                        <button class="quiz-option" data-correct="false" data-hint="Both APIs are equally fast — performance isn't the reason. Think about how often each one fires while the key is held.">A) get_pressed() is much slower than reading events, so it's avoided for actions on critical paths like jumping.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="A KEYDOWN event fires EXACTLY ONCE the moment the spacebar is pressed and then never again until you release and re-press the key. Perfect for a single jump impulse. pygame.key.get_pressed()[pygame.K_SPACE] is True every single frame the key is held — if you put 'vy = JUMP_VELOCITY' there, the jump impulse would re-apply 60 times per second while the spacebar is held, launching the player off-screen. The asymmetry between 'fires once per press' (events) and 'true while held' (state polling) is the whole reason both APIs exist.">B) KEYDOWN fires exactly once per press; get_pressed() reports True every frame the key is held, so re-applying jump velocity each frame would launch the player off-screen.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="get_pressed() works fine for the spacebar — the issue is timing/repeat-rate, not which keys it can read.">C) pygame.key.get_pressed() doesn't recognise the spacebar; it only works for arrow keys and letter keys.</button>
+                    </div>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
+        </section>
+
     <h2 id="what-s-next">What's Next?</h2>
     
     <p>Now that you can handle player input, next we'll learn about collision detection - how to know when game objects touch or overlap. This is crucial for making games where things can interact!</p>

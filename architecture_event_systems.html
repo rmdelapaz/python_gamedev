@@ -862,19 +862,136 @@ if __name__ == "__main__":
             <h2 id="practice-exercise-build-architecture-event-systems">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Event Bus + Four Decoupled Subscribers + Queued/Immediate/Resilient Dispatch in One Pygame Window</h3>
+                <p><strong>Objective:</strong> Build an ~85-line single-process pygame demo that exercises the three pillar event-system patterns from this lesson &mdash; decoupled publish-subscribe topology where emitters share only the event-type identifier with subscribers (zero direct references between publisher and any listener), queued <code>emit()</code> via a queue + <code>process_events()</code> drain at the top of every frame vs synchronous <code>emit_immediate()</code> as orthogonal dispatch modes (queued = batched at safe boundary; immediate = listener reaction lands before publisher&apos;s next line), and per-callback <code>try/except</code> in <code>_dispatch</code> as the resilience guarantee that keeps remaining listeners running when one throws &mdash; in one runnable pygame window where all three pillars are visible on screen. An <code>EventBus</code> class holds a <code>listeners</code> dict mapping <code>EventType</code> &rarr; list of callbacks and a <code>queue</code> list; <code>subscribe(event_type, cb)</code> appends; <code>emit(event_type, data)</code> queues an Event onto the list; <code>emit_immediate(event_type, data)</code> bypasses the queue and dispatches synchronously the same call frame; <code>process_events()</code> drains the queue at the top of every frame; <code>_dispatch(event)</code> walks <code>listeners[event.event_type]</code> and wraps each <code>cb(event)</code> in <code>try/except</code> so a buggy listener can&apos;t break dispatch to remaining listeners (the bus catches the exception, records it on <code>last_error</code> for HUD display, and continues iterating). Four orthogonal subscriber systems register at startup with ZERO references to the publisher: <code>AudioSystem</code> subscribes to PLAYER_HIT + ENEMY_KILLED (prints &apos;[Audio] hit&apos; / &apos;[Audio] death&apos;); <code>HUDSystem</code> subscribes to PLAYER_HIT + SCORE_CHANGED (mutates per-frame strings player_hp and score); <code>ParticleSystem</code> subscribes to ENEMY_KILLED (spawns 12 yellow particles per death decaying over ~25 frames); <code>AchievementSystem</code> subscribes to ENEMY_KILLED + SCORE_CHANGED (increments lifetime_kills and tracks max_score). Keys: 1 = <code>bus.emit(PLAYER_HIT)</code> queued, dispatched at top of NEXT frame so HUD updates one frame later (queue depth visibly goes 0 &rarr; 1 the frame the key is pressed and back to 0 after next-frame drain); 2 = <code>bus.emit_immediate(ENEMY_KILLED, ...)</code> synchronous, particles spawn the SAME frame and AchievementSystem.lifetime_kills increments same frame (queue depth never ticks); 3 = <code>bus.emit(SCORE_CHANGED, ...)</code> queued; F = toggle &apos;fault inject&apos; in HUDSystem so its on_score handler raises <code>ValueError(&apos;injected&apos;)</code> when fired &mdash; the EventBus&apos;s try/except wrapper catches it, prints &apos;[Bus] error in HUDSystem.on_score: injected&apos;, AchievementSystem still receives the SCORE_CHANGED event and updates max_score (visible proof that try/except isolates per-listener failures so partial bus failure doesn&apos;t become full bus failure). The publisher (a thin Game object that emits via the bus) holds ZERO attribute references to AudioSystem / HUDSystem / ParticleSystem / AchievementSystem after construction &mdash; adding a fifth subscriber later requires zero edits to the publisher. HUD shows: queue depth (rises by 1 on each queued emit, drops to 0 at top of next frame after process_events drains), last-event-type, player_hp, score, lifetime_kills, max_score, particle count, fault-inject state, last-error message &mdash; every signal feeding the bus is on screen so the abstract pub-sub / queued-vs-immediate / try-except shapes become concrete numbers per frame. Closes the architecture module&apos;s decoupling-via-indirection arc started at chat-54 M2 architecture_state_machines (decouple control flow over time via explicit transition table) + chat-56 M1 architecture_component_systems (decouple behavior over scope via component-filter) + chat-57 M1 architecture_event_systems here (decouple cross-system communication via centralized message bus) &mdash; three orthogonal axes of decoupling, each replacing a different form of imperative tight-coupling. Couples directly to chat-44 M5 fixed-timestep determinism (queued events as deferred work consumed at safe boundaries, the same accumulator-then-integrate shape applied to event dispatch instead of physics integration), chat-46 M2 platformer_tilemap is_solid-True-OOB invariant (try/except wrapper as fail-safe-defaults at the bus boundary &mdash; the same Saltzer &amp; Schroeder principle applied to listener-error handling), chat-47 M2 level_design tile-palette JSON externalization (data-driven event-type identifier as the contract between emitter and listener, the same externalize-the-contract pattern), chat-54 M2 architecture_state_machines explicit transition table (events as transition triggers &mdash; the FSM consumes events to drive state changes; in production architectures a state machine subscribes to relevant events from the bus rather than reading them from coupled callers), and chat-56 M1 architecture_component_systems composable system-filter (event-bus is the natural cross-system communication layer that pairs with component-filter&apos;s intra-system entity selection &mdash; systems pick which entities to operate on via component-filter and communicate among themselves via the event bus). Continues the architecture module advancing 3/5 &rarr; 4/5 partial at chat-57 M1; recommended chat-58 = architecture_save_load to close architecture 5/5 = 8th complete Phase-8 module.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Define <code>EventType</code> as an enum with PLAYER_HIT / ENEMY_KILLED / SCORE_CHANGED; define an <code>Event</code> dataclass with event_type and data:dict (default empty).</li>
+                    <li>Build <code>EventBus</code> with <code>listeners</code> dict, <code>queue</code> list, <code>last_error</code> string; <code>subscribe(event_type, cb)</code>, <code>emit(event_type, data=None)</code> (appends to queue), <code>emit_immediate(event_type, data=None)</code> (calls _dispatch directly), <code>process_events()</code> (drains queue), <code>_dispatch(event)</code> wrapping each callback in try/except so one listener&apos;s exception can&apos;t kill remaining dispatch.</li>
+                    <li>Implement AudioSystem / HUDSystem / ParticleSystem / AchievementSystem each with __init__(bus) that calls bus.subscribe(...) for the event types it cares about; the publisher (Game) never imports or references these classes after construction (only the bus).</li>
+                    <li>Wire keys 1/2/3 to emit / emit_immediate / emit; F to toggle HUDSystem.fault; call <code>bus.process_events()</code> at the TOP of every frame so queued events from the previous frame land before this frame&apos;s input/render &mdash; queue depth drops to 0 at this drain, then rises to 1 on the first queued emit of this frame, visible on the HUD.</li>
+                    <li>Render HUD lines for queue depth, last-event-type, player_hp, score, lifetime_kills, max_score, particle count, fault-inject state, and last-error message; observe (a) emit_immediate (key 2) updates HUD same frame while emit (keys 1+3) updates next frame; (b) fault-inject (F + key 3) shows the HUDSystem error message while AchievementSystem still increments max_score; (c) the Game object has zero direct references to any subscriber system after construction.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The decoupling test: after construction, the publisher (Game) should have ZERO attribute references to AudioSystem / HUDSystem / ParticleSystem / AchievementSystem &mdash; they wire themselves into the bus in their own __init__ and then operate purely through the bus, which is the publish-subscribe topology made concrete. The queued-vs-immediate test: queue depth on the HUD goes 0 &rarr; 1 the frame you press key 1 or 3 and back to 0 on the NEXT frame&apos;s process_events drain; key 2 (emit_immediate) never increments the queue depth at all because it bypasses the queue and dispatches synchronously. The try-except test: with fault-inject ON, pressing 3 fires HUDSystem.on_score which raises ValueError, the bus prints the error onto last_error, and AchievementSystem.max_score still updates &mdash; proving the remaining-subscribers-still-run guarantee is real, not theoretical.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame, sys
+from enum import Enum, auto
+from dataclasses import dataclass, field
+
+class EventType(Enum):
+    PLAYER_HIT = auto(); ENEMY_KILLED = auto(); SCORE_CHANGED = auto()
+
+@dataclass
+class Event:
+    event_type: EventType
+    data: dict = field(default_factory=dict)
+
+class EventBus:
+    def __init__(self):
+        self.listeners = {}
+        self.queue = []
+        self.last_error = ''
+    def subscribe(self, et, cb):
+        self.listeners.setdefault(et, []).append(cb)
+    def emit(self, et, data=None):
+        self.queue.append(Event(et, data or {}))
+    def emit_immediate(self, et, data=None):
+        self._dispatch(Event(et, data or {}))
+    def process_events(self):
+        while self.queue:
+            self._dispatch(self.queue.pop(0))
+    def _dispatch(self, ev):
+        for cb in self.listeners.get(ev.event_type, []):
+            try:
+                cb(ev)
+            except Exception as e:
+                self.last_error = f'{cb.__qualname__}: {e}'
+                print(f'[Bus] error in {cb.__qualname__}: {e}')
+
+class AudioSystem:
+    def __init__(self, bus):
+        bus.subscribe(EventType.PLAYER_HIT, self.on_hit)
+        bus.subscribe(EventType.ENEMY_KILLED, self.on_kill)
+    def on_hit(self, e): print('[Audio] hit')
+    def on_kill(self, e): print('[Audio] death')
+
+class HUDSystem:
+    def __init__(self, bus):
+        self.player_hp = 100; self.score = 0; self.fault = False
+        bus.subscribe(EventType.PLAYER_HIT, self.on_hit)
+        bus.subscribe(EventType.SCORE_CHANGED, self.on_score)
+    def on_hit(self, e):
+        self.player_hp = max(0, self.player_hp - 10)
+    def on_score(self, e):
+        if self.fault:
+            raise ValueError('injected')
+        self.score = e.data.get('score', self.score)
+
+class ParticleSystem:
+    def __init__(self, bus):
+        self.particles = []
+        bus.subscribe(EventType.ENEMY_KILLED, self.on_kill)
+    def on_kill(self, e):
+        x, y = e.data.get('pos', (400, 240))
+        for _ in range(12):
+            self.particles.append([x, y, 25])
+    def update(self):
+        for p in self.particles:
+            p[1] += 2; p[2] -= 1
+        self.particles = [p for p in self.particles if p[2] &gt; 0]
+
+class AchievementSystem:
+    def __init__(self, bus):
+        self.lifetime_kills = 0; self.max_score = 0
+        bus.subscribe(EventType.ENEMY_KILLED, self.on_kill)
+        bus.subscribe(EventType.SCORE_CHANGED, self.on_score)
+    def on_kill(self, e): self.lifetime_kills += 1
+    def on_score(self, e):
+        self.max_score = max(self.max_score, e.data.get('score', 0))
+
+pygame.init()
+screen = pygame.display.set_mode((800, 480))
+clock = pygame.time.Clock()
+font = pygame.font.SysFont('monospace', 14)
+bus = EventBus()
+# Publisher (Game) holds NO references to these after this line:
+AudioSystem(bus); hud = HUDSystem(bus); part = ParticleSystem(bus); ach = AchievementSystem(bus)
+last_event = '-'; score_counter = 0
+while True:
+    bus.process_events()  # drain queued events from prior frame at TOP
+    for ev in pygame.event.get():
+        if ev.type == pygame.QUIT:
+            pygame.quit(); sys.exit()
+        if ev.type == pygame.KEYDOWN:
+            if ev.key == pygame.K_1:
+                bus.emit(EventType.PLAYER_HIT); last_event = 'PLAYER_HIT (queued)'
+            elif ev.key == pygame.K_2:
+                bus.emit_immediate(EventType.ENEMY_KILLED, {'pos': (400, 240)}); last_event = 'ENEMY_KILLED (immediate)'
+            elif ev.key == pygame.K_3:
+                score_counter += 100; bus.emit(EventType.SCORE_CHANGED, {'score': score_counter}); last_event = 'SCORE_CHANGED (queued)'
+            elif ev.key == pygame.K_f:
+                hud.fault = not hud.fault
+    part.update()
+    screen.fill((20, 20, 30))
+    for p in part.particles:
+        pygame.draw.circle(screen, (255, 230, 80), (int(p[0]), int(p[1])), max(1, p[2] // 5))
+    lines = [
+        f'queue={len(bus.queue)}  last={last_event}',
+        f'hp={hud.player_hp}  score={hud.score}',
+        f'kills={ach.lifetime_kills}  max_score={ach.max_score}',
+        f'particles={len(part.particles)}  fault={hud.fault}',
+        f'err={bus.last_error[:60]}',
+        '1=PLAYER_HIT(q)  2=ENEMY_KILLED(imm)  3=SCORE(q)  F=fault',
+    ]
+    for i, line in enumerate(lines):
+        screen.blit(font.render(line, True, (220, 220, 220)), (10, 10 + i * 18))
+    pygame.display.flip()
+    clock.tick(60)
+</code></pre>
                 </details>
             </div>
 
@@ -882,31 +999,31 @@ if __name__ == "__main__":
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> In the lesson&apos;s <code>EventBus</code>, the <code>subscribe</code> / <code>emit</code> / <code>_dispatch_event</code> trio implements publish-subscribe by having listeners register only for an <code>EventType</code> identifier, while emitters call <code>event_bus.emit(Event(event_type=ENEMY_KILLED, ...))</code> with no reference to who&apos;s listening. Why is this design&apos;s zero-references-between-emitter-and-listener property &mdash; rather than performance &mdash; the load-bearing claim?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Direct subscriber lists kept on the publisher (Observer with explicit subscriber arrays) is a different pattern; it requires the publisher to know each subscriber type and breaks N&rarr;M decoupling. Adding a fifth subscriber (say, AnalyticsSystem) would force editing every emitter that needs to notify it.'>A) The publisher should keep an explicit list of subscriber objects so it can iterate them directly when an event fires.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Subscribers register only by event-type identifier; the publisher iterates listeners[event_type] (a dict lookup) without any direct reference to who&apos;s subscribed. The achievement / audio / save / particle / HUD / analytics / save-system listeners can all be added or removed at any time with zero changes to the emitter, because the emitter has never held any of their identities &mdash; only the bus does, and only by event-type. Cross-references chat-54 M2 architecture_state_machines (decoupling control flow over time via explicit transition table), chat-56 M1 architecture_component_systems (decoupling behavior over scope via class-level component-filter), and chat-57 M1 architecture_event_systems here (decoupling cross-system communication via centralized message bus) &mdash; three orthogonal axes of decoupling completing the architecture module&apos;s decoupling-via-indirection arc, each replacing a different form of imperative tight-coupling. Same data-driven externalization beats scattered control flow pattern as chat-44 M5 fixed-timestep determinism&apos;s lockstep replay buffer + chat-46 M2 platformer_tilemap&apos;s is_solid + chat-47 M2 level_design&apos;s tile-palette JSON + chat-54 M2 architecture_state_machines&apos;s explicit transition table + chat-55 M1 architecture_scene_management&apos;s scene-stack lifecycle hooks + chat-56 M1 architecture_component_systems&apos;s class-level required-components list = SEVEN lessons in second-half Phase 8 reinforcing data-driven externalization, with chat-57 M1 here the seventh and applied to inter-system messaging.'>B) Subscribers register only by event-type identifier; the publisher iterates <code>listeners[event_type]</code> with no direct reference to who&apos;s subscribed, so adding/removing listeners requires zero changes to the publisher and N&rarr;M emitter-listener composition stays open to extension.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Polling a shared event-history list adds latency (each subscriber checks once per tick instead of being called the moment the event fires), risks missing events between polls if the history truncates, and shifts the dispatch loop from one centralized place (the bus) to N decentralized places (every subscriber&apos;s tick). The lesson&apos;s emit / _dispatch_event flow is push-based for those reasons.'>C) Each subscriber should poll a shared global event-history list every game tick to find events it cares about.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> The lesson distinguishes <code>EventBus.emit(event)</code> (which calls <code>self.event_queue.put(event)</code> and processes via <code>process_events()</code>) from <code>EventBus.emit_immediate(event)</code> (which calls <code>self._dispatch_event(event)</code> directly, bypassing the queue). Why does the lesson keep both methods rather than collapsing to one?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Per-event cost is essentially identical between the two methods &mdash; both do the same listeners[event_type] dict lookup and the same callback iteration; the queue.put() in emit() is a few microseconds at most. The driver is timing semantics (when does the listener&apos;s reaction land relative to the publisher&apos;s next line?), not throughput.'>A) <code>emit_immediate</code> is the &apos;fast path&apos; for hot events because skipping the queue saves CPU per emit; <code>emit</code> is the slow general-purpose path.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Queued <code>emit()</code> defers dispatch to a controlled batch boundary (the lesson&apos;s process_events() drain at the top of every frame), avoiding RE-ENTRANCE bugs where a callback emits during dispatch and the new event interleaves mid-iteration over listeners[event_type]; queued events are also batchable for replay / debugging / event-sourcing. Synchronous <code>emit_immediate()</code> is the right choice when the listener&apos;s reaction MUST land before the publisher&apos;s next line of code &mdash; e.g., DAMAGE_TAKEN updating Player.health before subsequent collision checks read it the same frame, or PLAYER_DEATH at priority=1 in EventDrivenGame that must fire before the next physics step. Two orthogonal dispatch modes for two orthogonal timing requirements &mdash; choosing the wrong one causes either re-entrance bugs (immediate emits-during-dispatch interleaving) or stale-frame bugs (queued events firing one frame after the game state they describe is already gone). Same strict-ordering / safe-boundary discipline as chat-44 M3 friction&apos;s resting-velocity threshold (snap to zero before next frame&apos;s force application), chat-44 M4 collision separate-then-resolve (correct position before resolving impulse), chat-44 M5 fixed-timestep accumulator (consume time before integrating), chat-52 M2 networking_client_server snap-then-reapply reconciliation (snap to server position before re-applying unacked inputs), chat-54 M2 architecture_state_machines on_exit&rarr;reassign&rarr;on_enter (release before reassign before allocate), chat-55 M1 architecture_scene_management lazy-load-guard (loaded-flag before allocation), and chat-56 M1 architecture_component_systems components-hold-state-systems-hold-per-tick-logic (per-component data + per-tick work centralized in the system) = EIGHT lessons in second-half Phase 8 on strict-ordering / safe-boundary discipline, with chat-57 M1 here the eighth and applied to event-dispatch timing.'>B) Queued <code>emit()</code> defers dispatch to a controlled batch boundary (top-of-frame <code>process_events()</code> drain), avoiding re-entrance bugs where a callback emits during dispatch and the new event interleaves mid-iteration; synchronous <code>emit_immediate()</code> is correct when the listener&apos;s reaction MUST land before the publisher&apos;s next line of code.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='The two methods produce different behavior in any scenario where (a) a callback emits another event during dispatch, or (b) the publisher&apos;s next line depends on the listener having already run. They are NOT interchangeable; the lesson keeps both precisely because they encode different timing semantics. Picking the wrong one causes either re-entrance bugs (immediate emits-during-dispatch interleaving) or stale-frame bugs (queued events firing one frame after their context).'>C) <code>emit_immediate</code> is just an alias for <code>emit</code>; they produce identical behavior and the duplication is purely API ergonomics.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> The lesson&apos;s <code>_dispatch_event</code> wraps each callback in <code>try/except</code> with <code>print(f&apos;Error in event handler {callback.__name__}: {e}&apos;)</code> rather than letting the exception propagate up through the dispatch loop. Why is this wrap correctness, not just convenience?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='try/except has a microsecond cost per call &mdash; immeasurable next to the callback work itself. The driver is correctness / resilience, not throughput. Removing it doesn&apos;t make dispatch faster in any measurable way; it just removes the resilience guarantee.'>A) <code>try/except</code> is a performance optimization &mdash; raw exception propagation is slower than catching and printing.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Without the wrapper, the FIRST exception thrown by any subscriber kills the for-loop in _dispatch_event and remaining subscribers never see the event &mdash; partial dispatch failure that&apos;s invisible to the publisher (the publisher&apos;s emit() returns normally; nothing signals that 3 of 7 listeners didn&apos;t fire). With the wrapper, a buggy listener prints an error and remaining subscribers still receive the event &mdash; the bus stays available to the rest of the game even when one subscriber is broken. Same fail-safe-defaults / Saltzer &amp; Schroeder 1975 &apos;default to deny&apos; principle as chat-46 M2 platformer_tilemap&apos;s is_solid-True-OOB invariant (collapse two concerns &mdash; is this cell solid? + is it in-bounds? &mdash; into one True-by-default for safety) and chat-54 M2 architecture_state_machines&apos; two-layer transition gate (Layer 1 design-time membership + Layer 2 runtime condition both required; both must pass for transition to fire) applied at the dispatch boundary: the bus defaults to KEEPING REMAINING DISPATCH RUNNING when one listener fails, rather than failing closed and silently breaking the entire bus. Same design-time-vs-runtime separation rhetoric as chat-46 M2 is_solid-True-OOB + chat-47 M2 level_design&apos;s validate-vs-is_solid + chat-50 M2 polish_playtesting&apos;s p-value-AND-effect-size + chat-52 M2 networking_client_server&apos;s server-authority + chat-53 M1 networking_lag_compensation&apos;s MAX_REWIND cap + chat-54 M1 networking_lobby&apos;s host-excluded ready-up gate + chat-54 M2 architecture_state_machines&apos; two-layer transition gate + chat-55 M1 architecture_scene_management&apos;s halfway-point scene swap + chat-56 M1 architecture_component_systems&apos; system-required-components-filter = NINE lessons in second-half Phase 8 anchored on design-time-vs-runtime separation / fail-safe-defaults at boundaries, with chat-57 M1 here the ninth and applied to inter-listener failure isolation.'>B) Without the wrapper, the first exception from any subscriber kills the for-loop in <code>_dispatch_event</code> and remaining subscribers never see the event &mdash; partial dispatch failure invisible to the publisher; with it, a buggy listener can&apos;t take down the whole bus.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='The publisher has zero direct references to listeners by design (that&apos;s the whole pub-sub decoupling claim from Q1) &mdash; it can&apos;t take per-listener corrective action even if it received the exception, because it doesn&apos;t know which listener threw or what to do about it. The right place to handle is at the bus boundary, where the bus knows the callback&apos;s name, can log it, and can keep iterating; bubbling up violates the very decoupling the bus is built for.'>C) Errors should propagate up through <code>emit()</code> to the publisher so the publisher can take corrective action against the misbehaving listener.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

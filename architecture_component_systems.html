@@ -376,19 +376,139 @@ class EntityFactory:
             <h2 id="practice-exercise-build-architecture-component-systems">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Composable Entity Builder + System Filter + Live Component Toggle in One Pygame Window</h3>
+                <p><strong>Objective:</strong> Build a single-process pygame demo (~85 lines) that makes the three ECS pillars visible on one screen: (a) systems filter entities at runtime via a class-level <code>required</code> list so a brand-new entity type with the right component bag automatically becomes a system citizen with zero system-code change; (b) Player / Enemy / Particle differ <em>only</em> by which components they hold (composition over inheritance); (c) components are pure data &mdash; <code>Health</code> exposes <code>take_damage</code> / <code>heal</code> / <code>is_alive</code> mutators but the per-tick damage step lives in <code>CombatSystem.run()</code>, not in <code>Health.update()</code>.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Define five <code>@dataclass</code> components &mdash; <code>Transform(x, y)</code>, <code>Velocity(vx, vy)</code>, <code>Sprite(color, size)</code>, <code>Health(hp, max_hp)</code>, <code>AI(behavior)</code> &mdash; with <strong>no</strong> per-tick <code>update()</code> methods. <code>Health</code> may carry <code>take_damage()</code> / <code>heal()</code> / <code>is_alive()</code> as state mutators, but the per-frame damage application stays in the system, not the component.</li>
+                    <li>Define an <code>Entity</code> class as a thin container: an auto-incrementing <code>id</code>, a <code>name</code>, a <code>components</code> dict keyed by component type, and <code>add(c)</code> / <code>remove(t)</code> / <code>has(t)</code> / <code>get(t)</code> helpers. Entities hold no behavior beyond add/remove/has/get.</li>
+                    <li>Define three systems with explicit class-level <code>required</code> lists: <code>MovementSystem.required = [Transform, Velocity]</code>, <code>RenderSystem.required = [Transform, Sprite]</code>, <code>CombatSystem.required = [Health]</code>. Each system&apos;s <code>run(world, dt)</code> iterates <code>world.entities()</code> and calls <code>self.matches(e)</code> &mdash; defined as <code>all(e.has(t) for t in self.required)</code> &mdash; before touching any components.</li>
+                    <li>Bind keys: <kbd>1</kbd> spawns a Player (Transform + Velocity + Sprite + Health), <kbd>2</kbd> spawns an Enemy (Transform + Velocity + Sprite + Health + AI), <kbd>3</kbd> spawns a Particle (Transform + Velocity + Sprite &mdash; <strong>no</strong> Health). <kbd>H</kbd> queues 20 damage on <code>CombatSystem.pending</code>; on the next tick <code>CombatSystem.run</code> applies it to every entity matching <code>[Health]</code> &mdash; particles continue moving untouched, visibly proving the runtime filter.</li>
+                    <li>Bind <kbd>A</kbd> to toggle the <code>AI</code> component on the most recent enemy: if <code>enemy.has(AI)</code> call <code>enemy.remove(AI)</code>, else <code>enemy.add(AI(&apos;chase&apos;))</code>. The HUD must recompute the per-system match counts every frame so removing AI flips the AI-relevant count between 1 and 0 with no other change &mdash; component composition drives system membership at runtime.</li>
+                    <li>HUD requirements: per-system line showing system name, current match count, and the <code>required</code> component-name list (e.g. <code>MovementSystem: 3 matches required=[&apos;Transform&apos;, &apos;Velocity&apos;]</code>); per-entity line showing entity name, id, and its component-bag (e.g. <code>Particle #4: [&apos;Transform&apos;, &apos;Velocity&apos;, &apos;Sprite&apos;]</code>); a small horizontal HP bar drawn only on entities for which <code>e.has(Health)</code> is true &mdash; particles must visibly carry no bar.</li>
+                    <li>Verify all three pillars on screen in one run: spawn one of each entity type (3 entities, all moving rightward), press <kbd>H</kbd> three or four times to drain Player and Enemy HP to zero while the Particle keeps cruising with no HP bar (confirms runtime filter via Health-required); press <kbd>A</kbd> to remove AI from the enemy and watch the AI-system match count drop from 1 to 0 while every other system stays unchanged (confirms component-toggle drives system membership with no system code touched).</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The temptation is to give each component an <code>update(self, dt)</code> method and let entities loop over their own components calling <code>component.update(dt)</code>. Resist it. The whole point of a system is that the per-tick loop body lives <em>once</em>, in the system, and applies to every matching entity &mdash; if you scatter <code>update()</code> across components you have reinvented inheritance with extra steps. Components are dataclasses that may carry small synchronous mutators (<code>take_damage</code>, <code>heal</code>) but never per-frame ticks; the per-frame work is the system&apos;s job.</p>
+                    <p>For the runtime filter: the <code>matches(e)</code> helper using <code>all(e.has(t) for t in self.required)</code> is three lines but it is the entire ECS contract. Once it works, you can spawn any entity composed of any subset of components and the right systems automatically pick it up. That is the property the demo is meant to make visible &mdash; spawn a Particle (no Health) and watch <code>CombatSystem</code>&apos;s match count stay at zero for that entity while <code>MovementSystem</code> and <code>RenderSystem</code> happily count it. Press <kbd>A</kbd> on the enemy and the same filter recomputes the next frame with no system code touched.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame
+from dataclasses import dataclass
+
+# COMPONENTS (pure data; no per-tick update())
+@dataclass
+class Transform: x: float = 0; y: float = 0
+@dataclass
+class Velocity: vx: float = 0; vy: float = 0
+@dataclass
+class Sprite: color: tuple = (255, 255, 255); size: int = 16
+@dataclass
+class Health:
+    hp: int = 100
+    max_hp: int = 100
+    def take_damage(self, n): self.hp = max(0, self.hp - n)
+    def is_alive(self): return self.hp &gt; 0
+@dataclass
+class AI: behavior: str = 'patrol'
+
+class Entity:
+    _next = 0
+    def __init__(self, name=''):
+        self.id = Entity._next; Entity._next += 1
+        self.name = name; self.components = {}
+    def add(self, c): self.components[type(c)] = c; return self
+    def remove(self, t): self.components.pop(t, None)
+    def has(self, t): return t in self.components
+    def get(self, t): return self.components.get(t)
+
+# SYSTEMS (logic; required declared at class scope, filtered at runtime)
+class System:
+    required = []
+    def matches(self, e): return all(e.has(t) for t in self.required)
+
+class MovementSystem(System):
+    required = [Transform, Velocity]
+    def run(self, world, dt):
+        for e in world.entities():
+            if self.matches(e):
+                t, v = e.get(Transform), e.get(Velocity)
+                t.x += v.vx * dt; t.y += v.vy * dt
+                if t.x &gt; 620: t.x = 20
+
+class RenderSystem(System):
+    required = [Transform, Sprite]
+    def run(self, world, dt):
+        for e in world.entities():
+            if self.matches(e):
+                t, s = e.get(Transform), e.get(Sprite)
+                pygame.draw.rect(world.screen, s.color, (t.x, t.y, s.size, s.size))
+                if e.has(Health):  # HP bar only when relevant
+                    h = e.get(Health); w = int(s.size * h.hp / h.max_hp)
+                    pygame.draw.rect(world.screen, (255, 60, 60), (t.x, t.y - 6, w, 3))
+
+class CombatSystem(System):
+    required = [Health]
+    pending = 0
+    def run(self, world, dt):
+        if self.pending:
+            for e in world.entities():
+                if self.matches(e): e.get(Health).take_damage(self.pending)
+            self.pending = 0
+
+class World:
+    def __init__(self, screen):
+        self.screen = screen; self._e = {}; self.systems = []
+    def add(self, e): self._e[e.id] = e; return e
+    def entities(self): return self._e.values()
+    def update(self, dt):
+        for s in self.systems: s.run(self, dt)
+
+pygame.init(); screen = pygame.display.set_mode((640, 480))
+clock = pygame.time.Clock(); font = pygame.font.Font(None, 18)
+world = World(screen); movement, render, combat = MovementSystem(), RenderSystem(), CombatSystem()
+world.systems = [movement, render, combat]; enemy_ref = None
+
+def make(name, *comps):
+    e = Entity(name)
+    for c in comps: e.add(c)
+    return world.add(e)
+
+running = True
+while running:
+    dt = clock.tick(60) / 1000.0
+    for ev in pygame.event.get():
+        if ev.type == pygame.QUIT: running = False
+        elif ev.type == pygame.KEYDOWN:
+            if ev.key == pygame.K_1:
+                make('Player', Transform(20,200), Velocity(40,0), Sprite((0,255,0),24), Health(100,100))
+            elif ev.key == pygame.K_2:
+                enemy_ref = make('Enemy', Transform(20,280), Velocity(60,0), Sprite((255,0,0),20), Health(80,80), AI('patrol'))
+            elif ev.key == pygame.K_3:
+                make('Particle', Transform(20,360), Velocity(80,0), Sprite((255,255,0),6))
+            elif ev.key == pygame.K_h: combat.pending = 20
+            elif ev.key == pygame.K_a and enemy_ref:
+                if enemy_ref.has(AI): enemy_ref.remove(AI)
+                else: enemy_ref.add(AI('chase'))
+
+    screen.fill((30, 30, 40))
+    world.update(dt)
+
+    # HUD: per-system match counts; per-entity component-bag
+    y = 8
+    for s in world.systems:
+        n = sum(1 for e in world.entities() if s.matches(e))
+        line = f"{type(s).__name__}: {n} matches  required={[t.__name__ for t in s.required]}"
+        screen.blit(font.render(line, True, (200, 200, 200)), (10, y)); y += 18
+    y += 8
+    for e in world.entities():
+        bag = [t.__name__ for t in e.components.keys()]
+        screen.blit(font.render(f'{e.name} #{e.id}: {bag}', True, (180, 200, 220)), (10, y)); y += 16
+
+    pygame.display.flip()
+pygame.quit()</code></pre>
                 </details>
             </div>
 
@@ -396,31 +516,31 @@ class EntityFactory:
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> In the demo, <code>MovementSystem</code> declares <code>required = [Transform, Velocity]</code> at class-definition time and then calls <code>self.matches(e)</code> on every entity each tick before reading components. Why this two-step pattern (design-time declaration + runtime filter) instead of a hardcoded list of entity types the system applies to, or wrapping each component read in <code>try / except AttributeError</code>?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class='quiz-option' data-correct='false' data-hint='That works for the entity types you have today, but every new entity type forces an edit to every system that should process it &mdash; the system code becomes coupled to the entity zoo and the &quot;new entity type&quot; case fails closed by default. The whole point of ECS is that adding entity types should not require touching system code.'>A) The hardcoded list is shorter and easier to read; new entity types just get appended to each system&apos;s list.</button>
+                        <button class='quiz-option' data-correct='true' data-explanation='The class-level declaration is the contract (&quot;this system applies to entities with these components&quot;) and the runtime filter enforces it generically. Spawn a Particle (Transform + Velocity + Sprite, no Health) and MovementSystem and RenderSystem pick it up automatically while CombatSystem skips it &mdash; with zero edits to system code. The same demo&apos;s press-A toggle on the enemy proves it: removing AI from a live entity changes which systems match it on the very next tick. This is the same design-time-vs-runtime separation that drives chat-47&apos;s tile-palette validate-vs-is_solid, chat-54&apos;s explicit transition table guard-vs-trigger, and chat-55&apos;s halfway-point scene swap.'>B) Declaring required components at class-definition time documents the system&apos;s contract while the runtime filter keeps the system code generic &mdash; new entity types composed from those components automatically become system citizens with no system-code change.</button>
+                        <button class='quiz-option' data-correct='false' data-hint='try / except silently swallows real bugs (a typo in a component-type name reads as &quot;entity lacks component&quot; rather than a NameError), and you lose the explicit &quot;this system needs X&quot; contract that makes the codebase searchable for &quot;who reads Health?&quot;. The exception path is also slower than a dict-membership check on the hot path.'>C) Wrap each component read in <code>try / except AttributeError</code> so the system silently skips entities that lack a component.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> You are adding three enemy variants: a flying tank (gains a Flight component), a stealth scout (gains a Cloak component), and a flying-stealth scout (gains both). Why is the ECS approach &mdash; mix Flight and Cloak into the existing component bag &mdash; preferred over an inheritance chain like <code>FlyingTank(Tank)</code>, <code>StealthScout(Scout)</code>, <code>FlyingStealthScout(...)</code>?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class='quiz-option' data-correct='false' data-hint='Single inheritance forces a linear chain, so Flight and Cloak cannot both live in one ancestor without a diamond. Multiple inheritance fixes the diamond on paper but adds MRO surprises and forces every leaf class (FlyingScout, FlyingTank, StealthScout, StealthTank, FlyingStealthScout, &hellip;) to know about every fork &mdash; n&times;m subclass explosion as features grow.'>A) Extend the inheritance chain &mdash; <code>FlyingTank</code> extends <code>Tank</code> extends <code>Vehicle</code> extends <code>Entity</code> &mdash; so all the shared behavior is reused via the class hierarchy.</button>
+                        <button class='quiz-option' data-correct='true' data-explanation='Flight and Cloak are orthogonal capabilities &mdash; any entity may have either, both, or neither, in any combination. Composition supports those four combinations with one Flight component, one Cloak component, and one FlightSystem and CloakSystem each; inheritance forces a single linear chain that produces an n&times;m subclass explosion (FlyingTank, StealthTank, FlyingStealthTank, FlyingScout, StealthScout, FlyingStealthScout, &hellip;) where every leaf class re-implements or overrides at every fork. Same data-driven externalization pattern as chat-47&apos;s tile-palette JSON, chat-54&apos;s explicit transition table, and chat-55&apos;s scene-stack lifecycle hooks: declare the building blocks once, compose freely.'>B) Define a Flight component and a Cloak component independently &mdash; any entity bag can hold either, both, or neither &mdash; and add a FlightSystem and CloakSystem that filter on those components.</button>
+                        <button class='quiz-option' data-correct='false' data-hint='A god Entity class with optional flying=True, cloaked=True booleans on every instance hard-couples every feature into the base class. Bug fixes in Flight ripple through every entity that has the boolean even if it is False; you also lose the per-component data (a Flight component naturally carries altitude, lift, &hellip; that would not belong on a non-flying entity).'>C) Add <code>flying: bool = False</code> and <code>cloaked: bool = False</code> directly to the base <code>Entity</code> class so every entity carries the optional capabilities.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> <code>Health</code> in the demo is a dataclass that exposes <code>take_damage</code> / <code>heal</code> / <code>is_alive</code> mutators, but it has <strong>no</strong> <code>update(self, dt)</code> method &mdash; the per-tick damage application lives in <code>CombatSystem.run()</code>. Python&apos;s <code>@dataclass</code> would let you put <code>update()</code> on Health; why is the per-tick logic deliberately kept out of the component class?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class='quiz-option' data-correct='true' data-explanation='Components hold state; systems hold the per-tick logic that operates on state. Centralizing per-tick work in one CombatSystem.run keeps the cross-entity invariant (&quot;every Health-bearing entity takes the queued damage on this tick&quot;) in one place, and lets the same system apply to any entity composed with Health, regardless of entity type. If each component carried its own update(dt), a cross-cutting rule change &mdash; say, &quot;halve all damage on Easy difficulty&quot; or &quot;skip damage during a slow-mo bullet-time effect&quot; &mdash; would have to touch every component file that ticks. It is the same separation-of-state-from-update discipline that drives fixed-timestep integration (state in entities, integration in the loop), state-machine on_exit/on_enter (state on the instance, transition logic in the FSM), and chat-55&apos;s lazy-loading guard (loaded flag on the scene, allocation logic in on_enter).'>A) Components hold state, systems hold the per-tick logic that operates on state &mdash; centralizing per-tick work in the system keeps cross-cutting changes (&ldquo;halve all damage on Easy difficulty&rdquo;) in one file and lets the same system apply to any entity composed with the relevant components.</button>
+                        <button class='quiz-option' data-correct='false' data-hint='Putting update() on each component scatters tick-driven control flow across N component classes. Every cross-cutting change &mdash; difficulty scaling, pause behavior, slow-mo &mdash; now has to touch every component file. You have also reintroduced exactly the per-class behavior coupling that ECS was supposed to remove.'>B) Adding <code>update(self, dt)</code> to each component is fine and arguably cleaner &mdash; let each component tick itself, and the system just iterates entities and calls <code>component.update(dt)</code>.</button>
+                        <button class='quiz-option' data-correct='false' data-hint='A Tickable mixin dresses up the same scattered-update problem as polymorphism. You still have N classes that each carry their own per-tick logic; cross-cutting changes still have to touch every mixin user; you have added a second inheritance axis to manage on top of the component composition you were supposed to be using to replace inheritance.'>C) Define a <code>Tickable</code> mixin and have <code>Health</code> extend it so the per-tick <code>update()</code> dispatches polymorphically.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

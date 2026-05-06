@@ -1360,19 +1360,102 @@ class JuiceEffects:
             <h2 id="practice-exercise-build-polish-tweening">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Three Easings, One Target — Linear vs OutQuad vs OutBack on the Same Move</h3>
+                <p><strong>Objective:</strong> Build a single pygame demo (~75 lines) that exercises three pillar tweening patterns from this lesson — easing as a reshape of the lerp's <code>t</code> parameter (chat-43 lerp anchor extended), Out vs In as front-loaded-responsive vs back-loaded-anticipatory, and overshoot curves whose values pass <em>through</em> 1.0 before settling — by running three boxes from the same start to the same destination over the same duration with three different easing functions, side-by-side, so the curve-shape difference is visible as live divergence in position and in a numerical eased-value HUD.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Define three easing functions inline as plain Python: <code>linear(t)</code> returns <code>t</code>; <code>ease_out_quad(t)</code> returns <code>t * (2 - t)</code> (front-loaded — fast then slow); <code>ease_out_back(t)</code> uses <code>c1 = 1.70158</code>, <code>c3 = c1 + 1</code>, <code>t -= 1</code>, returns <code>1 + c3 * t * t * t + c1 * t * t</code> (overshoots ~10% past 1 then settles, the lesson's `easeOutBack` formula verbatim).</li>
+                    <li>Build a list of three tween records, one per easing: <code>{"name": &hellip;, "easing": fn, "color": rgb, "elapsed": 0.0, "x": START_X}</code>. Same <code>START_X = 100</code>, same <code>END_X = 660</code>, same <code>DURATION = 1.0</code> across all three so any divergence is purely from the easing function.</li>
+                    <li>Each frame, for each tween: advance <code>elapsed</code> by <code>dt</code> (clamped at <code>DURATION</code>); compute <code>progress = elapsed / DURATION</code> (the linear timing 0..1 parameter); compute <code>eased = easing_func(progress)</code> (the reshaped 0..1ish curve value, which can exceed 1 for back); apply the chat-43 lerp formula UNCHANGED: <code>x = START_X + (END_X - START_X) * eased</code>. The lerp stays the same; only the easing function differs.</li>
+                    <li>Draw two vertical reference lines: a faint one at <code>START_X</code> and a green one at <code>END_X</code> (the destination). The destination line is the visible <code>v = 1</code> reference — the OutBack box overshoots past it briefly before settling.</li>
+                    <li>For each tween, draw the box at its current <code>x</code>, plus two horizontal bars beside the label: a progress bar (linear elapsed/duration, always 0..1) and an eased-value bar (200 px wide = "100% of the way to destination" so the OutBack bar visibly extends past the 200 px mark during overshoot). Render numerical <code>progress</code> and <code>eased</code> values per tween so the divergence is quantitative.</li>
+                    <li>SPACE restarts all three tweens from <code>elapsed = 0</code> so the user can re-run the comparison side by side as many times as they want; one second of total motion per restart is enough for OutBack's overshoot to become unmistakable.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The key insight: easing only reshapes <code>t</code>. The lerp formula <code>x = start + (end - start) * eased</code> is the chat-43 lerp formula UNCHANGED — same start, same end, same multiplication. Swap the easing function and the boxes still arrive at the destination at the same wall-clock moment (they all hit <code>elapsed = DURATION</code> together), but they take visibly different paths to get there. OutBack returns a value &gt; 1 around <code>t = 0.7</code> (peaks near 1.10) before returning to exactly 1 at <code>t = 1</code> — that's the overshoot. The eased-value bar at 200 px wide treats 200 px as "100% to destination"; OutBack's bar visibly extends past 200 px during the overshoot phase, then retracts. At <code>t = 0.3</code>, easeOutQuad gives <code>0.3 * 1.7 = 0.51</code> (already past midpoint) while linear gives <code>0.30</code> (exactly 30%) — the front-loading is what makes Out feel "responsive" for UI buttons.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame
+pygame.init()
+SCREEN_W, SCREEN_H = 800, 480
+screen = pygame.display.set_mode((SCREEN_W, SCREEN_H))
+clock = pygame.time.Clock()
+font = pygame.font.SysFont("monospace", 14)
+
+# Three easing functions — each is a t -&gt; t' reshape on [0, 1] (back returns up to ~1.10)
+def linear(t):        return t
+def ease_out_quad(t): return t * (2 - t)              # front-loaded: fast then slow
+def ease_out_back(t):                                  # overshoots ~10% past 1, then settles
+    c1 = 1.70158
+    c3 = c1 + 1
+    t -= 1
+    return 1 + c3 * t * t * t + c1 * t * t
+
+EASINGS = [
+    ("linear",        linear,        (220, 220, 220)),
+    ("ease_out_quad", ease_out_quad, (90,  170, 240)),
+    ("ease_out_back", ease_out_back, (240, 150, 80)),
+]
+
+START_X = 100
+END_X = 660
+DURATION = 1.0
+
+# One tween record per easing — same start, same end, same duration
+tweens = [{"name": n, "easing": fn, "color": c, "elapsed": 0.0, "x": START_X}
+          for n, fn, c in EASINGS]
+
+def restart():
+    for tw in tweens:
+        tw["elapsed"] = 0.0
+        tw["x"] = START_X
+
+restart()
+running = True
+while running:
+    dt = clock.tick(60) / 1000.0
+    for e in pygame.event.get():
+        if e.type == pygame.QUIT:
+            running = False
+        elif e.type == pygame.KEYDOWN and e.key == pygame.K_SPACE:
+            restart()
+
+    # Update — single shared lerp formula: x = start + (end - start) * eased(progress)
+    for tw in tweens:
+        tw["elapsed"] = min(tw["elapsed"] + dt, DURATION)
+        progress = tw["elapsed"] / DURATION              # 0..1 linear timing parameter
+        eased = tw["easing"](progress)                   # reshaped 0..1ish (back overshoots past 1)
+        tw["x"] = START_X + (END_X - START_X) * eased    # chat-43 lerp formula, unchanged
+
+    screen.fill((20, 24, 38))
+    pygame.draw.line(screen, (60, 60, 80),    (START_X, 60), (START_X, SCREEN_H - 60), 1)
+    pygame.draw.line(screen, (100, 200, 100), (END_X,   60), (END_X,   SCREEN_H - 60), 2)
+
+    for i, tw in enumerate(tweens):
+        y = 100 + i * 100
+        pygame.draw.rect(screen, tw["color"], (int(tw["x"]) - 16, y, 32, 32))
+        screen.blit(font.render(tw["name"], True, (220, 220, 220)), (12, y + 8))
+
+        progress = tw["elapsed"] / DURATION
+        pygame.draw.rect(screen, (40, 40, 50),    (140, y + 38, 200, 8))
+        pygame.draw.rect(screen, (180, 180, 180), (140, y + 38, int(200 * progress), 8))
+
+        eased = tw["easing"](progress)
+        pygame.draw.rect(screen, (40, 40, 50), (140, y + 50, 280, 8))
+        bar_w = max(0, int(200 * eased))                  # 200 px = 100% to destination
+        pygame.draw.rect(screen, tw["color"], (140, y + 50, bar_w, 8))
+
+        screen.blit(font.render(f"progress={progress:.2f}  eased={eased:+.3f}",
+                                True, (200, 200, 210)), (350, y + 36))
+
+    screen.blit(font.render("SPACE: restart all three from t=0     "
+                            "green line at x=660 = destination (eased=1.0)",
+                            True, (180, 180, 180)), (12, SCREEN_H - 28))
+    pygame.display.flip()
+
+pygame.quit()</code></pre>
                 </details>
             </div>
 
@@ -1380,31 +1463,31 @@ class JuiceEffects:
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> The lesson's <code>TweenManager.update_tween</code> computes <code>progress = elapsed / duration</code>, then <code>eased_progress = tween.easing(progress)</code>, then <code>current_value = start_value + (end_value - start_value) * eased_progress</code>. What role does the easing function play in this three-step calculation?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Easing does not replace the lerp. The third line is the chat-43 lerp formula `lerp(a, b, t) = a + (b - a) * t` exactly &mdash; it computes the position from the [start, end] endpoints using the eased parameter. Easing reshapes the parameter, not the endpoints.">A) The easing function replaces the linear interpolation step entirely &mdash; it computes the new position directly from the start and end values without using the lerp formula.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="The chat-43 game_mathematics interpolation lesson made this exact point: the lerp formula `start + (end - start) * t` is unchanged across all easings. The easing function is a [0, 1] -&gt; [0, 1]ish reshape of t alone &mdash; it never touches the endpoints. Linear gives t -&gt; t (no reshape, constant rate). easeOutQuad gives t -&gt; t*(2-t) (front-loaded, fast then slow). easeOutBack gives t -&gt; values that briefly exceed 1 before returning to 1 (overshoot). The lerp formula receives the reshaped t and produces a position; same a, same b, same multiplication, just a curved path between them. Three Phase-8 lessons now anchor on this layered structure: chat-43 introduces lerp, this lesson generalizes it via easing, and chat-46 M3 camera's exponential decay is a third instance of the same shape (a curve toward a target on a 0..1ish parameter).">B) The easing function reshapes the linear timing parameter <code>t</code> from a constant rate into a curved rate (slow start, fast finish, overshoot, etc.); the lerp formula <code>start + (end - start) * t</code> stays identical — it just receives the reshaped <code>t</code>. Same chat-43 lerp, same endpoints, different curve between them.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="The easing function does not multiply the endpoints. If it did, the start of the animation would be at `start * eased(0) = start * 0 = 0`, not at `start`. The lerp formula `start + (end - start) * eased(t)` returns `start` when `eased(t) = 0` (animation start) and `end` when `eased(t) = 1` (animation end), which is the correct endpoint behavior the lesson preserves across all easings.">C) The easing function multiplies the start and end values by separate factors so the boxes accelerate and decelerate at the boundaries.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> The lesson's Best Practice is <em>"Out easing feels responsive, In easing builds anticipation."</em> Why does Out easing (front-loaded curves like <code>easeOutQuad</code>) feel "snappy" and responsive, while In easing (back-loaded curves like <code>easeInQuad</code>) feels sluggish for UI feedback?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Total duration is identical between the curves. easeOutQuad and easeInQuad both run for exactly the same time. The difference is WHERE the visible motion is concentrated within that fixed time window, not how long the window is.">A) Out easing finishes in a shorter total duration than In easing, so the user spends less time waiting overall.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Out and In have identical total durations, but front-load vs back-load the visible motion within that duration. easeOutQuad at t=0.3 returns 0.3*1.7=0.51 (already past the midpoint of the move); easeInQuad at t=0.3 returns 0.3*0.3=0.09 (barely moved at all). For a UI button press, the user's eye registers "the box moved" within the first ~30% of the duration with Out, while In leaves the box almost stationary for the same window. The early-feedback property is what makes Out feel "responsive" — the user gets visual confirmation immediately. In easing's back-loading is correct for ANTICIPATION (a wind-up before a big move, like a character crouching before a jump) but reads as "laggy" for UI feedback. Best Practice 'Out easing feels responsive, In easing builds anticipation' + 'Duration: Keep it snappy - 200-500ms for most UI'.">B) Out easing front-loads the visible motion: at <code>t = 0.3</code>, easeOutQuad gives <code>0.51</code> (already past midpoint), while easeInQuad gives <code>0.09</code> (barely moved). The user's eye registers the move within the first ~30% of the duration with Out; In leaves the box almost stationary for the same window, which reads as "laggy." Same total duration, completely different feel.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="All easing functions run on the same `pygame.time.Clock`-driven dt accounting. CPU cost between easeOutQuad (`t * (2 - t)`) and easeInQuad (`t * t`) is one multiplication apart &mdash; nanoseconds per call &mdash; and pygame doesn't have a per-easing performance penalty. The driver is perceptual, not computational.">C) Out easing is computationally cheaper than In easing, so the game loop has more headroom to update visuals smoothly.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> The lesson's <code>easeOutBack</code> overshoots ~10% past 1 before settling, and the <code>easing-curves.svg</code> diagram shows easeOutElastic peaking near 1.27 above the dashed v=1 line. The chat-46 M3 camera lesson's exponential-decay smooth-follow uses <code>camera.x += (target_x - camera.x) * smooth_speed * dt</code>, which has <em>no</em> overshoot — it asymptotes cleanly toward the target. Why does the camera lesson deliberately avoid overshoot curves, while polish-feel lessons embrace them?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Floating-point arithmetic handles overshoot fine &mdash; values briefly exceeding 1.0 are completely valid floats with no instability. The exponential-decay formula does have nice numerical properties (always converging toward target) but easeOutBack doesn't fail numerically; it returns to exactly 1.0 at t=1.0 by construction. The choice between them is about feel, not arithmetic.">A) Overshoot curves are numerically unstable in floating-point arithmetic, while exponential decay is mathematically guaranteed to converge.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Each curve shape produces a different feel and has a domain it suits. Camera smoothing wants no overshoot because the camera should feel like a steady gaze that drifts toward the player &mdash; overshoot would feel like the camera is over-correcting, induce mild motion sickness over long sessions, and make precise platforming harder (the player position relative to screen-center wobbles past zero). Hollow Knight, Celeste, Dead Cells all use exponential decay for cameras for exactly this reason. Polish-feel curves (back, elastic, bounce) want overshoot because UI elements and pickup animations should feel ALIVE — a button that scales to 1.10 then settles to 1.0 reads as "springy and energetic," while one that asymptotes feels "sluggish." Best Practice 'Overshoot: A little bounce makes things feel alive' + Key Takeaway 'Overshoot and bounce feel playful'. Same mathematical family (curves on a 0..1ish parameter), opposite design choices, both correct for context. Same context-determines-correct-choice axis as chat-44 M5 fixed-timestep determinism vs variable dt (different problems, different right answers) and chat-47 M2 level_design's snapshot-vs-delta undo (same trade-off as chat-44 M5, opposite direction chosen).">B) Each curve fits a different feel goal. Cameras want no overshoot — a steady gaze that asymptotes toward the player without wobbling past it (Hollow Knight, Celeste, Dead Cells all use exponential decay). UI buttons and pickups want overshoot — a value briefly past 1 then settling reads as "springy and alive" (Best Practice 'A little bounce makes things feel alive'). Same mathematical family of 0..1ish curves, opposite design choices, both correct for their context.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Overshoot curves on positional properties work fine and look intentional. They DO break for some properties &mdash; opacity at 1.27 means "more than fully opaque," which clamps to 1 and looks like nothing happened, then snaps. But position at 1.27 means "27% past the destination," which IS visible and intentional. The avoidance in cameras isn't a property mismatch, it's a feel mismatch (camera should not feel springy).">C) Overshoot curves only work for opacity and color animations; using them on position values causes visible glitches that the camera lesson avoids by switching to exponential decay.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

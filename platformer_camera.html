@@ -1181,19 +1181,154 @@ class CameraZone:
             <h2 id="practice-exercise-build-platformer-camera">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Three Cameras, Same Player — Smooth vs Deadzone vs Locked</h3>
+                <p><strong>Objective:</strong> Build a runnable pygame mini-platformer that exercises the three pillar camera patterns from the lesson — smooth-follow exponential decay, deadzone-only-when-target-leaves-rect, and locked-tracks-target-exactly — in one ~85-line program with runtime-toggleable modes (keys 1 / 2 / 3) so the player feels each mode's contribution by direct comparison. The world (1600×600) is much larger than the 640×360 screen so the camera scrolls; an amber lag-indicator line in smooth mode and a yellow deadzone rect in deadzone mode make each mode's mechanic visible. All world-space objects render through a single <code>world_to_screen(wx, wy)</code> helper so the camera-as-translation-offset pattern from chat-43 vectors lesson is exercised concretely.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Set up a 640×360 pygame window with <code>WORLD_W, WORLD_H = 1600, 600</code> (world is 2.5× wider than screen, ~1.7× taller — forces camera scroll on both axes when the player jumps onto raised platforms).</li>
+                    <li>Build platforms as a list of <code>pygame.Rect</code> in world space: a full-width floor (<code>pygame.Rect(0, 320, WORLD_W, 40)</code>) plus 5–6 floating platforms scattered across the world width (so the camera has reason to scroll horizontally as the player traverses).</li>
+                    <li>Player <code>pygame.Rect</code>, vx/vy floats, gravity, jump-on-grounded — same shape as M2's tilemap exercise. Two-pass X-then-Y collision against the platform list (chat-44 M4 + chat-46 M2 precedent).</li>
+                    <li>Camera state: <code>camera_x, camera_y</code> floats; <code>mode = "smooth"</code> string toggled by KEYDOWN on <code>K_1</code>/<code>K_2</code>/<code>K_3</code>; constants <code>SMOOTH_SPEED = 4.0</code> and <code>DEADZONE_W, DEADZONE_H = 200, 120</code>.</li>
+                    <li>Each frame, compute <code>target_x = player.centerx - SCREEN_W/2</code> and <code>target_y = player.centery - SCREEN_H/2</code> (the camera position that would put the player at screen center).</li>
+                    <li><strong>Smooth mode</strong> implements the lesson's <code>update_smooth</code>: <code>camera_x += (target_x - camera_x) * SMOOTH_SPEED * dt</code> (and the y equivalent). The dx-proportional update produces exponential decay — camera moves fast when far from target, slow when close — without overshoot or oscillation. Same mathematical shape as chat-44 M3 friction <code>velocity *= (1 - decay * dt)</code>.</li>
+                    <li><strong>Deadzone mode</strong> implements <code>update_deadzone</code>: compute <code>dx = player.centerx - cam_cx</code> where <code>cam_cx = camera_x + SCREEN_W/2</code>; only nudge camera when <code>|dx| &gt; DEADZONE_W/2</code> (and similarly for y). Inside the deadzone, the camera doesn't move at all — player can wiggle without inducing camera jitter.</li>
+                    <li><strong>Locked mode</strong> is the trivial case: <code>camera_x = target_x; camera_y = target_y</code>. Player at screen center every frame; any player jitter becomes camera jitter (which is the WHOLE point of contrasting it with the other two modes).</li>
+                    <li>After the per-mode update, clamp camera to world bounds: <code>camera_x = max(0, min(camera_x, WORLD_W - SCREEN_W))</code> (and y equivalent). This is the lesson's <code>apply_constraints</code> pattern, shared across all 3 modes — keeps off-world gray bars from showing at level edges.</li>
+                    <li>Render every world-space object via <code>world_to_screen(wx, wy)</code> returning <code>(wx - camera_x, wy - camera_y)</code> — the lesson's <code>world_to_screen</code> at zoom=1. One helper, one pattern, every platform + the player.</li>
+                    <li>Visualize each mode's mechanic: smooth mode draws an amber line from screen-center (where locked WOULD put the player) to the player's actual on-screen position — the line LENGTH visualizes the lag; deadzone mode draws the centered deadzone rect in yellow so the tolerance window is visible; locked mode is its own visualization (player nailed to screen center).</li>
+                    <li>HUD shows current mode, player + camera positions, and a live lag value <code>abs(player.centerx - (camera_x + SCREEN_W/2))</code> — numerically zero in locked, oscillates near zero in smooth (asymptotic decay), stays inside <code>DEADZONE_W/2 = 100</code> in deadzone.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The smooth mode formula <code>camera_x += (target_x - camera_x) * SMOOTH_SPEED * dt</code> looks like a constant-speed approach but isn't — the multiplier <code>(target_x - camera_x)</code> is itself the gap, so each frame covers a constant FRACTION of remaining distance, not a constant absolute distance. That's what makes it exponential decay rather than linear approach. Bumping SMOOTH_SPEED makes the camera tighter (closer to locked); lowering it makes the lag more pronounced.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>"""Three Cameras, Same Player — smooth vs deadzone vs locked, side by side feel."""
+import pygame, sys
+
+pygame.init()
+SCREEN_W, SCREEN_H = 640, 360
+WORLD_W, WORLD_H = 1600, 600
+SCREEN = pygame.display.set_mode((SCREEN_W, SCREEN_H))
+pygame.display.set_caption("Three Cameras, Same Player")
+FONT = pygame.font.SysFont("monospace", 13)
+CLOCK = pygame.time.Clock()
+
+# World: floor + scattered platforms (drawn in world space)
+PLATFORMS = [
+    pygame.Rect(0, 320, WORLD_W, 40),
+    pygame.Rect(200, 250, 120, 16),
+    pygame.Rect(450, 200, 120, 16),
+    pygame.Rect(700, 260, 100, 16),
+    pygame.Rect(900, 180, 140, 16),
+    pygame.Rect(1150, 240, 100, 16),
+    pygame.Rect(1400, 200, 120, 16),
+]
+
+# Player
+player = pygame.Rect(80, 250, 22, 32)
+vx, vy = 0.0, 0.0
+SPEED, GRAV, JUMP = 280.0, 1400.0, 520.0
+grounded = False
+
+# Camera: three modes selectable via keys 1/2/3
+camera_x, camera_y = 0.0, 0.0
+mode = "smooth"  # "smooth" | "deadzone" | "locked"
+SMOOTH_SPEED = 4.0
+DEADZONE_W, DEADZONE_H = 200, 120
+
+def world_to_screen(wx, wy):
+    return wx - camera_x, wy - camera_y
+
+while True:
+    dt = CLOCK.tick(60) / 1000.0
+    for e in pygame.event.get():
+        if e.type == pygame.QUIT:
+            pygame.quit(); sys.exit()
+        if e.type == pygame.KEYDOWN:
+            if e.key == pygame.K_1: mode = "smooth"
+            if e.key == pygame.K_2: mode = "deadzone"
+            if e.key == pygame.K_3: mode = "locked"
+            if e.key == pygame.K_SPACE and grounded:
+                vy = -JUMP; grounded = False
+
+    keys = pygame.key.get_pressed()
+    vx = ((1 if keys[pygame.K_RIGHT] or keys[pygame.K_d] else 0)
+        - (1 if keys[pygame.K_LEFT]  or keys[pygame.K_a] else 0)) * SPEED
+    vy += GRAV * dt
+
+    # Move + collide (X then Y, two-pass)
+    player.x += int(vx * dt)
+    for plat in PLATFORMS:
+        if player.colliderect(plat):
+            if vx &gt; 0:   player.right = plat.left
+            elif vx &lt; 0: player.left  = plat.right
+            vx = 0
+    player.y += int(vy * dt)
+    grounded = False
+    for plat in PLATFORMS:
+        if player.colliderect(plat):
+            if vy &gt; 0:
+                player.bottom = plat.top; grounded = True
+            elif vy &lt; 0:
+                player.top = plat.bottom
+            vy = 0
+
+    # Camera updates — three modes
+    target_x = player.centerx - SCREEN_W / 2
+    target_y = player.centery - SCREEN_H / 2
+
+    if mode == "smooth":
+        # Exponential-decay lag toward target
+        camera_x += (target_x - camera_x) * SMOOTH_SPEED * dt
+        camera_y += (target_y - camera_y) * SMOOTH_SPEED * dt
+    elif mode == "deadzone":
+        # Only move when target leaves centered rect
+        cam_cx = camera_x + SCREEN_W / 2
+        cam_cy = camera_y + SCREEN_H / 2
+        dx = player.centerx - cam_cx
+        dy = player.centery - cam_cy
+        if dx &gt;  DEADZONE_W / 2: camera_x += dx - DEADZONE_W / 2
+        if dx &lt; -DEADZONE_W / 2: camera_x += dx + DEADZONE_W / 2
+        if dy &gt;  DEADZONE_H / 2: camera_y += dy - DEADZONE_H / 2
+        if dy &lt; -DEADZONE_H / 2: camera_y += dy + DEADZONE_H / 2
+    elif mode == "locked":
+        camera_x, camera_y = target_x, target_y
+
+    # Clamp to world bounds (shared across modes)
+    camera_x = max(0, min(camera_x, WORLD_W - SCREEN_W))
+    camera_y = max(0, min(camera_y, WORLD_H - SCREEN_H))
+
+    # Render via world_to_screen for every world-space object
+    SCREEN.fill((44, 62, 80))
+    for plat in PLATFORMS:
+        sx, sy = world_to_screen(plat.x, plat.y)
+        pygame.draw.rect(SCREEN, (139, 69, 19), (sx, sy, plat.w, plat.h))
+    psx, psy = world_to_screen(player.x, player.y)
+    pygame.draw.rect(SCREEN, (76, 175, 80), (psx, psy, player.w, player.h))
+
+    # Per-mode mechanic visualization
+    if mode == "smooth":
+        pcx, pcy = world_to_screen(player.centerx, player.centery)
+        pygame.draw.line(SCREEN, (255, 200, 80),
+                         (SCREEN_W / 2, SCREEN_H / 2), (pcx, pcy), 2)
+    elif mode == "deadzone":
+        dz = pygame.Rect(SCREEN_W / 2 - DEADZONE_W / 2,
+                         SCREEN_H / 2 - DEADZONE_H / 2,
+                         DEADZONE_W, DEADZONE_H)
+        pygame.draw.rect(SCREEN, (255, 255, 80), dz, 2)
+
+    # HUD
+    lag = abs(player.centerx - (camera_x + SCREEN_W / 2))
+    hud = [
+        f"Mode: [{mode.upper()}]   1=smooth  2=deadzone  3=locked   SPACE=jump",
+        f"Player: ({player.x:4d}, {player.y:4d})   Camera: ({camera_x:6.1f}, {camera_y:6.1f})",
+        f"Lag: {lag:5.1f} px   (smooth=oscillates, deadzone=&lt;100, locked=0)",
+    ]
+    for i, line in enumerate(hud):
+        SCREEN.blit(FONT.render(line, True, (255, 255, 255)), (8, 8 + i * 17))
+    pygame.display.flip()</code></pre>
                 </details>
             </div>
 
@@ -1201,31 +1336,31 @@ class CameraZone:
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> The lesson's <code>Camera.update_smooth</code> uses <code>self.x += dx * self.smooth_speed * dt</code> where <code>dx = target_x - self.x</code>. Why this dx-proportional update rather than locking (<code>self.x = target_x</code>) or constant-speed approach (<code>self.x += SPEED * sign(dx) * dt</code>)?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Correct — the dx-proportional update implements exponential decay: at each frame, the camera covers a constant FRACTION of the remaining gap (smooth_speed * dt of it), not a constant absolute distance. The camera moves fast when far from target and slow when close, producing smooth deceleration without overshoot or oscillation. Same mathematical shape as chat-44 M3's friction `velocity *= (1 - decay * dt)` (decay-toward-zero) and chat-43 game_mathematics's lerp formula (decay-toward-target). The smooth-pursuit aesthetic that defines AAA platformer cameras (Hollow Knight, Celeste, Dead Cells all use this shape). Best Practice 'Smooth Movement: Use interpolation for fluid camera motion' + Key Takeaway 'Smooth following creates professional feel'.">A) The dx-proportional update implements exponential decay — the camera moves fast when far from target and slow when close, producing smooth deceleration without overshoot or oscillation. Same shape as chat-44 M3 friction and chat-43 lerp.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Locked and constant-speed are NOT interchangeable with dx-proportional. Constant-speed via `sign(dx) * SPEED * dt` overshoots the target when SPEED is large — each frame covers a fixed distance regardless of remaining gap, so the camera flies past zero and oscillates around target indefinitely. Locked teleports, which is jittery if the player is jittery. Only the dx-proportional update has the no-overshoot + smooth-deceleration property; the SHAPE of the approach matters, it's not stylistic.">B) Locked, constant-speed, and dx-proportional are all interchangeable choices — they're stylistic preferences, not functional differences.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="All three options can be made frame-rate-independent with `dt`. Locked has no rate-of-change to scale; constant-speed scales SPEED * dt; dx-proportional scales dx * smooth_speed * dt. Frame-rate independence isn't the differentiator. The actual driver is the SHAPE of the approach — dx-proportional gives exponential decay (no overshoot, no oscillation), which the other two don't.">C) The dx-proportional update is the only one that's frame-rate-independent.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> The lesson's <code>Camera.update_deadzone</code> only moves the camera when the target's center leaves a rectangle (deadzone_width × deadzone_height) centered on the camera. What player problem does this design solve?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Deadzones don't change camera SPEED — they change camera RESPONSE THRESHOLD. Inside the deadzone the camera doesn't move at all (zero response); outside the deadzone the camera follows. Speed is governed by smooth_speed (when combined with smooth-follow), not by the deadzone size. Bigger deadzone = larger tolerance window before any movement; doesn't make the camera 'snap' faster.">A) It speeds up the camera when the player moves fast, so fast players don't outrun the camera.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Correct — deadzones eliminate camera jitter from small player movements (idle bobbing, fired-projectile recoil shifts, walking back and forth a few pixels, weapon-recoil nudges). Inside the deadzone rectangle, the camera doesn't move at all, so the player can wiggle without inducing visible camera shake. Outside the deadzone, the camera nudges to keep the player within the tolerance window. Best Practice 'Deadzones: Allow player movement without camera jitter' + Key Takeaway 'Deadzones reduce camera motion sickness' — 'motion sickness' is the literal symptom: a constantly-jiggling camera induces nausea in some players, especially in long sessions. Different from constraints (level boundaries) and different from smooth_speed (interpolation rate); deadzone is purely a tolerance threshold.">B) It prevents 'camera jitter' from small player movements — idle bobbing, weapon recoil, walking back and forth a few pixels. Inside the deadzone the camera stays still, so the player can wiggle without shaking the camera. Outside the deadzone, the camera nudges to keep the player inside the tolerance window.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Level-edge clamping is `apply_constraints` with min_x/max_x bounds — a different mechanism. Deadzone is centered on the CAMERA, not anchored at level edges; it's a tolerance window around the camera's current position, applied uniformly across the world. The player going off-screen at level edges is solved by camera bounds, not deadzone.">C) It prevents the player from walking off the screen at the edges of the level.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> The lesson's <code>Camera.world_to_screen(world_x, world_y)</code> returns <code>((world_x - self.x) * self.zoom, (world_y - self.y) * self.zoom)</code>, and <code>screen_to_world(screen_x, screen_y)</code> returns <code>(screen_x / self.zoom + self.x, screen_y / self.zoom + self.y)</code>. Why are these two methods exact algebraic inverses of each other?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="There's no Pygame convention here — these are just custom Python methods on the Camera class, not part of the pygame API. The inverse property comes from algebraic necessity (any operation that converts between two coordinate spaces must have an exact inverse if round-tripping is to work), not from a Pygame requirement. Pygame doesn't even know about the Camera class.">A) They're inverses by Pygame convention; pygame.transform requires it.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Correct — mouse-click-to-world (a UI click in screen space converted to world coords for an action like 'shoot at this point') and world-to-screen-render (a world-space object positioned for drawing) must round-trip cleanly: a click at screen pixel (300, 200), converted to world coords, then re-rendered, must land at (300, 200) on screen. The mathematical inverse of `(W - C) * Z` is `S / Z + C` — subtraction inverts to addition (the +C is the same camera offset that was subtracted), multiplication inverts to division (the /Z undoes the *Z scale). Without exact inverses, mouse-pickup, world-space tooltips, and any 'click in screen, act in world' gameplay would silently drift by an amount that grows with camera_x or zoom factor. Same world↔screen translation pattern as chat-43 vectors / coordinates lessons (subtract camera = world-to-screen direction; add camera = screen-to-world direction), with the zoom multiplier as an additional scaling layer.">B) Round-trip correctness: a screen point converted to world coords and back to screen must land exactly where it started. The mathematical inverse of <code>(W - C) * Z</code> is <code>S / Z + C</code> — subtraction inverts to addition, multiplication inverts to division. Without exact inverses, mouse-click-pickup and world-space tooltip placement silently drift.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Subtraction and division aren't commutative — `a - b ≠ b - a` in general (subtraction commutes only when both operands are equal), and `a / b ≠ b / a`. The inverse property comes from algebraic INVERSION (each operation is undone by its mathematical inverse), not commutativity. Commutativity would require the operations to be reorderable, which they're not.">C) Both operations are commutative, so they're automatically inverses.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

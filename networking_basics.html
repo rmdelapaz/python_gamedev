@@ -1593,19 +1593,133 @@ class GameClient(NetworkManager):
             <h2 id="practice-exercise-build-networking-basics">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Connection Scaling Visualizer &mdash; Client-Server O(N) vs Full-Mesh O(N²)</h3>
+                <p><strong>Objective:</strong> Build a side-by-side topology visualizer that draws client-server (one server, N clients, N edges) and full-mesh peer-to-peer (N peers, N(N&minus;1)/2 edges) for the same player count N, animates per-period packet bursts on every connection so the mesh's quadratic packet load is directly visible, and exposes a live HUD showing N, the two connection counts, and their ratio (N&minus;1)/2 &mdash; making the lesson's foundational architectural-choice argument from the network-topology figure (CS scales linearly, mesh scales quadratically, so games default to CS past a handful of peers) directly experienceable as N changes.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Create an 800&times;480 pygame window with two side-by-side panels &mdash; left half is client-server topology, right half is full-mesh peer-to-peer topology.</li>
+                    <li>Maintain a single <code>n</code> integer for player count (range [2, 12]), with <code>-</code> decrementing and <code>=</code>/<code>+</code> incrementing; both panels redraw on <code>n</code> change.</li>
+                    <li>CS panel: draw one red server node at the top of the left half + <code>n</code> blue client nodes arranged in an arc below, with one line from each client to the server (<code>n</code> edges total).</li>
+                    <li>Mesh panel: draw <code>n</code> magenta peer nodes evenly in a circle in the right half, with a line from every peer to every other peer (<code>n*(n-1)//2</code> edges total).</li>
+                    <li>Spawn a packet burst every 1.5 seconds: one packet per CS edge (client &rarr; server) and one packet per mesh edge (peer i &rarr; peer j for j &gt; i). Advance each packet's progress by <code>dt</code> per frame; cull on <code>prog &gt;= 1.0</code>; render in flight as yellow circles traveling along their edges.</li>
+                    <li>HUD across the bottom shows: <code>N = {n}</code>, <code>Client-Server connections: {cs_count} LINEAR O(N)</code>, <code>Full-Mesh connections: {mesh_count} QUADRATIC O(N²)</code>, <code>Ratio mesh/CS = (N-1)/2 = {ratio:.1f}x</code>, and live in-flight packet counts.</li>
+                    <li>Verify the connection-count math at three reference Ns: at N=4 CS=4 vs Mesh=6 (ratio 1.5&times;); at N=8 CS=8 vs Mesh=28 (3.5&times;); at N=12 CS=12 vs Mesh=66 (5.5&times;) &mdash; the mesh's quadratic explosion is the headline lesson made visceral.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The connection-count formula for a complete graph on N nodes is <code>N*(N-1)//2</code> &mdash; every distinct pair of nodes contributes one edge. For client-server, one node is special (the server), and every other node has exactly one edge to it: N edges total. The two scale separately: CS is O(N), full-mesh is O(N²). At N=16, CS has 16 edges while mesh has 120 &mdash; that's why competitive games rarely run full-mesh past ~6 players.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import math
+import pygame
+
+pygame.init()
+W, H = 800, 480
+screen = pygame.display.set_mode((W, H))
+pygame.display.set_caption('Connection Scaling - CS vs Full Mesh')
+font = pygame.font.SysFont('arial', 16)
+small = pygame.font.SysFont('arial', 12)
+clock = pygame.time.Clock()
+
+n = 4  # player count, range [2, 12]
+
+def cs_layout(n):
+    server = (200, 80)
+    clients = []
+    for i in range(n):
+        a = (math.pi * 2 / n) * i - math.pi / 2
+        clients.append((200 + 110 * math.cos(a), 280 + 90 * math.sin(a)))
+    return server, clients
+
+def mesh_layout(n):
+    cx, cy = 600, 240
+    return [(cx + 110 * math.cos((math.pi * 2 / n) * i - math.pi / 2),
+             cy + 110 * math.sin((math.pi * 2 / n) * i - math.pi / 2))
+            for i in range(n)]
+
+packets_cs = []   # [client_idx, prog]
+packets_mesh = [] # [i, j, prog]
+last_burst = -1.5
+t = 0.0
+running = True
+
+while running:
+    dt = clock.tick(60) / 1000.0
+    t += dt
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key in (pygame.K_MINUS, pygame.K_KP_MINUS):
+                n = max(2, n - 1); packets_cs.clear(); packets_mesh.clear()
+            elif event.key in (pygame.K_EQUALS, pygame.K_PLUS, pygame.K_KP_PLUS):
+                n = min(12, n + 1); packets_cs.clear(); packets_mesh.clear()
+            elif event.key == pygame.K_ESCAPE:
+                running = False
+
+    if t - last_burst &gt;= 1.5:
+        last_burst = t
+        for i in range(n):
+            packets_cs.append([i, 0.0])
+            for j in range(i + 1, n):
+                packets_mesh.append([i, j, 0.0])
+
+    for p in packets_cs: p[1] += dt
+    for p in packets_mesh: p[2] += dt
+    packets_cs[:] = [p for p in packets_cs if p[1] &lt; 1.0]
+    packets_mesh[:] = [p for p in packets_mesh if p[2] &lt; 1.0]
+
+    server, clients = cs_layout(n)
+    peers = mesh_layout(n)
+    cs_count = n
+    mesh_count = n * (n - 1) // 2
+    ratio = (n - 1) / 2.0
+
+    screen.fill((15, 15, 25))
+    screen.blit(font.render('Client-Server  O(N)', True, (200, 220, 255)), (110, 30))
+    screen.blit(font.render('Full Mesh  O(N**2)', True, (255, 200, 220)), (510, 30))
+
+    for c in clients:
+        pygame.draw.line(screen, (80, 160, 240), server, c, 2)
+    pygame.draw.circle(screen, (240, 80, 80), server, 14)
+    screen.blit(small.render('SERVER', True, (255, 255, 255)),
+                (server[0] - 22, server[1] + 18))
+    for c in clients:
+        pygame.draw.circle(screen, (80, 160, 240), (int(c[0]), int(c[1])), 9)
+
+    for idx, prog in packets_cs:
+        if idx &lt; len(clients):
+            c = clients[idx]
+            x = c[0] + (server[0] - c[0]) * prog
+            y = c[1] + (server[1] - c[1]) * prog
+            pygame.draw.circle(screen, (255, 255, 100), (int(x), int(y)), 4)
+
+    for i in range(n):
+        for j in range(i + 1, n):
+            pygame.draw.line(screen, (220, 100, 200), peers[i], peers[j], 1)
+    for p in peers:
+        pygame.draw.circle(screen, (220, 100, 200), (int(p[0]), int(p[1])), 9)
+
+    for i, j, prog in packets_mesh:
+        if i &lt; len(peers) and j &lt; len(peers):
+            x = peers[i][0] + (peers[j][0] - peers[i][0]) * prog
+            y = peers[i][1] + (peers[j][1] - peers[i][1]) * prog
+            pygame.draw.circle(screen, (255, 255, 100), (int(x), int(y)), 4)
+
+    hud = [
+        f'N = {n}    (- / + to change, range [2, 12])',
+        f'Client-Server connections: {cs_count}    LINEAR  O(N)',
+        f'Full-Mesh connections:     {mesh_count}    QUADRATIC  O(N**2)',
+        f'Ratio mesh/CS = (N-1)/2 = {ratio:.1f}x',
+        f'In-flight packets:  CS={len(packets_cs)}    Mesh={len(packets_mesh)}',
+    ]
+    for i, line in enumerate(hud):
+        screen.blit(font.render(line, True, (220, 220, 220)),
+                    (20, H - 105 + i * 18))
+
+    pygame.display.flip()
+pygame.quit()</code></pre>
                 </details>
             </div>
 
@@ -1613,31 +1727,31 @@ class GameClient(NetworkManager):
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> A 16-player multiplayer FPS is choosing between client-server (one authoritative host with 16 client connections) and full-mesh peer-to-peer (every player connected directly to every other). Why does virtually every commercial multiplayer FPS pick client-server?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Latency is wall-clock round-trip time to whatever node you're talking to; topology choice doesn't reduce it. Client-server actually adds a hop for player-to-player communication (player &rarr; server &rarr; other player), so 'lower latency' is wrong. The lesson's optimization stack &mdash; interpolation, prediction, lag compensation &mdash; exists precisely because CS doesn't reduce latency.">A) Client-server has lower per-player latency because all packets pass through a fast server hub.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Full-mesh connection count grows quadratically as N(N&minus;1)/2, so 16 peers need 120 connections (each peer maintaining 15 simultaneous outbound state-sync streams), while client-server scales linearly at N edges (16 here). The bandwidth, NAT-traversal, and connection-management cost of 120 simultaneous P2P streams per match is impractical, so games default to CS past a handful of peers. The lesson's network-topology figcaption calls this out explicitly: 'a full mesh grows quadratically &mdash; N(N&minus;1)/2 connections &mdash; making it impractical past a handful of peers.'">B) Full-mesh connection count grows quadratically as N(N&minus;1)/2, so 16 peers need 120 connections; CS scales linearly at N edges; the bandwidth and connection-management cost of 120 P2P streams is impractical past a handful of peers.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="P2P does expose IPs and is genuinely a security concern, but it's not the architectural-scaling reason CS dominates; many games run successful P2P with relay or lobby servers handling NAT and IP-hiding. The headline reason CS dominates at scale is the connection-count math, not security.">C) Peer-to-peer is inherently insecure and exposes player IP addresses to opponents.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> TCP guarantees in-order, no-loss delivery; UDP delivers packets as-fast-as-possible with no ordering and no retransmission. Which protocol-choice pattern matches the lesson's TCP/UDP guidance for a real-time competitive shooter?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Chat, login, lobby join, match-result reporting, and inventory/save data MUST arrive in order with no loss &mdash; TCP is correct for these channels. Using UDP would corrupt the data. The choice is per-channel, not per-game; the lesson lists both protocols because production games normally use BOTH on different channels for different purposes.">A) Use UDP for everything because TCP retransmissions add unacceptable latency in any real-time game scenario.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="UDP for the high-frequency state-sync channel (player positions broadcast at 60Hz where a dropped packet is harmless because the next snapshot arrives ~16ms later &mdash; the data is intrinsically time-stale, so retransmitting an old packet is worse than dropping it), and TCP for chat / login / lobby / match-result channels where in-order, no-loss delivery is required even at the cost of retransmit-stall latency. Production games normally use BOTH on different channels for different purposes &mdash; the lesson's Key Takeaway 'TCP guarantees delivery, UDP is faster' presents them as separate-but-equal because each is correct for its category.">B) Use UDP for the high-frequency state-sync channel (60Hz player positions where dropped packets are harmless because the next snapshot arrives ~16ms later) and TCP for chat / login / lobby / match-result channels where in-order, no-loss delivery is required.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="TCP retransmission can stall a real-time state-sync channel by hundreds of ms when a single packet drops &mdash; the entire stream waits for the retransmit (head-of-line blocking). UDP avoids this by delivering the next state snapshot, since older state is already obsolete. The Key Takeaway 'UDP is faster' specifically refers to skipping this stall.">C) Use TCP for everything because UDP's lack of ordering guarantees makes it unsuitable for production multiplayer games.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> A player has a 100 Mbps fiber connection but consistently 200 ms ping to the game server, and reports the game 'feels laggy'. Which constraint is the headline problem, and what's the lesson's prescribed mitigation?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="100 Mbps is wildly more than enough for any game's state-sync channel &mdash; typical games use 50&ndash;200 KB/s, three orders of magnitude under 100 Mbps. Bandwidth is the size of the mailbox (Post Office Analogy in the lesson), not the delivery time, and this player's mailbox is already huge. Adding more bandwidth doesn't reduce ping.">A) Bandwidth is the problem &mdash; at 100 Mbps the player should be able to receive state updates instantly; upgrading to symmetric gigabit will help.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Latency measures wall-clock round-trip time (ms) and bandwidth measures throughput (bytes per second); they're orthogonal axes. The Post Office Analogy in the lesson separates them explicitly: 'Latency: Mail delivery time' vs 'Bandwidth: Size of mailbox.' Latency cannot be eliminated (light-speed and routing impose a physical floor &mdash; a packet from Sydney to New York takes ~100ms one way at the speed of light through fiber), only hidden &mdash; which is exactly why the lesson's optimization stack exists: client-side prediction (hide outbound input delay), interpolation (smooth inbound state delay), and lag compensation (rewind server state to input-time). At 100 Mbps and 50&ndash;200 KB/s typical state-sync, bandwidth is wildly abundant; latency is the bottleneck.">B) Latency is the headline problem &mdash; bandwidth and latency are orthogonal axes; the lesson's optimization stack (prediction + interpolation + lag compensation) exists specifically because latency cannot be eliminated, only hidden, while bandwidth is rarely the limiting factor for state-sync.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="The Post Office Analogy makes the orthogonality concrete: bandwidth = mailbox size, latency = mail delivery time. They're independent axes &mdash; increasing your mailbox size doesn't make mail arrive faster. The fiber connection guarantees bandwidth is not the bottleneck, so addressing bandwidth (compression, delta-encoding) won't help latency-induced lag.">C) Both bandwidth and latency are equally responsible &mdash; 'feels laggy' reflects a combined network-quality metric, and addressing either will help.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

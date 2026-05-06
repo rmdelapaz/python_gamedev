@@ -196,19 +196,112 @@ if __name__ == "__main__":
             <h2 id="practice-exercise-build-networking-client-server">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Authoritative Server + Predict + Reconcile in One Pygame Window</h3>
+                <p><strong>Objective:</strong> Build a single-process pygame demo (~90 lines) that exercises three pillar client-server patterns from this lesson &mdash; the authoritative-server / dumb-client split (server holds canonical state, client sends INPUTS and receives STATE snapshots), client-side prediction (local player applies its own input immediately to hide the input-to-server one-way latency), and server reconciliation (when a snapshot arrives, snap predicted position to server's authoritative position then re-apply any unacked inputs that arrived AFTER the server's last-acknowledged input sequence number) &mdash; all running in one window with the server simulated as a daemon thread, a synthetic 50 ms one-way latency on both directions, and the predicted (local-rendered) position drawn alongside the server-known position so the offset between them is the smoking-gun visualization of latency-being-hidden-by-prediction.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Set up two thread-safe <code>queue.Queue</code> channels: <code>inputs_to_server</code> carries <code>(seq, dx, dy)</code> input tuples, <code>snapshots_to_client</code> carries <code>(server_x, server_y, last_acked_seq)</code> snapshots. The synthetic one-way latency uses <code>threading.Timer(0.050, lambda: queue.put(...))</code> on each direction so a 100 ms RTT is visible on screen without an actual network.</li>
+                    <li>Spawn the server thread (<code>daemon=True</code>): drain all pending <code>inputs_to_server</code> messages, mutate the canonical <code>server_state</code> dict (under a <code>threading.Lock</code>), then push a snapshot at ~30 Hz tickrate via the latency-Timer (Best Practice "Server Authority: Never trust the client" &mdash; the server is the SINGLE place gameplay state mutates; clients send inputs, NOT positions).</li>
+                    <li>In the pygame main loop, on every WASD/arrow input compute <code>(dx, dy)</code>, then do BOTH things in the same frame: (a) apply the input to <code>predicted_x, predicted_y</code> immediately (this is the prediction — the green circle moves the frame the key is pressed, with zero wait for a server roundtrip), and (b) increment <code>seq</code> and append <code>(seq, dx, dy)</code> to the <code>unacked_inputs</code> list, then schedule the latency-Timer to deliver it to the server. Best Practice "Client Prediction: Hide latency with local simulation".</li>
+                    <li>Each frame, drain all pending <code>snapshots_to_client</code>. For every snapshot <code>(server_x, server_y, server_acked_seq)</code>, reconcile: set <code>predicted_x, predicted_y = server_x, server_y</code> (snap to authoritative), filter <code>unacked_inputs</code> to keep only entries with <code>seq &gt; server_acked_seq</code> (the server has already integrated everything &lt;= its acked seq), then re-apply each surviving unacked input to <code>predicted_x, predicted_y</code>. Without the re-apply step, prediction would snap backwards every snapshot arrival; the re-apply step is what keeps the predicted position ahead of the server-known position by exactly the in-flight inputs (Best Practice "Rollback: Correct prediction errors smoothly").</li>
+                    <li>Render two circles every frame: the GREEN circle at <code>(predicted_x, predicted_y)</code> is what the player sees as their character; the RED hollow circle at the server's last-known position is the authoritative truth, drawn ~100 ms behind on screen (50 ms outbound latency + 50 ms snapshot return). HUD shows predicted coords + server coords + length of <code>unacked_inputs</code> + current <code>seq</code>. Press WASD or arrows: green moves instantly, red follows ~100 ms behind — the visible offset IS the latency that prediction is hiding from the player.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The reconcile step is the subtle one. The server snapshot tells you "as of input seq=N, my authoritative position is (sx, sy)". You snap predicted to (sx, sy), but you've already sent inputs N+1, N+2, N+3 that the server hasn't seen yet — they're still in flight. Filter <code>unacked_inputs</code> to keep only those with <code>seq &gt; N</code> (the server hasn't acked them), then re-apply them to predicted. The lesson's <code>interpolate_entities</code> example shows a related but distinct pattern: REMOTE players (other people in the match) get smoothed via lerp toward the latest snapshot position (no prediction, no inputs to re-apply); only the LOCAL player runs the predict-and-reconcile loop. The asymmetry &mdash; local = predict, remote = interpolate &mdash; is canonical (Best Practice "Interpolation: Smooth visual updates between snapshots" + Key Takeaway "Interpolation smooths movement").</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame, queue, threading, time, sys
+
+WIDTH, HEIGHT, FPS = 800, 480, 60
+LATENCY_S = 0.050  # 50 ms one-way (100 ms RTT)
+
+server_state = {'x': 400.0, 'y': 240.0, 'last_seq': 0}
+state_lock = threading.Lock()
+inputs_to_server = queue.Queue()
+snapshots_to_client = queue.Queue()
+
+def server_loop():
+    while True:
+        try:
+            while True:
+                s, dx, dy = inputs_to_server.get_nowait()
+                with state_lock:
+                    server_state['x'] = max(0, min(WIDTH, server_state['x'] + dx))
+                    server_state['y'] = max(0, min(HEIGHT, server_state['y'] + dy))
+                    server_state['last_seq'] = s
+        except queue.Empty:
+            pass
+        with state_lock:
+            snap = (server_state['x'], server_state['y'], server_state['last_seq'])
+        threading.Timer(LATENCY_S, snapshots_to_client.put, args=(snap,)).start()
+        time.sleep(1.0 / 30.0)
+
+predicted_x, predicted_y = 400.0, 240.0
+unacked_inputs = []
+seq = 0
+
+def send_input(dx, dy):
+    global seq
+    seq += 1
+    unacked_inputs.append((seq, dx, dy))
+    threading.Timer(LATENCY_S, inputs_to_server.put,
+                    args=((seq, dx, dy),)).start()
+
+def reconcile(sx, sy, sseq):
+    global predicted_x, predicted_y, unacked_inputs
+    predicted_x, predicted_y = sx, sy
+    unacked_inputs = [u for u in unacked_inputs if u[0] &gt; sseq]
+    for (_, dx, dy) in unacked_inputs:
+        predicted_x += dx
+        predicted_y += dy
+
+pygame.init()
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+clock = pygame.time.Clock()
+font = pygame.font.SysFont(None, 18)
+threading.Thread(target=server_loop, daemon=True).start()
+
+SPEED = 4
+running = True
+while running:
+    clock.tick(FPS)
+    for e in pygame.event.get():
+        if e.type == pygame.QUIT: running = False
+    keys = pygame.key.get_pressed()
+    dx, dy = 0, 0
+    if keys[pygame.K_LEFT] or keys[pygame.K_a]: dx -= SPEED
+    if keys[pygame.K_RIGHT] or keys[pygame.K_d]: dx += SPEED
+    if keys[pygame.K_UP] or keys[pygame.K_w]: dy -= SPEED
+    if keys[pygame.K_DOWN] or keys[pygame.K_s]: dy += SPEED
+    if dx or dy:
+        predicted_x += dx
+        predicted_y += dy
+        send_input(dx, dy)
+    try:
+        while True:
+            sx, sy, sseq = snapshots_to_client.get_nowait()
+            reconcile(sx, sy, sseq)
+    except queue.Empty:
+        pass
+    screen.fill((20, 20, 40))
+    pygame.draw.circle(screen, (100, 255, 100),
+                       (int(predicted_x), int(predicted_y)), 12)
+    with state_lock:
+        sx, sy = server_state['x'], server_state['y']
+    pygame.draw.circle(screen, (255, 100, 100),
+                       (int(sx), int(sy)), 12, 2)
+    hud = [f"Predicted (green): ({int(predicted_x)}, {int(predicted_y)})",
+           f"Server (red, 100ms RTT): ({int(sx)}, {int(sy)})",
+           f"Unacked: {len(unacked_inputs)}  seq={seq}",
+           "WASD/arrows to move"]
+    for i, line in enumerate(hud):
+        screen.blit(font.render(line, True, (220, 220, 220)),
+                    (10, 10 + i * 18))
+    pygame.display.flip()
+pygame.quit()
+sys.exit()</code></pre>
                 </details>
             </div>
 
@@ -216,31 +309,31 @@ if __name__ == "__main__":
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> The lesson's Best Practice "Server Authority: Never trust the client" + Key Takeaway "Server is the source of truth" prescribes that clients send INPUTS to the server and receive STATE snapshots back, NEVER the other way around (clients should not send their position; server should not just relay client claims). What concrete failure mode does the alternative — letting clients update their own position and broadcast it to others through the server — cause?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Bandwidth is rarely the bottleneck. Position broadcasts are tiny (~10-20 bytes per packet) and a 60Hz stream is ~3 KB/s per client — three orders of magnitude below typical broadband. Authoritative-server architecture isn't chosen for bandwidth reasons; it's chosen for trust reasons.">A) Client-driven position broadcasts use too much bandwidth, while server-driven snapshots can be delta-compressed for efficiency.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Correct — the moment the server accepts client-claimed positions as truth, a malicious client can claim any position it wants: teleport across the map, walk through walls, stand inside locked rooms, occupy the same cell as another player and instantly kill them. The lesson's Best Practice 'Input Validation: Prevent cheating and exploits' + Key Takeaway 'Validation prevents cheating' depend on the SERVER applying the inputs and validating the resulting position against game rules (collision, line-of-sight, movement-speed cap). The 'authoritative' in 'authoritative server' is exactly this: only the server's computation of state is canonical; clients are 'dumb' (or rather, untrusted) and their predicted positions are visual-only convenience that gets corrected on every snapshot. The architectural shape is the same as chat-47 M2 level_design's design-time validate() vs runtime is_solid() — server-side validation is the runtime fail-safe gate, identical principle applied to multiplayer trust. CSGO and Valorant both run authoritative servers because the alternative (client-trusted positions) is what made early peer-to-peer FPS games infamous for trivial speed/teleport hacks.">B) A malicious client can claim any position it wants — teleport across the map, walk through walls, stand inside enemy spawn rooms — because the server has no independent way to verify whether the claimed position is reachable from the previous position under the game's movement rules; validation requires the server to APPLY the inputs and compute the resulting position itself.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Mathematical precision is identical regardless of whether the server or the client computes the integration — both use the same float arithmetic. The architectural choice is about TRUST, not numerical accuracy. Determinism in lockstep multiplayer (chat-44 M5 fixed-timestep) is a separate concern that applies equally to authoritative-server and peer-to-peer designs.">C) Client-side floating-point math is less precise than server-side math, so client-claimed positions accumulate rounding errors that desync players over time.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> Why does the lesson's Best Practice "Client Prediction: Hide latency with local simulation" + Key Takeaway "Prediction hides latency" prescribe that the LOCAL player applies its own input immediately (without waiting for server confirmation), even though the server is supposed to be the source of truth?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Network throughput limits aren't the issue — 60Hz position updates are tiny. The constraint that prediction addresses is wall-clock LATENCY (input-to-screen feedback delay), not throughput (bytes per second). Latency and bandwidth are orthogonal axes (chat-51 M1 networking_basics Q3's Post Office Analogy reinforced this exact distinction).">A) The server's network connection has a bandwidth cap that prevents it from sending position confirmations fast enough; prediction reduces the bandwidth pressure.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Determinism (chat-44 M5 fixed-timestep) is a separate concern that applies regardless of whether prediction runs. The reason for prediction is wall-clock perceived input lag, not floating-point divergence between server and client.">B) Floating-point arithmetic on the server can drift from client arithmetic, so the client must run its own simulation to prevent the predicted and authoritative paths from diverging on shared deterministic seeds.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Correct — without prediction, every key press has a wall-clock RTT of input lag visible to the player (50 ms outbound + server tick + 50 ms snapshot return = 100+ ms before the green circle moves on the player's screen, even on a fast connection). 100 ms input lag is unplayable for any real-time game — fighting games target &lt;30 ms, FPS games target &lt;50 ms, even action-RPGs feel sluggish above 80 ms. Prediction hides this by applying the input LOCALLY the same frame it's pressed: the player sees their character move at 16 ms (one rendered frame) instead of 100+ ms. The server is still authoritative — the local prediction is a visual-only optimization that gets reconciled when the snapshot arrives — but the human-perception experience is fast feedback. Same 'latency must be HIDDEN, not eliminated' rhetoric as chat-51 M1 networking_basics Q3 (latency cannot be reduced below the speed-of-light floor through fiber, only hidden by the optimization stack); chat-52 M2 here adds the prediction half of that stack. Note the asymmetry: only the LOCAL player gets prediction (you have inputs to predict from); REMOTE players get interpolation (you only have past server snapshots to lerp between, no inputs to apply ahead of time) — the lesson's interpolate_entities does exactly this, advancing remote players via player.x += (target_x - player.x) * lerp_speed * dt, the same lerp-toward-target shape as chat-43 game_mathematics interpolation, chat-46 M3 camera exponential decay, and chat-49 M2 polish_tweening — four Phase-8 modules now anchored on this same curve-toward-a-target pattern.">C) Without prediction, every key press has 100+ ms of input lag (the round-trip latency to the server) before the player sees their own character move on screen, which is unplayable for real-time games; prediction applies the input locally the same frame it's pressed so the player sees instant feedback while the server reconciliation still keeps the canonical state correct.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> When a server snapshot arrives saying "as of input seq=N, the authoritative position is (sx, sy)", the client snaps <code>predicted_x, predicted_y = sx, sy</code>. But the client has already sent inputs seq=N+1, N+2, N+3 that are still in flight (haven't reached the server yet). What's the correct reconciliation behavior, and why does omitting the re-apply step break the predict-and-reconcile loop?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Discarding unacked inputs is exactly the bug — they're inputs the player physically pressed and the server hasn't seen yet. Throwing them away makes prediction lose work the player did, which manifests as the predicted position visibly snapping backwards every time a snapshot arrives.">A) Discard the unacked inputs entirely; the server snapshot is authoritative, so any local state past the snapshot's seq is invalid and should be cleared.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="The server's snapshot already reflects every input it has acked (seq &lt;= N). Re-applying inputs with seq &lt;= N would double-count them — the predicted position would jump TWICE the distance the player actually moved. The filter must keep only seq &gt; N, not seq &gt;= N or all inputs.">B) Re-apply ALL inputs in the unacked_inputs list (regardless of seq number) to predicted_x, predicted_y after the snap; the server's last_acked_seq is informational only.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Correct — the server's snapshot reflects state 'as of input seq=N', so unacked inputs with seq &lt;= N are already integrated into (sx, sy) and re-applying them would double-count. Inputs with seq &gt; N are still in flight, the server hasn't seen them, so they're NOT in (sx, sy) — they're the predicted-ahead-of-server delta the prediction loop maintains. Filter unacked_inputs to seq &gt; N, then re-apply each surviving entry to predicted_x, predicted_y. Without the re-apply step, prediction snaps backwards every snapshot arrival: predicted was at (sx + lots_of_in_flight_delta), snapshot arrives saying server is at (sx), predicted snaps to (sx) without the in-flight delta — visible to the player as their character jolting backwards every ~33 ms (one server tick). With the re-apply, predicted lands at (sx + in_flight_delta_only) every reconcile — exactly one server-tick of in-flight delta ahead of the server's known position, which is the steady-state offset prediction is supposed to maintain. Best Practice 'Rollback: Correct prediction errors smoothly' + Key Takeaway 'Reconciliation corrects errors'. Same 'snap then re-apply' shape as chat-44 M5 fixed-timestep determinism's lockstep replay (rewind to a known state, re-apply inputs from that state forward); same 'partial state + remaining work' separation as chat-47 M2 level_design's snapshot-vs-delta undo trade-off (server snapshot = full state; in-flight inputs = delta-since-snapshot) — multiple Phase-8 lessons reinforcing the snap-to-known-good + re-apply-recent-deltas reconciliation pattern.">C) Filter unacked_inputs to keep only entries with seq &gt; N (the server hasn't acked these yet), then re-apply each surviving input to predicted_x, predicted_y; this lands predicted exactly one server-tick of in-flight delta ahead of the server's known position, which is the correct steady-state offset.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

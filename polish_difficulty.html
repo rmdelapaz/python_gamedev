@@ -1422,19 +1422,139 @@ class DifficultyPresets:
             <h2 id="practice-exercise-build-polish-difficulty">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Adaptive Combat Loop &mdash; DDA, Flow State, and One-Knob Multi-Axis Scaling</h3>
+                <p><strong>Objective:</strong> Build a runnable pygame top-down shooter (~85 lines) that exercises the three pillar patterns from this lesson side by side: <em>performance-driven Dynamic Difficulty Adjustment</em> as an <code>error &times; rate &rarr; clamp</code> control loop, <em>flow state</em> derived from the <code>skill / challenge</code> ratio (not absolute difficulty), and <em>one difficulty scalar driving N gameplay axes via per-axis exponents</em>. Three difficulty modes (<kbd>1</kbd> static, <kbd>2</kbd> DDA, <kbd>3</kbd> flow) toggle live so the curves can be compared on the same play session, with a HUD that prints every signal feeding the loop.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Create a <code>Difficulty</code> class with a scalar <code>value</code> in <code>[1, 10]</code>, a <code>mode</code> (<code>'static'</code> / <code>'dda'</code> / <code>'flow'</code>), rolling 10-second windows of <code>recent_kills</code> and <code>recent_deaths</code>, and lifetime <code>shots</code> / <code>hits</code> counters.</li>
+                    <li>Compute a <code>performance</code> scalar in <code>[0, 100]</code> as a weighted blend: start at <code>50</code>, add <code>(accuracy - 50) * 0.3</code>, add <code>recent_kills * 4</code>, subtract <code>recent_deaths * 6</code>, clamp to <code>[0, 100]</code>. <strong>This is the chat-43 vectors anchor &mdash; performance is a scalar magnitude derived from multiple weighted components, exactly the way speed is the magnitude of a velocity vector.</strong></li>
+                    <li>In <code>'dda'</code> mode, run the canonical control loop every frame: <code>error = performance - 65.0</code> (target 65% performance), then <code>value -= error * 0.01 * dt</code>, then clamp <code>value</code> to <code>[1, 10]</code>. The clamp is non-negotiable &mdash; without it, runaway adjustment pushes <code>value</code> off the scale.</li>
+                    <li>In <code>'flow'</code> mode, compute <code>ratio = skill / max(1, challenge)</code> where <code>skill = performance</code> and <code>challenge = value * 10</code>. Classify: <code>ratio &lt; 0.5</code> &rarr; <code>FRUSTRATION</code>, <code>ratio &gt; 2.0</code> &rarr; <code>BOREDOM</code>, <code>0.7 &lt;= ratio &lt;= 1.3</code> &rarr; <code>FLOW</code>, otherwise <code>ANXIETY</code>. The <strong>ratio</strong> is what drives the state, not the absolute difficulty.</li>
+                    <li>Wire <strong>one difficulty scalar to N gameplay axes via per-axis exponents</strong>: <code>mult = value / 5.0</code>, then <code>enemy_speed = 80 * mult ** 0.8</code> (sublinear &mdash; responsive), <code>enemy_hp = round(2 * mult ** 1.2)</code> (superlinear &mdash; spongy at high difficulty), <code>spawn_int = 1.5 / mult ** 0.7</code> (faster spawns at high mult), <code>player_dmg = (2 - mult) ** 0.5</code> (INVERSE &mdash; high difficulty reduces player damage).</li>
+                    <li>Build the gameplay loop: 800&times;480 window, player rect (24&times;24, WASD/arrows at 280 px/s, <code>clamp_ip</code> to screen), enemies spawn from the top with hp from <code>diff.enemy_hp()</code> and chase the player at <code>diff.enemy_speed()</code>; <kbd>Space</kbd> fires a yellow projectile upward; projectile-vs-enemy collision deals <code>diff.player_dmg()</code>; enemy-vs-player collision counts as a death.</li>
+                    <li>Render a HUD with six lines: mode + controls; <code>difficulty</code> / <code>mult</code> / target=65; <code>performance</code> / <code>skill</code> / <code>challenge</code>; <code>flow_state</code> color-coded (green flow, red frustration, yellow boredom, orange anxiety); <code>enemy_speed</code> / <code>enemy_hp</code>; <code>spawn_int</code> / <code>player_dmg</code>. Press <kbd>1</kbd>/<kbd>2</kbd>/<kbd>3</kbd> mid-play to switch modes &mdash; in static mode the per-axis numbers stop drifting; in DDA they track performance; in flow they track the ratio.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The DDA shape is identical to a proportional control loop in physics: <code>error &rarr; gain &rarr; clamp &rarr; integrate</code>. The trick that makes it feel right (rather than feel like the game is fighting the player) is the <strong>small rate constant</strong> &mdash; <code>0.01 * dt</code> means even a 30-point performance error only nudges difficulty by <code>~0.005</code> per frame at 60 FPS, so the adjustment is invisible to the player and shows up as a slow drift over seconds. Crank the rate to <code>0.1</code> and the difficulty visibly wobbles; that is what &ldquo;rubber-banding feels artificial&rdquo; means in practice. For flow detection, use <code>max(1, challenge)</code> in the denominator to avoid divide-by-zero when difficulty momentarily clamps to its low bound. For per-axis exponents, the rule of thumb is: properties that should feel <em>responsive</em> (speed, fire rate) get exponents <code>&lt; 1</code>; properties that should feel <em>punishing at the high end</em> (hp, damage) get exponents <code>&gt; 1</code>; properties that should <em>shrink as difficulty rises</em> (player damage, resource availability) use the <code>(2 - mult) ** k</code> inverse form.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame, math, random
+
+class Difficulty:
+    def __init__(self):
+        self.value = 5.0          # scalar in [1, 10]
+        self.mode = 'dda'         # 'static' / 'dda' / 'flow'
+        self.recent_kills = []    # timestamps in last 10s
+        self.recent_deaths = []
+        self.shots = 0
+        self.hits = 0
+        self.performance = 50.0
+        self.skill = 50.0
+        self.challenge = 50.0
+        self.flow_state = 'flow'
+
+    def _trim(self, ts, now):
+        ts[:] = [t for t in ts if now - t &lt; 10.0]
+
+    def _perf(self):
+        accuracy = (self.hits / self.shots * 100) if self.shots else 50.0
+        return max(0.0, min(100.0,
+            50 + (accuracy - 50) * 0.3
+               + len(self.recent_kills) * 4
+               - len(self.recent_deaths) * 6))
+
+    def update(self, dt, now):
+        self._trim(self.recent_kills, now); self._trim(self.recent_deaths, now)
+        self.performance = self._perf()
+        self.skill = self.performance
+        self.challenge = self.value * 10
+        if self.mode == 'dda':
+            error = self.performance - 65.0    # error * rate * clamp
+            self.value = max(1.0, min(10.0, self.value - error * 0.01 * dt))
+        ratio = self.skill / max(1.0, self.challenge)   # ratio drives flow, not absolute level
+        if ratio &lt; 0.5: self.flow_state = 'frustration'
+        elif ratio &gt; 2.0: self.flow_state = 'boredom'
+        elif 0.7 &lt;= ratio &lt;= 1.3: self.flow_state = 'flow'
+        else: self.flow_state = 'anxiety'
+
+    @property
+    def mult(self): return self.value / 5.0
+    # one knob, N per-axis curves via per-axis EXPONENTS
+    def enemy_speed(self): return 80 * (self.mult ** 0.8)         # sublinear -- responsive
+    def enemy_hp(self):    return max(1, round(2 * (self.mult ** 1.2)))  # superlinear -- spongy
+    def spawn_int(self):   return 1.5 / (self.mult ** 0.7)        # faster spawns at high mult
+    def player_dmg(self):  return max(0.3, (2.0 - self.mult) ** 0.5)  # INVERSE -- shrinks
+
+pygame.init()
+SCR = pygame.display.set_mode((800, 480))
+clock, font = pygame.time.Clock(), pygame.font.Font(None, 18)
+diff = Difficulty()
+player = pygame.Rect(390, 220, 24, 24)
+enemies, projectiles, spawn_t = [], [], 0.0
+
+run = True
+while run:
+    dt = clock.tick(60) / 1000.0
+    now = pygame.time.get_ticks() / 1000.0
+    for ev in pygame.event.get():
+        if ev.type == pygame.QUIT: run = False
+        elif ev.type == pygame.KEYDOWN:
+            if ev.key == pygame.K_1: diff.mode = 'static'
+            if ev.key == pygame.K_2: diff.mode = 'dda'
+            if ev.key == pygame.K_3: diff.mode = 'flow'
+            if ev.key == pygame.K_SPACE:
+                projectiles.append(pygame.Rect(player.centerx - 3, player.top - 6, 6, 10))
+                diff.shots += 1
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_a] or keys[pygame.K_LEFT]:  player.x -= int(280 * dt)
+    if keys[pygame.K_d] or keys[pygame.K_RIGHT]: player.x += int(280 * dt)
+    if keys[pygame.K_w] or keys[pygame.K_UP]:    player.y -= int(280 * dt)
+    if keys[pygame.K_s] or keys[pygame.K_DOWN]:  player.y += int(280 * dt)
+    player.clamp_ip(SCR.get_rect())
+    spawn_t += dt
+    if spawn_t &gt;= diff.spawn_int():
+        spawn_t = 0.0
+        enemies.append([pygame.Rect(random.randint(0, 776), -24, 24, 24), diff.enemy_hp()])
+    for e in enemies:
+        r = e[0]
+        dx, dy = player.centerx - r.centerx, player.centery - r.centery
+        d = math.hypot(dx, dy) or 1
+        r.x += int(dx / d * diff.enemy_speed() * dt)
+        r.y += int(dy / d * diff.enemy_speed() * dt)
+    for p in projectiles[:]:
+        p.y -= int(360 * dt)
+        if p.bottom &lt; 0: projectiles.remove(p); continue
+        for e in enemies[:]:
+            if p.colliderect(e[0]):
+                projectiles.remove(p); diff.hits += 1
+                e[1] -= diff.player_dmg()
+                if e[1] &lt;= 0: enemies.remove(e); diff.recent_kills.append(now)
+                break
+    for e in enemies[:]:
+        if player.colliderect(e[0]):
+            enemies.remove(e); diff.recent_deaths.append(now)
+    diff.update(dt, now)
+    SCR.fill((20, 20, 28))
+    pygame.draw.rect(SCR, (80, 200, 100), player)
+    for e in enemies: pygame.draw.rect(SCR, (220, 80, 80), e[0])
+    for p in projectiles: pygame.draw.rect(SCR, (255, 240, 80), p)
+    fc = {'flow': (80,220,120), 'frustration': (220,80,80),
+          'boredom': (220,220,80), 'anxiety': (220,140,60)}[diff.flow_state]
+    lines = [
+        f"mode: {diff.mode}   1=static 2=DDA 3=flow   SPACE=fire   WASD=move",
+        f"difficulty: {diff.value:.2f}   mult: {diff.mult:.2f}   target_perf=65",
+        f"performance: {diff.performance:.1f}   skill: {diff.skill:.1f}   challenge: {diff.challenge:.1f}",
+        f"flow_state: {diff.flow_state}",
+        f"enemy_speed: {diff.enemy_speed():.1f}px/s   enemy_hp: {diff.enemy_hp()}",
+        f"spawn_int: {diff.spawn_int():.2f}s   player_dmg: {diff.player_dmg():.2f}",
+    ]
+    for i, ln in enumerate(lines):
+        c = fc if 'flow_state' in ln else (240, 240, 240)
+        SCR.blit(font.render(ln, True, c), (10, 8 + i * 18))
+    pygame.display.flip()
+pygame.quit()</code></pre>
                 </details>
             </div>
 
@@ -1442,31 +1562,31 @@ class DifficultyPresets:
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> Dynamic Difficulty Adjustment in the lesson&rsquo;s <code>update_dynamic_difficulty</code> runs every frame as <code>error = performance - target</code>, then <code>current_difficulty -= error * dda_rate * 0.01</code>, then <code>clamp(1, 10)</code>. Why is this continuous, clamped, error-driven shape preferred over &ldquo;lower difficulty when the player dies, raise it when they get a kill streak&rdquo;?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Discrete event triggers under-react and over-react: a single death after a long winning streak shouldn't reset the system, but a binary 'lower on death' rule does exactly that. The continuous form averages noise out across frames; the event-driven form is dominated by the most recent event.">A) Event-driven adjustments are equivalent in effect; the lesson uses a continuous loop only because death and kill events are inconvenient to detect from inside the difficulty manager.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="The error * rate * clamp shape is the canonical proportional control loop applied to game balance. (a) 'error' is the gap between observed performance and a target (65% in the lesson) -- a single scalar that compresses many noisy signals (accuracy, kill rate, death rate) into one number, exactly the way speed is the scalar magnitude of a velocity vector (chat-43 vectors anchor: performance is a magnitude derived from weighted components). (b) 'rate' (0.1 * 0.01 = 0.001 per frame) makes adjustment slow enough to be invisible to the player, drifting over seconds rather than jumping per-event -- the same per-frame integration shape used in chat-44 physics for impulse-driven simulation response. (c) 'clamp' to [1, 10] prevents runaway: without it, a frustrated player who dies repeatedly would push current_difficulty below 1 (negative enemy speed) or a winning streak would push it above 10. Event-driven 'lower on death' rules are dominated by the most recent event and feel jerky; the continuous form is statistically stable.">B) The continuous form treats performance as a SCALAR signal that compresses noisy multi-source data (accuracy, kill rate, death rate) into one number, then drifts difficulty slowly via the small rate constant so adjustment is invisible per-frame; the clamp prevents runaway off the [1, 10] scale. Event-driven binary triggers are dominated by the most recent event, which feels jerky and over-reacts to noise.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="The clamp isn't an optimization. Without it, the integration runs unbounded -- a sustained 30-point performance error keeps subtracting from current_difficulty every frame, and after a few seconds the value goes negative and downstream multipliers (enemy_speed = mult ** 0.8) become NaN or imaginary. Clamping is correctness, not throughput.">C) The clamp to [1, 10] is a performance optimization that keeps the floating-point math fast; without it the continuous loop would still produce identical gameplay, just at slightly higher CPU cost.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> The lesson&rsquo;s <code>update_flow_based_difficulty</code> classifies flow state from <code>skill_challenge_ratio = player_skill / max(1, challenge_level)</code>: <code>&lt; 0.5</code> = FRUSTRATION, <code>&gt; 2</code> = BOREDOM, <code>0.7&ndash;1.3</code> = FLOW. A skilled player (skill = 80) plays the same lesson on three different difficulty settings: challenge = 30, challenge = 80, challenge = 160. What flow state does each produce, and what does that tell you about the relationship between difficulty and flow?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="This treats flow as a property of the difficulty number alone, ignoring the player. The whole point of the ratio form is that the SAME difficulty produces different flow states depending on the player's skill. A novice on 'Easy' is in flow; a pro on 'Easy' is bored. The lesson's classifier reads skill / challenge precisely because absolute difficulty alone tells you nothing about engagement.">A) Challenge 30 = FLOW (Easy is fun), challenge 80 = ANXIETY (Normal is the threshold), challenge 160 = FRUSTRATION (Hard is hard) &mdash; flow tracks the absolute difficulty setting, with FLOW reserved for the lower end and FRUSTRATION for the upper.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="At challenge 30, ratio = 80/30 = 2.67 (&gt; 2) -- BOREDOM. At challenge 80, ratio = 80/80 = 1.0 (in [0.7, 1.3]) -- FLOW. At challenge 160, ratio = 80/160 = 0.5 -- exactly at the FRUSTRATION threshold. SAME PLAYER, three different difficulties, three different flow states -- because flow tracks the GAP between skill and challenge (Csikszentmihalyi's flow channel), not the absolute level of either. This is why a single 'Hard' setting cannot be 'frustrating' or 'boring' in the abstract: a high-skill player may be in FLOW on Hard while a low-skill player on the same Hard setting is FRUSTRATED. Same rhetorical move as chat-46 M2 viewport-culling's '+2 is correctness not performance' and chat-47 M2 level_design's snapshot-vs-delta -- the driver of the design choice is not the obvious surface variable. Same axis as the chat-49 M2 polish_tweening Q3 distinction between camera (no-overshoot) and polish-feel (overshoot) -- context determines which side of the threshold is correct.">B) Challenge 30 ratio = 2.67 &rarr; BOREDOM; challenge 80 ratio = 1.0 &rarr; FLOW; challenge 160 ratio = 0.5 &rarr; FRUSTRATION. The same player produces three different flow states from three different difficulties because flow tracks the GAP between skill and challenge (Csikszentmihalyi&rsquo;s flow channel), not the absolute difficulty.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="This swaps boredom and frustration. Boredom is when skill greatly exceeds challenge (the player has nothing to do and stops paying attention); frustration is when challenge greatly exceeds skill (the player can't keep up and quits). The lesson's classifier puts BOREDOM at ratio &gt; 2 (skill far above challenge) and FRUSTRATION at ratio &lt; 0.5 (challenge far above skill).">C) Challenge 30 ratio = 2.67 &rarr; FRUSTRATION (the game is too easy and the player quits in disgust); challenge 80 ratio = 1.0 &rarr; FLOW; challenge 160 ratio = 0.5 &rarr; BOREDOM (the player gives up and stops trying). The boredom and frustration thresholds describe the player&rsquo;s emotional state when overwhelmed in either direction.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> The lesson&rsquo;s <code>update_parameters</code> derives <code>multiplier = current_difficulty / 5</code> and then applies different exponents per axis: <code>enemy_speed = pow(multiplier, 0.8)</code>, <code>enemy_health = pow(multiplier, 1.2)</code>, <code>player_damage = pow(2 - multiplier, 0.5)</code>. At difficulty = 10, multiplier = 2: <code>enemy_speed = 2 ** 0.8 &asymp; 1.74</code>, <code>enemy_health = 2 ** 1.2 &asymp; 2.30</code>. Why are the exponents <em>different</em> per axis instead of just multiplying every parameter by the multiplier?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="This treats per-axis exponents as a numerical accident. The lesson explicitly chooses 0.8 for speed (sublinear) and 1.2 for health (superlinear) because they shape FEEL: speed should compound less than health as difficulty rises, so high-difficulty enemies feel like bullet sponges (high hp ramp) without feeling unfair (lower speed ramp). Replacing them with a uniform multiplier collapses two intentionally-distinct curves into one.">A) The exponents are convenience numbers chosen to land near the canonical &ldquo;double at difficulty 10&rdquo; target; uniform multiplication (everything &times; mult) would produce visually identical gameplay and is the simpler implementation.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Per-axis exponents let one difficulty knob shape N independent feel curves. enemy_speed = mult ** 0.8 (sublinear, 1.74x at mult=2) keeps responsiveness in the player's reaction range -- if speed compounded as fast as health, hard difficulty would be 'unfair' rather than 'demanding'. enemy_health = mult ** 1.2 (superlinear, 2.30x at mult=2) makes high-end enemies feel disproportionately bullet-spongy, which is the canonical 'high-difficulty enemy' game-feel. player_damage = (2 - mult) ** 0.5 INVERSELY scales -- at mult = 2 it's (0) ** 0.5 = 0 in the limit, meaning hard difficulty REDUCES player damage, the inverse of enemy hp. One scalar, N axes, each axis tuned independently via its own exponent. Same one-knob-many-curves shape as chat-43 vectors (each coordinate transformed by its own coefficient -- camera_x at 1.0, parallax layers at 0.2 / 0.5 / 1.5) and chat-44 physics (per-component scaling -- gravity_y vs friction_x as separate parameters). Replacing the per-axis exponents with a single uniform multiplier collapses the design surface from N tunable curves into one shared curve and destroys the designer's ability to say 'hp should compound, but speed shouldn't' while keeping the same difficulty knob.">B) Per-axis exponents are how one difficulty scalar drives N independent feel curves: 0.8 (sublinear) keeps speed responsive without feeling unfair; 1.2 (superlinear) makes high-difficulty enemies feel disproportionately spongy; <code>(2 - mult) ** 0.5</code> inversely scales player damage so harder difficulty also weakens the player. One knob, N axes, each tuned independently &mdash; the same one-knob-many-curves shape as chat-43 vectors&rsquo; per-layer parallax coefficients and chat-44 physics&rsquo; per-component scaling.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="The exponents are not chosen for floating-point properties. pow(mult, 0.8) and mult * 0.8 take essentially the same time on modern CPUs; the choice is about CURVE SHAPE (where the value lands at low and high multipliers), not about computational cost. The lesson's Best Practice 'Multiple Axes: Vary different challenge types' calls out per-axis tuning explicitly as a design technique, not an optimization.">C) The exponents are chosen so that <code>pow(mult, k)</code> stays in a numerically stable range for floating-point math; replacing them with a uniform <code>mult * k_axis</code> linear scale would produce equivalent gameplay but accumulate floating-point error in long sessions.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

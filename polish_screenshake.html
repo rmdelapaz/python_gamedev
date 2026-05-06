@@ -1038,19 +1038,100 @@ class Ripple:
             <h2 id="practice-exercise-build-polish-screenshake">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Impact-Driven Trauma — Squared Envelope on a Camera Offset</h3>
+                <p><strong>Objective:</strong> Build an impact-shake demo (~60 lines) that exercises the three pillar trauma-system patterns from this lesson — trauma is additive and clamped, trauma decays linearly, visible shake is trauma squared — and applies the resulting offset to chat-46 M3's camera world↔screen translation as an additional offset so every world-space draw shakes in lockstep.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Build a horizontally scrolling world (1600 px wide) with a 32×48 player rect at center; arrow-key or A/D movement at 280 px/s; camera follows player centered with clamp to <code>[0, WORLD_W − SCREEN_W]</code> per chat-46 M3 pattern.</li>
+                    <li>Maintain a single trauma float starting at 0.0. On KEYDOWN, accumulate trauma additively with a clamp: <code>trauma = min(1.0, trauma + amount)</code>. Wire 1=0.20 (tap), 2=0.50 (medium), 3=0.90 (big boom). The clamp prevents trauma from exceeding 1.0; the addition makes successive hits stack rather than overwrite.</li>
+                    <li>Each frame, decay trauma LINEARLY: <code>trauma = max(0.0, trauma − DECAY_RATE * dt)</code> with <code>DECAY_RATE = 0.8</code> (trauma takes ~1.25 s to drain from 1.0 to 0.0).</li>
+                    <li>Compute visible shake as trauma SQUARED: <code>shake = trauma * trauma</code>. Per-frame random offset: <code>shake_x = MAX_OFFSET * shake * (random.random() * 2 − 1)</code> and same for <code>shake_y</code>, with <code>MAX_OFFSET = 18</code> px.</li>
+                    <li>Apply shake as an ADDITIONAL camera offset during world→screen translation: <code>screen = (world_x − camera_x + shake_x, world_y − camera_y + shake_y)</code>. Use this single transform for the world background blit AND the player rect — every world-space draw shakes together.</li>
+                    <li>HUD prints trauma (linear), shake (squared), and offset_x in pixels every frame so the trauma² relationship is visible: trauma=0.3 → shake=0.09 (barely visible jitter); trauma=0.9 → shake=0.81 (hard shake).</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The lesson's <code>ScreenShake.update</code> method does exactly this in three lines: <code>self.trauma = max(0, self.trauma - self.decay_rate * dt)</code> (linear decay), <code>shake = self.trauma * self.trauma</code> (squared envelope, with the explicit comment <code># trauma^2 for better feel</code>), and <code>self.offset_x = self.max_offset * shake * (random.random() * 2 - 1)</code> (random within the envelope). The shake offset is THEN added to the camera offset everywhere world coordinates get translated to screen coordinates — chat-46 M3 said <code>screen = world − camera</code>, this lesson says <code>screen = world − camera + shake</code>. Multiple impacts in rapid succession use the additive-clamped form <code>min(1.0, trauma + amount)</code> from the lesson's <code>add_trauma</code> method so successive hits stack without ever exceeding the max envelope.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame, random
+
+pygame.init()
+SCREEN_W, SCREEN_H = 800, 480
+WORLD_W = 1600
+screen = pygame.display.set_mode((SCREEN_W, SCREEN_H))
+clock = pygame.time.Clock()
+font = pygame.font.SysFont(None, 22)
+
+# World scene -- chat-46 M3 pattern: scrollable world wider than screen
+world = pygame.Surface((WORLD_W, SCREEN_H))
+world.fill((40, 40, 70))
+for x in range(0, WORLD_W, 80):
+    pygame.draw.rect(world, (60, 110, 60), (x, 360, 78, SCREEN_H - 360))
+for x in range(0, WORLD_W, 220):
+    pygame.draw.rect(world, (140, 90, 60), (x + 40, 290, 80, 70))
+
+player = pygame.Rect(SCREEN_W // 2, 312, 32, 48)
+camera_x = 0
+
+# Trauma state -- Squirrel Eiserloh GDC pattern
+trauma = 0.0
+DECAY_RATE = 0.8       # linear decay per second
+MAX_OFFSET = 18        # max shake pixels at trauma=1.0
+
+running = True
+while running:
+    dt = clock.tick(60) / 1000.0
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.KEYDOWN:
+            # Trauma is ADDITIVE + CLAMPED at 1.0 -- successive hits stack
+            if event.key == pygame.K_1:
+                trauma = min(1.0, trauma + 0.20)
+            elif event.key == pygame.K_2:
+                trauma = min(1.0, trauma + 0.50)
+            elif event.key == pygame.K_3:
+                trauma = min(1.0, trauma + 0.90)
+
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_LEFT] or keys[pygame.K_a]:
+        player.x -= int(280 * dt)
+    if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+        player.x += int(280 * dt)
+    player.x = max(0, min(WORLD_W - player.width, player.x))
+    camera_x = max(0, min(WORLD_W - SCREEN_W, player.centerx - SCREEN_W // 2))
+
+    # Trauma decays linearly
+    trauma = max(0.0, trauma - DECAY_RATE * dt)
+    # Visible shake envelope is trauma SQUARED -- the lesson's key insight
+    shake = trauma * trauma
+    shake_x = MAX_OFFSET * shake * (random.random() * 2 - 1)
+    shake_y = MAX_OFFSET * shake * (random.random() * 2 - 1)
+
+    # Render -- shake adds to chat-46 M3 camera offset
+    # screen = world - camera + shake (one transform; everything shakes together)
+    screen.fill((20, 20, 40))
+    screen.blit(world, (-camera_x + shake_x, shake_y))
+    pygame.draw.rect(screen, (220, 80, 80),
+                     (player.x - camera_x + shake_x,
+                      player.y + shake_y,
+                      player.width, player.height))
+
+    # HUD shows trauma (linear) AND shake (squared) -- relationship visible
+    hud = [
+        f"trauma:   {trauma:.3f}   (linear decay)",
+        f"shake:    {shake:.3f}   (= trauma * trauma)",
+        f"offset_x: {shake_x:+6.2f}px",
+        "1=tap   2=medium   3=big   arrows=move",
+    ]
+    for i, line in enumerate(hud):
+        screen.blit(font.render(line, True, (240, 240, 240)), (12, 12 + i * 22))
+    pygame.display.flip()
+
+pygame.quit()
+</code></pre>
                 </details>
             </div>
 
@@ -1058,31 +1139,31 @@ class Ripple:
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> The lesson's <code>ScreenShake.update</code> computes <code>shake = self.trauma * self.trauma</code> (trauma squared) and uses that — not <code>shake = self.trauma</code> — to drive the per-frame offset. Why?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Squaring is one CPU multiply — no faster than the linear form. The squaring is a feel choice, not a performance optimization.">A) Squaring is faster on modern CPUs than the linear form</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Best Practice 'Less is More' through curve weighting. At trauma=0.3 the linear form would shake at 0.3 of MAX_OFFSET (visible jitter even from a tap), but the squared form gives 0.09 (barely noticeable) — which feels right because a small tap shouldn't shake the whole screen. At trauma=0.9 both are close (0.9 vs 0.81) so big hits still shake hard. The squared envelope also makes the TAIL of a big hit fade faster than the trauma value itself decays linearly: as trauma drops from 1.0 to 0.5, shake drops from 1.0 to 0.25 — a sharper falloff than the underlying trauma. This is the canonical Squirrel Eiserloh GDC pattern, marked in the lesson's source by the comment 'trauma^2 for better feel'.">B) Squaring makes light hits barely shake while big hits still shake hard, and makes the tail of a big hit fade faster than the underlying trauma</button>
+                        <button class="quiz-option" data-correct="false" data-hint="pygame's blit and transform APIs accept any offset value — they don't know or care about trauma. The squared envelope is applied in user code, before the offset is passed to blit.">C) pygame's blit API requires offsets to be derived from a squared input</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> When trauma is non-zero, every visible object in the demo — player, world background, future enemies and projectiles — jitters together in lockstep. How is this achieved in the rendering pipeline?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Mutating each sprite's position would (a) desync UI elements that should NOT shake, (b) leak shake offset into game logic so collision checks would use shaken positions and break gameplay, and (c) require resetting every sprite's offset every frame to avoid drift.">A) Each sprite's position attribute is mutated by a small random offset every frame</button>
+                        <button class="quiz-option" data-correct="false" data-hint="pygame doesn't expose programmable shaders for blit-time pixel filters. Screen shake is a 2D translation applied during the world-to-screen transform, before blit — a transform on coordinates, not a filter on pixels.">B) A post-processing pixel-shader filter is applied to the rendered frame after blit</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Shake is an ADDITIONAL camera offset added during world-to-screen translation. The chat-46 M3 camera lesson defined world_to_screen as 'subtract the camera position' (screen = world − camera). Screen shake adds two more terms each frame: screen = world − camera + shake. Because EVERY world-space draw call routes through this same transform, every visible object shifts by the same shake offset on the same frame — the entire scene wobbles in lockstep, which is what reads as 'the screen is shaking' rather than 'each thing is vibrating independently'. Screen-space UI that should NOT shake is rendered AFTER the world layer, without the shake offset, keeping HUD elements rock-steady while the gameplay world rattles.">C) The shake offset is added to the camera position during world-to-screen translation, so every world-space draw shifts together that frame</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> The player fires a gun (impact triggers <code>add_trauma(0.4)</code>); 100 ms later the bullet hits an enemy (impact triggers another <code>add_trauma(0.4)</code>). What value does trauma take after the second hit lands, and why is the lesson's <code>add_trauma</code> implementation specifically <code>self.trauma = min(1.0, self.trauma + amount)</code>?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="The 'replace' anti-pattern (trauma = amount) would make a small hit landing AFTER a big explosion suddenly DECREASE the shake from 1.0 to 0.2 — the screen would un-shake mid-shake, which feels wrong. The lesson's add_trauma explicitly does the additive-clamped form to avoid this.">A) trauma = 0.4 (the new amount replaces the previous value, regardless of what it was)</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="trauma is ADDITIVE and CLAMPED at 1.0. The first hit raises trauma 0.0 → 0.4. In the 100 ms before the second hit, linear decay at DECAY_RATE=0.8 reduces it by 0.08 to ≈0.32. The second hit adds another 0.4, bringing trauma to ≈0.72. The result is a stronger shake than either hit alone, because the trauma values stacked. The clamp at 1.0 prevents a third or fourth quick-succession hit from exploding past the max envelope — successive hits at trauma=0.95 would otherwise push it to 1.35, but the min() pins it to 1.0. This stacking-with-ceiling property is what makes screen shake 'feel right' in busy combat scenes (chain-fire weapons, multi-enemy explosions) — small hits in rapid succession build up to a satisfying compounded shake, exactly like real impacts compound, while no single combo can push past the 'maximum chaos' envelope. Same principle as chat-43 game_mathematics 'Player Psychology: Fair ≠ Fun' Best Practice — controlled randomness shaped to feel right rather than be statistically pure.">B) trauma ≈ 0.72 (additive: ~0.32 remaining after decay + 0.4 from the new hit), and the clamp prevents it from ever exceeding 1.0</button>
+                        <button class="quiz-option" data-correct="false" data-hint="The 'high-water mark' anti-pattern (trauma = max(trauma, amount)) handles 'small after big' correctly but ignores hits that should still feel — five rapid taps of 0.2 each would just keep trauma at 0.2 forever instead of accumulating into a chain-fire shake. The additive-clamped form preserves both 'big hit dominates small' (via the clamp at 1.0) AND 'small hits compound' (via addition).">C) trauma = max(prev, 0.4) — the larger of the previous trauma and the new amount wins, like a high-water mark</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

@@ -1574,19 +1574,122 @@ class LevelEditor:
             <h2 id="practice-exercise-build-platformer-level-design">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Mini Level Editor — Place, Snap, Undo, Save in 80 Lines</h3>
+                <p><strong>Objective:</strong> Build a runnable pygame level editor that exercises the four pillar level-design patterns from the lesson — grid-snapping placement, snapshot-based undo via history list + index, JSON serialization round-trip, and design-time validation — in one program. This is the chat-46 M2 tilemap lesson seen from the OTHER side: tilemap is the runtime data structure that level_design AUTHORS.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Build a 800×480 pygame window with a 32-pixel grid drawn as a faint blue line overlay. Number keys 1/2/3/4 select tool: platform (96×32 brown), spike (32×32 red), coin (24×24 gold), checkpoint (32×64 green). Use a <code>TOOLS</code> dict keyed by <code>pygame.K_1..K_4</code> mapping to <code>(kind, (w, h), color)</code> tuples.</li>
+                    <li>Implement <code>snap(v) = round(v / GRID) * GRID</code> — round-to-nearest, NOT floor. A click at (49, 49) snaps to (64, 64) because 49 is closer to 64 than to 32. This is the critical contrast with chat-46 M2 tilemap's <code>world_to_tile</code> floor (which DOES want floor: a world position at x=49 belongs to the cell spanning x=32..63).</li>
+                    <li>Render a translucent outline preview at the snapped cursor position each frame — the user sees exactly where their click will land before clicking. Mouse-down places a real object: append <code>(kind, snap(mx), snap(my), w, h, color)</code> to <code>objects</code> list, then call <code>push_history()</code>.</li>
+                    <li>Implement <code>push_history()</code> using deep-copy snapshots: <code>history = history[:history_index + 1]; history.append(deepcopy(objects)); history_index += 1</code>. The truncation discards any redo tail when a new edit lands after an undo — history must always match the path of edits actually applied. Press Z to undo (decrement index, restore snapshot).</li>
+                    <li>Press S to save: serialize <code>objects</code> to JSON via list comprehension <code>[{'kind': k, 'x': x, ...} for ... in objects]</code> dumped to <code>level.json</code>. Press V to validate: check <code>any(o[0] == 'checkpoint' for o in objects)</code> and return a status message. Validation runs at DESIGN time (V key, save time) — not in the runtime gameplay loop.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>Four patterns, four traps. (1) Use <code>round</code> not <code>int</code> or <code>//</code> for snapping — different operators for different intents (round-to-nearest for click-where-I-mean placement; floor for which-cell-contains-this-point lookup as in chat-46 M2 tilemap). (2) Use <code>copy.deepcopy</code> not <code>list(objects)</code> — shallow copy means mutating one snapshot mutates all. (3) Truncate the redo tail BEFORE appending the new snapshot, otherwise undo+new-edit followed by redo restores stale state. (4) Validation is a design-time discipline; calling <code>validate()</code> in the gameplay loop is wrong scope — by then the level is already loaded and the player is already stuck without a respawn.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame
+import json
+import sys
+from copy import deepcopy
+
+pygame.init()
+SCREEN_W, SCREEN_H = 800, 480
+GRID = 32
+
+screen = pygame.display.set_mode((SCREEN_W, SCREEN_H))
+pygame.display.set_caption("Mini Level Editor — Place, Snap, Undo, Save")
+clock = pygame.time.Clock()
+font = pygame.font.SysFont(None, 22)
+
+# Tool palette: number key → (kind, (w, h), color)
+TOOLS = {
+    pygame.K_1: ('platform',   (96, 32), (130,  90,  50)),
+    pygame.K_2: ('spike',      (32, 32), (200,  50,  50)),
+    pygame.K_3: ('coin',       (24, 24), (255, 215,   0)),
+    pygame.K_4: ('checkpoint', (32, 64), ( 50, 200,  50)),
+}
+
+current_key = pygame.K_1
+objects = []                 # list of (kind, x, y, w, h, color)
+history = [[]]               # snapshot stack; history[0] = empty level
+history_index = 0
+status = "Click to place. Z=undo  S=save  V=validate  1/2/3/4=tool"
+
+def snap(v):
+    """Round-to-nearest — picks the closest grid line, NOT the floor.
+    Click at 49 snaps to 64 (49 is closer to 64 than to 32). Distinct from
+    chat-46 M2 world_to_tile floor: different operations for different intents."""
+    return round(v / GRID) * GRID
+
+def push_history():
+    """Snapshot-based undo. Truncate redo tail BEFORE appending so history
+    always matches the actual edit path applied to objects."""
+    global history, history_index
+    history = history[:history_index + 1]
+    history.append(deepcopy(objects))
+    history_index += 1
+
+def undo():
+    """Pointer walk + snapshot restore. No inverse logic per action type."""
+    global objects, history_index
+    if history_index &gt; 0:
+        history_index -= 1
+        objects = deepcopy(history[history_index])
+
+def save_json(path='level.json'):
+    """Design data → portable JSON via to_dict round-trip pattern."""
+    with open(path, 'w') as f:
+        json.dump([{'kind': k, 'x': x, 'y': y, 'w': w, 'h': h}
+                   for (k, x, y, w, h, _) in objects], f, indent=2)
+    return path
+
+def validate():
+    """Design-time invariant. Catches missing checkpoint BEFORE play, when
+    the cost of fixing is one click in the editor instead of a re-ship."""
+    if not any(o[0] == 'checkpoint' for o in objects):
+        return "MISSING: at least one checkpoint required"
+    return f"OK: {len(objects)} objects pass design-invariants"
+
+while True:
+    clock.tick(60)
+    for e in pygame.event.get():
+        if e.type == pygame.QUIT:
+            pygame.quit(); sys.exit()
+        elif e.type == pygame.KEYDOWN:
+            if e.key in TOOLS:
+                current_key = e.key
+                status = f"Tool: {TOOLS[e.key][0]}"
+            elif e.key == pygame.K_z:
+                undo(); status = f"Undo: {len(objects)} obj, history@{history_index}"
+            elif e.key == pygame.K_s:
+                status = f"Saved {len(objects)} obj to {save_json()}"
+            elif e.key == pygame.K_v:
+                status = validate()
+        elif e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
+            kind, (w, h), color = TOOLS[current_key]
+            x, y = snap(e.pos[0]), snap(e.pos[1])
+            objects.append((kind, x, y, w, h, color))
+            push_history()
+            status = f"Placed {kind} at ({x},{y})  history@{history_index}"
+
+    # Draw
+    screen.fill((28, 28, 40))
+    for gx in range(0, SCREEN_W, GRID):
+        pygame.draw.line(screen, (50, 50, 70), (gx, 0), (gx, SCREEN_H))
+    for gy in range(0, SCREEN_H, GRID):
+        pygame.draw.line(screen, (50, 50, 70), (0, gy), (SCREEN_W, gy))
+    for (kind, x, y, w, h, color) in objects:
+        pygame.draw.rect(screen, color, (x, y, w, h))
+    # Snapped cursor outline preview
+    mx, my = pygame.mouse.get_pos()
+    px, py = snap(mx), snap(my)
+    _, (w, h), color = TOOLS[current_key]
+    pygame.draw.rect(screen, color, (px, py, w, h), 2)
+    screen.blit(font.render(status, True, (240, 240, 240)), (10, SCREEN_H - 30))
+    pygame.display.flip()</code></pre>
                 </details>
             </div>
 
@@ -1594,31 +1697,31 @@ class LevelEditor:
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> The editor's <code>snap(v)</code> uses <code>round(v / GRID) * GRID</code>. The chat-46 M2 tilemap lesson's <code>world_to_tile</code> uses <code>int(wx // tile_size)</code> (floor division). A click at (49, 49) with GRID = 32 snaps to (64, 64) in this editor; the same world position belongs to tile (1, 1) (cell spanning 32..63) in tilemap. Why different operators for what looks like the same conversion?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="They are not interchangeable. Try replacing snap with floor in the editor and place an object near the right edge of a cell — the visual offset between cursor preview and final placement will reveal the mismatch immediately. The operator encodes design intent, not just numerical output.">A) They're the same operation written two different ways — round and floor agree at integer boundaries, so the difference is cosmetic.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Performance is not the differentiator on integer arithmetic of this scale; both round and floor are O(1) and effectively free. The choice is about intent: where the user wants the object to land vs which cell contains a given world point.">B) round is faster on floats, floor is faster on integers — both produce the same result; the editor uses round for performance, tilemap uses floor for memory layout.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="They encode different INTENTS. Level-design snapping asks 'where does the user MEAN to place this?' — the answer is the nearest grid line to where they clicked, so round-to-nearest is correct (49 snaps to 64 because the user's intent is closer to 64 than to 32). Tilemap world_to_tile asks 'which cell CONTAINS this world point?' — the answer is the cell whose range includes the position, so floor-to-cell-containing is correct (world x=49 is inside the cell spanning x=32..63, which is tile index 1). Same numerical input, different question, different operator. The chat-46 M2 catalog explicitly notes this asymmetry: world_to_tile uses // because 'tile_x must be an integer INDEX into the 2D layers[y][x] array,' a containment query. Snap to grid is a placement query — distinct discipline. Distractors test the equivalence anti-model (they only agree at exact grid boundaries — at x=48 (midpoint) round picks 64 while floor picks 32, a full grid cell of disagreement) and the performance anti-model (operator choice is semantic, not throughput; both are O(1) integer ops).">C) Different intents — snap asks 'which grid line is the click closest to?' (round-to-nearest matches user placement intent), world_to_tile asks 'which cell CONTAINS this world point?' (floor matches array-index containment).</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> <code>push_history()</code> runs <code>history = history[:history_index + 1]</code> BEFORE appending the new snapshot. What goes wrong if you remove the truncation, and why was snapshot-based undo chosen over delta-based?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Memory is not the immediate failure mode — even 50 snapshots of a small object list is a few KB. The failure is correctness: without truncation, the redo path no longer corresponds to the edit path actually applied, so redo restores STALE state.">A) Removing truncation only causes memory bloat — the editor still works correctly, just stores extra history entries that take up RAM until garbage-collected.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Without truncation, after undo+new-edit the history retains the OLD redo path: history = [empty, A, AB, ABC] with index pointing to A; user undoes (index → 0); user places D (which should produce history [empty, AD]). Without truncation you get [empty, A, AB, ABC, AD] with index → 4, so a subsequent redo would restore B (which was 'undone' and never re-applied, but appears in history as if it were the next state). The redo path silently goes back to a state that doesn't match the actual edit chain. Truncation discards [AB, ABC] when D lands at index 1, replacing the redo tail with [AD] so history matches the path applied. Snapshot-based was chosen over delta-based for SIMPLICITY: snapshots store the full state at each step (deep-copy of objects list ~few hundred bytes per snapshot, trivial for the 50-snapshot cap); delta-based would require per-action-type INVERSE logic (`place` undoes by `remove`, `move` undoes by `move-back-by-negative-dx`, `delete` undoes by `re-place-at-original-position`) which doubles the action surface area — every new tool needs both forward and inverse implementations and a serialization format for both. Same simplicity-vs-memory tradeoff as chat-44 M5's fixed-timestep determinism (full state replay vs delta replay). Distractors test the memory anti-model (correctness, not memory, drives the design) and the always-truncate anti-model (truncation is conditional on a non-tip edit; if history_index is already at the tip, history[:history_index + 1] is a no-op slice — Python handles the edge case correctly without a special branch).">B) Without truncation, after undo+new-edit a subsequent redo restores STALE state from the abandoned timeline. Snapshot-based wins on simplicity — delta-based requires inverse logic per action type, doubling the surface area for every tool added.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="The append always adds the new state at the end; the truncation is what discards the abandoned redo tail. Without truncation, the new state ends up after the abandoned redo entries rather than replacing them, so undo/redo navigation visits stale snapshots.">C) Removing truncation causes the new snapshot to be inserted at history_index instead of at the end, scrambling the chronological order of edits.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> <code>validate()</code> is bound to the V key (design-time call) and to save-time, NOT called in the runtime gameplay loop. The chat-46 M2 tilemap's <code>is_solid</code> out-of-bounds=True is a runtime invariant called every collision check. Why are these two correctness mechanisms placed at different lifecycle stages?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Performance is part of the picture but not the principle. validate is also slow per call (iterates all objects), but it runs ONCE at save time, not 60 times per second. is_solid is fast and runs continuously. The deeper question is at what stage each invariant is meaningful — and where the cost of failure is borne.">A) Performance — validate is too slow to run every frame, while is_solid is O(1) so it can run every collision check. Both could in principle run at either stage, but performance dictates the choice.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Both are checked invariants — they share the discipline of programmatic verification. The placement difference is about WHO is being protected (designer vs player) and WHAT the failure mode looks like in their hands.">B) is_solid is a checked invariant, validate is uncheckable — design issues can only be flagged with text warnings to a human, while collision is purely numerical so it can be enforced automatically.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="They protect against failures at different STAGES of the level's lifecycle, with different failure costs. is_solid is a RUNTIME invariant: the player is in the level right now, and the moment the player attempts to walk off the world bounds the engine must give a definitive answer. Failure cost = bug in the shipped level (player falls through floor or walks into void). validate is a DESIGN-TIME invariant: Ray (the level designer) is editing the level and should be told 'this level has no checkpoint' WHILE THE FILE IS STILL OPEN, because the cost of fixing is one click (place a checkpoint) instead of a player-facing patch. By the time the level is loaded into the gameplay loop and the player is moving through it, fixing 'no checkpoint' means re-shipping the level file — too late. Same correctness discipline, different lifecycle: design-time validation catches issues in the editor where they're cheap to fix; runtime invariants catch issues in play where the engine has to behave correctly even with malformed input. The chat-46 M2 'fail-safe defaults' Saltzer & Schroeder framing applies to BOTH (default to deny when in doubt) but the deny-action differs: validate refuses to mark the level 'shipped' without the required pieces; is_solid refuses to let the player walk into the void. Distractors test the performance-only anti-model (runtime cost matters but isn't the principle) and the checkability anti-model (validate IS programmatically checkable; the warning text is just the user-facing surface).">C) Different lifecycle stages with different failure costs. validate runs at DESIGN time so the level designer can fix issues while the file is still open (cost: one click); is_solid runs at RUNTIME so the engine answers correctly even when the player walks into a malformed region (cost of misbehavior: shipped bug).</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

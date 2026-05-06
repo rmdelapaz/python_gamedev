@@ -930,19 +930,158 @@ class Tilemap:
             <h2 id="practice-exercise-build-platformer-tilemap">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Tile World Navigator — Coords + Culling + Broad-Phase in One Loop</h3>
+                <p><strong>Objective:</strong> Build a runnable pygame mini-platformer that exercises the three pillar tilemap patterns from the lesson — <code>world_to_tile</code> for grid-from-world conversion, viewport culling for rendering, and <code>get_surrounding_tiles</code> as a broad-phase for collision — in one ~80-line program. The world (40×25 tiles) is much larger than the screen so the camera scrolls, making both culling and broad-phase pay off visibly. A live HUD reports collision-checked tiles vs total and rendered tiles vs total each frame, turning the abstract optimizations into concrete percentage savings.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Set up a 640×480 pygame window with <code>TILE = 24</code>, <code>MAP_W, MAP_H = 40, 25</code> (so the world is 960×600 — wider AND taller than the screen, forcing camera scroll on both axes if you build vertical level features).</li>
+                    <li>Build the world as a 2D Python list <code>tiles[y][x]</code> with three tile types — <code>EMPTY = 0</code>, <code>GROUND = 1</code>, <code>COIN = 2</code> — and a <code>SOLID = {GROUND}</code> set used by <code>is_solid</code>. Fill the bottom 5 rows with GROUND, add 1–2 floating platforms with GROUND tiles, and scatter ~6 COIN tiles in reachable positions.</li>
+                    <li>Implement <code>world_to_tile(wx, wy)</code> with integer division: <code>return int(wx // TILE), int(wy // TILE)</code>. The integer floor is what maps continuous world positions to discrete grid indices (the lesson's <code>Tilemap.world_to_tile</code> pattern verbatim).</li>
+                    <li>Implement <code>is_solid(tx, ty)</code> following the lesson's pattern: in-bounds returns <code>tiles[ty][tx] in SOLID</code>; <strong>out-of-bounds returns True</strong> so the void surrounding the level acts as an invisible wall, removing the need for a separate bounds check at every collision call site.</li>
+                    <li>Implement <code>surrounding_tiles(wx, wy, radius=1)</code> following the lesson's <code>get_surrounding_tiles</code> pattern: convert <code>(wx, wy)</code> to a center tile via <code>world_to_tile</code>, then return all <code>(cx+dx, cy+dy)</code> for <code>dx, dy in [-radius..radius]</code>. With radius=1 this is 9 tiles — the broad-phase set.</li>
+                    <li>Player movement: arrow keys for horizontal, SPACE for jump; gravity adds to vy each frame. For <strong>collision resolution</strong>, do TWO passes (X then Y), and for each pass only iterate the 9 surrounding tiles from <code>surrounding_tiles(player_center)</code> — NOT all 1000 tiles in the map. On collision, snap <code>player.right = tile.left</code> (rightward), <code>player.left = tile.right</code> (leftward), <code>player.bottom = tile.top</code> (downward, also sets <code>grounded = True</code>), or <code>player.top = tile.bottom</code> (upward).</li>
+                    <li>Coin collection: walk the same surrounding-tiles set; if any cell is COIN, set <code>tiles[ty][tx] = EMPTY</code> and increment score.</li>
+                    <li>Camera follow: <code>camera_x = clamp(player_x - SCREEN_W/2, 0, MAP_W*TILE - SCREEN_W)</code> so the player stays centered horizontally and the camera doesn't show off-world gray bars at level edges.</li>
+                    <li><strong>Viewport culling</strong> in render: derive <code>start_x = max(0, int(camera_x // TILE))</code> and <code>end_x = min(MAP_W, int((camera_x + SCREEN_W) // TILE) + 2)</code> (the +2 is the off-screen edge buffer that prevents pop-in as the camera pans by sub-tile amounts). Iterate ONLY <code>start_x..end_x</code>, not <code>0..MAP_W</code> — counting <code>rendered</code> tiles each frame proves the optimization is real.</li>
+                    <li>HUD shows three live numbers per frame: player tile coord <code>(tx, ty)</code> + score; collision-checked tiles count + percentage of total; rendered tiles count + percentage of total. With a 40×25 = 1000-tile world, expect ~9/1000 = 0.9% checked and ~28/1000 = 2.8% rendered — a 99%+ work reduction made concrete on screen.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The two-pass collision resolution (move X, resolve X collisions; then move Y, resolve Y collisions) is what avoids the corner-snag bug where a player approaching a corner gets snapped to the wrong axis. Resolving both axes simultaneously from one combined position update would arbitrate ties incorrectly — separating into two passes lets gravity-versus-walk resolutions happen independently. The pattern is identical to chat-44 M4's reflection-only-when-approaching gate: do one transform, resolve, do the next transform.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>"""Tile World Navigator — world_to_tile + viewport culling + broad-phase collision."""
+import pygame, sys
+
+pygame.init()
+SCREEN_W, SCREEN_H = 640, 480
+TILE = 24
+MAP_W, MAP_H = 40, 25
+SCREEN = pygame.display.set_mode((SCREEN_W, SCREEN_H))
+pygame.display.set_caption("Tile World Navigator")
+FONT = pygame.font.SysFont("monospace", 13)
+CLOCK = pygame.time.Clock()
+
+EMPTY, GROUND, COIN = 0, 1, 2
+SOLID = {GROUND}
+
+# Build the world (40 wide, 25 tall = 1000 tiles)
+tiles = [[EMPTY] * MAP_W for _ in range(MAP_H)]
+for x in range(MAP_W):                     # ground floor (rows 20-24)
+    for y in range(20, 25):
+        tiles[y][x] = GROUND
+for x in range(8, 14):  tiles[15][x] = GROUND   # floating platform 1
+for x in range(20, 27): tiles[12][x] = GROUND   # floating platform 2
+for x in range(30, 35): tiles[16][x] = GROUND   # floating platform 3
+for (cx, cy) in [(10, 14), (12, 14), (23, 11), (25, 11), (32, 15), (5, 19)]:
+    tiles[cy][cx] = COIN
+
+def world_to_tile(wx, wy):
+    return int(wx // TILE), int(wy // TILE)
+
+def is_solid(tx, ty):
+    if 0 &lt;= tx &lt; MAP_W and 0 &lt;= ty &lt; MAP_H:
+        return tiles[ty][tx] in SOLID
+    return True  # out-of-bounds is solid (invisible wall around level)
+
+def surrounding_tiles(wx, wy, radius=1):
+    cx, cy = world_to_tile(wx, wy)
+    return [(cx + dx, cy + dy)
+            for dy in range(-radius, radius + 1)
+            for dx in range(-radius, radius + 1)]
+
+# Player + camera
+P_W = P_H = 18
+px, py = 100.0, 400.0
+vx, vy = 0.0, 0.0
+SPEED, GRAV, JUMP = 240.0, 1400.0, 520.0
+grounded = False
+camera_x = 0.0
+score = 0
+
+while True:
+    dt = CLOCK.tick(60) / 1000.0
+    for e in pygame.event.get():
+        if e.type == pygame.QUIT:
+            pygame.quit(); sys.exit()
+        if e.type == pygame.KEYDOWN and e.key == pygame.K_SPACE and grounded:
+            vy = -JUMP; grounded = False
+
+    keys = pygame.key.get_pressed()
+    vx = ((1 if keys[pygame.K_RIGHT] or keys[pygame.K_d] else 0)
+        - (1 if keys[pygame.K_LEFT]  or keys[pygame.K_a] else 0)) * SPEED
+    vy += GRAV * dt
+
+    # X-axis movement + broad-phase collision
+    px += vx * dt
+    rect = pygame.Rect(int(px), int(py), P_W, P_H)
+    cx_world, cy_world = px + P_W / 2, py + P_H / 2
+    for tx, ty in surrounding_tiles(cx_world, cy_world):
+        if is_solid(tx, ty):
+            tile_rect = pygame.Rect(tx * TILE, ty * TILE, TILE, TILE)
+            if rect.colliderect(tile_rect):
+                if vx &gt; 0:   rect.right = tile_rect.left
+                elif vx &lt; 0: rect.left  = tile_rect.right
+                px = float(rect.x); vx = 0
+
+    # Y-axis movement + broad-phase collision
+    py += vy * dt
+    rect = pygame.Rect(int(px), int(py), P_W, P_H)
+    cx_world, cy_world = px + P_W / 2, py + P_H / 2
+    grounded = False
+    for tx, ty in surrounding_tiles(cx_world, cy_world):
+        if is_solid(tx, ty):
+            tile_rect = pygame.Rect(tx * TILE, ty * TILE, TILE, TILE)
+            if rect.colliderect(tile_rect):
+                if vy &gt; 0:
+                    rect.bottom = tile_rect.top; grounded = True
+                elif vy &lt; 0:
+                    rect.top = tile_rect.bottom
+                py = float(rect.y); vy = 0
+
+    # Coin pickup (also via broad-phase)
+    cx_world, cy_world = px + P_W / 2, py + P_H / 2
+    for tx, ty in surrounding_tiles(cx_world, cy_world):
+        if 0 &lt;= tx &lt; MAP_W and 0 &lt;= ty &lt; MAP_H and tiles[ty][tx] == COIN:
+            prect = pygame.Rect(int(px), int(py), P_W, P_H)
+            crect = pygame.Rect(tx * TILE, ty * TILE, TILE, TILE)
+            if prect.colliderect(crect):
+                tiles[ty][tx] = EMPTY; score += 1
+
+    # Camera follow
+    camera_x = max(0, min(MAP_W * TILE - SCREEN_W, px - SCREEN_W / 2))
+
+    # VIEWPORT CULLING — render only tiles in screen window
+    SCREEN.fill((135, 206, 235))
+    start_x = max(0, int(camera_x // TILE))
+    end_x   = min(MAP_W, int((camera_x + SCREEN_W) // TILE) + 2)
+    rendered = 0
+    for y in range(MAP_H):
+        for x in range(start_x, end_x):
+            t = tiles[y][x]
+            if t == EMPTY: continue
+            sx, sy = x * TILE - camera_x, y * TILE
+            if t == GROUND:
+                pygame.draw.rect(SCREEN, (139, 69, 19), (sx, sy, TILE, TILE))
+            elif t == COIN:
+                pygame.draw.circle(SCREEN, (255, 215, 0),
+                                   (int(sx + TILE / 2), int(sy + TILE / 2)), TILE // 3)
+            rendered += 1
+    pygame.draw.rect(SCREEN, (240, 200, 80), (px - camera_x, py, P_W, P_H))
+
+    # HUD — make the optimizations concrete
+    total = MAP_W * MAP_H
+    checked = 9  # surrounding_tiles with radius=1 always returns 9
+    ptx, pty = world_to_tile(cx_world, cy_world)
+    hud = [
+        f"Player tile: ({ptx}, {pty})   Score: {score}",
+        f"Checked: {checked:3d} / {total} tiles  ({checked * 100 / total:5.2f}%)",
+        f"Rendered: {rendered:3d} / {total} tiles  ({rendered * 100 / total:5.2f}%)",
+    ]
+    for i, line in enumerate(hud):
+        SCREEN.blit(FONT.render(line, True, (0, 0, 0)), (8, 8 + i * 17))
+    pygame.display.flip()</code></pre>
                 </details>
             </div>
 
@@ -950,31 +1089,31 @@ class Tilemap:
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> The lesson's <code>Tilemap.world_to_tile</code> method computes <code>tile_x = int(world_x // self.tile_size)</code> using integer division (<code>//</code>) rather than regular division (<code>/</code>). Why?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Performance is not the design driver — both `/` and `//` are fast on modern CPUs, and the int() cast would handle truncation either way. The real reason is semantic: tile_x must be an integer index into the 2D layers array, and integer division floors continuous world positions to the tile cell containing them.">A) <code>//</code> is faster than <code>/</code> in Python.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Correct — tile_x is an integer INDEX into the 2D layers[y][x] array, and integer division floors any sub-tile world position to the tile cell that contains it. World_x = 47.8 with tile_size = 32 must map to tile 1 (the cell spanning world x=32..63), not tile 1.49 — the float would crash with `TypeError: list indices must be integers`. world_to_tile is the bridge from continuous world space to discrete grid indices, and integer division is the operator that performs that conversion. Same gridsense as chat-43 coordinates Q3's off-by-one boundary on a width-N screen.">B) tile_x is an integer index into the 2D <code>layers</code> array; integer division floors continuous world positions to the tile cell containing them, so two world positions inside the same tile (e.g., 32.0 and 47.8 with tile_size=32) both map to the same integer tile coordinate (1).</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Integer division does NOT 'avoid' negative tile coords — Python's `-5 // 32 = -1`, which IS a negative tile coordinate. The lesson's bounds check `0 &lt;= x &lt; self.width` is what guards against negative indices, not the division operator. The semantic point about flooring continuous world space into discrete grid indices is the actual design driver.">C) Regular division would return a negative tile coordinate for negative world positions; integer division avoids that.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> The lesson's <code>Tilemap.render</code> method culls to a viewport: <code>start_x = max(0, camera_x // tile_size)</code> and <code>end_x = min(width, (camera_x + screen.get_width()) // tile_size + 2)</code>, then loops only <code>start_x..end_x</code>. Why is viewport culling done in the rendering loop every frame, instead of once at level load by trimming the tilemap to viewport-sized regions?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="The per-frame computation is 4 cheap arithmetic operations (two divides, a max, a min) — negligible compared to the cost of drawing thousands of tiles. The real reason for per-frame culling is that the camera pans, which shifts which tiles are visible every frame. A trimmed-at-load tilemap couldn't show the off-screen tiles the camera will reveal as it scrolls.">A) Trimming once at level load would be faster overall because per-frame culling computes start_x/end_x every frame.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Correct — the data structure must stay full-size because the camera moves every frame; what's off-screen this frame is on-screen the next. Trimming the tilemap data at load would destroy the tiles the camera will reveal as it pans. Per-frame culling is purely a rendering-loop optimization — the renderer iterates ~28 visible tiles instead of 1000 (a ~97% draw-call reduction) without changing the underlying data. The `+ 2` in `end_x` is the off-screen edge buffer that prevents pop-in as the camera scrolls by sub-tile increments. Best Practice 'Viewport Culling: Only render visible tiles' + Key Takeaway 'Viewport culling optimizes rendering' — both refer to per-frame rendering work, not data-structure size.">B) The tilemap data must stay full-size because the camera moves every frame; what's off-screen this frame is on-screen the next. Trimming the data structure would destroy tiles the camera will need as it pans. Culling is a per-frame rendering optimization, not a data-structure decision.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="A 1000×1000 tile map with int tile IDs is ~4 MB — small for any modern machine. Memory savings aren't the driver; rendering work-skipping per frame is. Per-frame culling iterates ~28 visible tiles instead of 1000 — a ~97% draw-call reduction independent of how much RAM the tile data uses.">C) Memory savings: trimming reduces the tilemap's RAM footprint.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> The lesson's <code>Tilemap.is_solid</code> method ends with <code>return True  # Out of bounds is solid</code>. Why return True for tile coordinates outside the tilemap, instead of returning False or raising an exception?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Returning True doesn't trigger any exception — it's just a boolean return. The design isn't error-handling; it's a deliberate gameplay invariant. The actual reason is that the void surrounding the level acts as an invisible wall, blocking the player from falling off the world without a separate bounds check at every call site.">A) Returning True ensures Python raises a KeyError downstream so the caller can detect bounds errors.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Correct — the pattern collapses two concerns (is this cell a solid tile? + is this cell in-bounds?) into one boolean answer that's correct for movement-blocking purposes. Without it, every place that calls is_solid would also need to check `0 &lt;= x &lt; width and 0 &lt;= y &lt; height`, doubling the gate logic at every collision call site. With it, the player can walk into the level edge and gets blocked exactly as if there were a wall there — same behavior as Mario hitting the left edge of World 1-1. The pattern is widespread enough that the lesson's source explicitly comments it as a design choice rather than a quirk.">B) The void surrounding the level acts as an invisible wall, which prevents the player from falling off the world without a separate bounds check at every collision call site. Movement code asks <code>is_solid(tx, ty)</code> once and gets True for both real solid tiles AND the out-of-bounds void; the player gets blocked at level edges automatically.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="The lesson's source says `return True  # Out of bounds is solid` — that's intentional semantics, explicitly commented in the code, not a typo. The pattern is widespread in tilemap-based games (e.g., Mario can't walk off the level edge) and the comment documents the design choice. C inverts the actual design: returning False would let the player walk off the world.">C) Out-of-bounds tiles are non-solid because there's nothing there to collide with; the comment is a mistake.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

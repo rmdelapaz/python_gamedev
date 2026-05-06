@@ -1516,19 +1516,124 @@ class ABTestAnalyzer:
             <h2 id="practice-exercise-build-polish-playtesting">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Three Channels of Playtest Instrumentation &mdash; Heatmap, Path, and Event Log on One Session</h3>
+                <p><strong>Objective:</strong> Build a runnable pygame mini-test (~90 lines) that runs the three pillar instrumentation channels from this lesson side by side on a single play session: a <em>spatial heatmap</em> aggregated into a coarse grid, a <em>temporal path</em> preserving move order, and a <em>semantic event log</em> capturing meaningful tasks. The player navigates a 3-target task in sequence; all three channels record the same play through three different lenses, with overlays toggleable per channel so the orthogonality is visible. A simple <code>pain_points()</code> call surfaces loitering hotspots from the heatmap and repeated-attempt counts from the event log &mdash; the two-signal union the lesson&rsquo;s <code>identify_pain_points</code> implements.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Create a <code>Session</code> class with three orthogonal data structures: <code>heatmap = defaultdict(int)</code> keyed by <code>(cell_x, cell_y)</code> grid coords (40-pixel buckets) holding visit counts, <code>path = []</code> as a list of <code>(x, y, t)</code> tuples preserving temporal order, and <code>events = []</code> as a list of <code>(t, event_type, data)</code> semantic records. <strong>None of the three is reducible to the others &mdash; the heatmap answers WHERE, the path answers HOW, the event log answers WHAT and WHEN.</strong></li>
+                    <li>Per-frame <code>tick(x, y)</code> updates two channels: increment <code>heatmap[(x // 40, y // 40)]</code> every frame (spatial aggregation) and append <code>(x, y, t)</code> to <code>path</code> roughly every 10 frames (temporal sample, kept sparse enough to avoid memory blowup over a long session).</li>
+                    <li>Per-action <code>log(event_type, data)</code> appends to <code>events</code> only on meaningful actions: <code>session_start</code>, <code>task_complete</code>, <code>session_complete</code>. Events are semantic, not per-frame &mdash; logging every frame would collapse the channel into a path-clone and lose the meaning-distinguishing property.</li>
+                    <li>Build a 3-target task: three <code>pygame.Rect</code> targets at <code>(700, 50)</code>, <code>(50, 400)</code>, <code>(370, 210)</code>. Player (20&times;20 green rect, WASD/arrows at 220 px/s, <code>clamp_ip</code> to screen) must visit them <em>in sequence</em>. On <code>player.colliderect(targets[current_target])</code>, log <code>task_complete</code> and advance <code>current_target</code>. The active target is highlighted yellow; completed targets dim green; future targets dark gray.</li>
+                    <li>Implement <code>pain_points(threshold=20)</code>: <strong>two-signal union</strong>. Signal A (spatial): cells in <code>heatmap</code> with count <code>&gt; threshold</code> are <em>loitering hotspots</em> (the player got stuck somewhere). Signal B (semantic): count <code>'task_attempt'</code> events &mdash; repeated attempts on the same task signal &ldquo;the design fails to communicate the goal.&rdquo; Either signal alone misses failure modes the other catches; the union is the discipline.</li>
+                    <li>Wire three overlay toggles: <kbd>H</kbd> toggles the heatmap (semi-transparent red squares scaled by visit-count intensity), <kbd>P</kbd> toggles the path (cyan polyline through all (x, y) samples in order), <kbd>E</kbd> toggles the event log (small marks rendered at top of screen). <kbd>R</kbd> resets the session. Three overlays, three orthogonal lenses on the same play.</li>
+                    <li>Render a HUD: controls; task progress (<code>current_target</code>/3 + active target name); per-channel sample counts (<code>len(heatmap)</code> cells, <code>len(path)</code> samples, <code>len(events)</code> events); pain-point summary (<code>len(hotspots)</code> loitering hotspots above threshold). Compare counts: a 60-second session typically logs ~3600 heatmap ticks (60 fps), ~360 path samples (10x sparse), and ~5 events (only the meaningful ones) &mdash; three orders of magnitude apart, by design.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The three channels intentionally sample at different rates because they answer questions of different granularity. The heatmap is per-frame because spatial coverage is densest when sampled at simulation rate &mdash; sparse sampling would miss short visits to small regions. The path is sub-sampled (every ~10 frames) because the temporal lens cares about the <em>shape</em> of the trajectory, not its sub-pixel precision &mdash; storing every frame produces a list that&rsquo;s 10x larger with no analytical gain. The event log is sparse because semantic events are intrinsically rare &mdash; <em>most frames are not interesting</em>, and logging every frame would collapse the channel into a path-clone. For pain-points, the threshold (20 visits per cell at 60 fps means &gt; 0.33 seconds of stationary loitering) is the knob: lower thresholds catch slight pauses (false positives); higher thresholds only catch true stuck-states (false negatives). Same instrumentation discipline as chat-47 M2 level_design&rsquo;s <code>validate()</code> &mdash; design-time validation catches structural failure, runtime instrumentation catches behavioral failure; together they cover both axes. For overlay rendering, draw heatmap first (background), then path (mid-layer), then targets and player (foreground) &mdash; the same back-to-front Painter&rsquo;s algorithm as chat-47 M1 platformer_parallax&rsquo;s layered rendering.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame
+from collections import defaultdict
+
+class Session:
+    """Three orthogonal instrumentation channels: spatial / temporal / semantic."""
+    def __init__(self):
+        self.heatmap = defaultdict(int)   # (cx, cy) -&gt; count           [SPATIAL]
+        self.path = []                    # list of (x, y, t) tuples    [TEMPORAL]
+        self.events = []                  # list of (t, type, data)     [SEMANTIC]
+        self.start = pygame.time.get_ticks() / 1000.0
+        self._frame = 0
+
+    def tick(self, x, y):
+        # spatial: per-frame grid aggregation in 40px buckets
+        self.heatmap[(x // 40, y // 40)] += 1
+        # temporal: 10x sub-sampled trajectory preserving order
+        self._frame += 1
+        if self._frame % 10 == 0:
+            self.path.append((x, y, pygame.time.get_ticks() / 1000.0 - self.start))
+
+    def log(self, event_type, data):
+        # semantic: only meaningful actions
+        self.events.append((pygame.time.get_ticks() / 1000.0 - self.start, event_type, data))
+
+    def pain_points(self, threshold=20):
+        # two-signal union: spatial loitering hotspots + behavioral repeated attempts
+        hotspots = [(c, n) for c, n in self.heatmap.items() if n &gt; threshold]
+        repeated = sum(1 for e in self.events if e[1] == 'task_attempt')
+        return hotspots, repeated
+
+pygame.init()
+SCR = pygame.display.set_mode((800, 480))
+clock, font = pygame.time.Clock(), pygame.font.Font(None, 16)
+session = Session()
+session.log('session_start', {})
+player = pygame.Rect(50, 50, 20, 20)
+targets = [pygame.Rect(700, 50, 60, 60),
+           pygame.Rect(50, 400, 60, 60),
+           pygame.Rect(370, 210, 60, 60)]
+names = ['T1: top-right', 'T2: bottom-left', 'T3: center']
+current = 0
+overlays = {'heatmap': True, 'path': True, 'events': True}
+
+run = True
+while run:
+    dt = clock.tick(60) / 1000.0
+    for ev in pygame.event.get():
+        if ev.type == pygame.QUIT: run = False
+        elif ev.type == pygame.KEYDOWN:
+            if ev.key == pygame.K_h: overlays['heatmap'] = not overlays['heatmap']
+            if ev.key == pygame.K_p: overlays['path']    = not overlays['path']
+            if ev.key == pygame.K_e: overlays['events']  = not overlays['events']
+            if ev.key == pygame.K_r:
+                session = Session(); session.log('session_start', {}); current = 0
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_LEFT]  or keys[pygame.K_a]: player.x -= int(220 * dt)
+    if keys[pygame.K_RIGHT] or keys[pygame.K_d]: player.x += int(220 * dt)
+    if keys[pygame.K_UP]    or keys[pygame.K_w]: player.y -= int(220 * dt)
+    if keys[pygame.K_DOWN]  or keys[pygame.K_s]: player.y += int(220 * dt)
+    player.clamp_ip(SCR.get_rect())
+
+    session.tick(player.centerx, player.centery)
+    if current &lt; 3 and player.colliderect(targets[current]):
+        session.log('task_complete', {'task': names[current]})
+        current += 1
+        if current == 3:
+            session.log('session_complete', {'duration': session.events[-1][0]})
+
+    SCR.fill((20, 20, 28))
+    if overlays['heatmap'] and session.heatmap:
+        mx = max(session.heatmap.values())
+        for (cx, cy), n in session.heatmap.items():
+            a = int(min(255, n / mx * 200))
+            s = pygame.Surface((40, 40), pygame.SRCALPHA); s.fill((220, 60, 60, a))
+            SCR.blit(s, (cx * 40, cy * 40))
+    if overlays['path'] and len(session.path) &gt; 1:
+        pygame.draw.lines(SCR, (80, 200, 240), False, [(p[0], p[1]) for p in session.path], 2)
+    for i, t in enumerate(targets):
+        c = (220, 220, 80) if i == current else (40, 120, 40) if i &lt; current else (60, 80, 60)
+        pygame.draw.rect(SCR, c, t, 3)
+        SCR.blit(font.render(names[i], True, (220, 220, 220)), (t.x, t.y - 16))
+    if overlays['events']:
+        for j, e in enumerate(session.events[-15:]):
+            pygame.draw.circle(SCR, (255, 220, 80), (15 + j * 16, 460), 4)
+    pygame.draw.rect(SCR, (80, 220, 100), player)
+
+    hotspots, repeated = session.pain_points(threshold=20)
+    active = names[current] if current &lt; 3 else 'DONE'
+    lines = [
+        "WASD/arrows = move | H/P/E = toggle heatmap/path/events | R = reset",
+        f"target progress: {current}/3   active: {active}",
+        f"channel A (spatial heatmap): {len(session.heatmap)} cells visited",
+        f"channel B (temporal path):   {len(session.path)} samples",
+        f"channel C (semantic events): {len(session.events)} events",
+        f"pain-points: {len(hotspots)} loitering hotspots (>20 visits)   repeated_attempts: {repeated}",
+    ]
+    for i, ln in enumerate(lines):
+        SCR.blit(font.render(ln, True, (240, 240, 240)), (10, 8 + i * 18))
+    pygame.display.flip()
+pygame.quit()</code></pre>
                 </details>
             </div>
 
@@ -1536,31 +1641,31 @@ class ABTestAnalyzer:
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> The lesson&rsquo;s <code>PlaytestManager</code> keeps three separate data structures: <code>heatmap_data</code> (a dict keyed by <code>f&quot;{grid_x},{grid_y}&quot;</code> with count values), <code>path_data</code> (a per-tester list of <code>(x, y, time)</code> tuples), and <code>events</code> (a list of <code>TestEvent</code> records with <code>timestamp</code>, <code>event_type</code>, <code>tester_id</code>, <code>data</code>). Why three structures instead of one unified store?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="You can compute a heatmap FROM the path (aggregate (x, y) samples into a grid), but you cannot compute the path FROM the heatmap -- the heatmap discards the order. And neither structure carries event semantics ('task_complete', 'error') -- those exist only in the event log. The three channels capture orthogonal information; collapsing them loses the questions only one channel can answer.">A) Three structures are kept for performance reasons &mdash; storing positions in a dict keyed by string is faster than storing them in a list, and faster than computing aggregations on demand from a single source-of-truth log.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Each structure answers an orthogonal question that the others cannot. The heatmap is a SPATIAL aggregation -- it answers 'WHERE did testers spend their attention' by collapsing many positions into grid cells with counts; trade-off: it discards the order and the per-tester identity. The path is a TEMPORAL sequence -- it answers 'HOW did this specific tester move through the space' by preserving (x, y) order with timestamps; trade-off: it has no semantic meaning, just coordinates. The event log is a SEMANTIC stream -- it answers 'WHAT meaningful actions happened, when, and to whom' (task_complete, error, session_start, etc.); trade-off: it captures only events deemed significant. None is reducible to the others: you can compute a heatmap from a path (aggregation), but you cannot compute a path from a heatmap (the order is lost), and neither carries event semantics. Three orthogonal questions, three orthogonal structures, no redundancy. Same instrumentation discipline as chat-47 M2 level_design's `validate()` -- design-time validation and runtime measurement are also orthogonal: validate() catches structural failure ('exit unreachable from spawn'), the heatmap/path/event log catch behavioral failure ('players don't FIND the exit even though it's reachable'). Storage cost is trivial relative to analytical value.">B) Each structure captures an orthogonal slice: heatmap = SPATIAL (where attention concentrated), path = TEMPORAL (how a specific tester moved through the space, in order), event log = SEMANTIC (what meaningful actions happened, when, to whom). None is reducible to the others &mdash; the heatmap discards order, the path discards meaning, the event log discards continuous coverage. Three questions, three structures.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="This treats the three structures as redundant. They aren't -- removing any one loses a question the others can't answer. Removing the heatmap loses fast spatial summarization (the path is dense per-tester but not aggregated across testers); removing the path loses per-tester order (the heatmap aggregates everyone); removing the event log loses semantics (neither path nor heatmap distinguishes 'task_complete' from 'just walking past').">C) The three structures are largely redundant &mdash; the path data alone contains all the information needed; heatmap and event log are derived views maintained eagerly only because re-computing them on demand from the path would be too slow.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> The lesson&rsquo;s <code>identify_pain_points</code> walks <em>two orthogonal signals</em>: spatial error clusters (<code>error_locations</code> keyed by <code>(x, y)</code> with threshold <code>count &gt; len(testers) * 0.3</code>) AND behavioral repeated-attempts (testers attempting the same task multiple times, detected via <code>len(testers) &gt; len(set(testers))</code>). Why both signals instead of just one?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Low satisfaction is a SYMPTOM of pain points, not a localizing signal. A low satisfaction score tells you 'something's wrong' but not 'what is wrong, where, or how to fix it.' Identifying pain points needs LOCALIZING signals -- spatial (where the user got stuck) and behavioral (which task they couldn't complete). Satisfaction surveys complement these, but they don't replace them.">A) The lesson uses both signals to triangulate against the satisfaction score from feedback surveys: a region is a pain point only if error rates are high AND satisfaction is low AND repeated attempts occur, with all three required to confirm.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Each signal localizes a different KIND of failure mode, and the union catches both. Spatial error clusters answer 'WHERE does the design fail mechanically' -- a button users keep missing because it's too small, a target users keep clicking past because of misleading visual hierarchy, an action that fails on certain coordinates because of a bug. Behavioral repeated-attempts answer 'WHEN does the design fail to COMMUNICATE' -- a task users keep failing because the goal isn't clear, a tutorial step users skip and then return to, a mechanic users don't understand on first encounter. Either signal alone misses half the failure modes: a tutorial that's confusing but doesn't produce wrong-button clicks would have NO error hotspot but many repeated attempts; a button-too-small bug produces error clusters but no repeated attempts. The union catches both. Same two-signal-union shape as chat-44 physics' AABB collision broad-phase + SAT narrow-phase (each catches what the other misses). Same 'the driver of failure is not the obvious surface metric' rhetoric as chat-50 M1 polish_difficulty Q2's flow-as-RATIO and chat-46 M2 viewport-culling's '+2 is correctness not performance'.">B) Each signal localizes a different KIND of failure: spatial error clusters answer &ldquo;WHERE does the design fail mechanically&rdquo; (button too small, target visually misleading); repeated attempts answer &ldquo;WHEN does the design fail to COMMUNICATE&rdquo; (goal unclear, tutorial step confusing). Either alone misses half the failure modes &mdash; a confusing tutorial produces repeated attempts with no spatial errors; a button-too-small bug produces errors with no repeated attempts. The union catches both.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="This treats one signal as redundant with the other. They aren't. A confusing tutorial that produces 50 repeated attempts at task X but zero clicks-in-wrong-place would be invisible to a single-signal 'error hotspots only' detector. A button-too-small bug producing 200 errors but zero repeated task attempts (because the task itself is clear) would be invisible to a 'repeated attempts only' detector.">C) Either signal alone is sufficient; the lesson keeps both for redundancy &mdash; if one channel of data collection fails or is disabled, the other still surfaces the same pain points through a different measurement path.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> The lesson&rsquo;s <code>ABTestAnalyzer.calculate_significance</code> returns BOTH a <code>p_value</code> (from <code>scipy.stats.ttest_ind</code>) AND an <code>effect_size</code> (Cohen&rsquo;s d, computed as <code>(mean_a - mean_b) / pooled_std</code>). Why are both required, instead of just checking <code>p_value &lt; 0.05</code>?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="This treats effect size as a quality control on data inputs. It isn't. Effect size measures the MAGNITUDE of the observed difference between groups; it's an output of the analysis, not a filter on the inputs. Distribution shape and outlier handling are separate preprocessing concerns -- typically tested with a Shapiro-Wilk normality test or boxplot inspection, not with Cohen's d.">A) The effect size is computed as a sanity check on the data &mdash; if Cohen&rsquo;s d is unreasonably large, it indicates the underlying distributions are non-normal or contain outliers, and the t-test&rsquo;s assumptions are violated; this validates the p-value before reporting it.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="p-value and effect size answer two different questions and BOTH must be checked. p-value answers 'is the observed difference likely real, or just sampling noise?' -- it depends on sample size and tells you the probability of seeing a difference this large by chance. Effect size (Cohen's d) answers 'is the difference big enough to MATTER?' -- it's scale-free and tells you the magnitude in standard-deviation units. The pair is required because they can decouple sharply: with large N (e.g., 10000 users per variant), even a 0.1% conversion-rate difference becomes 'statistically significant' (p &lt; 0.001) but has Cohen's d ~ 0.02 -- a real but utterly inconsequential effect. Conversely, with small N (e.g., 8 users per variant), a 30% real difference may produce p = 0.15 -- the effect size is huge (Cohen's d ~ 1.5) but we lack the data to distinguish it from noise. Significance != importance; the lesson's pair-return enforces this distinction at the API level. Same 'the surface metric isn't the driver' rhetorical move as chat-50 M1 polish_difficulty Q2's flow-as-RATIO (ratio drives state, not absolute level), chat-46 M2 viewport-culling's '+2 is correctness not performance', chat-47 M2 level_design's snapshot-vs-delta same-axis-opposite-directions, and chat-49 M2 polish_tweening's camera-vs-polish 'same math family, opposite design choices' -- five lessons in the second half of Phase 8 reinforcing that the obvious surface number is not always the design driver.">B) p-value and effect size answer different questions: p-value asks &ldquo;is the difference likely real, or sampling noise?&rdquo; (depends on N, can be tiny p with tiny effect at huge N); effect size asks &ldquo;is the difference big enough to MATTER?&rdquo; (scale-free magnitude). At N=10000, a 0.1% difference has p &lt; 0.001 but Cohen&rsquo;s d ~ 0.02 &mdash; statistically significant but inconsequential. At N=8, a 30% difference has p ~ 0.15 (insignificant) but Cohen&rsquo;s d ~ 1.5 (huge). Significance is not importance; both are required.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="This conflates the two with a single threshold. p-value &lt; 0.05 is a probability statement about sampling noise; it does not bound effect size. With N = 10000, p &lt; 0.05 can correspond to a 0.1% difference (Cohen's d ~ 0.02 -- tiny). 'Significant at p &lt; 0.05' is not a guarantee of practical importance; it's a guarantee that the difference is unlikely to be pure noise.">C) <code>p_value &lt; 0.05</code> already implies a meaningful effect size by definition &mdash; passing the significance threshold means the means differ by enough standard deviations to be detected, so reporting effect size separately is informational rather than required for decision-making.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

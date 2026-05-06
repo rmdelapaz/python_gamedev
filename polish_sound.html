@@ -1369,19 +1369,112 @@ class SoundGenerator:
             <h2 id="practice-exercise-build-polish-sound">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Three-Bus Mixer with Spatial SFX</h3>
+                <p><strong>Objective:</strong> Build a single pygame demo (~85 lines) that exercises three pillar sound-design patterns from this lesson — the three-level volume cascade <code>final_vol = source * bus * master</code>, multi-instance SFX via the <code>find_channel()</code> pool (vs streamed <code>pygame.mixer.music</code>), and spatial audio via Euclidean distance + linear falloff + stereo pan derived from <code>dx</code> — with procedurally-generated sound assets so no external audio files are needed.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Initialize <code>pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=512)</code> and <code>pygame.mixer.set_num_channels(8)</code> to size the SFX channel pool (8 concurrent voices).</li>
+                    <li>Write a <code>make_beep(freq, ms)</code> helper that builds a sine wave with an exponential decay envelope via numpy and returns a <code>pygame.mixer.Sound</code> via <code>pygame.sndarray.make_sound</code>. Pre-load three SFX at module scope (220 Hz / 440 Hz / 880 Hz) — preload-once-play-many per the chat-40 pygame_basics_sound anchor.</li>
+                    <li>Place a player rect (WASD or arrow keys, 280 px/s) and a fixed SFX emitter at world coords <code>(600, 400)</code> drawn as a red circle with a faint <code>MAX_DIST = 400</code> falloff ring around it so the spatial-audio contour is visible.</li>
+                    <li>Track three independent gain stages: <code>master_vol</code>, <code>sfx_bus_vol</code>, <code>amb_bus_vol</code>, all in [0, 1]. Keys 1 and 2 cycle <code>sfx_bus_vol</code> and <code>master_vol</code> in 0.25 increments. <code>amb_bus_vol</code> is set but unused for SFX — it sits in the HUD to make the orthogonal-bus point concrete (muting the music bus would not touch SFX).</li>
+                    <li>On SPACE: compute <code>dx, dy</code> from player to emitter, then <code>dist = math.sqrt(dx*dx + dy*dy)</code>, then <code>spatial_vol = max(0.0, 1.0 - dist / MAX_DIST)</code> for linear falloff and <code>pan = max(-1.0, min(1.0, dx / MAX_DIST))</code> for stereo position. Run the cascade <code>final_vol = source_vol * sfx_bus_vol * master_vol * spatial_vol</code>. Apply a cardioid pan law on the cascaded result: <code>L = final_vol * max(0.0, 1.0 - max(0.0, pan))</code> and <code>R = final_vol * max(0.0, 1.0 + min(0.0, pan))</code>. Acquire a channel via <code>pygame.mixer.find_channel()</code>, guard with <code>if ch is not None</code>, then <code>ch.set_volume(L, R)</code> and <code>ch.play(random.choice(SFX))</code>.</li>
+                    <li>HUD shows the three bus volumes, the live <code>dist</code>, <code>pan</code>, and <code>spatial_vol</code>, the cascaded <code>final_vol</code>, the <code>(L, R)</code> pair sent to the channel, and <code>voices_busy/8</code> (channels currently playing) so the cascade product, the falloff curve, and the channel pool are all numerically visible.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The cascade is just three multiplications applied left-to-right; <code>spatial_vol</code> is a fourth multiplier that scales the cascaded result by the linear-falloff function <code>1 - dist/MAX_DIST</code> (clamped at zero past <code>MAX_DIST</code>). The cardioid pan law <code>L = max(0, 1 - max(0, pan))</code>, <code>R = max(0, 1 + min(0, pan))</code> gives full volume on both channels when <code>pan = 0</code> (centered), full volume on one channel and zero on the other when <code>pan = +1</code> or <code>-1</code> (hard left or right), and a smooth blend in between. <code>find_channel()</code> returns <code>None</code> when all 8 voices are busy — guarding with <code>if ch is not None</code> prevents crashes during chain-fire SFX. The <code>amb_bus_vol</code> being orthogonal to <code>sfx_bus_vol</code> is the whole point of the three-stage cascade: muting one bus must not touch the others.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame, numpy as np, math, random
+pygame.init()
+pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=512)
+pygame.mixer.set_num_channels(8)  # SFX channel pool — 8 concurrent voices
+
+SCREEN_W, SCREEN_H = 800, 600
+screen = pygame.display.set_mode((SCREEN_W, SCREEN_H))
+clock = pygame.time.Clock()
+font = pygame.font.SysFont("monospace", 14)
+
+def make_beep(freq, ms, sample_rate=44100):
+    n = int(sample_rate * ms / 1000)
+    t = np.arange(n) / sample_rate
+    wave = np.sin(2 * np.pi * freq * t)
+    env = np.exp(-t * 6)  # decay envelope so beeps don't tail forever
+    samples = (wave * env * 32767).astype(np.int16)
+    stereo = np.column_stack([samples, samples])
+    return pygame.sndarray.make_sound(stereo)
+
+# Pre-loaded multi-instance SFX library — chat-40 anchor (preload, play many)
+SFX = [make_beep(220, 200), make_beep(440, 150), make_beep(880, 80)]
+
+# Three independent gain stages — Best Practice 'Layer Mixing'
+master_vol = 1.0
+sfx_bus_vol = 0.8
+amb_bus_vol = 0.4   # set but unused for SFX — present to make orthogonality visible
+
+player = pygame.Rect(100, 300, 24, 24)
+emitter = pygame.Vector2(600, 400)
+MAX_DIST = 400.0
+
+last = {"final": 0.0, "dist": 0.0, "pan": 0.0, "L": 0.0, "R": 0.0, "spatial": 0.0}
+
+running = True
+while running:
+    dt = clock.tick(60) / 1000.0
+    for e in pygame.event.get():
+        if e.type == pygame.QUIT:
+            running = False
+        elif e.type == pygame.KEYDOWN:
+            if e.key == pygame.K_1:
+                sfx_bus_vol = round((sfx_bus_vol + 0.25) % 1.25, 2)
+            elif e.key == pygame.K_2:
+                master_vol = round((master_vol + 0.25) % 1.25, 2)
+            elif e.key == pygame.K_SPACE:
+                # Spatial audio — chat-43 vectors anchor: Euclidean distance + dx pan
+                dx = emitter.x - (player.x + 12)
+                dy = emitter.y - (player.y + 12)
+                dist = math.sqrt(dx * dx + dy * dy)
+                spatial_vol = max(0.0, 1.0 - dist / MAX_DIST)
+                pan = max(-1.0, min(1.0, dx / MAX_DIST))
+                # Three-level cascade — final = source * bus * master (* spatial)
+                source_vol = 0.9
+                final_vol = source_vol * sfx_bus_vol * master_vol * spatial_vol
+                # Cardioid pan law on the cascaded final volume
+                L = final_vol * max(0.0, 1.0 - max(0.0, pan))
+                R = final_vol * max(0.0, 1.0 + min(0.0, pan))
+                ch = pygame.mixer.find_channel()
+                if ch is not None:
+                    ch.set_volume(L, R)
+                    ch.play(random.choice(SFX))
+                last.update(final=final_vol, dist=dist, pan=pan, L=L, R=R, spatial=spatial_vol)
+
+    keys = pygame.key.get_pressed()
+    speed = int(280 * dt)
+    if keys[pygame.K_LEFT]  or keys[pygame.K_a]: player.x -= speed
+    if keys[pygame.K_RIGHT] or keys[pygame.K_d]: player.x += speed
+    if keys[pygame.K_UP]    or keys[pygame.K_w]: player.y -= speed
+    if keys[pygame.K_DOWN]  or keys[pygame.K_s]: player.y += speed
+
+    screen.fill((20, 24, 38))
+    pygame.draw.circle(screen, (60, 60, 80),  (int(emitter.x), int(emitter.y)), int(MAX_DIST), 1)
+    pygame.draw.circle(screen, (220, 80, 80), (int(emitter.x), int(emitter.y)), 10)
+    pygame.draw.rect(screen, (80, 200, 120), player)
+
+    busy = sum(1 for i in range(8) if pygame.mixer.Channel(i).get_busy())
+    lines = [
+        f"master={master_vol:.2f}  sfx_bus={sfx_bus_vol:.2f}  amb_bus={amb_bus_vol:.2f}",
+        f"dist={last['dist']:6.1f}  pan={last['pan']:+.2f}  spatial={last['spatial']:.2f}",
+        f"final_vol = src * bus * master * spatial = {last['final']:.3f}",
+        f"channel.set_volume(L={last['L']:.2f}, R={last['R']:.2f})",
+        f"voices_busy = {busy}/8",
+        "WASD: move listener   SPACE: play SFX at emitter   1: sfx_bus  2: master",
+    ]
+    for i, txt in enumerate(lines):
+        screen.blit(font.render(txt, True, (220, 220, 230)), (12, 12 + i * 18))
+    pygame.display.flip()
+
+pygame.quit()</code></pre>
                 </details>
             </div>
 
@@ -1389,31 +1482,31 @@ class SoundGenerator:
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> The lesson's <code>play_sound</code> implements the volume calculation as <code>final_volume = volume * self.volumes[layer] * self.master_volume</code> &mdash; three multiplications, three independently-set gain stages. What is the design reason for keeping the source, bus, and master gains as <em>three orthogonal stages</em> instead of collapsing them into one combined volume parameter?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Performance is not the driver. The cascade runs once per SFX trigger (a human-input rate, not a per-sample audio-thread rate), and three multiplications cost a few nanoseconds total &mdash; immeasurable next to the SFX itself. The driver is mixing flexibility, not CPU time.">A) Three small multiplications execute faster than one large one on modern CPUs &mdash; a performance optimization for the audio thread.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="The three stages are independently addressable mixing levers. The source volume is per-call (this footstep is quiet, that explosion is loud); the bus volume is per-category (mute MUSIC during a cutscene without touching SFX, or duck SFX 50% during dialogue without re-touching every Sound); the master volume scales the entire mix uniformly (player's accessibility setting, pause-menu duck). Collapsing them into one parameter destroys the orthogonality &mdash; muting music would either mute SFX too or require recomputing every active source's volume. Best Practice 'Layer Mixing: Balance music, SFX, and ambient carefully' depends on these stages staying independent.">B) The three stages are independent mixing levers: per-source (this one sound), per-bus (this category of sounds), and master (the whole mix). Muting the music bus during a cutscene leaves SFX untouched; the master scales everything for accessibility without changing relative balance &mdash; properties that collapse if the stages are merged.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="There is no such API constraint &mdash; pygame's Channel.set_volume accepts any float in [0, 1] (or two floats for stereo). The cascade structure is a design choice for mixing flexibility, not a workaround for a clamped range.">C) <code>pygame.mixer</code> clamps individual volume calls to a maximum of 1/3, so three multiplications are required to reach full volume.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> The lesson uses <code>pygame.mixer.Sound</code> objects with <code>pygame.mixer.find_channel()</code> for sound effects, but <code>pygame.mixer.music</code> for the background music track. Why are these two different APIs &mdash; what's the architectural distinction the lesson is making?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="They are not interchangeable. pygame.mixer.music is a singleton API (one track at a time), while Sound + find_channel() is a multi-instance pool. Swapping them would either truncate concurrent SFX or fail to stream long music tracks. The chat-40 pygame_basics_sound lesson Key Takeaway is explicit: 'Sound effects use Sound objects, music uses the music module'.">A) The two APIs are functionally interchangeable &mdash; the choice between them is purely a matter of programmer style.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="This is the chat-40 pygame_basics_sound foundation extended. Sound objects are decoded once into RAM and triggered concurrently across the channel pool sized by set_num_channels(N) &mdash; two simultaneous gunshots play in parallel on different channels, neither cutting the other off. pygame.mixer.music streams a single track from disk (cheap on RAM for a 5-minute song that would balloon as a Sound) but is a singleton: only one music track at a time, and find_channel() does not apply. Using music for SFX would clip earlier triggers; using Sound for a 5-minute track would load the whole thing into memory. Each API is correct for its category.">B) Sound objects preload into RAM and play concurrently across the channel pool sized by <code>set_num_channels(N)</code> &mdash; two gunshots can play in parallel without truncating each other. <code>pygame.mixer.music</code> streams from disk one track at a time (cheap on RAM for long tracks) but is a singleton: it would clip earlier triggers if used for SFX. Each API matches the category it serves.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Spatial audio works through Channel.set_volume(left, right) &mdash; the same API used for stereo balance on Sound objects via find_channel(). pygame.mixer.music does NOT have a privileged stereo-pan API; the spatial-audio code in the lesson's calculate_spatial_audio routes through the SFX channel pool, not through music.">C) <code>pygame.mixer.music</code> is required for spatial audio because it's the only API that supports stereo panning.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> The spatial-audio routine computes <code>distance = math.sqrt(dx*dx + dy*dy)</code> and uses it for volume falloff. Why use Euclidean distance (the square root of the sum of squares) instead of Manhattan distance (<code>abs(dx) + abs(dy)</code>) for the falloff calculation?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Performance reasoning here is backwards: abs(dx)+abs(dy) is actually CHEAPER than math.sqrt (no square root). The choice of Euclidean isn't about speed &mdash; spatial calculations run at trigger rate, not per-sample. It's about geometry: Manhattan and Euclidean produce different equal-volume contour shapes.">A) Manhattan is mathematically slower than Euclidean; using it would degrade audio thread performance.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="The chat-43 vectors anchor: Euclidean distance from sqrt(dx*dx + dy*dy) gives circular equal-volume contours &mdash; a sound directly ahead at (3, 0) and a sound diagonally ahead at (~2.12, 2.12) are both 'distance 3' under Euclidean, matching how sound physically travels through air at the same radius regardless of bearing. Manhattan distance abs(dx)+abs(dy) gives DIAMOND contours: (3, 0) is Manhattan-distance 3 but (~2.12, 2.12) is Manhattan-distance ~4.24, so the diagonal sound would feel 40% farther even though it is the same physical distance away. The mismatch breaks player intuition. Same Euclidean-vs-Manhattan choice the chat-43 vectors lesson made for chase-distance comparisons.">B) Euclidean distance produces <em>circular</em> equal-volume contours that match how sound physically travels through air &mdash; a sound directly ahead and a sound at 45 degrees feel equidistant when they are at the same Euclidean radius. Manhattan distance produces <em>diamond</em> contours that would make the diagonal sound feel ~40% farther than the head-on sound at the same physical range. Same Euclidean choice as the chat-43 vectors lesson.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Both formulas produce non-negative results from any real input: a square root is always non-negative, and a sum of two absolute values is always non-negative. find_channel() doesn't impose any input constraint on distance &mdash; it doesn't even know about distance. The choice is geometric, not API-driven.">C) <code>pygame.mixer.find_channel()</code> requires its inputs to be non-negative floats, which <code>abs(dx) + abs(dy)</code> might violate.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

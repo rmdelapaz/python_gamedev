@@ -1110,19 +1110,90 @@ def log_packet(direction, address, data):
             <h2 id="practice-exercise-build-networking-sockets">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Concurrent Echo Server with Length-Prefixed Framing</h3>
+                <p><strong>Objective:</strong> Build a single-process Python demo (~80 lines) that exercises three pillar TCP patterns from this lesson &mdash; the server lifecycle scaffold (<code>socket</code> + <code>SO_REUSEADDR</code> + <code>bind</code> + <code>listen</code> + <code>accept</code> loop spawning <code>threading.Thread</code> per client), TCP message framing via a 4-byte big-endian length prefix (because TCP is a byte-stream, not message-boundary-preserving), and socket lifecycle hygiene (try/finally close, recv-loop buffering, timeouts) &mdash; all running in one runnable Python file with two client threads talking to one server thread on <code>localhost</code> so the whole multi-client conversation plays out without needing a second terminal.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Define a length-prefix framing pair: <code>send_msg(sock, text)</code> packs <code>struct.pack('!I', len(payload)) + payload</code> via <code>sock.sendall</code>, and <code>recv_msg(sock)</code> reads exactly 4 bytes for the length header in a buffer-until-full loop, unpacks via <code>struct.unpack('!I', header)[0]</code>, then reads exactly that many payload bytes in a second buffer-until-full loop. The recv-loop is essential because <code>sock.recv(N)</code> can return fewer than N bytes &mdash; TCP makes no message-boundary promises, so the application has to frame its own messages.</li>
+                    <li>Write <code>handle_client(sock, addr)</code> as the per-thread loop: <code>sock.settimeout(5.0)</code> so a stalled client doesn't pin the thread forever, then loop calling <code>recv_msg</code> until it returns <code>None</code> (clean disconnect) or raises <code>socket.timeout</code>; for each received message echo back via <code>send_msg</code>. Wrap the whole thing in try/finally so <code>sock.close()</code> always runs (Best Practice "Resource Cleanup: Always close sockets properly").</li>
+                    <li>Write the server function: <code>s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)</code> creates a TCP socket; <code>s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)</code> goes BEFORE <code>bind</code> so a fast restart doesn't fail with "Address already in use" (Common Issues "Address Already in Use: Port still bound from previous run"); <code>s.bind((HOST, PORT))</code> then <code>s.listen(8)</code> (8 = OS-level pending-accept queue depth, NOT a cap on concurrent connections); finally a <code>while True: client_sock, addr = s.accept(); threading.Thread(target=handle_client, args=(client_sock, addr), daemon=True).start()</code> loop that spawns one daemon thread per accepted client and immediately returns to <code>accept()</code> for the next &mdash; the thread-per-client pattern that keeps the accept loop unblocked.</li>
+                    <li>Write a client function that sleeps 0.5 s for the server to come up, opens a socket, calls <code>connect((HOST, PORT))</code>, then loops sending a list of messages via <code>send_msg</code> and reading the reply via <code>recv_msg</code>; close in a finally block. Spawn the server thread as a daemon, then spawn TWO client threads with different names ("alice" + "bob") and different message lists &mdash; their messages will interleave on the server's stdout, proving the per-client threads run concurrently without blocking each other or the accept loop.</li>
+                    <li>Run the script. Watch the interleaved server-side output: alice's three messages and bob's three messages arrive in arbitrary order (sometimes alice-bob-alice-bob, sometimes alice-alice-bob, depending on thread scheduling), but each client's messages return to that client in the order it sent them &mdash; because each client has its own <code>recv_msg</code> loop on its own socket, the per-client ordering is preserved while the cross-client ordering is not.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The recv-loops are the whole point of message framing. <code>sock.recv(4)</code> can return 1, 2, 3, or 4 bytes &mdash; TCP guarantees the bytes will arrive in order eventually but makes no promise about how many arrive per <code>recv</code> call. The buffer-until-full pattern <code>while len(buf) &lt; needed: chunk = sock.recv(needed - len(buf)); if not chunk: return None; buf += chunk</code> handles all the fragmentation cases. Skipping it works on localhost in test (bytes arrive in one chunk because there is no real network) but breaks the moment you deploy across the public internet (Best Practice "Buffer Management: Don't assume message boundaries").</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import socket, struct, threading, time
+
+HOST, PORT = '127.0.0.1', 5555
+
+def send_msg(sock, text):
+    payload = text.encode('utf-8')
+    sock.sendall(struct.pack('!I', len(payload)) + payload)
+
+def recv_msg(sock):
+    header = b''
+    while len(header) &lt; 4:
+        chunk = sock.recv(4 - len(header))
+        if not chunk: return None
+        header += chunk
+    msg_len = struct.unpack('!I', header)[0]
+    body = b''
+    while len(body) &lt; msg_len:
+        chunk = sock.recv(msg_len - len(body))
+        if not chunk: return None
+        body += chunk
+    return body.decode('utf-8')
+
+def handle_client(sock, addr):
+    print(f"[server] connected: {addr}")
+    try:
+        sock.settimeout(5.0)
+        while True:
+            msg = recv_msg(sock)
+            if msg is None: break
+            print(f"[server] from {addr}: {msg}")
+            send_msg(sock, f"echo: {msg}")
+    except socket.timeout:
+        print(f"[server] timeout: {addr}")
+    finally:
+        sock.close()
+
+def server():
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    s.bind((HOST, PORT))
+    s.listen(8)
+    print(f"[server] listening on {HOST}:{PORT}")
+    while True:
+        client_sock, addr = s.accept()
+        threading.Thread(target=handle_client,
+                         args=(client_sock, addr),
+                         daemon=True).start()
+
+def client(name, messages):
+    time.sleep(0.5)
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.connect((HOST, PORT))
+        for m in messages:
+            send_msg(s, f"{name}: {m}")
+            reply = recv_msg(s)
+            print(f"[{name}] got: {reply}")
+            time.sleep(0.2)
+    finally:
+        s.close()
+
+if __name__ == '__main__':
+    threading.Thread(target=server, daemon=True).start()
+    threading.Thread(target=client,
+                     args=('alice', ['hi', 'how are you?', 'bye'])).start()
+    threading.Thread(target=client,
+                     args=('bob', ['hello', 'are you there?', 'goodbye'])).start()
+    time.sleep(5)</code></pre>
                 </details>
             </div>
 
@@ -1130,31 +1201,31 @@ def log_packet(direction, address, data):
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> The lesson's TCP server uses <code>s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)</code> with the explicit comment "Allow reuse of address" BEFORE the call to <code>s.bind</code>. What concrete failure mode does this option prevent on a typical development workflow?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="SO_REUSEADDR is about the LOCAL address binding, not about preventing duplicate client connections. OS kernels already enforce that two connections from different (remote_ip, remote_port) tuples are distinct without any special socket option.">A) It prevents two clients from accidentally connecting to the same server port simultaneously.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Correct — the lesson's Common Issues entry 'Address Already in Use: Port still bound from previous run' is exactly this scenario. When a TCP server crashes or is killed with Ctrl-C, the OS keeps the port in TIME_WAIT state for up to 2 minutes (a TCP-protocol guarantee that lets late packets from the previous connection drain harmlessly). Without SO_REUSEADDR, an immediate restart of the same server on the same port fails with 'Address already in use'; with it, the OS allows the bind to succeed even with TIME_WAIT lingering. Purely a development-loop quality-of-life option, NOT a security feature — it doesn't change which clients can connect or what data passes through the socket. The order matters: setsockopt MUST come before bind because the option is read at bind-time; setting it after bind has no effect.">B) It prevents the OS-level "Address already in use" error when restarting the server on the same port immediately after a crash or Ctrl-C, while the previous connection's TIME_WAIT state is still draining.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="SO_REUSEADDR has no effect on data integrity. TCP itself guarantees byte-ordering and reliable delivery on a per-connection basis, regardless of what socket options are set. Conflating reuse-of-local-address with data-stream guarantees mixes layers.">C) It guarantees that data sent on the socket arrives in the order it was sent, even if multiple clients connect simultaneously.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> Why does the lesson's Best Practice "Buffer Management: Don't assume message boundaries" + Key Takeaway "Frame your messages properly for TCP" mean a naive <code>data = sock.recv(4096); message = json.loads(data)</code> pattern is broken in production, and what does the length-prefix framing pair fix?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="json.loads is fast enough for game traffic — a few hundred messages per second of small JSON payloads is microseconds of parse time per message, well below any per-frame budget. Switching to a binary protocol is a separate optimization unrelated to the framing problem.">A) json.loads is too slow for real-time games; the framing pair fixes the problem by switching to a binary protocol that parses faster.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Correct — TCP is a BYTE-STREAM protocol, not a message-boundary protocol. The OS is free to deliver bytes from one application-level send across multiple recv calls (FRAGMENTATION: a 12-KB JSON message arrives as four 3-KB chunks because the TCP stack split it into MSS-sized segments) OR to deliver bytes from MULTIPLE sends in one recv (CONGEALMENT: two small messages arrive in one buffer because Nagle's algorithm batched them at the sender). Either case breaks json.loads(data): a partial JSON parse fails, and a doubled JSON parse fails. The length-prefix pair (4-byte big-endian header via struct.pack('!I', len(payload)) + payload, with matching struct.unpack on the receive side and a recv-loop that buffers until exactly N+4 bytes have arrived) tells the receiver exactly how many bytes belong to ONE application-level message, regardless of how the bytes are fragmented or congealed in transit. Localhost testing hides the bug because the loopback interface delivers small payloads in single chunks; production traffic across the public internet routinely fragments and congeals.">B) TCP is a byte-stream, not a message-boundary protocol — one application-level send can be split across multiple recv calls (fragmentation) or multiple sends can arrive in one recv (congealment); the length prefix tells the receiver exactly how many bytes belong to one application message so it can buffer-until-complete and parse exactly that span.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Encoding has nothing to do with framing. A 4-byte length prefix works equally well for UTF-8, UTF-16, ASCII, or raw binary payloads. The framing problem is about WHERE one message ends and the next begins on the byte-stream, which is independent of which character encoding the payload uses.">C) recv can corrupt UTF-8 multi-byte sequences during transmission; the length prefix fixes the encoding by switching to ASCII-only.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> The lesson's TCP server spawns <code>threading.Thread(target=self.handle_client, args=(client_socket, address))</code> on every accepted connection. Why is the per-client thread necessary, and what concrete failure mode does the alternative (handling the client inline in the accept loop) cause?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Network throughput is rarely the bottleneck for game traffic. A 60Hz position broadcast at ~50 bytes per packet is ~3 KB/s per client, three orders of magnitude below typical broadband. The constraint is concurrency, not bandwidth.">A) Threads make the server faster overall by parallelizing data transmission across multiple network cards.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Threading and processes are different concurrency models — threads share memory and synchronize cheaply, processes don't share memory and require IPC. The lesson uses threads because all client state lives in self.clients (one shared dict in one process), which threads can access directly while processes would need IPC. The reason isn't crash isolation; it's shared-state access.">B) Threads provide automatic crash isolation: if one client crashes the handler, only that thread dies and the other clients keep running.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Correct — sock.recv is a BLOCKING call: it returns when bytes arrive, not when the loop iteration ends. If handle_client runs inline in the accept loop, every call to recv blocks the accept loop too — the server becomes effectively single-client, with the second client's connect sitting in the OS-level listen(N) queue (the N from s.listen(8)) until the first client either disconnects or sends data. The thread-per-client pattern decouples the two concerns: the accept loop only blocks on accept() (the next new connection), while each client's recv blocks only its own thread. The accept loop is therefore always free to spawn another thread the moment a new client connects, regardless of what existing clients are doing. This is the canonical TCP-server pattern; asyncio-based servers achieve the same decoupling via cooperative multitasking instead of OS threads, but the design constraint — don't let one client's recv block other clients' accepts — is the same.">C) The accept loop's s.accept() and the per-client sock.recv are both BLOCKING calls; if handle_client ran inline, the first client's recv would block the accept loop, leaving every subsequent client stuck in the listen queue until the first one disconnects — the server becomes effectively single-client. Threading decouples them so each client's recv blocks only its own thread.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

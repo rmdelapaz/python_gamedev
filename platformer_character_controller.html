@@ -1292,19 +1292,140 @@ class CharacterController:
             <h2 id="practice-exercise-build-platformer-character-controller">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Forgive the Player — Coyote + Buffer + Variable Jump</h3>
+                <p><strong>Objective:</strong> Build a runnable pygame mini-platformer that integrates the three forgiveness/responsiveness pillars from the lesson — coyote time, jump buffering, and variable jump height — into one ~90-line program. Three runtime toggles (1/2/3) flip each layer ON/OFF independently so the difference each mechanic makes is felt directly through play.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Set up a 640×360 pygame window with three rectangles: a floor and two raised platforms with a gap between them (the gap is what makes coyote time and jump buffer feel necessary).</li>
+                    <li>Track player <code>x</code>, <code>y</code>, <code>vx</code>, <code>vy</code>, <code>grounded</code>, plus three forgiveness state variables: <code>coyote_t</code>, <code>buffer_t</code>, and <code>jump_holding</code> (used by variable jump).</li>
+                    <li>For horizontal movement, apply the ground/air asymmetry from the lesson: ground uses <code>vx += move_x * ACCEL * dt</code>, air uses <code>vx += move_x * ACCEL * AIR_CONTROL * dt</code> with <code>AIR_CONTROL = 0.5</code>. On ground with no input, decay <code>vx</code> toward zero by <code>FRICTION * dt</code>.</li>
+                    <li>Each frame, count down <code>coyote_t</code> and <code>buffer_t</code> by <code>dt</code> (clamped at zero). The frame the player goes from grounded to airborne (and toggle 1 is ON), set <code>coyote_t = COYOTE_MAX</code> (≈100 ms).</li>
+                    <li>On SPACE press, fire a jump (<code>vy = -JUMP_POWER</code>) if either <code>grounded</code> OR <code>coyote_t &gt; 0</code>; otherwise (and if toggle 2 is ON), set <code>buffer_t = BUFFER_MAX</code> to remember the press. The moment the player transitions back to grounded with <code>buffer_t &gt; 0</code>, consume the buffer and fire a jump.</li>
+                    <li>For variable jump, on SPACE release while <code>vy &lt; 0</code> and <code>jump_holding</code> is True (and toggle 3 is ON), halve <code>vy</code> — short tap = small hop, hold = full jump.</li>
+                    <li>Apply gravity (<code>vy += GRAVITY * dt</code>) and integrate position. Resolve platform collisions: on <code>vy &gt; 0</code> overlap, snap <code>player.bottom = plat.top</code> and set <code>grounded = True</code>; on <code>vy &lt; 0</code> overlap, snap <code>player.top = plat.bottom</code> and zero <code>vy</code>.</li>
+                    <li>Render the platforms, the player, and a HUD showing each toggle's ON/OFF state plus the live <code>coyote_t</code> / <code>buffer_t</code> millisecond countdowns. Try walking off the right edge of the left platform with coyote OFF vs ON, and try pressing SPACE just before landing with buffer OFF vs ON — each mechanic's contribution becomes obvious through the contrast.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>Track <code>was_grounded</code> separately from <code>grounded</code> across the frame so you can detect the two transition edges: <code>was_grounded and not grounded</code> is the moment to arm coyote, and <code>not was_grounded and grounded</code> is the moment to consume the buffer. Without that two-state comparison the timers fire on the wrong frames.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>"""Forgive the Player — coyote time + jump buffer + variable jump in pygame."""
+import pygame, sys
+
+pygame.init()
+SCREEN = pygame.display.set_mode((640, 360))
+pygame.display.set_caption("Forgive the Player")
+CLOCK = pygame.time.Clock()
+FONT = pygame.font.SysFont("monospace", 14)
+
+# Level: floor + two platforms with a gap (x=240..380)
+PLATFORMS = [
+    pygame.Rect(0, 320, 640, 40),
+    pygame.Rect(60, 230, 180, 12),
+    pygame.Rect(380, 230, 200, 12),
+]
+
+# Player + state
+player = pygame.Rect(80, 200, 24, 32)
+vx, vy = 0.0, 0.0
+grounded = False
+
+# Tunables from the lesson
+RUN_SPEED, ACCEL, FRICTION = 220.0, 1500.0, 1500.0
+AIR_CONTROL, GRAVITY, JUMP_POWER = 0.5, 1400.0, 480.0
+
+# Forgiveness state (seconds)
+coyote_t, buffer_t = 0.0, 0.0
+jump_holding = False
+COYOTE_MAX, BUFFER_MAX = 0.10, 0.10
+
+toggles = {"coyote": True, "buffer": True, "variable": True}
+
+while True:
+    dt = CLOCK.tick(60) / 1000.0
+    space_pressed = space_released = False
+
+    for e in pygame.event.get():
+        if e.type == pygame.QUIT:
+            pygame.quit(); sys.exit()
+        if e.type == pygame.KEYDOWN:
+            if e.key == pygame.K_SPACE: space_pressed = True
+            if e.key == pygame.K_1: toggles["coyote"]   = not toggles["coyote"]
+            if e.key == pygame.K_2: toggles["buffer"]   = not toggles["buffer"]
+            if e.key == pygame.K_3: toggles["variable"] = not toggles["variable"]
+        if e.type == pygame.KEYUP and e.key == pygame.K_SPACE:
+            space_released = True
+
+    keys = pygame.key.get_pressed()
+    move_x = (1 if keys[pygame.K_RIGHT] or keys[pygame.K_d] else 0) \
+           - (1 if keys[pygame.K_LEFT]  or keys[pygame.K_a] else 0)
+
+    # Horizontal: ground vs air asymmetry
+    mult = 1.0 if grounded else AIR_CONTROL
+    if move_x != 0:
+        vx = max(-RUN_SPEED, min(RUN_SPEED, vx + move_x * ACCEL * mult * dt))
+    elif grounded:
+        vx = max(0, vx - FRICTION*dt) if vx &gt; 0 else min(0, vx + FRICTION*dt)
+
+    # Forgiveness countdowns
+    if toggles["coyote"] and not grounded:
+        coyote_t = max(0.0, coyote_t - dt)
+    if toggles["buffer"]:
+        buffer_t = max(0.0, buffer_t - dt)
+
+    # Jump press
+    if space_pressed:
+        if grounded or (toggles["coyote"] and coyote_t &gt; 0):
+            vy = -JUMP_POWER
+            grounded = False; coyote_t = 0
+            jump_holding = True
+        elif toggles["buffer"]:
+            buffer_t = BUFFER_MAX
+
+    # Variable jump cut on early release
+    if toggles["variable"] and space_released and vy &lt; 0 and jump_holding:
+        vy *= 0.5
+        jump_holding = False
+
+    # Gravity + integrate
+    vy += GRAVITY * dt
+    player.x += int(vx * dt)
+    player.y += int(vy * dt)
+
+    # Platform collisions
+    was_grounded = grounded
+    grounded = False
+    for plat in PLATFORMS:
+        if player.colliderect(plat):
+            if vy &gt; 0:
+                player.bottom = plat.top; vy = 0
+                grounded = True; jump_holding = False
+            elif vy &lt; 0:
+                player.top = plat.bottom; vy = 0
+
+    # Edge transitions: arm coyote on leave, consume buffer on land
+    if was_grounded and not grounded and toggles["coyote"]:
+        coyote_t = COYOTE_MAX
+    if not was_grounded and grounded and toggles["buffer"] and buffer_t &gt; 0:
+        vy = -JUMP_POWER
+        grounded = False; buffer_t = 0; jump_holding = True
+
+    # Render
+    SCREEN.fill((30, 30, 50))
+    for plat in PLATFORMS:
+        pygame.draw.rect(SCREEN, (90, 110, 130), plat)
+    pygame.draw.rect(SCREEN, (240, 200, 80), player)
+    hud = [
+        f"[1] Coyote:   {'ON ' if toggles['coyote'] else 'OFF'}  ({coyote_t*1000:5.0f} ms)",
+        f"[2] Buffer:   {'ON ' if toggles['buffer'] else 'OFF'}  ({buffer_t*1000:5.0f} ms)",
+        f"[3] Variable: {'ON' if toggles['variable'] else 'OFF'}",
+        f"grounded={grounded}  vy={vy:6.1f}",
+    ]
+    for i, line in enumerate(hud):
+        SCREEN.blit(FONT.render(line, True, (220,220,220)), (10, 8 + i*18))
+    pygame.display.flip()</code></pre>
                 </details>
             </div>
 
@@ -1312,31 +1433,31 @@ class CharacterController:
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> The lesson's <code>try_jump()</code> method gates a jump on <code>if self.grounded or self.coyote_time &gt; 0</code>, where <code>self.coyote_time</code> counts down from a small positive value (~100 ms) the moment the player transitions from grounded to airborne. What player problem does this design solve?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="That's a separate mechanic (multi-jump / double-jump); coyote time only grants ONE jump for a brief grace period after leaving the ground, not a second jump in mid-air.">A) It lets the player double-jump without an explicit double-jump mechanic.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Correct — coyote time forgives a slightly-late jump press: the player walks off a platform edge intending to jump, but the press lands a few frames after they're already airborne. Without coyote time the press is rejected (grounded is False) and the player drops; with coyote time the small countdown keeps the jump path open for ~100 ms after leaving the ground, matching the lesson's Best Practice 'Coyote Time: Allow jumps briefly after leaving platforms' and Key Takeaway 'Coyote time forgives timing mistakes'.">B) It lets a jump press that arrives a few frames after walking off a platform edge still register as a ledge jump, forgiving slightly-late inputs.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="That's terminal velocity / max-fall-speed clamping (a distinct technique from chat-44 M2 gravity), unrelated to coyote time. Coyote time is exclusively about extending the WINDOW in which a jump press is accepted, not about capping velocity.">C) It caps the player's maximum vertical velocity so a jump never carries them off the top of the screen.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> The lesson's <code>try_jump()</code> method has a fallback branch when no jump can fire immediately: <code>self.jump_buffer_time = self.max_jump_buffer_time</code>. On subsequent frames, the moment the player becomes grounded, this stored value is consumed and a jump fires. What player problem does this design solve?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Correct — jump buffering is the symmetric mirror of coyote time. Coyote time forgives slightly-LATE presses on the way OUT (player has just left the ground); buffering forgives slightly-EARLY presses on the way IN (player is still falling but lands within ~100 ms). A press that arrives 50 ms before landing would otherwise be silently eaten — the buffer holds it briefly and fires it the instant the player touches ground, matching the lesson's Best Practice 'Jump Buffering: Register jump input before landing' and Key Takeaway 'Jump buffering makes controls responsive'.">A) It lets a jump press that arrives a few frames before landing still trigger a jump on touchdown, forgiving slightly-early inputs (the symmetric counterpart to coyote time).</button>
+                        <button class="quiz-option" data-correct="false" data-hint="That's a different concern entirely (anti-bunny-hop logic is usually 'must release SPACE between jumps' — a separate gate). Jump buffering does not prevent rapid re-jumping; it ensures a single SPACE press doesn't get lost when timed slightly before ground contact.">B) It prevents the player from holding SPACE to bunny-hop continuously across the level.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="That conflates jump buffering with variable jump height (a separate mechanic that uses KEYUP on SPACE plus an early-release vy cut). The buffer holds an INPUT in time, not a HEIGHT in space.">C) It limits the maximum height of every jump to a fixed buffer value regardless of how long SPACE is held.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> In the lesson's <code>apply_horizontal_movement</code>, ground movement applies <code>velocity.x += move_x * self.acceleration * dt</code>, while airborne movement applies <code>velocity.x += move_x * self.acceleration * self.air_control * dt</code> with <code>self.air_control</code> set to 0.5. Why apply the air_control multiplier mid-air but not on the ground?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="The chat-43 coordinates 'Y down' finding applies to the Y axis; air_control is purely horizontal-axis (X) acceleration scaling. Pygame's coordinate convention has nothing to do with mid-air horizontal maneuverability.">A) Pygame's coordinate system flips Y mid-air, so horizontal acceleration must be halved to keep the math consistent.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="That sounds plausible but isn't what's happening — floating-point accumulation isn't axis-asymmetric, and a 0.5 multiplier wouldn't be a stability fix anyway (it's a feel coefficient). The chat-44 fixed-timestep finding is the real numerical-stability lever; air_control is a design lever.">B) Floating-point error compounds faster mid-air, so the multiplier is a numerical-stability fix.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Correct — air_control = 0.5 models the physical reality that a jumping body has limited mid-air maneuverability compared to one pushing off solid ground. Full air control (multiplier 1.0) feels arcade-y and makes launch trajectory irrelevant; zero air control feels punishing and removes mid-jump course correction entirely. The 0.5 split lets players nudge their landing position while preserving the weight of the original jump, matching the lesson's Best Practice 'Air Control: Limited but present mid-air movement' and Key Takeaway 'Air control allows mid-jump adjustments'.">C) It models the physical reality that a jumping player has limited mid-air maneuvering compared to one pushing off the ground — full air control feels arcade-y, zero air control feels punishing, so 0.5 splits the difference.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

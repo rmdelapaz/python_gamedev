@@ -1400,19 +1400,101 @@ class AnimatedParallaxLayer(ParallaxLayer):
             <h2 id="practice-exercise-build-platformer-parallax">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Three Layers, Three Speeds — A Living World in 60 Lines</h3>
+                <p><strong>Objective:</strong> Build a side-scrolling demo that exercises the three pillar parallax patterns from the lesson — <code>speed_x</code> as per-layer multiplier on camera position, modulo wrapping for infinite tiling, and back-to-front draw order — in one runnable program. The HUD prints per-layer offsets each frame so the abstract speed scalar becomes a visible number on screen.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Build three 800×400 layer surfaces in code: a <strong>far</strong> sky with two suns (so the wrap is visible), a <strong>mid</strong> mountain silhouette polygon, and a <strong>near</strong> row of tree silhouettes. Use <code>SRCALPHA</code> for the mid + near layers so the sky shows through.</li>
+                    <li>Store layers as a list of <code>(surface, speed_x)</code> tuples in back-to-front order: <code>[(sky, 0.2), (mid, 0.5), (near, 1.5)]</code>. Far = small speed (drifts past slowly), foreground = speed &gt; 1 (whips past faster than the camera).</li>
+                    <li>Implement <code>draw_layer(surf, speed_x, camera_x)</code> using <code>offset = -(camera_x * speed_x) % LAYER_W</code> and a tile loop of count <code>(SCREEN_W // LAYER_W) + 2</code>. The <code>+ 2</code> covers the seam at modulo wrap plus the partial tile drawn at negative x.</li>
+                    <li>Player is a 24×40 red rect controlled by Left/Right or A/D arrow keys at 280 px/s. The world is 2400 px wide (3× screen) so the camera scrolls. Camera follows player centered, clamped to <code>[0, WORLD_W - SCREEN_W]</code>.</li>
+                    <li>Each frame, draw the layers in list order (back-to-front, Painter's algorithm), then draw the player at <code>player.move(-camera_x, 0)</code>. Add a HUD line: <code>camera.x | far_off | mid_off | near_off</code> so the per-layer offsets are visible numerically as you walk.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The parallax magic is one line: <code>offset = -(camera_x * speed_x) % LAYER_W</code>. The negation flips sign so the world appears to move opposite the camera (camera goes right → layers shift left on screen — same world↔screen translation pattern as the chat-43 vectors lesson and the chat-46 camera lesson, just applied at N different rates per layer). The modulo creates the infinite-tiling illusion. The tile loop's <code>+ 2</code> is for correctness, not optimization: <code>+ 1</code> alone leaves a 1-pixel gap flashing at the screen edge whenever the modulo wraps the offset back to zero. Draw order matters: if you reverse the list, trees render BEHIND the sky and the depth illusion collapses (Painter's algorithm — same back-to-front rule used by chat-42 sprite_groups_layers <code>LayeredUpdates</code> and the chat-46 tilemap layer system).</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame
+import sys
+
+pygame.init()
+SCREEN_W, SCREEN_H = 800, 400
+WORLD_W = 2400              # 3× screen → camera scrolls
+LAYER_W = 800               # tile-of-2 covers screen
+PLAYER_SPEED = 280
+
+screen = pygame.display.set_mode((SCREEN_W, SCREEN_H))
+pygame.display.set_caption("Three Layers, Three Speeds")
+clock = pygame.time.Clock()
+font = pygame.font.SysFont(None, 22)
+
+# ---- Build 3 layer surfaces ----------------------------------------------
+# FAR: sky-blue with two suns (so modulo wrap is visible)
+sky = pygame.Surface((LAYER_W, SCREEN_H))
+sky.fill((135, 206, 235))
+pygame.draw.circle(sky, (255, 220, 100), (200, 80), 50)
+pygame.draw.circle(sky, (255, 220, 100), (650, 60), 35)
+
+# MID: mountain silhouette polygon
+mid = pygame.Surface((LAYER_W, SCREEN_H), pygame.SRCALPHA)
+pygame.draw.polygon(mid, (90, 70, 110), [
+    (0, 280), (180, 150), (340, 250), (520, 130),
+    (700, 240), (LAYER_W, 220),
+    (LAYER_W, SCREEN_H), (0, SCREEN_H)
+])
+
+# NEAR: tree silhouettes
+near = pygame.Surface((LAYER_W, SCREEN_H), pygame.SRCALPHA)
+for tx in (50, 240, 400, 580, 720):
+    pygame.draw.rect(near, (30, 80, 30), (tx, 280, 20, 80))
+    pygame.draw.circle(near, (30, 80, 30), (tx + 10, 270), 35)
+
+# Layer table — drawn back-to-front per Painter's algorithm
+LAYERS = [(sky, 0.2), (mid, 0.5), (near, 1.5)]
+
+def draw_layer(surf, speed_x, camera_x):
+    """Parallax + infinite tiling. Tile count covers viewport plus seam."""
+    offset = -(camera_x * speed_x) % LAYER_W
+    tiles = (SCREEN_W // LAYER_W) + 2
+    for i in range(tiles):
+        screen.blit(surf, (offset + i * LAYER_W - LAYER_W, 0))
+
+# ---- Player + camera -----------------------------------------------------
+player = pygame.Rect(SCREEN_W // 2, 320, 24, 40)
+camera_x = 0.0
+
+while True:
+    dt = clock.tick(60) / 1000
+    for e in pygame.event.get():
+        if e.type == pygame.QUIT:
+            pygame.quit(); sys.exit()
+
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_LEFT]  or keys[pygame.K_a]:  player.x -= int(PLAYER_SPEED * dt)
+    if keys[pygame.K_RIGHT] or keys[pygame.K_d]:  player.x += int(PLAYER_SPEED * dt)
+    player.x = max(0, min(player.x, WORLD_W - player.width))
+
+    # Camera follows player, clamped to world
+    camera_x = player.x - SCREEN_W // 2
+    camera_x = max(0, min(camera_x, WORLD_W - SCREEN_W))
+
+    # Draw layers BACK-TO-FRONT (Painter's algorithm)
+    for surf, speed_x in LAYERS:
+        draw_layer(surf, speed_x, camera_x)
+
+    # Draw player at world-pos minus camera-pos
+    pygame.draw.rect(screen, (220, 60, 60), player.move(-camera_x, 0))
+
+    # HUD: per-layer offsets make speed_x visible numerically
+    hud = (f"camera.x={int(camera_x):4d}   "
+           f"far_off={int(camera_x*0.2):4d}   "
+           f"mid_off={int(camera_x*0.5):4d}   "
+           f"near_off={int(camera_x*1.5):4d}")
+    screen.blit(font.render(hud, True, (255, 255, 255)), (10, 10))
+
+    pygame.display.flip()</code></pre>
                 </details>
             </div>
 
@@ -1420,31 +1502,31 @@ class AnimatedParallaxLayer(ParallaxLayer):
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> The demo's camera moves right at 280 px/s. The sky layer has <code>speed_x = 0.2</code> and the tree layer has <code>speed_x = 1.5</code>. After 1 second of camera motion, how much has each layer's drawing offset shifted, and what does <code>speed_x</code> represent?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Both layers can't shift the same — that would be no parallax at all (a single layer at speed 1.0). Open the HUD and watch far_off and near_off diverge as you walk.">A) Both shift by 280 px — speed_x is just a label naming the layer's draw order, not a multiplier on camera position.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Sky shifts 56 px (280 × 0.2), trees shift 420 px (280 × 1.5) — speed_x is a per-layer SCALAR MULTIPLIER on the camera's position. The draw formula offset = -(camera.x * speed_x) % LAYER_W applies that scalar before the modulo wrap. speed_x &lt; 1 makes a layer DRIFT past the camera lazily (creates 'far' depth: distant mountains barely move when you walk); speed_x = 1 sits at the camera plane (gameplay tilemap, ground); speed_x &gt; 1 OVERTAKES the camera (creates 'near' depth: foreground trees whip past faster than you do). This is the same world↔screen translation pattern from chat-43 vectors and chat-46 M3 camera (subtract the camera offset to map world to screen), but applied at N independent rates per layer — parallax is effectively N coordinate transforms sharing one camera, each scaled differently to simulate distance.">B) Sky shifts 56 px, trees shift 420 px — speed_x is a per-layer multiplier on camera position (far &lt; 1, foreground &gt; 1).</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Speed factors are absolute scalars, not normalized to [0..1]. A speed_x of 1.5 is real and meaningful — foreground trees move 1.5× faster than the camera. Try setting it to 2.0 and watch them whip past even more aggressively.">C) Sky shifts 56 px, trees shift 280 px — speed_x is clamped to [0, 1] internally; values above 1 are silently treated as 1.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> The draw formula is <code>offset = -(camera_x * speed_x) % LAYER_W</code> followed by a tile loop of count <code>(SCREEN_W // LAYER_W) + 2</code>. Why <code>+ 2</code> instead of <code>+ 1</code>?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="The +2 is correctness, not optimization. One extra tile covers the seam where modulo wraps the offset back near zero — without it, a 1-pixel gap flashes at the right edge every time camera_x * speed_x crosses a LAYER_W boundary. The SECOND extra hides the partial tile drawn at negative x via the `i * LAYER_W - LAYER_W` term in the blit (which intentionally pulls the first tile leftward off-screen so the wrap doesn't pop in). With +1 you cover ONE of those two cases, but the other still flashes; with +2 both are covered. Drop +2 to +1, walk back and forth across a wrap boundary, and you'll see the seam strobe at every layer width. Same per-frame edge-buffer principle as the chat-46 M2 tilemap viewport-culling `+ 2` (off-screen edge tiles prevent pop-in as the camera scrolls by sub-tile increments) — same fix, applied to a wrapping layer rather than a clipped tilemap.">A) Correctness, not performance — one extra tile covers the seam where modulo wraps the offset to zero, the second hides the partial tile drawn at negative x. With +1, a 1-pixel gap flashes at the screen edge every wrap.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Drawing more tiles is never faster than drawing fewer — every extra blit is per-pixel work. The +2 is for visual correctness, not throughput; pygame's blitter doesn't get faster with more inputs.">B) Performance — pygame's blitter is faster when given more tiles to batch in a single frame, so +2 amortizes setup cost over more draws.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="The tile count just needs to cover viewport plus seam; even or odd doesn't matter. Try a SCREEN_W of 600 and LAYER_W of 800 and you'll get +2 = 2 tiles total — works fine. The constraint is geometric, not parity.">C) Tile counts must be even for grid alignment with pygame's internal blit batching.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> The demo iterates <code>LAYERS = [(sky, 0.2), (mid, 0.5), (near, 1.5)]</code> in list order to draw. What happens if you reverse that list, and what general principle does the unreversed order follow?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Pygame is immediate-mode — each blit immediately replaces pixels at its destination. There's no z-buffer, no compositing pass that resolves overlaps after the fact. Order is everything. Try the reversal and watch.">A) Nothing visible changes — pygame's blitter resolves overlaps using each surface's alpha channel, so draw order is irrelevant when SRCALPHA layers are involved.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="Reversing draws trees first, then mountains, then sky LAST — and since pygame is immediate-mode (each blit overwrites destination pixels), the sky covers everything that came before. Trees and mountains are still drawn, but they're invisible behind the sky surface that's now painted on top. The depth illusion collapses entirely. The unreversed order follows PAINTER'S ALGORITHM: render farthest first, closer surfaces overwrite them where they overlap — exactly how a painter layers oil on canvas (sky background goes down first, then mountains over the sky, then trees in front of the mountains). Same back-to-front rule used by chat-42 sprite_groups_layers `LayeredUpdates` (the `_layer` attribute determines draw order before group.draw() iterates) and the chat-46 M2 tilemap layer system (the `layers` list is iterated in order, each layer's tiles painted on top of the previous). Three Phase-8 modules now anchored on the same render-order discipline: sprite groups, tilemaps, and parallax layers.">B) Trees render BEHIND the sky and the depth illusion collapses — the sky covers everything painted before it. The unreversed order follows Painter's algorithm: render back-to-front so closer surfaces overwrite farther ones where they overlap.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Camera math runs once per frame and is independent of which layers were drawn or in what order; reversing the list only changes which surface wins which pixel. The camera still moves with the player, the offsets are still computed correctly — they just look wrong because the wrong layer is on top.">C) The camera scrolls in the wrong direction — reversing the list inverts the sign of the offset formula, so player movement appears mirrored.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

@@ -1204,53 +1204,181 @@ class AsyncSceneLoader:
             <h2 id="practice-exercise-build-architecture-scene-management">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Halfway-Point Scene Swap + Stack Overlay + Lazy-Load Guard in One Pygame Window</h3>
+                <p><strong>Objective:</strong> Build a single-process pygame demo (~85 lines) that exercises three pillar production-scale scene-management patterns in one runnable program: (1) the halfway-point scene swap during a fade transition (the lesson&rsquo;s <code>if self.transition_progress &gt;= 0.5 and self.next_scene:</code> block &mdash; swap is hidden behind the maximum-opacity moment of the fade), (2) scene stack push/pop with <code>on_pause()</code>/<code>on_resume()</code> preserving the underlying scene&rsquo;s state vs <code>change_scene</code>&rsquo;s full <code>on_exit()</code>/<code>on_enter()</code> teardown, and (3) the lazy-loading guard <code>if not self.loaded</code> inside <code>on_enter()</code> preventing double-allocation when scenes are re-entered through stack patterns or rapid change_scene cycles.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Define three Scene subclasses (or one Scene class with name+color+resource_count fields): MENU, LEVEL, PAUSE_OVERLAY. Each has a <code>loaded</code> bool and overrides on_enter/on_exit/on_pause/on_resume to append a line to a shared lifecycle log (e.g. <code>'on_enter MENU: loading 4 resources'</code>). on_enter starts with <code>if not self.loaded: self.loaded = True; LOG.append(...loading...)</code> &mdash; otherwise <code>LOG.append(...SKIP (already loaded)...)</code> so the lazy-load guard is visible. on_exit clears self.loaded.</li>
+                    <li>SceneManager keeps current_scene, next_scene, scene_stack (list), transition_progress (float, 1.0 = idle), and transition_duration. update_transition advances progress by dt/duration each frame and fires the SWAP exactly when progress crosses 0.5: current.on_exit(), self.current_scene = self.next_scene, current.on_enter(), self.next_scene = None.</li>
+                    <li>change_scene(name) sets self.next = scenes[name] and resets self.tp = 0.0; this drives the fade. push_scene(name) calls current.on_pause(), stack.append(current), then current = scenes[name] and current.on_enter() (instant, no fade). pop_scene() calls current.on_exit(), current = stack.pop(), current.on_resume() (instant, no fade).</li>
+                    <li>Render: clear, current_scene.draw(); if transition active, overlay a black rect with alpha = 255 * (progress*2 if progress&lt;0.5 else 2 - progress*2) &mdash; peaks at 255 at progress=0.5. HUD: current scene name, stack depth (0 or 1), transition progress bar 0&ndash;1 with a vertical red tick at 0.5 (the swap moment), last-5 lifecycle-log lines, per-scene loaded boolean.</li>
+                    <li>Keys: 1 &rarr; change_scene('MENU'); 2 &rarr; change_scene('LEVEL'); P &rarr; push_scene('PAUSE_OVERLAY'); ESC &rarr; pop_scene(); R &rarr; reset. The visual proves all three patterns simultaneously: pressing 1↔2 fires the fade-blackout-swap-fade visible on the progress bar (on_exit/on_enter pair fires at the red-tick moment); pressing 2 then P then ESC shows on_pause/on_resume firing without unload (LEVEL stays loaded throughout the overlay); pressing 1 then 1 again triggers the lazy-load guard (second on_enter sees self.loaded == True and emits the SKIP line, no duplicate loading).</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The halfway-swap timing is the key insight: at progress=0.5 the fade overlay&rsquo;s alpha is exactly 255 (fully opaque), so the on_exit&rarr;reassign&rarr;on_enter sequence happens behind a black screen &mdash; the user can&rsquo;t see the moment the scene changes. Swapping at progress=1.0 (transition complete) would expose a frame of the new scene during the fade-out half (overlay alpha &lt; 255 already), producing a visible single-frame pop. The fade is the visual contract; the swap is the runtime work; doing them at temporally-separated moments (full span vs midpoint) gives correct visuals AND correct lifecycle ordering simultaneously &mdash; the same design-time-vs-runtime separation pattern from chat-54 M2 architecture_state_machines&rsquo;s two-layer transition gate, applied here at scene-lifecycle scope.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame, sys
+
+pygame.init()
+SCREEN_W, SCREEN_H = 800, 600
+screen = pygame.display.set_mode((SCREEN_W, SCREEN_H))
+clock = pygame.time.Clock()
+font = pygame.font.Font(None, 22)
+LOG = []  # rolling lifecycle log
+
+class Scene:
+    def __init__(self, name, color, resource_count):
+        self.name = name
+        self.color = color
+        self.resource_count = resource_count
+        self.loaded = False
+
+    def on_enter(self):
+        if not self.loaded:  # lazy-load guard
+            self.loaded = True
+            LOG.append(f'on_enter {self.name}: loading {self.resource_count} resources')
+        else:
+            LOG.append(f'on_enter {self.name}: SKIP (already loaded)')
+
+    def on_exit(self):
+        self.loaded = False
+        LOG.append(f'on_exit {self.name}: unloading {self.resource_count} resources')
+
+    def on_pause(self):
+        LOG.append(f'on_pause {self.name}: keeping state, hiding music')
+
+    def on_resume(self):
+        LOG.append(f'on_resume {self.name}: restoring music')
+
+    def draw(self, surf):
+        surf.fill(self.color)
+        label = font.render(f'{self.name} (loaded={self.loaded})', True, (255, 255, 255))
+        surf.blit(label, (40, 40))
+
+class SceneManager:
+    def __init__(self):
+        self.scenes = {
+            'MENU': Scene('MENU', (40, 60, 100), 4),
+            'LEVEL': Scene('LEVEL', (60, 100, 60), 6),
+            'PAUSE_OVERLAY': Scene('PAUSE_OVERLAY', (40, 40, 40), 1),
+        }
+        self.current = self.scenes['MENU']
+        self.current.on_enter()
+        self.next = None
+        self.stack = []
+        self.tp = 1.0  # transition progress: 1.0 = idle
+        self.tdur = 0.6
+
+    def change_scene(self, name):
+        if self.tp &lt; 1.0:
+            return  # already transitioning
+        self.next = self.scenes[name]
+        self.tp = 0.0
+
+    def push_scene(self, name):
+        self.current.on_pause()
+        self.stack.append(self.current)
+        self.current = self.scenes[name]
+        self.current.on_enter()
+
+    def pop_scene(self):
+        if not self.stack:
+            return
+        self.current.on_exit()
+        self.current = self.stack.pop()
+        self.current.on_resume()
+
+    def update(self, dt):
+        if self.tp &lt; 1.0:
+            self.tp += dt / self.tdur
+            if self.tp &gt;= 0.5 and self.next:
+                # halfway-point swap: hidden behind max-opacity fade
+                self.current.on_exit()
+                self.current = self.next
+                self.current.on_enter()
+                self.next = None
+            if self.tp &gt;= 1.0:
+                self.tp = 1.0
+
+    def draw(self, surf):
+        self.current.draw(surf)
+        if self.tp &lt; 1.0:
+            alpha = int(255 * (self.tp * 2 if self.tp &lt; 0.5 else 2 - self.tp * 2))
+            ov = pygame.Surface((SCREEN_W, SCREEN_H))
+            ov.fill((0, 0, 0))
+            ov.set_alpha(alpha)
+            surf.blit(ov, (0, 0))
+        # HUD
+        hud_y = SCREEN_H - 180
+        pygame.draw.rect(surf, (0, 0, 0), (0, hud_y, SCREEN_W, 180))
+        bar_w = int(self.tp * 400)
+        pygame.draw.rect(surf, (80, 80, 80), (40, hud_y + 10, 400, 14))
+        pygame.draw.rect(surf, (200, 220, 0), (40, hud_y + 10, bar_w, 14))
+        # red tick at progress=0.5 (the swap moment)
+        pygame.draw.line(surf, (255, 0, 0), (240, hud_y + 8), (240, hud_y + 26), 2)
+        info = f'stack={len(self.stack)}  progress={self.tp:.2f}  scene={self.current.name}'
+        surf.blit(font.render(info, True, (255, 255, 255)), (40, hud_y + 32))
+        for i, line in enumerate(LOG[-5:]):
+            surf.blit(font.render(line, True, (180, 220, 255)), (40, hud_y + 60 + i * 22))
+
+mgr = SceneManager()
+running = True
+while running:
+    dt = clock.tick(60) / 1000.0
+    for ev in pygame.event.get():
+        if ev.type == pygame.QUIT:
+            running = False
+        if ev.type == pygame.KEYDOWN:
+            if ev.key == pygame.K_1:
+                mgr.change_scene('MENU')
+            elif ev.key == pygame.K_2:
+                mgr.change_scene('LEVEL')
+            elif ev.key == pygame.K_p:
+                mgr.push_scene('PAUSE_OVERLAY')
+            elif ev.key == pygame.K_ESCAPE:
+                mgr.pop_scene()
+    mgr.update(dt)
+    mgr.draw(screen)
+    pygame.display.flip()
+pygame.quit()
+sys.exit()</code></pre>
                 </details>
             </div>
 
             <div class="card quiz-container">
                 <h3>🎯 Quick Quiz</h3>
 
-                <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
-                    <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                <div class='quiz-question'>
+                    <p><strong>Question 1:</strong> The lesson&rsquo;s <code>update_transition()</code> method performs the actual scene swap (current.on_exit(), reassign self.current_scene = next_scene, next.on_enter()) at <code>transition_progress &gt;= 0.5</code> rather than waiting until <code>progress &gt;= 1.0</code> when the transition fully completes. Why is the midpoint the correct moment for the swap?</p>
+                    <div class='quiz-options'>
+                        <button class='quiz-option' data-correct='false' data-hint='The swap is a single synchronous call &mdash; nothing is split across frames. If the swap is expensive the cost lands on whichever frame fires it.'>A) Performance &mdash; splitting the swap work across two frames at the midpoint reduces frame-time spike during heavy asset loads.</button>
+                        <button class='quiz-option' data-correct='true' data-explanation='The fade overlay reaches MAXIMUM opacity (alpha=255) at progress=0.5 &mdash; the lesson&rsquo;s draw_fade_transition formula is alpha = 255 * (progress*2) for progress&lt;0.5 then 255 * (2 - progress*2) for progress&gt;=0.5, peaking exactly at the midpoint. Swapping there means the on_exit/reassign/on_enter sequence runs behind a fully opaque black overlay; the user cannot see the swap. Swapping at progress=1.0 would fire the swap during the fade-out half when overlay alpha is already &lt; 255, exposing a visible frame of the new scene through the partially-transparent fade. The fade is the visual contract; the swap is the runtime work; doing them at temporally-separated moments (full span vs midpoint) gives correct visuals AND correct lifecycle ordering simultaneously &mdash; same design-time-vs-runtime separation pattern as chat-54 M2 architecture_state_machines&rsquo;s two-layer transition gate, here applied at scene-lifecycle scope.'>B) The fade overlay reaches maximum opacity at progress=0.5, so the swap is hidden behind the visual blackout moment; swapping at progress=1.0 would expose a single frame of the new scene through the still-transparent fade-out edges.</button>
+                        <button class='quiz-option' data-correct='false' data-hint='Pygame is Python, not JavaScript &mdash; no Promises are involved in the fade rendering pipeline. The midpoint timing is about visual hiding, not browser scheduling.'>C) JavaScript Promise resolution requires midpoint scheduling for cross-browser compatibility with the canvas rendering API.</button>
                     </div>
-                    <div class="quiz-feedback"></div>
+                    <div class='quiz-feedback'></div>
                 </div>
 
-                <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
-                    <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                <div class='quiz-question'>
+                    <p><strong>Question 2:</strong> A pause menu opens during gameplay and the player should return to the EXACT mid-game state (player position, score, enemy positions intact) when they close it. Which scene-management API is correct, and which two lifecycle hooks fire on the underlying gameplay scene during the pause?</p>
+                    <div class='quiz-options'>
+                        <button class='quiz-option' data-correct='false' data-hint='change_scene calls on_exit which the lesson defines as unloading resources and clearing the loaded flag; reentering loses mid-game state because the scene was destroyed at on_exit.'>A) change_scene(&apos;PAUSE&apos;) then change_scene(&apos;GAMEPLAY&apos;) &mdash; fires on_exit then on_enter twice on the gameplay scene, with the loaded-flag guard skipping the second load.</button>
+                        <button class='quiz-option' data-correct='true' data-explanation='push_scene preserves the underlying scene&rsquo;s state by design: the lesson&rsquo;s push_scene calls self.current_scene.on_pause() (which signals state-freeze without touching resources or game-state) then stack-pushes the gameplay scene; pop_scene calls the overlay&rsquo;s on_exit() and the restored stack-top&rsquo;s on_resume() &mdash; no reload, no state loss. The four-hook lifecycle (on_enter/on_exit/on_pause/on_resume) maps to the two scenarios: change_scene fully unloads and re-loads (loses state, frees memory); push/pop preserves state (no unload) and uses the on_pause/on_resume pair to signal transient suspension. Confusing the two patterns either holds too much memory live (push when change is right) or destroys state needed on return (change when push is right) &mdash; same fail-safe-defaults rhetoric as chat-46 M2 platformer_tilemap&rsquo;s is_solid-True-OOB invariant applied to the API choice itself: when in doubt about whether the player needs the state back, prefer push (preserve) over change (destroy).'>B) push_scene(&apos;PAUSE_OVERLAY&apos;) then pop_scene() &mdash; fires on_pause when the overlay is pushed, on_resume when it&rsquo;s popped; the gameplay scene&rsquo;s resources stay loaded throughout the overlay&rsquo;s lifetime.</button>
+                        <button class='quiz-option' data-correct='false' data-hint='change_scene already destroyed the gameplay state at on_exit before push_scene runs; push_scene then stacks on top of the wrong (already-unloaded) scene and the gameplay state is gone.'>C) change_scene(&apos;PAUSE&apos;) then push_scene(&apos;GAMEPLAY&apos;) &mdash; fires on_exit then on_enter, then on_pause as the gameplay scene returns to the foreground via the stack.</button>
                     </div>
-                    <div class="quiz-feedback"></div>
+                    <div class='quiz-feedback'></div>
                 </div>
 
-                <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
-                    <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                <div class='quiz-question'>
+                    <p><strong>Question 3:</strong> The lesson&rsquo;s <code>Scene.on_enter()</code> begins with <code>if not self.loaded: self.load_resources(); self.loaded = True</code>. What invariant does the loaded-flag guard protect against, and which prior lessons share the same strict-ordering-with-state-flag shape?</p>
+                    <div class='quiz-options'>
+                        <button class='quiz-option' data-correct='false' data-hint='The cost is not function-call overhead &mdash; it is real texture/sound/GPU buffer allocation at megabyte scale. The guard is correctness, not microbenchmark optimization; skipping the guard would not just slow things down, it would actively leak memory.'>A) The guard is a Python optimization to skip redundant function calls on subsequent enter calls; without it, performance degrades over many scene swaps but no correctness issue exists.</button>
+                        <button class='quiz-option' data-correct='true' data-explanation='At scene-lifecycle scope on_enter()&rsquo;s work is significant &mdash; multi-megabyte texture loads, GPU buffer allocation, music decoder setup, asset streaming pipelines. Calling it twice without an intervening on_exit (e.g., pause overlay popped returning to the same underlying scene; rapid change_scene(&apos;A&apos;) &rarr; change_scene(&apos;A&apos;) in test or save-load code paths; race conditions in async loaders) would double-allocate, leaking the original allocation; the guard prevents that. Same strict-ordering-with-state-flag shape as chat-44 M3 friction&rsquo;s resting-velocity threshold (snap to zero before next force application), chat-44 M4 collision separate-then-resolve (correct position before resolving impulse), chat-44 M5 fixed-timestep accumulator (consume time before integrating), chat-52 M2 networking_client_server&rsquo;s snap-then-reapply reconciliation (snap to server position before re-applying unacked inputs), and chat-54 M2 architecture_state_machines&rsquo;s on_exit&rarr;reassign&rarr;on_enter ordering (release before reassign before allocate) &mdash; six Phase-8 lessons reinforcing that strict-ordering disciplines are the discipline; architecture_scene_management is the production-scale instantiation where the costs are no longer milliseconds of state-machine hooks but megabytes of asset-pipeline operations.'>B) The guard prevents DOUBLE-ALLOCATION when a scene is re-entered through stack pop without intervening on_exit, or through rapid change_scene cycles in test/save-load code paths; at scene-lifecycle scope on_enter()&rsquo;s allocations are megabyte-scale (textures, GPU buffers, music decoders), so double-allocation is a real production memory leak.</button>
+                        <button class='quiz-option' data-correct='false' data-hint='The lesson&rsquo;s scene management is single-threaded; the loaded boolean works within a sequential call chain, not against concurrent access. Production thread-safe loading would need a lock or atomic compare-and-swap, not just a plain boolean flag.'>C) The guard is for thread safety &mdash; multiple loading threads could call on_enter simultaneously and the loaded flag prevents race conditions during async resource loading.</button>
                     </div>
-                    <div class="quiz-feedback"></div>
+                    <div class='quiz-feedback'></div>
                 </div>
             </div>
         </section>

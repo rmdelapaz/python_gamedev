@@ -682,19 +682,123 @@ class StateManager:
             <h2 id="practice-exercise-build-architecture-state-machines">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Two-Layer Transition Gate + Strict Enter/Exit Ordering in One Pygame Window</h3>
+                <p><strong>Objective:</strong> Build a single-process pygame demo (~85 lines) that exercises three pillar formal-FSM patterns from this lesson in one runnable program: the explicit transition table (<code>addTransition(event, target, condition)</code> registers each allowed transition; events absent from the table are silently rejected with no fallback), the two-layer transition gate (Layer 1: is the event registered in the current state&apos;s table at all? Layer 2: does the optional <code>condition(context)</code> function return True given the current runtime context?), and strict enter/exit hook ordering (<code>previous.on_exit()</code> MUST complete before <code>current.on_enter()</code> starts so per-state resources allocated in <code>on_enter</code> are released in <code>on_exit</code> before the next state allocates its own). Three states (MENU / PLAYING / PAUSED) with the MENU&rarr;PLAYING transition condition-gated on <code>has_save_data</code> &mdash; key <code>D</code> toggles the flag so the same <code>S</code> keypress is sometimes allowed (gate passes) and sometimes blocked (gate rejects) at runtime even though it is always allowed in the table. Generalizes the chat-54 M1 networking_lobby&apos;s ad-hoc <code>can_start()</code> state machine to the FORMAL pattern that prevents ad-hoc state from collapsing into spaghetti as N grows.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Define a <code>State</code> class holding <code>name</code>, <code>color</code>, a <code>transitions</code> dict (event &rarr; (target, condition)), and <code>on_enter</code> / <code>on_exit</code> callables. Implement <code>add_transition(event, target, condition=None)</code> and <code>can_transition(event, context)</code> returning a (bool, payload) tuple where payload is either the target state on success or a reason string on failure.</li>
+                    <li>Define a <code>StateMachine</code> class holding <code>current</code> and a <code>context</code> dict. Implement <code>transition(event)</code> in this strict order: call <code>can_transition</code> on the current state; on success, call <code>current.on_exit(context)</code> first, THEN re-assign <code>self.current</code>, THEN call <code>new_current.on_enter(context)</code>. The exit-before-enter ordering is non-negotiable.</li>
+                    <li>Create three states (MENU blue, PLAYING green, PAUSED gold) and register transitions: <code>MENU --[START]--&gt; PLAYING</code> with <code>condition=lambda ctx: ctx[&apos;has_save_data&apos;]</code>; <code>PLAYING --[PAUSE]--&gt; PAUSED</code>; <code>PAUSED --[RESUME]--&gt; PLAYING</code>; <code>PAUSED --[QUIT]--&gt; MENU</code>. Note <code>MENU --[PAUSE]--&gt;</code> and <code>PLAYING --[QUIT]--&gt;</code> are NOT registered &mdash; pressing those keys in those states must fall through to the table-membership check and be silently rejected (logged as BLOCKED).</li>
+                    <li>Wire <code>on_enter</code> / <code>on_exit</code> hooks to log per-state lifecycle events into <code>context[&apos;logs&apos;]</code>: PLAYING.on_enter resets <code>context[&apos;score&apos;]=0</code>; PLAYING.on_exit logs the final score. Per-frame in the main loop, when current is PLAYING, increment <code>context[&apos;score&apos;] += dt * 10</code>.</li>
+                    <li>Render the screen filled with the current state&apos;s color (visual confirmation of transitions); HUD shows current state name + <code>has_save_data</code> bool + score + key bindings + the last 8 transition log lines. Wire keys: <code>S</code>=START, <code>P</code>=PAUSE, <code>R</code>=RESUME, <code>Q</code>=QUIT, <code>D</code>=toggle has_save_data. Verify by pressing <code>S</code> while <code>has_save_data=False</code>: the log shows <code>BLOCKED MENU -[START]-&gt; ? (runtime condition denied)</code>; press <code>D</code> to flip the flag, then <code>S</code> succeeds. Pressing <code>S</code> while in PLAYING is also blocked but with a DIFFERENT reason (<code>event not in transition table</code>) &mdash; the two layers fail with distinguishable messages.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The two-layer gate is two short conditionals in <code>can_transition</code>: <code>if event not in self.transitions: return False, &apos;event not in transition table&apos;</code> (Layer 1: design-time table membership), then <code>if condition and not condition(context): return False, &apos;runtime condition denied&apos;</code> (Layer 2: runtime context check). Layer 1 catches typos and design errors at trigger-time; Layer 2 catches gameplay-state violations like &quot;you can&apos;t start a game without save data.&quot; In <code>StateMachine.transition</code>, the canonical order is <code>on_exit &mdash;&gt; reassign current &mdash;&gt; on_enter</code>; reversing this leaks per-state resources because <code>on_enter</code> would allocate before <code>on_exit</code> could free.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame
+from enum import Enum, auto
+
+class GameState(Enum):
+    MENU = auto()
+    PLAYING = auto()
+    PAUSED = auto()
+
+class State:
+    def __init__(self, name, color):
+        self.name = name
+        self.color = color
+        self.transitions = {}
+        self.on_enter = None
+        self.on_exit = None
+
+    def add_transition(self, event, target, condition=None):
+        self.transitions[event] = (target, condition)
+
+    def can_transition(self, event, context):
+        if event not in self.transitions:
+            return False, 'event not in transition table'
+        target, condition = self.transitions[event]
+        if condition and not condition(context):
+            return False, 'runtime condition denied'
+        return True, target
+
+class StateMachine:
+    def __init__(self, initial):
+        self.current = initial
+        self.context = {'has_save_data': False, 'score': 0, 'logs': []}
+        if initial.on_enter:
+            initial.on_enter(self.context)
+
+    def transition(self, event):
+        ok, payload = self.current.can_transition(event, self.context)
+        if not ok:
+            self.context['logs'].append(f'BLOCKED {self.current.name} -[{event}]-&gt; ? ({payload})')
+            return False
+        target = payload
+        if self.current.on_exit:
+            self.current.on_exit(self.context)
+        self.context['logs'].append(f'{self.current.name} -[{event}]-&gt; {target.name}')
+        self.current = target
+        if target.on_enter:
+            target.on_enter(self.context)
+        return True
+
+menu = State('MENU', (60, 110, 200))
+playing = State('PLAYING', (60, 180, 80))
+paused = State('PAUSED', (220, 180, 40))
+
+menu.add_transition('START', playing, condition=lambda ctx: ctx['has_save_data'])
+playing.add_transition('PAUSE', paused)
+paused.add_transition('RESUME', playing)
+paused.add_transition('QUIT', menu)
+
+def menu_enter(ctx): ctx['logs'].append('ENTER MENU')
+def menu_exit(ctx):  ctx['logs'].append('EXIT MENU')
+def playing_enter(ctx): ctx['score'] = 0; ctx['logs'].append('ENTER PLAYING (reset score)')
+def playing_exit(ctx):  ctx['logs'].append(f"EXIT PLAYING (score={ctx['score']:.0f})")
+def paused_enter(ctx): ctx['logs'].append('ENTER PAUSED')
+def paused_exit(ctx):  ctx['logs'].append('EXIT PAUSED')
+
+menu.on_enter = menu_enter; menu.on_exit = menu_exit
+playing.on_enter = playing_enter; playing.on_exit = playing_exit
+paused.on_enter = paused_enter; paused.on_exit = paused_exit
+
+pygame.init()
+screen = pygame.display.set_mode((640, 400))
+clock = pygame.time.Clock()
+font = pygame.font.SysFont(None, 20)
+sm = StateMachine(menu)
+
+running = True
+while running:
+    dt = clock.tick(60) / 1000.0
+    for ev in pygame.event.get():
+        if ev.type == pygame.QUIT:
+            running = False
+        elif ev.type == pygame.KEYDOWN:
+            if ev.key == pygame.K_s: sm.transition('START')
+            elif ev.key == pygame.K_p: sm.transition('PAUSE')
+            elif ev.key == pygame.K_r: sm.transition('RESUME')
+            elif ev.key == pygame.K_q: sm.transition('QUIT')
+            elif ev.key == pygame.K_d:
+                sm.context['has_save_data'] = not sm.context['has_save_data']
+                sm.context['logs'].append(f"toggled has_save_data={sm.context['has_save_data']}")
+    if sm.current is playing:
+        sm.context['score'] += dt * 10
+
+    screen.fill(sm.current.color)
+    screen.blit(font.render(f"State: {sm.current.name}", True, (255, 255, 255)), (20, 20))
+    screen.blit(font.render(f"has_save_data={sm.context['has_save_data']}", True, (255, 255, 255)), (20, 50))
+    screen.blit(font.render(f"score={sm.context['score']:.1f}", True, (255, 255, 255)), (20, 80))
+    screen.blit(font.render("Keys: S=start  P=pause  R=resume  Q=quit  D=toggle save_data", True, (255, 255, 255)), (20, 110))
+    screen.blit(font.render("Recent transitions:", True, (255, 255, 255)), (20, 150))
+    for i, line in enumerate(sm.context['logs'][-8:]):
+        screen.blit(font.render(line, True, (240, 240, 200)), (20, 180 + i * 22))
+    pygame.display.flip()
+pygame.quit()</code></pre>
                 </details>
             </div>
 
@@ -702,31 +806,31 @@ class StateManager:
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> The lesson&apos;s <code>State.addTransition(event, targetState, condition)</code> registers transitions in an explicit <code>this.transitions</code> Map keyed by event. Why does the lesson model the FSM&apos;s allowed transitions as a centralized data-structure lookup instead of using ad-hoc <code>if-elif</code> chains scattered across input handlers and update methods?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class='quiz-option' data-correct='false' data-hint='Map.get is O(1) but if-elif chains over a small fixed number of states are also effectively O(1) at the scales FSMs run at; lookup speed is not the design driver. The driver is centralization &mdash; one place to read the rules instead of N call sites.'>A) Because <code>Map.get(event)</code> is O(1) while if-elif chains are O(N), so transition tables scale to thousands of states without performance loss.</button>
+                        <button class='quiz-option' data-correct='true' data-explanation='Centralizing the rules in <code>this.transitions</code> makes the FSM&apos;s allowed-transition graph one piece of data instead of logic scattered across every site that wants to change state. Three concrete consequences: (a) unreachable-state detection becomes trivial &mdash; if no transition references a state, it&apos;s dead code, visible by walking the table; with scattered if-elif, the same dead state is invisible because nothing forces an exhaustive view. (b) The state machine becomes invariant-checkable &mdash; <code>transition(event)</code> returns false for any unregistered event, so arbitrary state mutation is impossible-by-construction; with scattered logic, a forgotten branch in one input handler can leave the FSM in an inconsistent state. (c) Adding a new state means registering its transitions in one place; with scattered logic, every existing site that knows the old state list must also be updated, and missing one is a silent bug. Same design-time-validate vs runtime-fail-safe shape as chat-47 M2 level_design&apos;s validate() (catches structural failures at design-time before they leak to runtime). Same fail-safe-defaults rhetoric as chat-46 M2 platformer_tilemap&apos;s is_solid-True-OOB invariant (collapse multiple concerns into one centralized invariant correct without per-call-site checks). Generalizes the chat-54 M1 networking_lobby&apos;s ad-hoc <code>can_start()</code> state machine (concrete case study) to the formal FSM pattern (this lesson) &mdash; same concrete-then-formal cohort coherence as chat-46 platformer-foundational-triplet and chat-51 networking-foundational-triplet.'>B) Because the centralized table is the FSM&apos;s authoritative graph &mdash; transitions not in the table are impossible-by-construction (silent rejection from <code>transition(event)</code>), unreachable states become detectable by walking the table, and adding a new state requires updates in one place instead of every scattered handler.</button>
+                        <button class='quiz-option' data-correct='false' data-hint='JavaScript Maps and Python dicts are general-purpose data structures with no FSM-specific semantics; the lesson uses them because they&apos;re convenient for keyed lookup, not because Map has special FSM enforcement. The discipline lives in the design, not the data structure.'>C) Because JavaScript&apos;s <code>Map</code> has built-in finite-state-machine semantics that automatically reject invalid transitions and validate state-graph invariants at construction time.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> In the lesson&apos;s <code>StateMachine.transition(event)</code>, the order of operations on a successful transition is strictly <code>this.currentState.exit() &mdash;&gt; reassign this.currentState = nextState &mdash;&gt; this.currentState.enter()</code>. Why is reversing this ordering (calling <code>enter()</code> on the new state before <code>exit()</code> on the old state) a bug?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class='quiz-option' data-correct='false' data-hint='State objects in the lesson&apos;s example don&apos;t depend on transient resource ownership for thread safety; they hold their own data structures. The ordering matters because of resource lifecycle and side-effect sequencing, not threading.'>A) Because both <code>enter()</code> and <code>exit()</code> mutate <code>this.context</code>, and JavaScript&apos;s single-threaded event loop would race on the shared object if they overlapped.</button>
+                        <button class='quiz-option' data-correct='true' data-explanation='Per-state resources allocated in <code>on_enter</code> (loaded textures, opened audio channels, registered input handlers, started timers, allocated buffers) MUST be released in <code>on_exit</code> before the next state allocates its own equivalents, or two states briefly own the same singleton resource and corruption is possible &mdash; a paused-state listener still active when the playing-state listener registers, two music tracks playing simultaneously during the overlap, etc. The strict <code>exit() &mdash;&gt; reassign &mdash;&gt; enter()</code> ordering also makes the transition observable to listeners as a single atomic event: at no point does a listener see <code>currentState</code> as the OLD state while the NEW state has already entered, or vice versa. Same two-phase ordered-discipline shape as chat-44 M4 collision response (broad-phase AABB filter MUST run before narrow-phase SAT or the narrow-phase wastes work on impossible pairs) and chat-46 M2 platformer_tilemap (viewport-cull MUST run before render or the renderer wastes work on off-screen tiles) &mdash; multiple Phase-8 lessons reinforcing the &quot;phase A must complete before phase B starts&quot; ordering invariant. Same fail-safe-defaults rhetoric as chat-46 M2&apos;s is_solid-True-OOB and chat-54 M1&apos;s host migration &mdash; the ordering is the invariant that makes per-state resource lifecycle correct without requiring caller-side cleanup logic at every transition site.'>B) Because per-state resources allocated in <code>on_enter</code> (textures, audio channels, input handlers, timers) must be released in <code>on_exit</code> BEFORE the next state allocates its own equivalents, or two states briefly own the same resources and corruption / leaks / overlapping listeners follow.</button>
+                        <button class='quiz-option' data-correct='false' data-hint='JavaScript&apos;s garbage collector handles unreachable-object cleanup automatically; the issue isn&apos;t GC reclamation order but ACTIVE resources (event listeners, audio channels, timers) that GC alone won&apos;t cancel before the new state acquires them.'>C) Because the JavaScript garbage collector requires the OLD state object to be unreachable before the NEW state object can be allocated, or memory pressure causes the runtime to throw an OutOfMemoryError.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> The lesson&apos;s <code>State.canTransition(event, context)</code> implements a TWO-LAYER gate: first checks if the event is registered in the <code>transitions</code> Map at all, and only then evaluates the optional <code>condition(context)</code> function. Why are these two layers separated rather than collapsed into a single check?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class='quiz-option' data-correct='false' data-hint='Both layers are O(1) lookups (Map.get + a single function call); separating them does not optimize anything. The driver is conceptual separation between design-time and runtime concerns, not performance.'>A) Because evaluating the <code>condition</code> function on every event check is expensive, so the table-membership check serves as a fast-path filter that short-circuits the more costly condition evaluation in the common case.</button>
+                        <button class='quiz-option' data-correct='true' data-explanation='The two layers separate DESIGN-TIME concerns (which transitions are even POSSIBLE in the FSM&apos;s graph) from RUNTIME concerns (is this transition allowed RIGHT NOW given the current context). Layer 1 (table membership) catches design errors and typos &mdash; <code>transition(&quot;START_GAEM&quot;)</code> with the typo silently fails because no such event is registered, regardless of context. Layer 2 (condition function) catches gameplay-state violations &mdash; <code>MENU --[START]--&gt; PLAYING</code> is allowed in the table BUT the condition <code>lambda ctx: ctx[&apos;has_save_data&apos;]</code> rejects it at runtime if no save data exists. The two layers fail with DISTINGUISHABLE error messages (&quot;event not in table&quot; vs &quot;runtime condition denied&quot;), which is invaluable for debugging &mdash; one tells you to fix the FSM definition, the other tells you to look at the gameplay state. Same two-layer-validation discipline as chat-47 M2 level_design&apos;s design-time <code>validate()</code> (catches structural failures like &quot;exit unreachable from spawn&quot; before runtime) PLUS the playtest instrumentation from chat-50 M2 polish_playtesting (catches behavioral failures at runtime that design-time validation cannot foresee) &mdash; same orthogonal-axes discipline applied at different lifecycle stages. Same two-signal-union shape as chat-44 M4 collision (broad-phase AABB + narrow-phase SAT, each catches what the other misses) and chat-50 M2 polish_playtesting (heatmap + event log as orthogonal channels). Generalizes the chat-54 M1 networking_lobby&apos;s ad-hoc <code>can_start()</code> ready gate (which collapses the two layers into one conditional) to the formal FSM pattern that keeps them separate &mdash; the cohort-9-finish-extended-plus-cohort-10 internal coherence at work (concrete case study M1 generalized by formal pattern M2).'>B) Because the two layers separate DESIGN-TIME concerns (is this transition possible in the FSM graph at all?) from RUNTIME concerns (is it allowed right now given current context?) &mdash; Layer 1 catches design errors and typos, Layer 2 catches gameplay-state violations, and the layers fail with distinguishable error messages.</button>
+                        <button class='quiz-option' data-correct='false' data-hint='The condition argument is documented as optional with default null; the API does not require both layers to be specified. Most transitions register only a target with no condition, and the second layer is skipped in those cases. The separation is about conceptual clarity, not API enforcement.'>C) Because the JavaScript Map API requires keys to be checked for presence before being looked up to avoid TypeError exceptions on undefined values, so the two-layer check is a language-imposed pattern rather than a design choice.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

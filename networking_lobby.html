@@ -1492,19 +1492,148 @@ class Matchmaker:
             <h2 id="practice-exercise-build-networking-lobby">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Lobby State Machine + Ready-Up Gate + Host Migration in One Pygame Window</h3>
+                <p><strong>Objective:</strong> Build a single-process pygame demo (~85 lines) that exercises three pillar lobby patterns from this lesson in one runnable program: the explicit <code>PlayerState</code> enum driving each player&apos;s UI cell color (LOBBY &rarr; IN_ROOM &rarr; READY &rarr; IN_GAME), the host-excluded <code>can_start()</code> ready gate (every non-host player must be ready while the host is implicitly ready &mdash; preventing the deadlock where the host both needs to tick is_ready AND press start), and host migration on host-leave (the next player in the dict inherits the crown rather than collapsing the room). Four simulated players (Alice / Bob / Carol / Dave) are wired to keys <code>1/2/3/4</code> for ready toggle, <code>L</code> to remove the current host (triggers migration), <code>S</code> to start (gated on <code>can_start()</code>), <code>R</code> to reset.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Define <code>PlayerState</code> as an Enum with values LOBBY, IN_ROOM, READY, IN_GAME. Define a <code>Player</code> dataclass with <code>id</code>, <code>name</code>, <code>state</code>, <code>is_ready</code>, <code>is_host</code>.</li>
+                    <li>Define a <code>Room</code> class holding <code>players</code> (dict id &rarr; Player), <code>host_id</code>, <code>MIN_PLAYERS=2</code>, <code>MAX_PLAYERS=4</code>. Implement <code>can_start()</code>: return False if <code>len(players) &lt; MIN_PLAYERS</code>, return False if any non-host player has <code>is_ready=False</code>, otherwise True &mdash; the host is implicitly skipped.</li>
+                    <li>Implement <code>remove_player(player_id)</code>: del the player from the dict; if the removed player was the host AND the dict is non-empty, transfer host to <code>next(iter(self.players.values()))</code> by setting that player&apos;s <code>is_host=True</code> and updating <code>self.host_id</code>.</li>
+                    <li>Pre-populate four players on launch with Alice as host. Keys <code>1/2/3/4</code> toggle <code>is_ready</code> for the corresponding player AND walk that player&apos;s state IN_ROOM &harr; READY in lockstep. Key <code>L</code> removes the current host (triggering migration). Key <code>S</code> calls <code>start_game()</code> guarded by <code>can_start()</code> &mdash; if True, walk every player&apos;s state to IN_GAME and run a 3-second countdown via <code>dt</code>-based subtraction. Key <code>R</code> resets to fresh four-player lobby.</li>
+                    <li>Render four player cells colored by state (gray=LOBBY, blue=IN_ROOM, green=READY, gold=IN_GAME) with <strong>[HOST]</strong> tag on the host. HUD shows live <code>can_start()</code> boolean, room state, and any countdown remaining. Verify by pressing <code>L</code> mid-lobby: the [HOST] tag jumps to the next player and the lobby keeps running rather than collapsing.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The host migration is one expression: <code>new_host = next(iter(self.players.values())); new_host.is_host = True; self.host_id = new_host.id</code>. Order matters &mdash; del the leaving player from the dict FIRST, then check if the dict is non-empty before iterating. The ready gate&apos;s host-exclusion is one conditional: <code>if not player.is_host and not player.is_ready: return False</code>; reversing the conjunction or dropping the <code>not player.is_host</code> guard recreates the deadlock.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame
+from dataclasses import dataclass
+from enum import Enum
+
+class PlayerState(Enum):
+    LOBBY = 'lobby'
+    IN_ROOM = 'in_room'
+    READY = 'ready'
+    IN_GAME = 'in_game'
+
+@dataclass
+class Player:
+    id: int
+    name: str
+    state: PlayerState = PlayerState.IN_ROOM
+    is_ready: bool = False
+    is_host: bool = False
+
+class Room:
+    MIN_PLAYERS = 2
+    MAX_PLAYERS = 4
+
+    def __init__(self):
+        self.players = {}
+        self.host_id = None
+        self.state = 'WAITING'
+        self.countdown = 0.0
+
+    def add_player(self, p):
+        if len(self.players) &gt;= self.MAX_PLAYERS:
+            return False
+        self.players[p.id] = p
+        if self.host_id is None:
+            p.is_host = True
+            self.host_id = p.id
+        return True
+
+    def remove_player(self, pid):
+        if pid not in self.players:
+            return
+        was_host = self.players[pid].is_host
+        del self.players[pid]
+        if was_host and self.players:
+            new_host = next(iter(self.players.values()))
+            new_host.is_host = True
+            self.host_id = new_host.id
+        elif not self.players:
+            self.host_id = None
+
+    def toggle_ready(self, pid):
+        p = self.players.get(pid)
+        if p is None or p.is_host:
+            return
+        p.is_ready = not p.is_ready
+        p.state = PlayerState.READY if p.is_ready else PlayerState.IN_ROOM
+
+    def can_start(self):
+        if len(self.players) &lt; self.MIN_PLAYERS:
+            return False
+        for p in self.players.values():
+            if not p.is_host and not p.is_ready:
+                return False
+        return True
+
+    def start_game(self):
+        if not self.can_start():
+            return False
+        self.state = 'STARTING'
+        self.countdown = 3.0
+        return True
+
+    def update(self, dt):
+        if self.state == 'STARTING':
+            self.countdown -= dt
+            if self.countdown &lt;= 0:
+                self.state = 'IN_PROGRESS'
+                for p in self.players.values():
+                    p.state = PlayerState.IN_GAME
+
+def reset(room):
+    room.players.clear()
+    room.host_id = None
+    room.state = 'WAITING'
+    room.countdown = 0.0
+    for i, name in enumerate(['Alice', 'Bob', 'Carol', 'Dave']):
+        room.add_player(Player(i + 1, name))
+
+pygame.init()
+screen = pygame.display.set_mode((640, 360))
+clock = pygame.time.Clock()
+font = pygame.font.SysFont(None, 22)
+COLORS = {PlayerState.LOBBY: (96, 96, 96), PlayerState.IN_ROOM: (60, 110, 200),
+          PlayerState.READY: (60, 180, 80), PlayerState.IN_GAME: (220, 180, 40)}
+room = Room()
+reset(room)
+
+running = True
+while running:
+    dt = clock.tick(60) / 1000.0
+    for ev in pygame.event.get():
+        if ev.type == pygame.QUIT:
+            running = False
+        elif ev.type == pygame.KEYDOWN:
+            if ev.key in (pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4):
+                room.toggle_ready(ev.key - pygame.K_0)
+            elif ev.key == pygame.K_l and room.host_id is not None:
+                room.remove_player(room.host_id)
+            elif ev.key == pygame.K_s:
+                room.start_game()
+            elif ev.key == pygame.K_r:
+                reset(room)
+    room.update(dt)
+    screen.fill((22, 24, 28))
+    for i, p in enumerate(sorted(room.players.values(), key=lambda x: x.id)):
+        rect = pygame.Rect(20 + i * 150, 60, 140, 100)
+        pygame.draw.rect(screen, COLORS[p.state], rect, border_radius=8)
+        label = f"{p.name}{' [HOST]' if p.is_host else ''}"
+        screen.blit(font.render(label, True, (255, 255, 255)), (rect.x + 8, rect.y + 8))
+        screen.blit(font.render(p.state.value, True, (240, 240, 240)), (rect.x + 8, rect.y + 36))
+        screen.blit(font.render(f"ready={p.is_ready}", True, (240, 240, 240)), (rect.x + 8, rect.y + 64))
+    hud = [f"Room: {room.state}  can_start: {room.can_start()}  countdown: {room.countdown:.1f}",
+           "Keys: 1/2/3/4=toggle ready  L=remove host  S=start  R=reset"]
+    for i, line in enumerate(hud):
+        screen.blit(font.render(line, True, (220, 220, 220)), (20, 200 + i * 24))
+    pygame.display.flip()
+pygame.quit()</code></pre>
                 </details>
             </div>
 
@@ -1512,31 +1641,31 @@ class Matchmaker:
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> In the lesson&apos;s <code>can_start()</code> method, why does the loop <code>for player in self.players.values(): if not player.is_host and not player.is_ready: return False</code> skip the host&apos;s ready state when checking whether the game can start?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class='quiz-option' data-correct='false' data-hint='Player.__init__ defaults is_ready=False for everyone including the host; there is no special host-default-ready logic in the constructor. The host-skip is a deliberate gate-design choice in can_start, not a constructor side-effect.'>A) Because <code>is_ready</code> defaults to True for the host in the <code>Player.__init__</code> method, so checking would always pass.</button>
+                        <button class='quiz-option' data-correct='true' data-explanation='The host is the player who will press the Start Game button, so the host&apos;s INTENT is to start the game &mdash; requiring them to also tick is_ready would create a deadlock where the host needs to ready themselves AND press start simultaneously, with no clean ordering. Excluding the host from the must-be-ready loop collapses two actions into one (host&apos;s start-press IS their readiness signal). Same authority pattern as chat-52 M2 networking_client_server&apos;s server-authority for who-decides-when-the-match-starts &mdash; the host-as-room-server validates the start condition and acts on it; same authority concentration applies. Same context-determines-correct-choice rhetorical shape as chat-49 M2 polish_tweening + chat-50 M1 polish_difficulty + chat-50 M2 polish_playtesting + chat-52 M2 client_server + chat-53 M1 networking_lag_compensation = six lessons in second-half Phase 8 anchored on the same who-decides discipline.'>B) Because the host&apos;s intent IS to start the game (they&apos;re the one who&apos;ll press the Start Game button), so the host implicitly skips the ready check &mdash; requiring host-ready would deadlock the start condition.</button>
+                        <button class='quiz-option' data-correct='false' data-hint='The Player class is a regular Python class with no enum/reserved-slot magic; is_host=True does not suppress any other attribute. The is_ready attribute exists and is checked normally on the host; the can_start loop just skips reading it.'>C) Because Python&apos;s <code>enum</code> module reserves the <code>is_host=True</code> slot for system-level players who cannot have an <code>is_ready</code> attribute.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> When a player marked <code>is_host=True</code> leaves the lobby, why does the lesson&apos;s <code>remove_player()</code> method transfer the host role to <code>next(iter(self.players.values()))</code> instead of just deleting the room and disconnecting all remaining players?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class='quiz-option' data-correct='false' data-hint='Sockets are owned by the Player object, not the Room; a player&apos;s TCP socket stays open whether the room exists or is deleted. Host migration is about lobby UX (do not kill the lobby on host churn), not about socket lifecycle.'>A) Because <code>remove_player()</code> must keep the room alive to preserve TCP socket state &mdash; deleting the room would close every other player&apos;s socket and break the underlying connection.</button>
+                        <button class='quiz-option' data-correct='true' data-explanation='Deleting the room when the host leaves makes every other player&apos;s lobby session die through no fault of their own &mdash; they joined Alice&apos;s room, Alice rage-quit, now their entire lobby vanishes. Host migration transfers ownership smoothly so the lobby survives host churn; the room only deletes when len(room.players) == 0. Same fail-safe-defaults rhetoric as chat-46 M2 platformer_tilemap&apos;s is_solid-returns-True-OOB invariant: collapse two concerns (is the host present? + does the room continue?) into one transfer-rather-than-delete invariant correct for resilience without requiring caller-side host-presence checks at every operation. Used everywhere in production (Halo, Among Us, Fall Guys all migrate the host on host-disconnect rather than collapsing the lobby) for exactly this reason.'>B) Because deleting the room when the host leaves makes every other player&apos;s lobby session die through no fault of their own; host migration keeps the lobby alive across host churn, only deleting when <code>len(room.players) == 0</code>.</button>
+                        <button class='quiz-option' data-correct='false' data-hint='Python dict iteration in 3.7+ preserves INSERTION order, not creation-history; next(iter(...)) returns whoever was added next after the original host, not the original creator. There is no insertion-creator caching at the language level.'>C) Because Python&apos;s dict iterator caches the first key from when the dict was created, so it always returns the original room creator regardless of who left.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> In the lesson&apos;s <code>Matchmaker.find_matches()</code>, why does the code expand <code>search_range = 100 + (wait_time * 10)</code> per second of queue time rather than keeping the search range fixed at the initial value?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class='quiz-option' data-correct='false' data-hint='Float arithmetic on rating-difference comparisons is stable in normal range; there is no numerical drift driving the expansion. The widening is a design choice about the fairness-vs-wait-time trade-off, not a fix for a numerical bug.'>A) Because Python&apos;s float arithmetic introduces small drift over time, so the expansion is a numerical-stability adjustment.</button>
+                        <button class='quiz-option' data-correct='true' data-explanation='A fixed-narrow search range guarantees balanced matches but creates infinite wait at low traffic (no players within the &plusmn;100 rating window ever queue, so the player waits forever). A fixed-wide range guarantees fast matches but unbalanced (high-rated player crushed by low-rated, low-rated frustrated by high-rated). The expansion is the time-based mediator: starts narrow when traffic is heavy (favoring fairness when many candidates exist), gradually widens to ensure eventual match when traffic is sparse (a slightly unbalanced match beats no match at all). Same context-determines-correct-choice shape as chat-49 M2 polish_tweening (camera no-overshoot vs polish-feel overshoot &mdash; same math family, opposite design choices) + chat-50 M1 polish_difficulty (DDA target performance band) + chat-50 M2 polish_playtesting (p-value vs effect size both required) + chat-52 M2 networking_client_server (favor-the-shooter trade-off) + chat-53 M1 networking_lag_compensation (rewind cap as correctness-not-optimization) = seven lessons in second-half Phase 8 reinforcing the rhetorical move that the surface metric is not the only driver and the trade-off itself is the design.'>B) Because fixed search ranges force a binary trade-off (narrow=balanced-but-infinite-wait, wide=fast-but-unbalanced); expansion mediates over time &mdash; initial narrow window favors balanced matches when traffic is heavy, gradually widening to guarantee eventual match when traffic is sparse.</button>
+                        <button class='quiz-option' data-correct='false' data-hint='wait_time is per-PLAYER (time since each player joined the queue), not pool-wide. Pool size does not necessarily grow over a single player&apos;s wait, so the expansion is not about preserving a percentage; it is about easing the fairness-vs-wait trade-off for that specific player.'>C) Because the matchmaking pool grows over time, so a wider range keeps the relative-percentage of compatible players constant.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

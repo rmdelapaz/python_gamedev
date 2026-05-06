@@ -1286,19 +1286,121 @@ class ProjectileCompensation:
             <h2 id="practice-exercise-build-networking-lag-compensation">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Server-Side Rewind &mdash; Snapshot History + Favor-the-Shooter Hit Test in One Pygame Window</h3>
+                <p><strong>Objective:</strong> Build a single-process pygame demo (~85 lines) that exercises the three pillar lag-compensation patterns from this lesson &mdash; the snapshot history buffer (`collections.deque(maxlen=60)` at 60&nbsp;Hz tickrate = 1 second of past world states), the rewind-to-input-time hit-test (compute `target_time = now - shooter_latency`, clamp to `MAX_REWIND_MS`, find bracketing snapshots, lerp between them, run hit-test against the interpolated historical position), and the favor-the-shooter trade-off (server validates against the rewound state, accepting hits the shooter genuinely SAW at shot-time even though the target may have moved on the server's current state) &mdash; all running in one window with the &quot;server&quot; (red ground-truth NOW), the &quot;client view&quot; (yellow ~100&nbsp;ms behind = what the shooter sees and aims at), and the rewound hit-test target (cyan/green = server's reconstruction of where the bot was at shot-time) drawn simultaneously so the latency-vs-rewind-vs-current spatial separation is the smoking-gun visualization.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Define a `Snapshot` dataclass with `timestamp`, `bot_x`, `bot_y` and a `history = collections.deque(maxlen=60)` rolling buffer at 60&nbsp;Hz tickrate so the server keeps exactly 1 second of past world states &mdash; the lesson's `LagCompensationSystem.state_history` pattern.</li>
+                    <li>Set `LATENCY_MS = 100` (one-way shooter-to-server delay), `MAX_REWIND_MS = 200` (Best Practice 'Rewind Limits: Cap maximum rewind time (150-250ms)'), `BOT_RADIUS = 18`. Bot moves left-to-right at 220 px/s, bouncing at screen edges.</li>
+                    <li>Each frame: update bot position, then `history.append(Snapshot(now, bot_x, bot_y))` so the server records its authoritative state every tick.</li>
+                    <li>Implement `get_state_at(target_time)` that finds two bracketing snapshots (one with timestamp `&lt;=` target, one with `&gt;=`) and lerps between them via `pos1 + (pos2 - pos1) * t` where `t = (target_time - before.timestamp) / (after.timestamp - before.timestamp)` &mdash; the chat-43 game_mathematics interpolation lerp formula, exactly the lesson's `lerp_position` shape.</li>
+                    <li>On `MOUSEBUTTONDOWN`: compute `rewind_s = min(LATENCY_MS, MAX_REWIND_MS) / 1000.0`, `target_time = now - rewind_s`, get the historical Snapshot via `get_state_at(target_time)`, then run hit-test against the historical position via squared-distance check `(dx*dx + dy*dy) &lt;= BOT_RADIUS * BOT_RADIUS` (chat-43 vectors Performance Tip 'Use Squared Distance').</li>
+                    <li>Render three concentric realities: RED filled circle at server's current `(bot_x, bot_y)` = ground truth NOW; YELLOW outline at `get_state_at(now - LATENCY_MS/1000.0)` = client's delayed view = what the shooter sees and aims at; GREEN/GRAY outline at the last shot's rewound target = server's reconstruction of where the bot was at shot-time. The yellow-vs-red gap visualizes latency; the green-vs-yellow proximity proves the rewind reconstructs the client view.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The `get_state_at` interpolation is the chat-43 lerp formula UNCHANGED &mdash; the only difference is what t represents (here, where target_time falls between the two bracketing snapshot timestamps). When the bot moves at 220 px/s and latency is 100&nbsp;ms, the client view is 22 px behind the server's authoritative position; the shooter aims at the YELLOW (delayed) target, server rewinds 100&nbsp;ms back, and the reconstructed position should land within ~1 px of where YELLOW is drawn &mdash; that proximity is the test that the rewind correctly reconstructs the client view. Without the buffer, server can only see RED (current) and would reject every hit on a moving target as 'missed' even though the shooter aimed correctly at where they SAW the bot.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame, time, collections
+from dataclasses import dataclass
+
+pygame.init()
+SCREEN_W, SCREEN_H = 800, 480
+screen = pygame.display.set_mode((SCREEN_W, SCREEN_H))
+pygame.display.set_caption('Server-Side Rewind &mdash; Favor-the-Shooter')
+clock = pygame.time.Clock()
+font = pygame.font.SysFont('monospace', 14)
+
+LATENCY_MS = 100      # one-way shooter-to-server delay
+MAX_REWIND_MS = 200   # Best Practice 'Rewind Limits' (150-250 ms)
+TICKRATE_HZ = 60
+HISTORY_LEN = TICKRATE_HZ  # 1 second at 60 Hz
+BOT_RADIUS = 18
+
+@dataclass
+class Snapshot:
+    timestamp: float  # seconds since startup
+    bot_x: float
+    bot_y: float
+
+# Server-side rolling snapshot buffer
+history = collections.deque(maxlen=HISTORY_LEN)
+
+bot_x, bot_y, bot_vx = 100.0, 240.0, 220.0
+shots = hits = 0
+last = None  # (rx, ry, hit) for HUD overlay
+start_t = time.time()
+
+def get_state_at(target_time):
+    """Find bracketing snapshots and lerp between them &mdash; chat-43 lerp."""
+    if not history:
+        return None
+    before = after = None
+    for i in range(len(history) - 1):
+        if history[i].timestamp &lt;= target_time &lt;= history[i + 1].timestamp:
+            before, after = history[i], history[i + 1]
+            break
+    if before is None:
+        return history[0]   # before history start
+    if after is None:
+        return history[-1]  # after history end
+    span = after.timestamp - before.timestamp
+    if span == 0:
+        return before
+    t = (target_time - before.timestamp) / span
+    return Snapshot(target_time,
+                    before.bot_x + (after.bot_x - before.bot_x) * t,
+                    before.bot_y + (after.bot_y - before.bot_y) * t)
+
+running = True
+while running:
+    dt = clock.tick(60) / 1000.0
+    now = time.time() - start_t
+    for ev in pygame.event.get():
+        if ev.type == pygame.QUIT:
+            running = False
+        elif ev.type == pygame.MOUSEBUTTONDOWN:
+            mx, my = ev.pos
+            shots += 1
+            # Rewind: server clock minus shooter's latency, capped
+            rewind_s = min(LATENCY_MS, MAX_REWIND_MS) / 1000.0
+            historical = get_state_at(now - rewind_s)
+            if historical is not None:
+                dx = mx - historical.bot_x
+                dy = my - historical.bot_y
+                hit = (dx * dx + dy * dy) &lt;= BOT_RADIUS * BOT_RADIUS
+                if hit:
+                    hits += 1
+                last = (historical.bot_x, historical.bot_y, hit)
+
+    bot_x += bot_vx * dt
+    if bot_x &lt; BOT_RADIUS or bot_x &gt; SCREEN_W - BOT_RADIUS:
+        bot_vx *= -1
+        bot_x = max(BOT_RADIUS, min(SCREEN_W - BOT_RADIUS, bot_x))
+    history.append(Snapshot(now, bot_x, bot_y))  # server records every tick
+    client_view = get_state_at(now - LATENCY_MS / 1000.0)
+
+    screen.fill((20, 20, 30))
+    pygame.draw.circle(screen, (220, 80, 80), (int(bot_x), int(bot_y)), BOT_RADIUS)
+    if client_view:
+        pygame.draw.circle(screen, (240, 220, 0),
+                           (int(client_view.bot_x), int(client_view.bot_y)),
+                           BOT_RADIUS, 2)
+    if last:
+        rx, ry, was_hit = last
+        col = (60, 240, 60) if was_hit else (160, 160, 160)
+        pygame.draw.circle(screen, col, (int(rx), int(ry)), BOT_RADIUS, 2)
+
+    hud = [f'Click yellow (delayed view) to shoot.  Shots: {shots}  Hits: {hits}',
+           f'RED = server NOW  |  YELLOW = client view ({LATENCY_MS} ms behind)',
+           f'GREEN/GRAY = rewound hit-test target  |  History: {len(history)}/{HISTORY_LEN}']
+    for i, line in enumerate(hud):
+        screen.blit(font.render(line, True, (220, 220, 220)), (12, 8 + i * 18))
+    pygame.display.flip()
+
+pygame.quit()</code></pre>
                 </details>
             </div>
 
@@ -1306,31 +1408,31 @@ class ProjectileCompensation:
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> The lesson's `LagCompensationSystem` keeps `state_history = collections.deque(maxlen=60)` at a 60&nbsp;Hz tickrate &mdash; one full second of past world states. Why is this rolling buffer essential, rather than the server just using its current state for hit validation?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Memory and access-pattern reasoning is not the driver. A deque is convenient (O(1) append + bounded length) but the design driver is preserving past STATES the server can rewind to, not data-structure microbenchmarks.">A) To reduce memory: a `deque` with `maxlen` is faster than a list for typical access patterns.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="The buffer preserves the last second of past world states so when a delayed hit-claim arrives, the server can reconstruct what the shooter genuinely SAW at shot-time. Without buffered past states, the server has only its CURRENT state and cannot validate a rewound hit-test against the past &mdash; anti-cheat then collapses to either trust-the-client (insecure) or no-compensation (every shot fired with non-zero latency feels broken). 1 second covers worst-case ~250 ms ping plus safety margin per Best Practice 'Rewind Limits'. Same 'snap to known good past state + reconstruct' shape as chat-44 M5 fixed-timestep determinism's lockstep replay buffer and chat-52 M2 client_server's snap-to-server + re-apply-unacked reconciliation &mdash; three Phase-8 lessons anchored on keeping a rolling history of authoritative past states.">B) To preserve the last second of past world states so the server can reconstruct what the shooter SAW at shot-time and run hit-test against the rewound past, not the moved-on present.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="The buffer is server-internal, not a streaming protocol. Clients receive snapshot packets directly (chat-52 M2 pattern); they do not reconstruct missing state from a server's history buffer. The buffer's purpose is server-side hit validation against past states, not client-state reconstruction.">C) To stream snapshots to clients as the next packet &mdash; clients reconstruct any missing state from this buffer.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> When a hit-claim arrives at the server with the shooter's reported latency = 100&nbsp;ms, what does the server's lag-compensation pipeline actually do, and why is the `MAX_REWIND_TIME` cap (150-250&nbsp;ms range, Best Practice 'Rewind Limits') NOT optional?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Trusting client-claimed timestamps directly is the anti-cheat hole the cap is designed to close. A malicious client can send any timestamp it wants; the server must compute target_time from its OWN clock minus the latency, not from the client's claimed timestamp.">A) Rewind to the timestamp the client claims the shot was fired at (trusting the client's clock) and run the hit-test against that historical state.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="The lesson's `validate_hit` computes `target_timestamp = current_time - rewind_time` (subtracting from the SERVER clock, not trusting any client timestamp), capped at `max_rewind_time = 0.2`. It then calls `get_state_at_time` which finds the two bracketing snapshots from the rolling history and lerps between them via `lerp_position` (the chat-43 game_mathematics lerp formula UNCHANGED &mdash; only t represents 'where target_time falls between the two snapshot timestamps' instead of 'where elapsed falls between 0 and duration'). The cap is anti-abuse and NOT optional: without it, a malicious client claiming 5-second latency would force the server to rewind the world 5 seconds, allowing 'I shot you before you reached cover even though you reached it 4 seconds ago' shots to land &mdash; arbitrary backwards-time exploits. The 150-250 ms range covers honest worst-case ping plus safety margin without enabling exploits. Same 'cap is correctness, not optimization' rhetorical shape as chat-44 M3 friction's resting-velocity threshold and chat-44 M2 gravity's terminal-velocity cap &mdash; the cap is the discipline, not the implementation detail.">B) Compute `target_time = server_now - shooter_latency` (using the server's own clock, capped at MAX_REWIND_TIME), get the bracketing snapshots and lerp between them per the lesson's `get_state_at_time`, then run hit-test against the interpolated historical position. The cap is anti-abuse: without it, a malicious client claiming 5-second latency could rewind the world arbitrarily far.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="This is exactly the disabled-lag-compensation path the demo's toggle exposes. Skipping rewind defeats the entire purpose &mdash; the shooter saw the bot in the YELLOW position, but the server-current is RED (22 px ahead at 220 px/s); every hit on a moving target would be rejected because 'shooter aimed at where it WAS, server checks where it IS NOW'.">C) Skip rewind and run hit-test against current server state &mdash; this is the simplest implementation and the one production servers actually use for security.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> When server validates a hit using the rewound state, the target may have ALREADY moved on the server's CURRENT state &mdash; possibly already behind cover. Best Practice 'Favor Balance' calls this the 'shot from around the corner' experience for the target. Why is the favor-the-shooter design choice (CSGO, Overwatch, Valorant all ship it) intentional rather than a bug?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Favor-the-target IS technically feasible &mdash; the server can simply skip rewind and validate against current state, or reject any hit where the target has since moved. The choice is design, not technical: favor-the-target reliably frustrates shooters because non-zero-latency hits feel rejected for no visible reason on screen.">A) Because favor-the-target is technically infeasible &mdash; the server can't roll back the world for the target's perspective.</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="The shooter genuinely SAW the target there 100+ ms ago (the YELLOW circle in the demo, ~22 px behind RED at 220 px/s) and aimed correctly at what they saw. Rejecting the hit because the server's CURRENT state has the target elsewhere would mean every shot fired with non-zero latency feels rejected for no visible reason &mdash; gameplay would feel broken on any non-LAN connection. The trade-off is the target's 'shot from around the corner' experience: a real cost, but localized to a small visible-on-each-side time window (~100-200 ms = within the MAX_REWIND cap), whereas favor-the-target's cost is global (every networked hit feels broken). Cross-references chat-52 M2 networking_client_server's server-authority (server still validates &mdash; lag-comp doesn't bypass server-authority, it just rewinds the state the server validates against, so cheats like teleport are still caught) and Best Practice 'Favor Balance: Consider both shooter and target experience' (acknowledged trade-off, not denied). Same 'context-determines-correct-choice' shape as chat-49 M2 polish_tweening's camera-no-overshoot vs polish-feel-overshoot, chat-50 M1 polish_difficulty's flow-as-RATIO-not-absolute, and chat-50 M2 polish_playtesting's p-value-AND-effect-size &mdash; six lessons in second-half Phase 8 reinforcing that the obvious surface metric is not always the design driver.">B) The shooter genuinely SAW the target at the rewound position and aimed correctly; rejecting that hit because server-current state moved on would make every networked shot feel broken on any non-LAN connection. The 'shot from around the corner' experience is an acknowledged design trade-off, not a bug &mdash; localized to ~150-200&nbsp;ms (capped by MAX_REWIND) and accepted because the alternative (favor-the-target) breaks gameplay globally.</button>
+                        <button class="quiz-option" data-correct="false" data-hint="Shots in networked games are subject to the same wall-clock latency as everything else &mdash; client input travels to server, server validates, server broadcasts result back, all subject to RTT. There is no 'instant' channel, and that is exactly why lag compensation exists. The favor-the-shooter label is a real design choice with measurable trade-offs (the demo's RED-vs-YELLOW gap), not just a label.">C) Because shots travel at the speed of light and reach the target instantaneously regardless of network latency; favor-the-shooter is just a label without practical effect.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

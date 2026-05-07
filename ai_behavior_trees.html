@@ -1663,19 +1663,150 @@ class BehaviorTree:
             <h2 id="practice-exercise-build-ai-behavior-trees">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Worker Behavior Tree with Selector Priority + RUNNING-State Stickiness + Decorator Cooldown in One Pygame Window</h3>
+                <p><strong>Objective:</strong> Build a runnable pygame window in roughly 85 lines that shows three orthogonal behavior-tree disciplines visible per frame on a 24&times;15 cell grid (each cell 32px) with a 320px tree-visualization sidebar. The agent runs a Worker BT with a <code>Selector</code> root over three prioritized children: a Combat <code>Sequence</code> (EnemyNear? &rarr; Flee), a Gather <code>Sequence</code> (ResourceExists? &rarr; MoveToResource &rarr; Pickup &rarr; MoveHome &rarr; Deposit), and an Idle catch-all action. Press E to spawn an enemy near the agent &mdash; the root&rsquo;s <code>current_child</code> snaps from 1 (gather) back to 0 (combat) on the next tick because the Selector is tried top-down and Combat&rsquo;s EnemyNear? gate now returns SUCCESS, so Flee runs and whatever gather step was running gets abandoned (priority interrupt). Press R to spawn a resource &mdash; once Combat fails (no enemy) the Selector falls through to Gather and the gather Sequence&rsquo;s <code>current_child</code> visibly progresses 0&rarr;1&rarr;2&rarr;3&rarr;4 across many frames as MoveToResource and MoveHome each return RUNNING for ~120 ticks before SUCCESS, demonstrating that the index persists across ticks rather than resetting to 0 every frame (RUNNING-state stickiness). Press D to toggle a <code>Cooldown(2s)</code> decorator wrapping Flee &mdash; the same Flee action gets a 2-second cooldown without any source change to the action itself, and the HUD shows the cooldown timer counting down independently (decorator pattern). Right-side sidebar renders the live tree with each node colored by last tick result (gray=IDLE, green=SUCCESS, red=FAILURE, yellow=RUNNING) and an amber outline on the currently-RUNNING leaf. HUD shows tick count, root result, root.cc, gather.cc, carry Y/N, score, cd remaining ms, and cooldown ON/OFF flag &mdash; three orthogonal BT disciplines visible per frame as concrete numbers and colors.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Initialize pygame with a 768&times;480 window plus a 320px tree-visualization sidebar (1088&times;480 total); create an Agent at cell (4, 7) with attributes <code>pos</code>, <code>home</code>, <code>carrying=False</code>, <code>score=0</code>, and a reference to the world.</li>
+                    <li>Define a <code>NodeState</code> enum (SUCCESS / FAILURE / RUNNING) and a <code>Node</code> base with <code>name</code> + <code>last</code> (for visualization coloring) + a default <code>tick(agent)</code> returning SUCCESS.</li>
+                    <li>Build <code>Selector</code> and <code>Sequence</code> as composite subclasses of a <code>Composite</code> mixin that initializes <code>self.children = []</code> + <code>self.cc = 0</code> in <code>__init__</code>. On <code>tick()</code>, iterate children starting from <code>self.cc</code>; <code>Selector</code> returns SUCCESS-on-any-child-SUCCESS (OR-of-children short-circuit), <code>Sequence</code> returns FAILURE-on-any-child-FAILURE (AND-of-children short-circuit). On RUNNING return, set <code>self.cc = i</code> so the next tick re-enters at the same index. On terminal SUCCESS or FAILURE, reset <code>self.cc = 0</code> so the next outer cycle starts fresh.</li>
+                    <li>Build leaf nodes: a <code>Cond</code> wrapping a predicate (returns SUCCESS if true, FAILURE otherwise) and an <code>Act</code> wrapping a function returning a NodeState (so multi-tick actions can return RUNNING). Conditions: <code>EnemyNear?</code> = enemies exist and nearest within 150px; <code>ResExists?</code> = resources list non-empty.</li>
+                    <li>Build action functions: <code>flee(a)</code> moves 4 px/tick away from nearest enemy and returns RUNNING until distance from home exceeds 25 px (then SUCCESS); <code>move_to(a, target)</code> moves 4 px/tick toward target, returns RUNNING until within 8 px (then SUCCESS); <code>pickup</code>, <code>deposit</code>, and <code>idle</code> are one-tick actions that return SUCCESS or FAILURE based on world state.</li>
+                    <li>Build a <code>Cooldown(child, secs)</code> decorator: returns FAILURE if <code>time.time() - self.t0 &lt; self.secs</code>, otherwise ticks the wrapped child and timestamps <code>self.t0 = time.time()</code> on a SUCCESS return. The wrapped child&rsquo;s source code is never touched &mdash; that&rsquo;s the decorator pattern&rsquo;s whole point.</li>
+                    <li>Compose the worker tree in a <code>build_tree()</code> function that returns the root and a reference to the gather Sequence (so the HUD can read <code>gather.cc</code>): <code>root = Selector('Worker'); combat = Sequence('Combat'); combat.add(Cond(EnemyNear)); combat.add(cd if cooldown_on else flee_act); gather = Sequence('Gather'); gather.add(Cond(ResExists)); gather.add(Act(move_to_res)); gather.add(Act(pickup)); gather.add(Act(move_home)); gather.add(Act(deposit)); root.add(combat); root.add(gather); root.add(Act(idle))</code>. The child-list order IS the agent&rsquo;s priority policy.</li>
+                    <li>Main loop: key E spawns an enemy 80 px from agent; key R appends a random-position resource; key D toggles <code>cooldown_on</code> and rebuilds the tree (combat sequence now contains the Cooldown wrapper instead of bare Flee, or vice versa); key Z resets agent to home and clears world; SPACE pauses. Each unpaused frame, call <code>root.tick(agent)</code> and let each node record its <code>last</code> state for color rendering.</li>
+                    <li>Render: agent as blue 12-px circle, home as a 24-px brown square at home cell, enemies as red 10-px circles, resources as gold 8-px circles. On the right sidebar, render the live tree (root at top, two-deep layout) with each node as a 140&times;22 colored rectangle (gray IDLE, green SUCCESS, red FAILURE, yellow RUNNING) and an amber 3-px outline on the currently-RUNNING leaf node.</li>
+                    <li>HUD line at top of game area: <code>tick=N | root=RESULT | root.cc=I | gather.cc=J | carry=Y/N | score=K | cd=Lms | cdON=B</code>. Watching <code>gather.cc</code> climb 0&rarr;1&rarr;2&rarr;3&rarr;4 across many frames (instead of resetting to 0) is the RUNNING-state stickiness in action; <code>root.cc</code> snapping from 1 (gather) back to 0 (combat) on E-press is the priority interrupt in action; <code>cd=NNNms</code> ticking down after a successful flee is the Cooldown decorator working without touching Flee&rsquo;s source.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The single most important detail is the <code>self.cc = i</code> assignment on RUNNING return AND the <code>self.cc = 0</code> reset on terminal SUCCESS/FAILURE in BOTH <code>Selector</code> and <code>Sequence</code> &mdash; both composites need the persistence for symmetric reasons. Without <code>self.cc = i</code> on RUNNING, a multi-tick MoveToResource would re-evaluate from index 0 each tick and the gather sequence would never reach Pickup. Without the reset to 0 on terminal results, the next gather cycle would start partway through a stale sequence. For the priority interrupt to work, place the Selector&rsquo;s <code>cc = 0</code> reset on the SUCCESS return path (not on RUNNING) so the next tick&rsquo;s outer walk starts from index 0 and re-checks Combat&rsquo;s EnemyNear? gate before falling through to Gather &mdash; if you reset on RUNNING too, you&rsquo;d lose the in-flight Flee progress. For the Cooldown decorator, store <code>last_success</code> on the decorator instance (not on the wrapped child); rebuild the combat sequence in-place when D toggles rather than mutating the existing Flee node, so the source code of Flee never changes when the decorator goes on or off &mdash; that&rsquo;s the decorator pattern&rsquo;s whole point. The child-list order in <code>add_child()</code> calls is the priority encoding; <code>add_child()</code> uses <code>list.append()</code> which preserves insertion order, so the order you call <code>combat.add(...)</code>, <code>gather.add(...)</code>, then <code>root.add(combat); root.add(gather); root.add(idle)</code> IS the runtime priority of those three behaviors.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame, sys, time, math, random
+from enum import Enum
+pygame.init()
+W, H, CELL, SIDEBAR = 768, 480, 32, 320
+screen = pygame.display.set_mode((W + SIDEBAR, H))
+font = pygame.font.SysFont('Consolas', 14)
+clock = pygame.time.Clock()
+
+class S(Enum):
+    SUCCESS, FAILURE, RUNNING = 'S', 'F', 'R'
+
+def dist(a, b): return math.hypot(a[0]-b[0], a[1]-b[1])
+
+class Node:
+    def __init__(self, name): self.name, self.last = name, None
+    def tick(self, a): self.last = S.SUCCESS; return S.SUCCESS
+
+class Composite(Node):
+    def __init__(self, name): super().__init__(name); self.children = []; self.cc = 0
+    def add(self, c): self.children.append(c); return self
+
+class Selector(Composite):
+    def tick(self, a):
+        for i in range(self.cc, len(self.children)):
+            r = self.children[i].tick(a)
+            if r == S.SUCCESS: self.cc = 0; self.last = r; return r
+            if r == S.RUNNING: self.cc = i; self.last = r; return r
+        self.cc = 0; self.last = S.FAILURE; return S.FAILURE
+
+class Sequence(Composite):
+    def tick(self, a):
+        for i in range(self.cc, len(self.children)):
+            r = self.children[i].tick(a)
+            if r == S.FAILURE: self.cc = 0; self.last = r; return r
+            if r == S.RUNNING: self.cc = i; self.last = r; return r
+        self.cc = 0; self.last = S.SUCCESS; return S.SUCCESS
+
+class Cond(Node):
+    def __init__(self, name, fn): super().__init__(name); self.fn = fn
+    def tick(self, a): r = S.SUCCESS if self.fn(a) else S.FAILURE; self.last = r; return r
+
+class Act(Node):
+    def __init__(self, name, fn): super().__init__(name); self.fn = fn
+    def tick(self, a): r = self.fn(a); self.last = r; return r
+
+class Cooldown(Node):
+    def __init__(self, child, secs):
+        super().__init__(f'Cd({secs}s)'); self.child, self.secs, self.t0 = child, secs, 0
+    def tick(self, a):
+        if time.time() - self.t0 &lt; self.secs: self.last = S.FAILURE; return S.FAILURE
+        r = self.child.tick(a)
+        if r == S.SUCCESS: self.t0 = time.time()
+        self.last = r; return r
+    def remaining_ms(self): return max(0, int((self.secs - (time.time() - self.t0)) * 1000))
+
+class World: pass
+world = World(); world.enemies = []; world.resources = []
+agent = type('Ag', (), {})(); agent.pos = [4*CELL, 7*CELL]; agent.home = (4*CELL, 7*CELL)
+agent.carrying = False; agent.score = 0; agent.world = world
+
+def flee(a):
+    if not a.world.enemies: return S.FAILURE
+    e = a.world.enemies[0]; dx, dy = a.pos[0]-e[0], a.pos[1]-e[1]; d = math.hypot(dx, dy) or 1
+    a.pos[0] += dx/d * 4; a.pos[1] += dy/d * 4
+    return S.SUCCESS if dist(a.pos, a.home) &gt; 60 else S.RUNNING
+
+def move_to(a, t):
+    dx, dy = t[0]-a.pos[0], t[1]-a.pos[1]; d = math.hypot(dx, dy)
+    if d &lt; 8: return S.SUCCESS
+    a.pos[0] += dx/d * 4; a.pos[1] += dy/d * 4; return S.RUNNING
+
+def move_to_res(a): return move_to(a, a.world.resources[0]) if a.world.resources else S.FAILURE
+def move_home(a): return move_to(a, a.home)
+def pickup(a):
+    if a.world.resources: a.world.resources.pop(0); a.carrying = True; return S.SUCCESS
+    return S.FAILURE
+def deposit(a):
+    if a.carrying and dist(a.pos, a.home) &lt; 24: a.carrying = False; a.score += 1; return S.SUCCESS
+    return S.FAILURE
+
+flee_act = Act('Flee', flee); cd = Cooldown(flee_act, 2.0); cooldown_on = False
+
+def build_tree():
+    root = Selector('Worker'); combat = Sequence('Combat')
+    combat.add(Cond('EnemyNear?', lambda a: bool(a.world.enemies) and dist(a.pos, a.world.enemies[0]) &lt; 150))
+    combat.add(cd if cooldown_on else flee_act)
+    gather = Sequence('Gather')
+    gather.add(Cond('ResExists?', lambda a: bool(a.world.resources)))
+    gather.add(Act('MoveRes', move_to_res)); gather.add(Act('Pickup', pickup))
+    gather.add(Act('MoveHome', move_home)); gather.add(Act('Deposit', deposit))
+    root.add(combat); root.add(gather); root.add(Act('Idle', lambda a: S.SUCCESS))
+    return root, gather
+
+root, gather = build_tree(); tick_n = 0; paused = False
+COLOR = {S.SUCCESS:(76,175,80), S.FAILURE:(244,67,54), S.RUNNING:(255,193,7), None:(158,158,158)}
+
+def draw_tree(node, x, y):
+    pygame.draw.rect(screen, COLOR[node.last], (x, y, 140, 22))
+    if node.last == S.RUNNING and not getattr(node, 'children', None):
+        pygame.draw.rect(screen, (255,140,0), (x, y, 140, 22), 3)
+    screen.blit(font.render(node.name, True, (0,0,0)), (x+4, y+3))
+    if hasattr(node, 'children'):
+        for i, c in enumerate(node.children): draw_tree(c, x+18, y+30+i*28)
+
+while True:
+    for ev in pygame.event.get():
+        if ev.type == pygame.QUIT: pygame.quit(); sys.exit()
+        if ev.type == pygame.KEYDOWN:
+            if ev.key == pygame.K_e: world.enemies = [(agent.pos[0]+80, agent.pos[1])]
+            if ev.key == pygame.K_r: world.resources.append((random.randint(50, W-50), random.randint(50, H-50)))
+            if ev.key == pygame.K_d: cooldown_on = not cooldown_on; root, gather = build_tree()
+            if ev.key == pygame.K_z: agent.pos = list(agent.home); world.enemies = []; world.resources = []
+            if ev.key == pygame.K_SPACE: paused = not paused
+    if not paused: root.tick(agent); tick_n += 1
+    screen.fill((44,62,80))
+    pygame.draw.rect(screen, (121,85,72), (agent.home[0]-12, agent.home[1]-12, 24, 24))
+    for e in world.enemies: pygame.draw.circle(screen, (244,67,54), (int(e[0]), int(e[1])), 10)
+    for r in world.resources: pygame.draw.circle(screen, (255,215,0), (int(r[0]), int(r[1])), 8)
+    pygame.draw.circle(screen, (33,150,243), (int(agent.pos[0]), int(agent.pos[1])), 12)
+    hud = f'tick={tick_n} root={root.last.value if root.last else "-"} root.cc={root.cc} gather.cc={gather.cc} carry={"Y" if agent.carrying else "N"} score={agent.score} cd={cd.remaining_ms()}ms cdON={cooldown_on}'
+    screen.blit(font.render(hud, True, (255,255,255)), (10, 10))
+    pygame.draw.rect(screen, (30,30,30), (W, 0, SIDEBAR, H)); draw_tree(root, W+10, 30)
+    pygame.display.flip(); clock.tick(60)</code></pre>
                 </details>
             </div>
 
@@ -1683,31 +1814,31 @@ class BehaviorTree:
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> A behavior tree&rsquo;s <code>Selector</code> and <code>Sequence</code> composite nodes both walk their children top-down each tick, but they short-circuit on different result kinds. Which statement most accurately captures the asymmetry?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Selector does NOT iterate every child &mdash; it short-circuits as soon as a child returns SUCCESS, which is the whole point of OR-of-children semantics. Iterating every child regardless of result would defeat the priority-interrupt behavior that makes earlier children take precedence; the first viable option is supposed to win immediately.'>A) Both Selector and Sequence iterate every child every tick regardless of result; the only difference is that Selector returns SUCCESS at the end if any child succeeded, while Sequence returns SUCCESS only if all children succeeded.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Selector implements OR-of-children: it returns SUCCESS as soon as any child returns SUCCESS, and only returns FAILURE if every child fails. Sequence implements AND-of-children: it returns FAILURE as soon as any child returns FAILURE, and only returns SUCCESS if every child succeeds. Both short-circuit &mdash; just on opposite result kinds. This is the asymmetry that lets you compose Combat (Sequence: EnemyNear AND CanAttack AND Attack) under Worker (Selector: Combat OR Gather OR Idle) and get the natural priority-interrupt behavior where the first viable option wins. The same root walks the same children every tick, so a previously-failing child can succeed on a later tick and the Selector immediately picks it up &mdash; which is what makes E-press mid-gather snap the agent back to combat.'>B) Selector returns SUCCESS as soon as any child returns SUCCESS (OR-of-children); Sequence returns FAILURE as soon as any child returns FAILURE (AND-of-children). Both short-circuit, just on opposite result kinds.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='This swaps the two semantics. Selector is the OR composite (first SUCCESS wins) and Sequence is the AND composite (first FAILURE aborts). If Sequence aborted on the first SUCCESS instead, you could never compose a multi-step plan like Move-then-Pickup-then-Deposit because the first successful Move would terminate the sequence before Pickup ran &mdash; which is the whole reason the AND/OR distinction exists.'>C) Sequence returns SUCCESS as soon as any child returns SUCCESS (OR-of-children); Selector returns FAILURE as soon as any child returns FAILURE (AND-of-children). The naming convention is historical and runs opposite to the semantics most beginners expect.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> Both <code>Selector</code> and <code>Sequence</code> store a <code>self.cc</code> (current_child) index that gets set to <code>i</code> when child <code>i</code> returns RUNNING and reset to <code>0</code> on terminal SUCCESS or FAILURE. The lesson&rsquo;s gather Sequence is <code>[ResExists?, MoveToResource, Pickup, MoveHome, Deposit]</code> and a 60Hz tick runs MoveToResource for ~120 frames before it returns SUCCESS. What does <code>self.cc</code> persistence across ticks accomplish?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='If self.cc reset to 0 on every tick, the sequence would re-evaluate ResExists? and re-call MoveToResource from scratch on every one of those ~120 frames, never advancing past index 1 to reach Pickup at index 2. The whole point of self.cc is that it does NOT reset on RUNNING &mdash; it only resets when the sequence terminates with SUCCESS or FAILURE.'>A) <code>self.cc</code> resets to 0 on every tick so the sequence always re-validates earlier children (ResExists?) before continuing &mdash; this guarantees the resource hasn&apos;t disappeared mid-route; the index is purely a debugging aid for the HUD.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='self.cc persistence is the mechanism that makes multi-tick actions actually work in a tree ticked at 60Hz. When MoveToResource returns RUNNING for ~120 frames, self.cc stays at 1 across all those frames, so each tick re-enters the sequence at index 1 and re-ticks the SAME MoveToResource action &mdash; preserving its movement progress. When MoveToResource finally returns SUCCESS, the sequence advances to index 2 (Pickup) on the NEXT tick and continues forward. Without persistence, the sequence would re-call ResExists? then re-call MoveToResource from index 0 every frame, never advancing to Pickup. The same mechanism applies symmetrically to Selector: it tracks self.cc so a RUNNING child (e.g., Flee mid-flight) keeps ticking on subsequent frames rather than the Selector re-walking from index 0 and possibly switching mid-flee. This is the data-driven externalization pattern at composite-node scope &mdash; the per-tick decision state lives on the composite node itself rather than being recomputed from scratch each tick.'>B) <code>self.cc</code> stays at the index of the RUNNING child across ticks, so the sequence re-enters at that index each tick and keeps ticking the same multi-tick action until it returns SUCCESS or FAILURE; this is what makes long-running behaviors like move-to-target progress across many frames rather than restarting from index 0 every tick.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='self.cc persistence is needed in BOTH composites for symmetric reasons. Selector needs it so a RUNNING child like Flee mid-flight keeps ticking on subsequent frames rather than the Selector re-walking children from index 0 and possibly switching to a different child mid-flee. The mechanism is composite-symmetric, not Sequence-only.'>C) <code>self.cc</code> is needed only on <code>Sequence</code> because Sequence depends on completing children in order; <code>Selector</code> doesn&apos;t need it because Selector retries from index 0 each tick anyway, picking whichever child currently succeeds.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> The lesson&rsquo;s Worker tree composes <code>Selector(root)</code> with children <code>[Combat Sequence, Gather Sequence, Idle]</code> in that exact order. Pressing E in the demo spawns an enemy near the agent, and on the next tick the root&rsquo;s <code>cc</code> snaps from 1 (gather) back to 0 (combat), interrupting whatever gather step was running. What does this child-list ordering encode, and why does the order matter?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Selector is deterministic top-down, NOT random &mdash; that is what RandomSelector is for. The whole point of Selector&apos;s priority semantics is that earlier children are tried first every tick; if it picked randomly, you could never express &quot;flee takes priority over gather.&quot; The interrupt-on-enemy behavior depends entirely on Combat being literally the first child in the list.'>A) Child order in <code>Selector</code> is purely stylistic &mdash; the Selector internally retries children in random order until one succeeds, so reordering Combat before Gather has no behavioral effect; the priority interrupt on E-press is just coincidence based on which child the random pick happened to land on this tick.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Selector child-list order IS the agent&apos;s decision policy. Earlier children are tried first every tick, so survival behaviors (Combat with EnemyNear? gate) belong above goal behaviors (Gather), and the always-succeed Idle leaf belongs last as the catch-all default. When E spawns an enemy, the next tick Combat&apos;s EnemyNear? returns SUCCESS so Flee runs and the Selector returns RUNNING with cc=0 &mdash; whatever gather step was previously running gets abandoned because the Selector starts from index 0 each outer cycle and never reaches Gather (index 1) while Combat (index 0) keeps returning RUNNING. Reordering the children with no other code change reorders the agent&apos;s priorities: putting Gather first would mean a worker happily harvests next to an enemy until killed. The same external child-list-order mechanism at the BT scope plays the same role as the explicit transition table in the architecture state-machines lesson and the terrain-cost dict in the pathfinding lesson &mdash; the decision data is centralized and editable as data, not scattered through control flow.'>B) Child order encodes decision priority: Selector tries earlier children first, so survival behaviors (Combat with EnemyNear? gate) belong above goal behaviors (Gather), and the always-succeed Idle leaf belongs last as the catch-all default; reordering the children with no other code change reorders the agent&apos;s priorities &mdash; the child list IS the decision policy.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='add_child() preserves insertion order &mdash; that is exactly the mechanism that lets child-list order encode priority. There is no subclassing required; the priority you want is the order you call add_child() in. Subclassing the Selector to hard-code class-name checks would actually defeat the data-driven externalization that makes BTs editable as data without code changes &mdash; the whole architectural advantage of behavior trees is that the structure lives in the composition, not in the class hierarchy.'>C) Child order is fixed by the <code>BehaviorNode</code> base class and can&apos;t be changed without subclassing the Selector to override its child iteration; the demo&apos;s priority interrupt works because <code>Selector</code> is hard-coded to check Combat-class children before Gather-class children inside its base <code>tick()</code> method.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

@@ -1604,19 +1604,153 @@ class NPC:
             <h2 id="practice-exercise-build-ai-state-machines">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Four-State NPC FSM + Personality-Driven Transition + State History Log</h3>
+                <p><strong>Objective:</strong> Build a runnable pygame window in roughly 85 lines that shows a five-state NPC finite state machine (IDLE &harr; PATROL &harr; ALERT &rarr; CHASE/FLEE &rarr; IDLE) driving a green NPC against a player-controlled blue rect, with personality-driven branching at the ALERT outgoing transition (aggressive routes to CHASE, coward routes to FLEE), strict on_exit &rarr; reassign &rarr; on_enter ordering in <code>StateMachine.change_state</code> enforced at every transition, and per-state perception checks owning their own outgoing-edge logic so adding a new state is one new class plus one <code>add_state</code> call rather than an edit to a centralized dispatcher &mdash; three orthogonal architectural disciplines visible per frame in the HUD: current state name color-coded by state, active personality, transition count, and a rolling 8-line state-history log showing every from&rarr;to&rarr;time row.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Define <code>NPCState(Enum)</code> with members IDLE/PATROL/ALERT/CHASE/FLEE. Subclass <code>State</code> once with <code>enter()</code>/<code>execute(dt)</code>/<code>exit()</code> hooks; subclass IdleState/PatrolState/AlertState/ChaseState/FleeState overriding the hooks with state-specific behavior plus outgoing-edge transition checks.</li>
+                    <li>Build <code>StateMachine</code> holding a <code>states</code> dict keyed by <code>NPCState</code>, plus <code>current</code>, <code>history</code>, and <code>count</code>. <code>change_state(new_name)</code> MUST execute in this exact order: (a) call <code>self.current.exit()</code> first; (b) reassign <code>self.current = self.states[new_name]</code>; (c) call <code>self.current.enter()</code> last; (d) record the from&rarr;to&rarr;time row in <code>history</code> and bump <code>count</code>.</li>
+                    <li>In <code>AlertState.execute</code>, after <code>self.entry_time &gt;= 1.0</code>, branch on <code>self.npc.personality</code>: <code>'aggressive'</code> &rarr; CHASE, <code>'coward'</code> &rarr; FLEE. The same FSM topology produces orthogonal behaviors purely from personality-as-data &mdash; no AggressiveNPC vs CowardNPC subclass split.</li>
+                    <li>Each state's <code>execute(dt)</code> owns its OWN outgoing transition logic. IdleState checks <code>distance_to_player() &lt; 200</code> and transitions to ALERT; ChaseState checks <code>distance &gt; 300</code> and transitions back to IDLE; etc. NO centralized tick-loop dispatcher routes transitions based on global perception state.</li>
+                    <li>Pygame window 800x480, NPC color-shifts per state (gray=IDLE, blue=PATROL, yellow=ALERT, red=CHASE, magenta=FLEE). Keys 1/2 set personality aggressive/coward, I/P force IDLE/PATROL, R resets NPC position. Draw a 200-px detection-radius circle around the NPC so the IdleState/PatrolState transition trigger is visible.</li>
+                    <li>HUD shows: current state name color-coded + personality + transition count + distance-to-player + rolling 8-line state-history log with from&rarr;to&rarr;time rows so all three pillars are observable per frame.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The strict on_exit &rarr; reassign &rarr; on_enter ordering matters because if you reassign FIRST and then call <code>exit()</code>, you call <code>exit()</code> on the NEW state (clobbering its just-initialized <code>entry_time</code> and resetting its just-allocated waypoint list); and if you call <code>enter()</code> before <code>exit()</code>, the new state's enter-side-effects run while the old state still owns <code>self.npc</code>'s mutable attributes (orphaned timers, stuck listener registrations, wrong-self-reference bugs). Insert a print in each hook and watch the order in stdout to verify. Same lifecycle invariant as chat-54's architecture_state_machines lesson, here applied at NPC AI lifecycle scope rather than game-architecture scope &mdash; ai_state_machines is the FIRST downstream-applied case of the formal FSM pattern.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame, math, random
+from enum import Enum
+
+WIDTH, HEIGHT = 800, 480
+pygame.init(); screen = pygame.display.set_mode((WIDTH, HEIGHT)); clock = pygame.time.Clock()
+font = pygame.font.SysFont('monospace', 14)
+
+class NPCState(Enum):
+    IDLE='idle'; PATROL='patrol'; ALERT='alert'; CHASE='chase'; FLEE='flee'
+
+COLORS = {NPCState.IDLE:(140,140,140), NPCState.PATROL:(80,140,220),
+          NPCState.ALERT:(240,210,60), NPCState.CHASE:(220,60,60), NPCState.FLEE:(220,80,200)}
+
+class State:
+    def __init__(self, name, npc): self.name=name; self.npc=npc; self.entry_time=0
+    def enter(self): self.entry_time=0
+    def execute(self, dt): self.entry_time += dt
+    def exit(self): pass
+
+class IdleState(State):
+    def __init__(self, npc): super().__init__(NPCState.IDLE, npc)
+    def enter(self): super().enter(); self.npc.vel=(0,0)
+    def execute(self, dt):
+        super().execute(dt)
+        if self.npc.distance_to_player() &lt; 200: self.npc.fsm.change_state(NPCState.ALERT)
+        elif self.entry_time &gt; 2.0: self.npc.fsm.change_state(NPCState.PATROL)
+
+class PatrolState(State):
+    def __init__(self, npc): super().__init__(NPCState.PATROL, npc); self.waypoints=[]; self.idx=0
+    def enter(self):
+        super().enter()
+        self.waypoints=[(random.randint(60,740), random.randint(60,420)) for _ in range(3)]; self.idx=0
+    def execute(self, dt):
+        super().execute(dt)
+        if self.npc.distance_to_player() &lt; 200: self.npc.fsm.change_state(NPCState.ALERT); return
+        tx,ty = self.waypoints[self.idx]
+        dx,dy = tx-self.npc.pos[0], ty-self.npc.pos[1]; d=math.hypot(dx,dy)
+        if d &lt; 12: self.idx=(self.idx+1)%len(self.waypoints)
+        else: self.npc.vel=(dx/d*70, dy/d*70)
+
+class AlertState(State):
+    def __init__(self, npc): super().__init__(NPCState.ALERT, npc)
+    def enter(self): super().enter(); self.npc.vel=(0,0)
+    def execute(self, dt):
+        super().execute(dt)
+        if self.entry_time &gt;= 1.0:
+            if self.npc.personality == 'coward': self.npc.fsm.change_state(NPCState.FLEE)
+            else: self.npc.fsm.change_state(NPCState.CHASE)
+
+class ChaseState(State):
+    def __init__(self, npc): super().__init__(NPCState.CHASE, npc)
+    def execute(self, dt):
+        super().execute(dt); d = self.npc.distance_to_player()
+        if d &gt; 300: self.npc.fsm.change_state(NPCState.IDLE); return
+        dx,dy = self.npc.player[0]-self.npc.pos[0], self.npc.player[1]-self.npc.pos[1]
+        self.npc.vel=(dx/d*150, dy/d*150)
+
+class FleeState(State):
+    def __init__(self, npc): super().__init__(NPCState.FLEE, npc)
+    def execute(self, dt):
+        super().execute(dt); d = self.npc.distance_to_player()
+        if d &gt; 300: self.npc.fsm.change_state(NPCState.IDLE); return
+        dx,dy = self.npc.player[0]-self.npc.pos[0], self.npc.player[1]-self.npc.pos[1]
+        self.npc.vel=(-dx/d*180, -dy/d*180)
+
+class StateMachine:
+    def __init__(self, npc): self.npc=npc; self.states={}; self.current=None; self.history=[]; self.count=0
+    def add_state(self, st): self.states[st.name]=st
+    def change_state(self, new_name):
+        if new_name not in self.states: return
+        old = self.current.name if self.current else None
+        if self.current: self.current.exit()              # 1. exit OLD
+        self.current = self.states[new_name]              # 2. reassign
+        self.current.enter()                              # 3. enter NEW
+        self.count += 1
+        self.history.append((old.value if old else 'init', new_name.value,
+                             round(pygame.time.get_ticks()/1000, 2)))
+        if len(self.history) &gt; 8: self.history.pop(0)
+    def update(self, dt):
+        if self.current: self.current.execute(dt)
+
+class NPC:
+    def __init__(self, x, y, personality='neutral'):
+        self.pos=[x,y]; self.vel=(0,0); self.personality=personality; self.player=(0,0)
+        self.fsm=StateMachine(self)
+        for cls in (IdleState, PatrolState, AlertState, ChaseState, FleeState):
+            self.fsm.add_state(cls(self))
+        self.fsm.change_state(NPCState.IDLE)
+    def distance_to_player(self):
+        return math.hypot(self.player[0]-self.pos[0], self.player[1]-self.pos[1])
+    def update(self, dt, player_pos):
+        self.player = player_pos; self.fsm.update(dt)
+        self.pos[0] += self.vel[0]*dt; self.pos[1] += self.vel[1]*dt
+
+player = [400, 240]; npc = NPC(120, 120, 'aggressive'); running = True
+while running:
+    dt = clock.tick(60)/1000
+    for ev in pygame.event.get():
+        if ev.type == pygame.QUIT: running = False
+        elif ev.type == pygame.KEYDOWN:
+            if   ev.key == pygame.K_1: npc.personality='aggressive'
+            elif ev.key == pygame.K_2: npc.personality='coward'
+            elif ev.key == pygame.K_i: npc.fsm.change_state(NPCState.IDLE)
+            elif ev.key == pygame.K_p: npc.fsm.change_state(NPCState.PATROL)
+            elif ev.key == pygame.K_r: npc.pos=[120,120]; npc.fsm.change_state(NPCState.IDLE)
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_w] or keys[pygame.K_UP]:    player[1] -= 240*dt
+    if keys[pygame.K_s] or keys[pygame.K_DOWN]:  player[1] += 240*dt
+    if keys[pygame.K_a] or keys[pygame.K_LEFT]:  player[0] -= 240*dt
+    if keys[pygame.K_d] or keys[pygame.K_RIGHT]: player[0] += 240*dt
+    npc.update(dt, tuple(player))
+    screen.fill((30, 30, 40))
+    pygame.draw.circle(screen, (60, 60, 80), (int(npc.pos[0]), int(npc.pos[1])), 200, 1)
+    pygame.draw.rect(screen, COLORS[npc.fsm.current.name],
+                     (npc.pos[0]-12, npc.pos[1]-12, 24, 24))
+    pygame.draw.rect(screen, (80, 140, 240), (player[0]-12, player[1]-12, 24, 24))
+    hud = [f'state: {npc.fsm.current.name.value.upper()}',
+           f'personality: {npc.personality}',
+           f'transitions: {npc.fsm.count}',
+           f'distance: {int(npc.distance_to_player())}',
+           '1/2=personality  I/P=force IDLE/PATROL  R=reset']
+    for i, line in enumerate(hud):
+        screen.blit(font.render(line, True, (220, 220, 220)), (10, 10 + i*16))
+    screen.blit(font.render('-- state history (newest at bottom) --', True, (180, 180, 180)),
+                (10, HEIGHT-160))
+    for i, (frm, to, t) in enumerate(npc.fsm.history):
+        screen.blit(font.render(f't={t}s  {frm} -&gt; {to}', True, (180, 220, 180)),
+                    (10, HEIGHT-140 + i*15))
+    pygame.display.flip()
+pygame.quit()</code></pre>
                 </details>
             </div>
 
@@ -1624,31 +1758,31 @@ class NPC:
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> In the lesson&apos;s pattern, why does <code>IdleState.execute()</code> itself contain the check <code>if self.npc.can_see_player(): self.npc.change_state(NPCState.ALERT)</code> rather than a centralized tick-loop dispatcher routing every state&apos;s transition based on a single global perception update?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class='quiz-option' data-correct='false' data-hint='Method-call overhead vs function-call overhead is negligible at NPC tick frequency &mdash; the pattern choice is about code organization and edit cost, not about runtime cost. Try again.'>A) Because Python class-method calls execute slightly faster than function-pointer dispatch, so per-state checks reduce per-tick overhead.</button>
+                        <button class='quiz-option' data-correct='true' data-explanation='Each state owns its own outgoing-edge logic, so adding a new state means writing one new class plus one add_state(...) call rather than editing a growing dispatcher with every state&apos;s exit conditions hard-coded into one branching function. Same data-driven externalization pattern as chat-44 M5 lockstep replay buffer + chat-46 M2 platformer_tilemap is_solid centralized + chat-47 M2 level_design tile-palette JSON + chat-54 M2 architecture_state_machines explicit transition table + chat-55 M1 architecture_scene_management lifecycle hooks + chat-56 M1 architecture_component_systems class-level required-components list + chat-57 M1 architecture_event_systems listeners-keyed-by-event-type dict + chat-58 M1 architecture_save_load dataclass schema-as-contract &mdash; ai_state_machines is the ninth such instance and the first applied to NPC-AI per-state transition-edge ownership.'>B) Because each state owns its own outgoing-edge logic, so adding a new state is one new class plus one add_state call rather than an edit to a growing dispatcher with every state&apos;s exit conditions hard-coded into one branching function.</button>
+                        <button class='quiz-option' data-correct='false' data-hint='Python has had first-class function objects since the beginning &mdash; dispatcher tables are trivially expressible as dicts of callables. The pattern choice is about scaling code-edit cost as the state count grows, not about language expressiveness. Try again.'>C) Because Python lacks first-class function pointers, so dispatcher tables can&apos;t be expressed cleanly &mdash; per-state methods are the only available routing mechanism.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> In <code>StateMachine.change_state</code>, why MUST the strict order be: (1) <code>self.current.exit()</code>, (2) <code>self.current = self.states[new_name]</code>, (3) <code>self.current.enter()</code> &mdash; and never any other interleaving?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class='quiz-option' data-correct='true' data-explanation='If reassignment happens before exit(), self.current already points at the NEW state and exit() clobbers the new state&apos;s just-initialized entry_time + waypoint list; and if enter() runs before exit(), the new state&apos;s enter-side-effects (timer resets, listener registrations, vel=(0,0) writes on self.npc) happen while the old state still owns self.npc&apos;s mutable attributes &mdash; same strict-ordering invariant as chat-44 M3 friction&apos;s resting threshold + chat-44 M4 collision separate-then-resolve + chat-44 M5 fixed-timestep accumulator + chat-52 M2 client_server snap-then-reapply + chat-54 M2 architecture_state_machines on_exit&rarr;reassign&rarr;on_enter at architecture-FSM scope + chat-55 M1 lazy-load-guard + chat-56 M1 components-hold-state-systems-hold-per-tick-logic + chat-57 M1 queued-emit + top-of-frame drain + chat-58 M1 atomic-write-temp-then-os.replace = NINE prior lessons, with chat-59 here the tenth and the FIRST downstream-applied case of the formal chat-54 architecture_state_machines pattern at NPC AI lifecycle scope rather than game-architecture scope.'>A) If reassignment happens before exit(), self.current already points at the NEW state and exit() clobbers the new state&apos;s just-initialized data; and if enter() runs before exit(), the new state&apos;s enter-side-effects happen while the old state still owns self.npc&apos;s mutable attributes (orphaned timers, stuck listeners, wrong-self-reference bugs).</button>
+                        <button class='quiz-option' data-correct='false' data-hint='The MRO is determined at class definition time and walks the same chain regardless of when self.current is assigned &mdash; super() doesn&apos;t consult self.current to figure out which base class to resolve to. The order matters for instance-level resource lifecycle, not for class-level attribute resolution. Try again.'>B) Because <code>super().enter()</code> calls require <code>self.current</code> to be reassigned first or the MRO walks the wrong base class and the wrong <code>State.enter</code> implementation runs.</button>
+                        <button class='quiz-option' data-correct='false' data-hint='Strict ordering matters at runtime in production: orphaned timers from the old state and uninitialized data in the new state are real bugs, not test artifacts. A unit-test mock would not catch the symptom unless it asserts on mutation order specifically. Try again.'>C) Because the order matters for unit-test mocking (so test assertions fire in the expected sequence) but in production behavior the interpreter executes all three steps within the same tick anyway and the order doesn&apos;t change observable outcomes.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> In <code>AlertState.execute</code>, the same five-state FSM topology (same <code>add_state</code> registrations, same enter/execute/exit hook structure) produces ALERT&rarr;CHASE for <code>personality='aggressive'</code> and ALERT&rarr;FLEE for <code>personality='coward'</code> &mdash; what design principle does this externalization-of-personality-into-data demonstrate?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class='quiz-option' data-correct='false' data-hint='pygame&apos;s draw order is determined by the per-frame blit sequence in the main loop, not by personality state. The personality field never reaches the rendering pipeline &mdash; it only routes the AlertState&apos;s outgoing transition. Try again.'>A) Because pygame&apos;s blit ordering requires personality to be checked at the alert state for visual consistency &mdash; rendering aggressive vs coward NPCs needs different sprite-layer order.</button>
+                        <button class='quiz-option' data-correct='true' data-explanation='Composition of personality data with the same FSM topology produces orthogonal behaviors without an AggressiveNPC vs CowardNPC subclass split, avoiding the n&times;m subclass explosion for every (personality &times; FSM-pattern) combination &mdash; same data-driven externalization pattern as chat-44 M5 lockstep replay buffer + chat-46 M2 platformer_tilemap is_solid centralized + chat-47 M2 level_design tile-palette JSON + chat-54 M2 architecture_state_machines explicit transition table + chat-55 M1 architecture_scene_management lifecycle hooks + chat-56 M1 architecture_component_systems composition over inheritance + chat-57 M1 architecture_event_systems listeners-keyed-by-event-type dict + chat-58 M1 architecture_save_load dataclass schema-as-contract = EIGHT prior lessons, with chat-59 here the ninth and applied at NPC personality scope where one new personality value extends the AlertState branching rather than forking the entire NPC class hierarchy.'>B) Composition of personality data with the same FSM topology produces orthogonal behaviors without subclassing AggressiveNPC vs CowardNPC, avoiding the n&times;m subclass explosion for every (personality &times; FSM-pattern) combination.</button>
+                        <button class='quiz-option' data-correct='false' data-hint='Python&apos;s match statement (3.10+) is one possible dispatch mechanism but personality could equally well be checked with a plain if-elif chain, a dict lookup, or a strategy-object reference &mdash; none of those require an Enum. The principle is about composition vs subclassing, not about which dispatch syntax is used. Try again.'>C) Because Python&apos;s match statement requires personality to be a first-class enum value to dispatch correctly, and the AlertState pattern enforces this constraint structurally.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

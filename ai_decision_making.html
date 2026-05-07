@@ -266,19 +266,170 @@ class UtilityAI:
             <h2 id="practice-exercise-build-ai-decision-making">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Utility AI Agent with Response Curves + Personality Modifiers + Requirements Gating in One Pygame Window</h3>
+                <p><strong>Objective:</strong> Build a runnable pygame window in roughly 90 lines that shows three orthogonal utility-AI disciplines visible per frame on a 768&times;480 play area plus a 320px score-bar sidebar (1088&times;480 total). A single agent with four needs (<code>hunger</code>, <code>health</code>, <code>safety</code>, <code>stim</code>) and three personality traits (<code>aggression</code>, <code>caution</code>, <code>curiosity</code>) considers four candidate actions each tick &mdash; <code>eat</code> / <code>fight</code> / <code>flee</code> / <code>explore</code> &mdash; and picks the action with the highest score via a single <code>decide()</code> loop: <code>if not action.requirements(): continue; score = action.score_func(agent) * personality_modifier(action); if score &gt; best: best = action</code>. (a) Utility-scored runtime weighted choice: unlike a behavior tree whose <code>Selector</code> tries children in fixed top-down child-list order, <code>decide()</code> ranks ALL viable options by a numeric score every tick, so the same agent in the same world picks differently as needs drift &mdash; an agent at <code>hunger=0.3</code> might explore, while at <code>hunger=0.8</code> the same agent prefers eat even with food much further away because eat&rsquo;s score now exceeds explore&rsquo;s. (b) Response curves shape behavior: keys 1/2/3/4/5 swap the curve used by <code>score_eat</code> (linear / quadratic / exponential / sigmoid / gaussian) so the SAME hunger value (e.g., 0.7) produces visibly different eat scores per curve &mdash; sigmoid behaves like a soft threshold (snap to high near center=0.5), exponential delays the response (high values dominate late), gaussian peaks at center then falls off both sides; the sidebar bar for eat changes length without any other state changing. (c) Personality modifiers as multiplicative weights: keys A/Z adjust aggression, C/X adjust caution; the same world state and same scoring functions produce a different chosen action per personality (a high-aggression agent fights an enemy that a low-aggression agent flees from), demonstrating that personality lives entirely in the data dict and never touches the scoring code. Keys F/E/T spawn food (gold) / enemy (red) / threat (orange) at random positions. Sidebar shows live bar chart of all four scores per tick with the chosen action highlighted at full color and the rest dimmed; needs drift over time (hunger climbs +0.0008/tick, stim falls &minus;0.0005/tick, safety drops while threats present); HUD shows tick count, chosen action, all four needs, active hunger curve, and aggression value &mdash; three orthogonal utility-AI disciplines visible per frame as concrete bar lengths and score values.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Initialize pygame with a 768&times;480 play area + 320px sidebar (1088&times;480 total). Create an <code>agent</code> object at center (<code>W/2, H/2</code>) with <code>needs = {&apos;hunger&apos;: 0.4, &apos;health&apos;: 1.0, &apos;safety&apos;: 1.0, &apos;stim&apos;: 0.5}</code> and <code>personality = {&apos;aggression&apos;: 0.5, &apos;caution&apos;: 0.5, &apos;curiosity&apos;: 0.5}</code>; create a <code>world</code> object with empty <code>foods</code>, <code>enemies</code>, <code>threats</code> lists.</li>
+                    <li>Define five response-curve functions as standalone <code>def</code>s: <code>linear(v)</code> = clamp 0..1; <code>quadratic(v)</code> = <code>v*v</code>; <code>exponential(v, p=3)</code> = <code>v**p</code>; <code>sigmoid(v, k=10, c=0.5)</code> = <code>1/(1+exp(&minus;k*(v&minus;c)))</code>; <code>gaussian(v, c=0.5, w=0.2)</code> = <code>exp(&minus;(v&minus;c)**2/(2*w*w))</code>. Store them in a list <code>CURVES = [(&apos;linear&apos;, linear), (&apos;quadratic&apos;, quadratic), ...]</code> indexed by <code>hunger_curve_i</code> (default 3 = sigmoid). Same input value, different output shapes &mdash; that&rsquo;s the entire point.</li>
+                    <li>Define four <code>can_X(agent)</code> requirement functions returning <code>True</code>/<code>False</code> (<code>can_eat</code> needs food in world; <code>can_fight</code> needs enemy; <code>can_flee</code> needs threat; <code>can_explore</code> always returns <code>True</code>) and four <code>score_X(agent)</code> functions returning a float in roughly <code>0..1</code>. <code>score_eat</code> applies <code>CURVES[hunger_curve_i][1](agent.needs[&apos;hunger&apos;])</code> times a distance-decay factor <code>1 &minus; min(1.0, dist_to_food / 500)</code>; <code>score_fight</code> = <code>sigmoid(agent.needs[&apos;health&apos;])</code>; <code>score_flee</code> = <code>exponential(1 &minus; agent.needs[&apos;safety&apos;]) * (1 &minus; agent.needs[&apos;health&apos;] * 0.5)</code>; <code>score_explore</code> = <code>(1 &minus; agent.needs[&apos;stim&apos;]) * agent.needs[&apos;safety&apos;] * 0.5</code>.</li>
+                    <li>Define <code>decide(agent)</code> as the single utility-AI loop. Iterate <code>ACTIONS = [(name, req_fn, score_fn), ...]</code>: if <code>req_fn(agent)</code> returns <code>False</code>, store <code>scores[name] = None</code> and <code>continue</code> (Layer-1 binary gate &mdash; this is what prevents the agent from even considering eat when there&rsquo;s no food); otherwise compute <code>s = score_fn(agent) * personality_mod(name)</code> where <code>personality_mod</code> looks up <code>agent.personality[trait]</code> per action via a <code>PMOD = {&apos;eat&apos;: None, &apos;fight&apos;: &apos;aggression&apos;, &apos;flee&apos;: &apos;caution&apos;, &apos;explore&apos;: &apos;curiosity&apos;}</code> table (Layer-2 continuous score). Track <code>best_score</code> and <code>best_action</code>; return <em>both</em> the chosen action and the full <code>scores</code> dict so the sidebar can render the bar chart for ALL viable actions, not just the winner.</li>
+                    <li>Define <code>take_action(agent, name)</code>: <code>eat</code> moves toward nearest food at 3 px/tick and consumes when within 12 px (sets <code>hunger=0.0</code>); <code>fight</code> moves toward nearest enemy at 2.5 px/tick and removes when within 20 px (decrements health by 0.005/tick while engaged); <code>flee</code> moves AWAY from nearest threat at 4 px/tick (regenerates safety +0.01/tick while moving); <code>explore</code> jitters the agent &plusmn;2 px on each axis (regenerates stim +0.005/tick).</li>
+                    <li>Define <code>tick_needs(agent)</code>: hunger climbs +0.0008/tick (slow drift toward starvation), stim falls &minus;0.0005/tick (boredom builds), safety drops &minus;0.002/tick while threats exist in the world (otherwise stable). Clamp <code>agent.pos</code> to play-area bounds. This is what makes the chosen action change over time even with no key presses &mdash; needs drift, scores drift, the max-score winner shifts.</li>
+                    <li>Main loop: keys F/E/T spawn food/enemy/threat at random play-area positions; keys 1/2/3/4/5 switch <code>hunger_curve_i</code>; A/Z adjust aggression by &plusmn;0.1 (clamped 0..1); C/X adjust caution by &plusmn;0.1; R resets agent + world; SPACE pauses. Each unpaused frame call <code>action, scores = decide(agent)</code>, then <code>take_action(agent, action)</code>, then <code>tick_needs(agent)</code>, then <code>tick_n += 1</code>.</li>
+                    <li>Render play area: food as gold 8-px circles, enemies as red 10-px circles, threats as orange 12-px circles, agent as blue 12-px circle. Render the sidebar with one row per action: action name + a horizontal bar whose width equals <code>int(score * 200)</code> with the chosen action&rsquo;s bar at FULL color and non-chosen bars at half-brightness; show numeric score to the right of each bar; if the action is gated out by requirements (<code>scores[name] is None</code>), show &ldquo;REQ FAIL&rdquo; instead of a bar.</li>
+                    <li>HUD line at top of game area: <code>tick=N | action=NAME | hung=H | hp=H | safe=S | stim=S | curve=NAME | aggr=A</code>. Watching the eat bar length change WITHOUT changing hunger (just by pressing 1/2/3/4/5) is the response-curve discipline in action; watching the fight bar grow as you press A repeatedly (without enemies dying or health changing) is the personality-modifier discipline; watching the chosen action flip from explore to eat as hunger drifts up over time is the utility-scored runtime weighted choice in action.</li>
+                    <li>Add a sidebar legend at the bottom showing &ldquo;CHOSEN: NAME&rdquo; in green plus a key reminder. Watching the chosen action flicker between two near-tied options (e.g., eat=0.42 vs explore=0.41) reveals one classic utility-AI failure mode &mdash; <em>action thrashing</em> &mdash; which production utility AIs solve with hysteresis (a small bonus added to the currently-chosen action&rsquo;s score so it has to be clearly beaten to lose, not just barely beaten); the lesson&rsquo;s &ldquo;Decision Making Tips&rdquo; section lists hysteresis explicitly as a recommended add-on, but the demo intentionally omits it so the thrashing failure mode is visible.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The single most important detail is keeping the three disciplines orthogonal in the code so you can see each one work in isolation. The response-curve choice for hunger lives entirely in <code>CURVES[hunger_curve_i][1]</code> applied inside <code>score_eat</code> &mdash; nothing else changes when you press 1/2/3/4/5, so the eat bar&rsquo;s length change is purely the curve&rsquo;s output shape. The personality modifier lives entirely in <code>personality_mod(name)</code> as a multiplicative factor outside the per-action score function &mdash; nothing inside <code>score_fight</code> reads the aggression value directly, so you can swap aggression from 0.2 to 0.9 and watch the fight bar grow proportionally without any scoring-function code running differently. The requirements gate lives entirely in the <code>if not req_fn(agent): continue</code> line in <code>decide()</code> &mdash; it&rsquo;s a Layer-1 binary check that prevents an action from ever entering the score comparison, so &ldquo;REQ FAIL&rdquo; in the sidebar means the action wasn&rsquo;t even considered (not that it scored badly). Keep <code>scores</code> as a dict that holds <code>None</code> for gated-out actions and the float score for considered actions, so the sidebar render can distinguish &ldquo;not even considered&rdquo; from &ldquo;considered and lost.&rdquo; For action thrashing, leave hysteresis OUT of <code>decide()</code> on the first pass so the failure mode is visible; if you want to add it as a stretch goal, store <code>last_action</code> on the module level and add a small bonus (e.g., +0.05) to that action&rsquo;s score before the max comparison &mdash; the same ad-hoc bias the lesson&rsquo;s &ldquo;Decision Making Tips&rdquo; section recommends.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame, sys, math, random
+pygame.init()
+W, H, SIDEBAR = 768, 480, 320
+screen = pygame.display.set_mode((W + SIDEBAR, H))
+font = pygame.font.SysFont('Consolas', 13)
+clock = pygame.time.Clock()
+
+def linear(v): return max(0.0, min(1.0, v))
+def quadratic(v): return v * v
+def exponential(v, p=3): return math.pow(max(0.0, v), p)
+def sigmoid(v, k=10, c=0.5): return 1 / (1 + math.exp(-k * (v - c)))
+def gaussian(v, c=0.5, w=0.2): return math.exp(-((v - c) ** 2) / (2 * w * w))
+CURVES = [('linear', linear), ('quadratic', quadratic), ('exponential', exponential),
+          ('sigmoid', sigmoid), ('gaussian', gaussian)]
+hunger_curve_i = 3  # default sigmoid
+
+agent = type('Ag', (), {})()
+agent.pos = [W // 2, H // 2]
+agent.needs = {'hunger': 0.4, 'health': 1.0, 'safety': 1.0, 'stim': 0.5}
+agent.personality = {'aggression': 0.5, 'caution': 0.5, 'curiosity': 0.5}
+world = type('Wd', (), {})(); world.foods, world.enemies, world.threats = [], [], []
+
+def dist_to(a, p): return math.hypot(a.pos[0]-p[0], a.pos[1]-p[1])
+def nearest(a, things): return min(things, key=lambda t: dist_to(a, t)) if things else None
+
+def can_eat(a): return bool(world.foods)
+def can_fight(a): return bool(world.enemies)
+def can_flee(a): return bool(world.threats)
+def can_explore(a): return True
+
+def score_eat(a):
+    f = nearest(a, world.foods)
+    if not f: return 0.0
+    d_score = 1 - min(1.0, dist_to(a, f) / 500)
+    h_score = CURVES[hunger_curve_i][1](a.needs['hunger'])
+    return h_score * d_score
+
+def score_fight(a):
+    if not world.enemies: return 0.0
+    return sigmoid(a.needs['health'])
+
+def score_flee(a):
+    if not world.threats: return 0.0
+    return exponential(1 - a.needs['safety']) * (1 - a.needs['health'] * 0.5)
+
+def score_explore(a):
+    return (1 - a.needs['stim']) * a.needs['safety'] * 0.5
+
+ACTIONS = [('eat', can_eat, score_eat), ('fight', can_fight, score_fight),
+           ('flee', can_flee, score_flee), ('explore', can_explore, score_explore)]
+PMOD = {'eat': None, 'fight': 'aggression', 'flee': 'caution', 'explore': 'curiosity'}
+def personality_mod(name): return 1.0 if PMOD[name] is None else agent.personality[PMOD[name]]
+
+def decide(a):
+    best, best_s, scores = 'idle', float('-inf'), {}
+    for name, req, sf in ACTIONS:
+        if not req(a): scores[name] = None; continue
+        s = sf(a) * personality_mod(name)
+        scores[name] = s
+        if s &gt; best_s: best_s, best = s, name
+    return best, scores
+
+def take_action(a, name):
+    if name == 'eat':
+        f = nearest(a, world.foods)
+        if f:
+            if dist_to(a, f) &lt; 12: world.foods.remove(f); a.needs['hunger'] = 0.0
+            else:
+                dx, dy = f[0]-a.pos[0], f[1]-a.pos[1]; d = math.hypot(dx, dy) or 1
+                a.pos[0] += dx/d * 3; a.pos[1] += dy/d * 3
+    elif name == 'fight':
+        e = nearest(a, world.enemies)
+        if e:
+            if dist_to(a, e) &lt; 20: world.enemies.remove(e)
+            else:
+                dx, dy = e[0]-a.pos[0], e[1]-a.pos[1]; d = math.hypot(dx, dy) or 1
+                a.pos[0] += dx/d * 2.5; a.pos[1] += dy/d * 2.5
+                a.needs['health'] = max(0.0, a.needs['health'] - 0.005)
+    elif name == 'flee':
+        t = nearest(a, world.threats)
+        if t:
+            dx, dy = a.pos[0]-t[0], a.pos[1]-t[1]; d = math.hypot(dx, dy) or 1
+            a.pos[0] += dx/d * 4; a.pos[1] += dy/d * 4
+            a.needs['safety'] = min(1.0, a.needs['safety'] + 0.01)
+    elif name == 'explore':
+        a.pos[0] += random.choice([-2, 2]); a.pos[1] += random.choice([-2, 2])
+        a.needs['stim'] = min(1.0, a.needs['stim'] + 0.005)
+
+def tick_needs(a):
+    a.needs['hunger'] = min(1.0, a.needs['hunger'] + 0.0008)
+    a.needs['stim'] = max(0.0, a.needs['stim'] - 0.0005)
+    if world.threats: a.needs['safety'] = max(0.0, a.needs['safety'] - 0.002)
+    a.pos[0] = max(8, min(W-8, a.pos[0])); a.pos[1] = max(8, min(H-8, a.pos[1]))
+
+tick_n, paused = 0, False
+COL_BAR = {'eat': (255,215,0), 'fight': (244,67,54), 'flee': (255,152,0), 'explore': (156,39,176)}
+
+while True:
+    for ev in pygame.event.get():
+        if ev.type == pygame.QUIT: pygame.quit(); sys.exit()
+        if ev.type == pygame.KEYDOWN:
+            if ev.key == pygame.K_f: world.foods.append((random.randint(40, W-40), random.randint(40, H-40)))
+            if ev.key == pygame.K_e: world.enemies.append((random.randint(40, W-40), random.randint(40, H-40)))
+            if ev.key == pygame.K_t: world.threats.append((random.randint(40, W-40), random.randint(40, H-40)))
+            if pygame.K_1 &lt;= ev.key &lt;= pygame.K_5: hunger_curve_i = ev.key - pygame.K_1
+            if ev.key == pygame.K_a: agent.personality['aggression'] = min(1.0, agent.personality['aggression'] + 0.1)
+            if ev.key == pygame.K_z: agent.personality['aggression'] = max(0.0, agent.personality['aggression'] - 0.1)
+            if ev.key == pygame.K_c: agent.personality['caution'] = min(1.0, agent.personality['caution'] + 0.1)
+            if ev.key == pygame.K_x: agent.personality['caution'] = max(0.0, agent.personality['caution'] - 0.1)
+            if ev.key == pygame.K_r:
+                agent.pos = [W//2, H//2]; agent.needs = {'hunger':0.4,'health':1.0,'safety':1.0,'stim':0.5}
+                world.foods, world.enemies, world.threats = [], [], []
+            if ev.key == pygame.K_SPACE: paused = not paused
+
+    action, scores = decide(agent)
+    if not paused: take_action(agent, action); tick_needs(agent); tick_n += 1
+
+    screen.fill((44,62,80))
+    for f in world.foods: pygame.draw.circle(screen, (255,215,0), (int(f[0]), int(f[1])), 8)
+    for e in world.enemies: pygame.draw.circle(screen, (244,67,54), (int(e[0]), int(e[1])), 10)
+    for t in world.threats: pygame.draw.circle(screen, (255,152,0), (int(t[0]), int(t[1])), 12)
+    pygame.draw.circle(screen, (33,150,243), (int(agent.pos[0]), int(agent.pos[1])), 12)
+    hud = f"tick={tick_n} action={action} hung={agent.needs['hunger']:.2f} hp={agent.needs['health']:.2f} safe={agent.needs['safety']:.2f} stim={agent.needs['stim']:.2f} curve={CURVES[hunger_curve_i][0]} aggr={agent.personality['aggression']:.1f}"
+    screen.blit(font.render(hud, True, (255,255,255)), (8, 8))
+
+    pygame.draw.rect(screen, (30,30,30), (W, 0, SIDEBAR, H))
+    screen.blit(font.render('Utility scores per action:', True, (200,200,200)), (W+10, 20))
+    for i, (name, _, _) in enumerate(ACTIONS):
+        s = scores.get(name); y = 50 + i * 50
+        screen.blit(font.render(f'{name}:', True, (220,220,220)), (W+10, y))
+        if s is None:
+            screen.blit(font.render('REQ FAIL', True, (160,160,160)), (W+90, y))
+        else:
+            col = COL_BAR[name]
+            dim = col if name == action else (col[0]//2, col[1]//2, col[2]//2)
+            pygame.draw.rect(screen, dim, (W+90, y, max(1, int(s * 200)), 18))
+            screen.blit(font.render(f'{s:.3f}', True, (255,255,255)), (W+295, y))
+    screen.blit(font.render(f'CHOSEN: {action}', True, (76,175,80)), (W+10, 280))
+    screen.blit(font.render('F=food E=enemy T=threat', True, (180,180,180)), (W+10, 320))
+    screen.blit(font.render('1-5=hunger curve', True, (180,180,180)), (W+10, 340))
+    screen.blit(font.render('A/Z=aggr  C/X=caution', True, (180,180,180)), (W+10, 360))
+    screen.blit(font.render('R=reset  SPACE=pause', True, (180,180,180)), (W+10, 380))
+    pygame.display.flip(); clock.tick(60)</code></pre>
                 </details>
             </div>
 
@@ -286,31 +437,31 @@ class UtilityAI:
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> The lesson&rsquo;s <code>decide()</code> method iterates all four candidate actions (<code>eat</code>, <code>fight</code>, <code>flee</code>, <code>explore</code>), computes a utility score for each viable action, and picks the action with the highest score. Compare this with a behavior-tree <code>Selector</code>, which tries children in a fixed top-down child-list order and picks the first one that returns SUCCESS. Which statement most accurately captures when each architecture fits and what the practical difference is on a given tick?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Behavior trees and utility AI are NOT interchangeable in their behavioral output. On a tick where two options are close in priority, a Selector picks the earlier child every time (deterministic top-down) while a utility AI picks whichever option scored higher this tick (which can flip frame-to-frame as needs drift). The two architectures encode priority differently &mdash; structurally for BTs, numerically for utility AI &mdash; and produce visibly different chosen actions whenever the relative ranking of options changes between ticks.'>A) Behavior-tree Selectors and utility-AI <code>decide()</code> loops are interchangeable &mdash; they produce the same chosen action on every tick, so picking between them is purely a stylistic preference about whether you prefer tree visualization or score bars in the debug HUD.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Selector encodes priority as a fixed compile-time child-list order (Combat tried before Gather, always), so reordering options requires editing the tree composition; utility AI computes a runtime numeric score per option (eat&apos;s score depends on hunger and food distance; fight&apos;s on health and aggression; flee&apos;s on safety and health) and picks the max, so the same agent in the same world picks differently as needs drift &mdash; at hunger=0.3 the agent might explore (explore_score &gt; eat_score because hunger is mild), at hunger=0.8 the same agent picks eat (eat_score now exceeds explore_score because the response curve has lifted hunger&apos;s contribution sharply). Behavior trees fit when priorities are static and well-known at design time (Combat ALWAYS beats Gather when an enemy is near); utility AI fits when the relative ranking of options changes per tick based on agent state and world context (deciding among eat/fight/flee/explore depends on a continuous mix of hunger/health/safety/stim values that no fixed ordering captures). The two systems compose orthogonally in production: BTs as the structural decision skeleton, utility AI as the scored choice within each Selector branch.'>B) Selector encodes priority as a fixed compile-time child-list order (Combat tried before Gather always), so reordering options requires editing the tree composition; utility AI computes a runtime numeric score per option and picks the max, so the same agent in the same world picks differently as needs drift &mdash; at <code>hunger=0.3</code> the agent might explore, at <code>hunger=0.8</code> the same agent picks eat because eat&rsquo;s score now exceeds explore&rsquo;s. Selectors fit when priorities are static and well-known at design time; utility AI fits when the relative ranking of options changes per tick based on agent state and world context.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Utility AI has NOT replaced behavior trees in production game AI. Both architectures remain in active use because they fit different problems &mdash; BTs excel at structured, debuggable, designer-readable decision flow with static priorities (Halo, Spore, many AAA shooters), while utility AI excels at continuous-valued ranking among many roughly-equivalent options whose relative weight shifts with state (The Sims, Total War, many simulation games). The two systems are commonly composed together: BTs as the structural skeleton with utility-AI scoring inside individual Selector branches. Each architecture has its native fit; neither strictly subsumes the other.'>C) Utility AI is strictly superior to behavior trees because it produces smoother, more believable behavior; production game AIs have replaced behavior trees with utility AI across the board, and BTs are kept around only for legacy code that hasn&apos;t been ported yet.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> The lesson&rsquo;s <code>score_eat</code> function applies <code>CURVES[hunger_curve_i][1](agent.needs[&apos;hunger&apos;])</code> &mdash; the response curve transforms the raw hunger value into a behavioral weight. With the same hunger value of 0.7, the curve choice produces dramatically different scores: linear &rarr; 0.70, quadratic &rarr; 0.49, exponential (cubed) &rarr; 0.34, sigmoid (k=10, c=0.5) &rarr; ~0.88, gaussian (c=0.5, w=0.2) &rarr; ~0.61. Why does designer-controlled curve choice matter as much as the raw input value?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Curve choice is NOT primarily a performance optimization. The runtime cost differences among these five curves are negligible &mdash; one math.exp() call per tick per scoring function is not a bottleneck even for thousands of agents. The reason designers spend tuning effort on curve choice is that the SHAPE of the output mapping fundamentally changes the behavior the agent exhibits, not its compute cost. A linear curve makes the agent react proportionally; sigmoid makes it react like a soft threshold; exponential makes it react late-and-hard; gaussian makes it react around a sweet-spot. Production utility AIs use sigmoid and gaussian routinely.'>A) Curve choice is a performance optimization &mdash; designers pick the cheapest curve to evaluate (linear is fastest) and the others exist only for educational comparison; sigmoid and gaussian are too expensive to use in production game AI.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='The curve determines the SHAPE of the behavior, not just the magnitude of the score. Sigmoid behaves like a soft threshold (snap to high near the center=0.5), so the agent largely ignores hunger below ~0.4 and then suddenly cares a lot once it crosses the inflection &mdash; matching how a healthy human ignores mild hunger but suddenly prioritizes lunch when it crosses some internal threshold. Exponential delays the response (low and medium hunger barely register, high values dominate late), so the agent stays casual until starvation looms &mdash; matching a stoic survivor archetype. Gaussian peaks at a center value then falls off both sides, matching needs that have a sweet spot like temperature comfort or social-interaction frequency, where both too-little and too-much are bad. Tuning a utility AI is largely about picking the curve whose shape matches how the agent should react to that need &mdash; the curve is the designer&apos;s main external knob for behavior shaping, with no scoring-function code edits required to swap one shape for another. The data-driven externalization here is at response-curve scope: the curve choice itself is data (the integer index into CURVES), not control flow inside score_eat.'>B) The curve determines the SHAPE of the behavior, not just the magnitude. Sigmoid behaves like a soft threshold (snap to high near the center=0.5, so the agent largely ignores hunger below ~0.4 then suddenly cares a lot once it crosses the inflection); exponential delays the response (low/medium hunger barely register, high values dominate late, so the agent stays casual until starvation looms); gaussian peaks at a center value then falls off both sides (matching needs that have a sweet spot like temperature comfort, where both too-little and too-much are bad). Tuning a utility AI is largely about picking the curve whose shape matches how the agent should react to that need &mdash; the curve is the designer&rsquo;s main external knob for behavior shaping, with no scoring-function code edits required to swap behavior shapes.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='The numeric differences are NOT imperceptible &mdash; a 0.34 vs 0.88 score gap is a factor of ~2.6, which routinely flips which action wins the max comparison in decide(). When eat scores 0.34 (exponential at hunger=0.7), explore at 0.5 wins and the agent wanders; when eat scores 0.88 (sigmoid at hunger=0.7), eat dominates and the agent heads straight for food. The curve choice therefore changes the chosen action visibly on the same world state &mdash; that is exactly what makes designer curve-tuning matter at all.'>C) The numeric score differences are imperceptible at runtime &mdash; a 0.34 vs 0.88 score gap rounds to identical-looking behavior because the <code>decide()</code> loop only compares scores ordinally; the curve choice exists for designer intuition during tuning but doesn&rsquo;t actually change the chosen action.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> The lesson&rsquo;s <code>decide()</code> loop multiplies each action&rsquo;s raw score by a personality modifier looked up from the agent&rsquo;s <code>personality</code> dict (<code>{&apos;aggression&apos;: 0.5, &apos;caution&apos;: 0.5, &apos;curiosity&apos;: 0.5}</code> by default; fight uses aggression, flee uses caution, explore uses curiosity, eat uses no modifier). The same world state + same scoring functions produce a different chosen action depending on the personality dict &mdash; a high-aggression agent (<code>aggression: 0.9</code>) fights an enemy that a low-aggression agent (<code>aggression: 0.1</code>) flees from. What does this externalization-as-data-dict buy you?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Multiplying every action&apos;s score by the same value would rescale all four scores proportionally, but that is not what the personality system does. Each action multiplies by a DIFFERENT personality trait (fight by aggression, flee by caution, explore by curiosity, eat by 1.0), so when you raise aggression from 0.5 to 0.9 only the fight score grows by 1.8x while flee/explore/eat stay where they are &mdash; the relative ranking changes and the max-score winner can flip. Default values of 0.5 across the board make the demo&apos;s starting state balanced; deliberately editing one trait higher tilts the chosen action toward the actions weighted by that trait.'>A) The personality dict is a code-organization convenience that has no behavioral effect &mdash; multiplying every action&rsquo;s score by the same 0.5 default value just rescales all four scores proportionally, so the max-score winner is the same as if you removed the modifier entirely.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Personality lives entirely in the data dict and never touches the scoring code, so designers can tune NPC behavior by editing config files without code changes &mdash; generating fifty NPCs with fifty different personality dicts produces fifty visibly different agents from one shared scoring implementation. The same external-data-as-decision-policy mechanism plays the same role at agent-personality scope as the explicit transition table in the architecture state-machines lesson, the terrain-cost dict in the pathfinding lesson, and the Selector child-list order in the behavior-trees lesson &mdash; the decision data is centralized and editable as data, not scattered through control flow. The action requirements (req_fn returning True/False) operate as a separate Layer-1 binary gate before the score computation runs, so personality modifiers only affect ranking among already-viable options &mdash; they cannot make an impossible action (eat with no food) eligible. This is the TWELFTH lesson reinforcing data-driven externalization in second-half Phase 8 (chat-44 lockstep replay buffer + chat-46 is_solid + chat-47 tile-palette + chat-54 explicit transition table + chat-55 scene-stack lifecycle hooks + chat-56 required-components list + chat-57 listeners-by-event dict + chat-58 dataclass schema + chat-59 per-state perception + chat-60 terrain cost dict + chat-61 RUNNING-state stickiness + chat-61 child-list order = 11 prior; chat-62 here is the TWELFTH and FIRST applied at PERSONALITY-PROFILE scope where the personality dict IS the agent&apos;s behavioral fingerprint that the same scoring code consults at every tick).'>B) Personality lives entirely in the data dict and never touches the scoring code, so designers can tune NPC behavior by editing config files without code changes &mdash; generating fifty NPCs with fifty different <code>personality</code> dicts produces fifty visibly different agents from one shared scoring implementation. The same external-data-as-decision-policy mechanism plays the same role at agent-personality scope as the explicit transition table in the architecture state-machines lesson, the terrain-cost dict in the pathfinding lesson, and the Selector child-list order in the behavior-trees lesson &mdash; the decision data is centralized and editable as data, not scattered through control flow. The action requirements operate as a separate Layer-1 binary gate before the score runs, so personality modifiers only affect ranking among already-viable options &mdash; they can&rsquo;t make an impossible action (eat with no food) eligible.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Python dictionary lookups are fast (O(1) amortized) and four lookups per tick is negligible cost &mdash; not a real performance concern. The personality_mod(name) indirection is shown as the architectural pattern, not as a teaching device that production code would unfold. Hard-coding personality reads inside each scoring function would defeat the entire data-driven externalization that makes the personality dict the single source of truth: with fifty NPCs you would need fifty copies of every score function, or a giant if/elif chain inside each scoring function dispatching on agent identity &mdash; both of which are the anti-pattern that the personality dict deliberately replaces.'>C) Personality modifiers must be hard-coded into each scoring function (e.g., <code>score_fight</code> would need to read <code>personality[&apos;aggression&apos;]</code> directly inside its body) because Python dictionaries have too much lookup overhead to read on every action&rsquo;s score per tick &mdash; the lesson&rsquo;s <code>personality_mod(name)</code> indirection is shown only as a teaching device.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

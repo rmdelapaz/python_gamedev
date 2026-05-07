@@ -1387,19 +1387,161 @@ class AStar:
             <h2 id="practice-exercise-build-ai-pathfinding">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: A* Pathfinding with Cost-Externalized Terrain Map + Admissible-vs-Inflated Heuristic Selector + Heuristic-Drives-Search-Shape Visualization in One Pygame Window</h3>
+                <p><strong>Objective:</strong> Build a runnable pygame window in roughly 85 lines that shows A* pathfinding over a 24×15 cell grid (each cell 32px) with three orthogonal pathfinding disciplines visible per frame: (a) terrain cost externalized as a <code>TERRAIN_COST</code> dict (<code>EMPTY=1</code>, <code>WALL=float('inf')</code>, <code>FOREST=3</code>, <code>WATER=10</code>, <code>SAND=2</code>) so adding a new terrain type is one dict entry rather than an edit to the A* loop — the data-driven externalization pattern at pathfinding scope; (b) heuristic selector switching between Manhattan / Octile / Euclidean / Zero (= Dijkstra) on keys H/O/U/Z so the same goal with the same map produces visibly different search shapes — Zero explores in all directions equally (uniform expansion fan-out, Dijkstra's behavior), Manhattan / Octile direct toward the goal (anisotropic search wedge); (c) heuristic-multiplier toggle (1.0× admissible, 1.5× inflated) on keys + and − so the inflated case visibly explores fewer nodes but may return a longer-cost path than the admissible case — the trade-off itself is the design choice between optimality and speed.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Create a 24×15 grid at 32px/cell (768×480 window plus 80px HUD strip below). Define terrain constants <code>EMPTY=0, WALL=1, FOREST=2, WATER=3, SAND=4, HAZARD=5</code> and <code>TERRAIN_COST = {EMPTY: 1, WALL: float('inf'), FOREST: 3, WATER: 10, SAND: 2, HAZARD: 5}</code> — the cost dict is the data-driven externalization. Color each cell by terrain (EMPTY=dark gray, WALL=black, FOREST=dark green, WATER=blue, SAND=tan, HAZARD=red).</li>
+                    <li>Implement A* using <code>heapq</code> as the priority queue ordered by f-score, where <code>f = g + h * heuristic_multiplier</code>. Push tuples of <code>(f_score, counter, node)</code> with a monotonic counter as tiebreaker (heapq cannot compare bare nodes when f-scores tie). Track <code>g_score</code> as a dict mapping <code>(x, y)</code> to actual committed cost from start; track <code>came_from</code> as a dict for parent pointers used in path reconstruction. On goal-reach, walk <code>came_from</code> back from goal to start to build the path list.</li>
+                    <li>Implement four heuristics: <code>manhattan(a, b) = abs(a.x - b.x) + abs(a.y - b.y)</code> — admissible for 4-direction grids; <code>octile(a, b) = max(dx, dy) + (sqrt(2) − 1) * min(dx, dy)</code> — admissible for 8-direction grids; <code>euclidean(a, b) = sqrt(dx*dx + dy*dy)</code> — admissible for any grid; <code>zero(a, b) = 0</code> — degenerates A* to Dijkstra. Switch between them via keys H / O / U / Z.</li>
+                    <li>Add a heuristic-multiplier toggle on keys + and − cycling through 0.5 / 1.0 / 1.5 / 2.0. At 1.0 the heuristic is used as-is (admissible if the underlying heuristic is admissible). At 1.5 and 2.0 the heuristic is inflated (no longer admissible) — A* explores fewer nodes but may return a suboptimal path. At 0.5 the heuristic is deflated (still admissible because 0.5 × admissible ≤ admissible ≤ true cost) — A* explores more nodes but still returns optimal.</li>
+                    <li>Mouse left-click drag-paints cells with the current paint terrain; mouse right-click sets GOAL at the cell under the cursor; shift + left-click sets START. Keys 1/2/3/4/5 toggle the paint terrain to WALL/FOREST/WATER/SAND/HAZARD; key E paints EMPTY (eraser). Press SPACE to run A* and render result. Press R to reset grid to defaults (start at (2,2), goal at (21,12), no obstacles).</li>
+                    <li>After SPACE: tint cells in the closed list pink; cells still in the open list light green; draw the final path as a gold polyline through cell centers. HUD displays per-frame: current heuristic name, multiplier value with &quot;ADMISSIBLE&quot; / &quot;INFLATED&quot; flag, open-list size, closed-list size, nodes-explored count, final path cost, final path length, last-search wall-clock ms, plus a key-binding cheat sheet line.</li>
+                    <li>Verify three pillars on screen: (a) switch heuristic to Zero and run — closed-list region grows in all four directions equally (Dijkstra's uniform fan-out); switch back to Manhattan and run — closed-list region narrows into a wedge directed at the goal; (b) switch multiplier to 1.5 with Manhattan and run — nodes-explored drops noticeably while path cost may rise vs the 1.0 baseline; (c) paint a few HAZARD cells (key 5) and run — A* respects the HAZARD cost of 5 with zero edits to the A* loop, proving the externalization claim from Pillar (a).</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>Three things commonly bite first-time A* implementations: (1) push <code>(f_score, counter, node)</code> tuples to the heap with a monotonic counter as tiebreaker — bare <code>(f_score, node)</code> tuples raise <code>TypeError</code> when f-scores tie because heapq tries to compare the node objects and Node-objects don't implement <code>&lt;</code> by default; (2) update <code>g_score</code> for a neighbor only when <code>tentative_g</code> is strictly less than the existing <code>g_score[neighbor]</code> — otherwise you re-process nodes already settled to better paths and the closed-list semantics break; (3) for diagonal moves the move-cost is <code>sqrt(2)</code> not 1 (the per-cell terrain cost from <code>TERRAIN_COST</code> applies in addition: <code>step = move_cost * TERRAIN_COST[grid[ny][nx]]</code>). For the heuristic-shape visualization, the Zero-heuristic case should produce a roughly circular closed-list region centered on start; the Manhattan-1.0 case should produce a closed-list region pointed at the goal with a narrower angular spread — if both look the same, your priority queue is probably not actually using f-score for ordering.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame, heapq, math, sys
+
+pygame.init()
+W, H, CELL = 768, 480, 32
+COLS, ROWS = W // CELL, H // CELL  # 24 x 15
+screen = pygame.display.set_mode((W, H + 80))
+pygame.display.set_caption("A* Pathfinding: Terrain + Heuristic + Multiplier")
+clock = pygame.time.Clock()
+font = pygame.font.SysFont("monospace", 13)
+
+EMPTY, WALL, FOREST, WATER, SAND, HAZARD = 0, 1, 2, 3, 4, 5
+TERRAIN_COST = {EMPTY: 1, WALL: float('inf'), FOREST: 3, WATER: 10, SAND: 2, HAZARD: 5}
+TERRAIN_COLOR = {EMPTY: (60, 70, 90), WALL: (20, 20, 20), FOREST: (40, 110, 50),
+                 WATER: (60, 90, 200), SAND: (220, 180, 120), HAZARD: (200, 80, 80)}
+
+grid = [[EMPTY] * COLS for _ in range(ROWS)]
+start, goal = (2, 2), (21, 12)
+heuristic_name, multiplier, paint = "manhattan", 1.0, WALL
+closed_list, open_list, path = set(), set(), []
+nodes_explored, search_ms, path_cost = 0, 0, 0.0
+
+def manhattan(a, b): return abs(a[0] - b[0]) + abs(a[1] - b[1])
+def octile(a, b):
+    dx, dy = abs(a[0] - b[0]), abs(a[1] - b[1])
+    return max(dx, dy) + (math.sqrt(2) - 1) * min(dx, dy)
+def euclidean(a, b):
+    return math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2)
+def zero(a, b): return 0
+HEURISTICS = {"manhattan": manhattan, "octile": octile, "euclidean": euclidean, "zero": zero}
+
+def neighbors(p):
+    x, y = p
+    for dx, dy in [(-1,0),(1,0),(0,-1),(0,1),(-1,-1),(-1,1),(1,-1),(1,1)]:
+        nx, ny = x + dx, y + dy
+        if 0 &lt;= nx &lt; COLS and 0 &lt;= ny &lt; ROWS and TERRAIN_COST[grid[ny][nx]] != float('inf'):
+            move_cost = math.sqrt(2) if dx and dy else 1
+            yield (nx, ny), move_cost * TERRAIN_COST[grid[ny][nx]]
+
+def astar():
+    global closed_list, open_list, path, nodes_explored, search_ms, path_cost
+    t0 = pygame.time.get_ticks()
+    h = HEURISTICS[heuristic_name]
+    open_heap, came_from, g_score = [], {}, {start: 0}
+    counter = 0
+    heapq.heappush(open_heap, (h(start, goal) * multiplier, counter, start))
+    open_set, closed = {start}, set()
+    nodes_explored, path, path_cost = 0, [], 0.0
+    while open_heap:
+        _, _, current = heapq.heappop(open_heap)
+        if current in closed: continue
+        open_set.discard(current)
+        closed.add(current)
+        nodes_explored += 1
+        if current == goal:
+            path = [current]
+            while current in came_from:
+                current = came_from[current]
+                path.append(current)
+            path.reverse()
+            path_cost = g_score[goal]
+            break
+        for nb, step in neighbors(current):
+            if nb in closed: continue
+            tentative_g = g_score[current] + step
+            if nb not in g_score or tentative_g &lt; g_score[nb]:
+                g_score[nb] = tentative_g
+                came_from[nb] = current
+                f = tentative_g + h(nb, goal) * multiplier
+                counter += 1
+                heapq.heappush(open_heap, (f, counter, nb))
+                open_set.add(nb)
+    closed_list, open_list = closed, open_set
+    search_ms = pygame.time.get_ticks() - t0
+
+def reset():
+    global grid, start, goal, closed_list, open_list, path, nodes_explored, path_cost
+    grid = [[EMPTY] * COLS for _ in range(ROWS)]
+    start, goal = (2, 2), (21, 12)
+    closed_list, open_list, path = set(), set(), []
+    nodes_explored, path_cost = 0, 0.0
+
+PAINT_KEYS = {pygame.K_1: WALL, pygame.K_2: FOREST, pygame.K_3: WATER,
+              pygame.K_4: SAND, pygame.K_5: HAZARD, pygame.K_e: EMPTY}
+HEUR_KEYS = {pygame.K_h: "manhattan", pygame.K_o: "octile",
+             pygame.K_u: "euclidean", pygame.K_z: "zero"}
+MULT_LIST = [0.5, 1.0, 1.5, 2.0]
+
+while True:
+    for e in pygame.event.get():
+        if e.type == pygame.QUIT: pygame.quit(); sys.exit()
+        if e.type == pygame.KEYDOWN:
+            if e.key in PAINT_KEYS: paint = PAINT_KEYS[e.key]
+            elif e.key in HEUR_KEYS: heuristic_name = HEUR_KEYS[e.key]
+            elif e.key in (pygame.K_PLUS, pygame.K_EQUALS):
+                multiplier = MULT_LIST[(MULT_LIST.index(multiplier) + 1) % len(MULT_LIST)]
+            elif e.key == pygame.K_MINUS:
+                multiplier = MULT_LIST[(MULT_LIST.index(multiplier) - 1) % len(MULT_LIST)]
+            elif e.key == pygame.K_SPACE: astar()
+            elif e.key == pygame.K_r: reset()
+    mb = pygame.mouse.get_pressed()
+    if any(mb):
+        mx, my = pygame.mouse.get_pos()
+        if my &lt; H:
+            cx, cy = mx // CELL, my // CELL
+            if mb[0]:
+                if pygame.key.get_mods() &amp; pygame.KMOD_SHIFT: start = (cx, cy)
+                else: grid[cy][cx] = paint
+            elif mb[2]: goal = (cx, cy)
+
+    screen.fill((30, 30, 30))
+    for y in range(ROWS):
+        for x in range(COLS):
+            pygame.draw.rect(screen, TERRAIN_COLOR[grid[y][x]],
+                             (x*CELL+1, y*CELL+1, CELL-2, CELL-2))
+            if (x, y) in closed_list and grid[y][x] == EMPTY:
+                pygame.draw.rect(screen, (255, 182, 193),
+                                 (x*CELL+10, y*CELL+10, CELL-20, CELL-20))
+            elif (x, y) in open_list and grid[y][x] == EMPTY:
+                pygame.draw.rect(screen, (144, 238, 144),
+                                 (x*CELL+10, y*CELL+10, CELL-20, CELL-20))
+    if path:
+        pts = [(x*CELL + CELL//2, y*CELL + CELL//2) for x, y in path]
+        pygame.draw.lines(screen, (255, 215, 0), False, pts, 4)
+    sx, sy = start; pygame.draw.circle(screen, (60,200,60), (sx*CELL+CELL//2, sy*CELL+CELL//2), 10)
+    gx, gy = goal; pygame.draw.circle(screen, (220,60,60), (gx*CELL+CELL//2, gy*CELL+CELL//2), 10)
+
+    adm = "ADMISSIBLE" if multiplier &lt;= 1.0 else "INFLATED"
+    paint_name = {WALL:"WALL",FOREST:"FOREST",WATER:"WATER",SAND:"SAND",HAZARD:"HAZARD",EMPTY:"EMPTY"}[paint]
+    hud = [
+        f"heuristic: {heuristic_name}  multiplier: {multiplier}x ({adm})  paint: {paint_name}",
+        f"open: {len(open_list)}  closed: {len(closed_list)}  explored: {nodes_explored}  cost: {path_cost:.2f}  len: {len(path)}  ms: {search_ms}",
+        "L-drag paint  R goal  Shift+L start  1-5 terrain  E erase  H/O/U/Z heuristic  +/- mult  SPACE run  R reset",
+    ]
+    for i, line in enumerate(hud):
+        screen.blit(font.render(line, True, (220,220,220)), (8, H + 8 + i * 20))
+    pygame.display.flip()
+    clock.tick(60)</code></pre>
                 </details>
             </div>
 
@@ -1407,31 +1549,31 @@ class AStar:
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> A* orders its priority queue by <code>f = g + h</code>. What does combining the two terms give you that using only one would not?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class='quiz-option' data-correct='false' data-hint='Greedy Best-First (h alone) is fast but NOT optimal &mdash; it gets stuck in local cul-de-sacs around obstacles because it never reconsiders a partially-explored direction once a closer-to-goal estimate appears elsewhere; A&apos;s tracking of g is what prevents that and what guarantees optimality.'>A) h alone (Greedy Best-First) is fastest because it stops searching as soon as estimated distance to goal is minimized; A* is slower because it also tracks g, which is wasted work once the heuristic is doing the directing.</button>
+                        <button class='quiz-option' data-correct='true' data-explanation='Correct. f = g + h captures committed-past cost (g, like Dijkstra) plus estimated-future cost (h, like Greedy) so A&apos;s priority queue orders nodes by total estimated path cost. Setting h=0 degenerates A* to Dijkstra (complete but undirected, explores everywhere); setting g=0 degenerates A* to Greedy Best-First (directed but incomplete, gets stuck in cul-de-sacs); the combination keeps both properties at the cost of computing both terms per node. Same context-determines-correct-choice rhetorical move as chat-49 polish_tweening, chat-50 polish_difficulty/playtesting, chat-52 client_server&apos;s favor-the-shooter, chat-53 lag_compensation&apos;s MAX_REWIND, chat-54 lobby&apos;s host-excluded gate, and chat-59 ai_state_machines&apos; personality-as-data &mdash; the trade-off itself is the design.'>B) g + h captures committed-past cost (g, like Dijkstra) plus estimated-future cost (h, like Greedy) so A*&apos;s priority queue orders nodes by total estimated path cost; setting h=0 degenerates to Dijkstra (complete but undirected), setting g=0 degenerates to Greedy Best-First (directed but incomplete), and the combination keeps both properties at the cost of computing both terms per node.</button>
+                        <button class='quiz-option' data-correct='false' data-hint='Dijkstra (g-only) explores in all directions equally because nothing tells it which direction the goal is in &mdash; that is exactly what A* avoids by adding h. The search shapes are visibly different on any non-trivial map and the time difference is often 10-100x for large maps with obstacles, not &quot;identical&quot;.'>C) g + h is just an optimization detail; you can equivalently use only g (cost-from-start, like Dijkstra) and the algorithm produces identical paths in identical time because the priority queue ordering is dominated by g once the search has progressed past a few nodes.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> What does it mean for a heuristic to be &quot;admissible&quot;, and what does inflating the heuristic by 1.5x trade away?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class='quiz-option' data-correct='true' data-explanation='Correct. Admissibility means the heuristic never overestimates true cost-to-goal &mdash; Manhattan |dx|+|dy| is admissible on 4-direction grids, Octile max(dx,dy)+(sqrt(2)-1)*min(dx,dy) on 8-direction grids, Euclidean sqrt(dx^2+dy^2) on any grid (a straight line is the shortest possible path between two points). With admissibility A* is guaranteed to return the optimal-cost path. Inflating h by 1.5x makes the heuristic non-admissible (it may now overestimate) so A* may return a suboptimal path, but it explores far fewer nodes because the inflated h dominates the f-score and pulls the search more aggressively toward the goal. Production engines (RTS, MOBA, racing) routinely use 1.5x-2x inflated heuristics for &quot;fast and good enough&quot; paths in real-time games where re-planning every frame matters more than guaranteed shortest cost.'>A) Admissibility means the heuristic never overestimates true cost-to-goal &mdash; Manhattan |dx|+|dy| is admissible on 4-direction grids, Octile max(dx,dy)+(sqrt(2)-1)*min(dx,dy) on 8-direction grids, Euclidean sqrt(dx^2+dy^2) on any grid; with admissibility A* returns the optimal path, while inflating h by 1.5x trades optimality for speed (fewer nodes explored, but path cost may exceed optimal) &mdash; production engines use inflated heuristics for fast &quot;good enough&quot; paths in real-time games where re-planning every frame matters more than guaranteed shortest cost.</button>
+                        <button class='quiz-option' data-correct='false' data-hint='Admissibility is a LOWER-bound property (h &lt;= true cost), not equality. If you knew the true cost to the goal you would not need to search for the path &mdash; you would already have it; that is the whole point of pathfinding being unsolved at start. Inflated heuristics are FASTER in practice not slower (the lesson&apos;s &quot;Best Practices&quot; tip about &quot;early exit when good enough path found&quot; relies on this).'>B) Admissibility means the heuristic always returns the exact true cost-to-goal so A* can skip the priority queue ordering entirely and walk directly to the goal in one pass; an inadmissible heuristic forces the queue to be re-sorted every node which is what makes inflated heuristics slower despite exploring fewer nodes.</button>
+                        <button class='quiz-option' data-correct='false' data-hint='That property is &quot;consistency&quot; (also called &quot;monotonicity&quot;): h(n) &lt;= cost(n,n&apos;) + h(n&apos;) for any neighbor n&apos;. Consistency is a stronger condition than admissibility &mdash; consistency implies admissibility but not vice versa. Non-consistent admissible heuristics still guarantee optimality but may require re-opening closed nodes. Heuristic inflation INCREASES speed not decreases it, which is precisely why production engines do it.'>C) Admissibility means the heuristic is monotonically increasing along any path so A* can prune backtracking branches; non-admissible heuristics like 1.5x Manhattan break the monotonicity property and force A* to recompute every visited node, which is why inflation hurts performance.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> The lesson&apos;s A* implementation reads per-cell traversal cost from a <code>TERRAIN_COST</code> dict (<code>EMPTY: 1, WALL: float('inf'), FOREST: 3, WATER: 10, SAND: 2</code>). What design property does the dict-as-cost-table give you that an inline if-elif chain in the inner loop would not?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class='quiz-option' data-correct='false' data-hint='Python dict lookup is O(1) and at the relevant scale dominated by the priority queue heappush/heappop ops, not the cost lookup. The design driver is maintainability and correctness, not microbenchmarks. Inlining as if-elif scatters the cost knowledge across every grid-walking site (neighbor expansion, path-cost summation, smoothing, replay validation) and the sites drift silently when one is updated and another is not.'>A) Storing per-cell costs in a TERRAIN_COST dict adds dict-lookup overhead at every neighbor expansion; for production-scale pathfinding the per-frame budget mandates inlining the costs as if-elif chains in the inner loop because dict lookup is too slow at the millions-of-nodes-per-second rate that AAA games require.</button>
+                        <button class='quiz-option' data-correct='true' data-explanation='Correct. TERRAIN_COST = {EMPTY: 1, WALL: float(&quot;inf&quot;), FOREST: 3, WATER: 10, SAND: 2} centralizes the per-cell traversal cost in one dict so A*&apos;s neighbor expansion calls TERRAIN_COST[grid[ny][nx]] with zero conditional branches in the algorithm; adding a HAZARD terrain with cost 5 is one new dict entry and zero edits to A*; the wall-as-infinity entry is a fail-safe-defaults invariant where g + inf is never minimized so the cost lookup naturally rejects walls without a special-case &quot;skip walls&quot; branch. Same data-driven externalization beats scattered control flow pattern as chat-44 M5 fixed-timestep&apos;s lockstep replay buffer + chat-46 M2 platformer_tilemap&apos;s is_solid grid (which IS the pathfinding cost function: solid cells are infinite cost, walkable cells are unit cost) + chat-47 M2 level_design&apos;s tile-palette JSON (level designers tune the cost map externally) + chat-54 M2 architecture_state_machines&apos; explicit transition table + chat-55 M1 architecture_scene_management&apos;s scene-stack lifecycle hooks + chat-56 M1 architecture_component_systems&apos; class-level required-components list + chat-57 M1 architecture_event_systems&apos; listeners-keyed-by-event-type dict + chat-58 M1 architecture_save_load&apos;s dataclass schema-as-contract + chat-59 M1 ai_state_machines&apos; per-state perception checks = NINE prior lessons in second-half Phase 8 reinforcing data-driven externalization, with chat-60 M1 here the tenth and the FIRST applied at PATHFINDING scope where the cost table IS the spatial decision data the algorithm consults at every step.'>B) TERRAIN_COST = {EMPTY: 1, WALL: float(&quot;inf&quot;), FOREST: 3, WATER: 10, SAND: 2} centralizes the per-cell traversal cost in one dict so A*&apos;s neighbor expansion calls TERRAIN_COST[grid[ny][nx]] with zero conditional branches in the algorithm; adding a HAZARD terrain with cost 5 is one new dict entry and zero edits to A*; the wall-as-infinity entry is a fail-safe-defaults invariant where g + inf is never minimized so the cost lookup naturally rejects walls without a special-case &quot;skip walls&quot; branch.</button>
+                        <button class='quiz-option' data-correct='false' data-hint='@dataclass and dict are unrelated patterns serving different purposes. dict has no auto-generated comparison methods related to terrain costs &mdash; it is just a key-value mapping. Adding a HAZARD type to the dict gives you the cost lookup but no &quot;comparator method&quot; exists or is needed; the conflation of dataclass synthesis with dict lookup is nonsensical.'>C) Externalizing terrain costs in a dict is the same pattern as Python&apos;s @dataclass: the dict declares the data shape and Python automatically generates the cost-lookup method via __getitem__, so the cost-comparison logic is handled by the dict&apos;s built-in implementation rather than user code; adding a HAZARD type would auto-generate a HAZARD comparator method.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

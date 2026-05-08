@@ -1023,19 +1023,149 @@ print(f"Top Growing Channel: {report['top_channel']}")
             <h2 id="practice-exercise-build-publishing-marketing">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Three Pipelines, One Launch — Pitch Templates as Data + 5-Stage Conversion Funnel + Multi-Track Marketing Timeline in One Pygame Window</h3>
+                <p><strong>Objective:</strong> Build a runnable pygame window in roughly 95 lines that shows three orthogonal marketing-domain disciplines visible per frame on a 1088×540 window: a top timeline panel showing six parallel marketing tracks on different cadences, a bottom-left pitch panel rendering one of four templates from a list, and a bottom-right conversion-funnel panel showing five stages with stage-by-stage drop-off rates. (a) <strong>Marketing-copy as data externalization at MARKETING-COPY scope:</strong> four pitch templates live in a module-level <code>PITCH_TEMPLATES</code> list as format strings (<code>'{name} is a {genre} where you {mech} to {goal}.'</code>, etc.); a <code>GAME</code> dict holds the values that fill those templates; seven days of hashtags live in a <code>HASHTAGS</code> dict keyed by day-of-week (<code>'Mon': '#IndieDevMonday'</code>, ..., <code>'Sun': '#SilentSunday'</code>); pressing 1/2/3/4 swaps which template renders by changing a single integer index, and the rendered pitch updates live without touching any control flow — the data IS the marketing copy, externalized from the runtime. Same data-driven externalization shape as architecture_save_load schema, pathfinding terrain-cost dict, behavior-trees child-list-order, decision-making personality dict, procedural generation seed, and publishing_executables .spec file (chat-70 at BUILD-CONFIG scope), now applied at MARKETING-COPY scope. (b) <strong>Conversion-funnel-as-multi-stage-signal at MARKETING-METRICS scope:</strong> a five-stage funnel <code>['Awareness', 'Interest', 'Consideration', 'Purchase', 'Retention']</code> is rendered as five horizontal bars with widths proportional to count; between adjacent bars, the conversion rate <code>(counts[i+1] / counts[i]) * 100</code> is rendered as its own per-edge label — four edge metrics for five nodes, four independent optimization targets. Pressing A/I/C/P/E bumps the corresponding stage by a small amount, and the affected upstream/downstream conversion rates update live, demonstrating that doubling Awareness without improving Awareness→Interest produces zero downstream gain (the funnel is a pipeline of filters, not a single aggregate metric). Same proper-composition-vs-flat-aggregation shape as graphics_ui_hud&apos;s UIElement-protocol-vs-isinstance-branches and graphics_procedural&apos;s height-vs-moisture-independence, applied at MARKETING-METRICS scope. (c) <strong>Marketing-pipeline vs build-pipeline temporal-decoupling at PUBLISHING-PIPELINE scope:</strong> six marketing tracks (<code>'Social Media'</code> 180d, <code>'Dev Blog'</code> 165d, <code>'Press Kit'</code> 90d, <code>'Trailer'</code> 30d, <code>'Influencer'</code> 45d, <code>'Launch'</code> 15d) live in a <code>TRACKS</code> list of <code>(label, start_day, duration, color)</code> tuples; each renders as its own horizontal Gantt bar at its declared start and length, and a red day-cursor advances at 30 days/sec across the timeline (SPACE pauses, R resets). The launch day at day 150 is marked with a yellow vertical line where all tracks converge — the marketing pipeline runs on calendar cadences spanning 15–180 days, while chat-70&apos;s build pipeline runs on-demand whenever the developer presses build; the two pipelines share the launch date as their convergence anchor but neither blocks the other. Same independent-data-composes-via-shared-anchor pattern as graphics_postprocessing&apos;s ping-pong-effects-dict, graphics_ui_hud&apos;s UIElement-protocol, and graphics_procedural&apos;s height-vs-moisture-independence, applied at PUBLISHING-PIPELINE scope. HUD shows the current day, day-of-week, today&apos;s hashtag (looked up from the dict, not branched on), and key bindings — three orthogonal marketing-domain disciplines visible per frame as concrete strings, bar geometries, and conversion percentages. ADVANCES the publishing module 1/5 → 2/5 partial; module-completeness stays 11/13 since publishing doesn&apos;t close in one chat (3 publishing lessons remain after this one: performance / platforms / updates).</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Define the three marketing-copy data structures at module level: <code>PITCH_TEMPLATES = [...]</code> as a list of four format-string templates; <code>GAME = {'name': 'Pixel Dungeons', ...}</code> as the dict that fills them; <code>HASHTAGS = {'Mon': '#IndieDevMonday', ...}</code> as the day-of-week→hashtag dict; <code>DAYS = ['Mon', 'Tue', ..., 'Sun']</code> as the index lookup for the day cursor.</li>
+                    <li>Define the timeline data: <code>TRACKS = [('Social Media', 0, 180, color), ('Dev Blog', 14, 165, color), ('Press Kit', 60, 90, color), ('Trailer', 90, 30, color), ('Influencer', 105, 45, color), ('Launch', 135, 15, color)]</code>; <code>TIMELINE_DAYS = 180</code>; <code>LAUNCH_DAY = 150</code>. Define the funnel data: <code>FUNNEL = ['Awareness', 'Interest', 'Consideration', 'Purchase', 'Retention']</code>; <code>counts = [10000, 1500, 600, 200, 120]</code>.</li>
+                    <li>Initialize pygame at 1088×540. Use Consolas/Courier monospace at sizes 12, 14, and 18-bold for the three font tiers. Define helper <code>render_pitch(idx)</code> returning <code>PITCH_TEMPLATES[idx].format(**GAME)</code>, and <code>conv_rate(prev, curr)</code> returning <code>0.0</code> if <code>prev == 0</code> else <code>(curr / prev) * 100.0</code>.</li>
+                    <li>Maintain three pieces of state: <code>template_idx = 0</code> (selected pitch template), <code>day_cursor = 0.0</code> (current day, advances <code>DAY_RATE = 30.0</code> days per second), <code>paused = False</code>. Handle keys: 1–4 set <code>template_idx</code>; SPACE toggles <code>paused</code>; R resets <code>day_cursor</code> to 0; A/I/C/P/E bump <code>counts[0..4]</code> by 500/50/25/10/5 respectively (only one each per key press, which is the discrete-keydown semantics).</li>
+                    <li>Per-frame timeline render (top panel): for each track, compute <code>x = bar_x0 + int((start_day / TIMELINE_DAYS) * timeline_width)</code> and <code>w = int((duration / TIMELINE_DAYS) * timeline_width)</code>, draw a colored rect at <code>(x, track_y, w, 16)</code> with the label rendered to the left margin. Draw the day cursor as a 2-pixel red vertical line at <code>cursor_x = bar_x0 + int((day_cursor / TIMELINE_DAYS) * timeline_width)</code>, and the launch-day marker as a 1-pixel yellow vertical line at the launch-day x.</li>
+                    <li>Per-frame pitch panel (bottom-left): show four <code>[1] template 1</code> labels with the active one highlighted in yellow; render <code>render_pitch(template_idx)</code> word-wrapped at ~38 chars across up to 5 lines so the rendered pitch is visible. Per-frame funnel panel (bottom-right): for each of the five stages, render a horizontal bar at width <code>(count / max(counts)) * (panel_width - 140)</code> with the stage label and count overlaid; below each bar (except the last), render <code>'  -> {cr:.1f}% to next stage'</code> using <code>conv_rate(counts[i], counts[i+1])</code>.</li>
+                    <li>Per-frame HUD: show <code>'Day {n} ({dow})'</code> with the day-of-week looked up via <code>DAYS[int(day_cursor) % 7]</code>, today&apos;s hashtag via <code>HASHTAGS[dow]</code>, and the key bindings string. Verify the three orthogonal axes are visible per frame: (a) pressing 1–4 swaps the rendered pitch text without changing any control flow — the templates ARE data; (b) pressing A/I/C/P/E bumps a single stage and the displayed conversion rates change for the affected edges only — five stages, four edges, four independent signals; (c) the timeline panel shows six parallel bars converging at the yellow launch-day line while the red cursor sweeps left-to-right — independent cadences, shared launch anchor.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The whole point of the demo is that <strong>the data IS the marketing pipeline</strong>. <code>PITCH_TEMPLATES</code> is a list, <code>HASHTAGS</code> is a dict, <code>TRACKS</code> is a list of tuples, <code>FUNNEL</code> is a list, <code>counts</code> is a list — every marketing artifact in the demo is rendered from a data structure that the program treats as content. Pressing 1–4 changes which template renders by changing an integer index; the control flow doesn&apos;t branch on which template is active. Pressing A/I/C/P/E bumps a single funnel stage and the conversion rates re-derive in one place — the funnel is a pipeline of filters, not a single aggregate metric, and that&apos;s why each edge needs its own conversion-rate label. The marketing tracks render at their declared <code>start_day</code> and <code>duration</code> against a fixed <code>TIMELINE_DAYS = 180</code> scale; adding a seventh track is a one-line append to <code>TRACKS</code>, not a new branch in the render loop. The temporal-decoupling axis is the visual fact that the six tracks have different lengths, start at different days, and overlap freely — they don&apos;t block each other; they share the launch date as their convergence point but otherwise run independently.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame, sys
+
+W, H = 1088, 540
+FPS = 60
+
+PITCH_TEMPLATES = [
+    "{name} is a {genre} where you {mech} to {goal}.",
+    "Imagine {ref1} meets {ref2} - that's {name}.",
+    "In {name}, you play as {hero} who must {challenge}.",
+    "{name}: {adj1}, {adj2} {genre} with {usp}.",
+]
+GAME = {'name': 'Pixel Dungeons', 'genre': 'roguelike', 'mech': 'rewind time',
+        'goal': 'escape the loop', 'ref1': 'Spelunky', 'ref2': 'Braid',
+        'hero': 'a Time Keeper', 'challenge': 'rewrite history',
+        'adj1': 'snappy', 'adj2': 'rewarding', 'usp': 'time-rewind mechanics'}
+HASHTAGS = {'Mon': '#IndieDevMonday', 'Tue': '#TuesdayTip', 'Wed': '#WIPWednesday',
+            'Thu': '#ThrowbackThursday', 'Fri': '#FollowFriday',
+            'Sat': '#ScreenshotSaturday', 'Sun': '#SilentSunday'}
+DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+
+TRACKS = [
+    ('Social Media', 0, 180, (88, 166, 255)),
+    ('Dev Blog',     14, 165, (140, 200, 100)),
+    ('Press Kit',    60,  90, (240, 180, 80)),
+    ('Trailer',      90,  30, (200, 120, 200)),
+    ('Influencer',  105,  45, (240, 100, 100)),
+    ('Launch',      135,  15, (255, 220, 60)),
+]
+TIMELINE_DAYS = 180
+LAUNCH_DAY = 150
+
+FUNNEL = ['Awareness', 'Interest', 'Consideration', 'Purchase', 'Retention']
+counts = [10000, 1500, 600, 200, 120]
+
+template_idx = 0
+day_cursor = 0.0
+paused = False
+DAY_RATE = 30.0
+
+pygame.init()
+screen = pygame.display.set_mode((W, H))
+clock = pygame.time.Clock()
+small = pygame.font.SysFont('Consolas', 12)
+font = pygame.font.SysFont('Consolas', 14)
+big = pygame.font.SysFont('Consolas', 18, bold=True)
+
+def render_pitch(idx):
+    return PITCH_TEMPLATES[idx].format(**GAME)
+
+def conv_rate(prev, curr):
+    return 0.0 if prev == 0 else (curr / prev) * 100.0
+
+running = True
+while running:
+    dt = clock.tick(FPS) / 1000.0
+    for ev in pygame.event.get():
+        if ev.type == pygame.QUIT: running = False
+        elif ev.type == pygame.KEYDOWN:
+            if ev.key in (pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4):
+                template_idx = ev.key - pygame.K_1
+            elif ev.key == pygame.K_SPACE: paused = not paused
+            elif ev.key == pygame.K_r: day_cursor = 0.0
+            elif ev.key == pygame.K_a: counts[0] += 500
+            elif ev.key == pygame.K_i: counts[1] += 50
+            elif ev.key == pygame.K_c: counts[2] += 25
+            elif ev.key == pygame.K_p: counts[3] += 10
+            elif ev.key == pygame.K_e: counts[4] += 5
+
+    if not paused:
+        day_cursor = min(TIMELINE_DAYS, day_cursor + DAY_RATE * dt)
+
+    screen.fill((20, 20, 28))
+    pygame.draw.rect(screen, (40, 40, 50), (10, 10, W-20, 180))
+    screen.blit(big.render('Marketing Timeline (3 pipelines, 1 launch)', True, (220, 220, 240)), (20, 14))
+    bar_x0, ty, bh, bp = 140, 38, 16, 6
+    tw = W - 30 - bar_x0
+    for label, start, dur, color in TRACKS:
+        x = bar_x0 + int((start / TIMELINE_DAYS) * tw)
+        bw = int((dur / TIMELINE_DAYS) * tw)
+        pygame.draw.rect(screen, color, (x, ty, bw, bh))
+        screen.blit(small.render(label, True, (200, 200, 200)), (20, ty + 2))
+        ty += bh + bp
+    cursor_x = bar_x0 + int((day_cursor / TIMELINE_DAYS) * tw)
+    pygame.draw.line(screen, (255, 80, 80), (cursor_x, 36), (cursor_x, 180), 2)
+    launch_x = bar_x0 + int((LAUNCH_DAY / TIMELINE_DAYS) * tw)
+    pygame.draw.line(screen, (255, 220, 60), (launch_x, 36), (launch_x, 180), 1)
+    dow = DAYS[int(day_cursor) % 7]
+    info = f'Day {int(day_cursor)} ({dow}) ' + ('paused' if paused else '')
+    screen.blit(font.render(info, True, (255, 255, 255)), (20, 162))
+    screen.blit(small.render(f'today hashtag: {HASHTAGS[dow]}', True, (180, 220, 255)), (240, 164))
+
+    pygame.draw.rect(screen, (40, 40, 50), (10, 200, 540, 160))
+    screen.blit(big.render('Pitch (template-as-data)', True, (220, 220, 240)), (20, 204))
+    for i in range(4):
+        c = (255, 220, 80) if i == template_idx else (160, 160, 160)
+        screen.blit(small.render(f'[{i+1}] template {i+1}', True, c), (20, 230 + i*16))
+    pitch = render_pitch(template_idx)
+    words, lines, cur = pitch.split(), [], ''
+    for word in words:
+        if len(cur) + len(word) + 1 > 38:
+            lines.append(cur); cur = word
+        else:
+            cur = (cur + ' ' + word).strip()
+    if cur: lines.append(cur)
+    for li, line in enumerate(lines[:5]):
+        screen.blit(font.render(line, True, (255, 255, 255)), (170, 232 + li*18))
+
+    fx, fy, fw = 560, 200, W - 10 - 560
+    pygame.draw.rect(screen, (40, 40, 50), (fx, fy, fw, 320))
+    screen.blit(big.render('Conversion Funnel (5 stages, 4 signals)', True, (220, 220, 240)), (fx+10, fy+4))
+    mx = max(counts) or 1
+    for i, (stage, count) in enumerate(zip(FUNNEL, counts)):
+        bar_w = int((count / mx) * (fw - 140))
+        by = fy + 32 + i*52
+        pygame.draw.rect(screen, (88, 166, 255), (fx+10, by, bar_w, 24))
+        screen.blit(font.render(f'{stage}: {count}', True, (255, 255, 255)), (fx+14, by+4))
+        if i &lt; len(FUNNEL) - 1:
+            cr = conv_rate(counts[i], counts[i+1])
+            screen.blit(small.render(f'  -&gt; {cr:.1f}% to next stage', True, (255, 200, 100)), (fx+10, by+28))
+
+    hud = '1-4=pitch | A/I/C/P/E=bump funnel | SPACE=pause | R=reset day'
+    screen.blit(small.render(hud, True, (160, 160, 180)), (10, 524))
+    pygame.display.flip()
+
+pygame.quit()</code></pre>
                 </details>
             </div>
 
@@ -1043,31 +1173,31 @@ print(f"Top Growing Channel: {report['top_channel']}")
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> The lesson&apos;s <code>PitchGenerator.templates = [...]</code> list and <code>ContentCalendar.hashtags = {'monday': [...], ..., 'sunday': [...]}</code> dict and <code>InfluencerOutreach.email_templates = {'micro': ..., 'standard': ..., 'large': ...}</code> tier dict are all examples of the same architectural pattern. What is the central design insight they share?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='An if-elif-else chain on day-of-week or influencer-tier scatters the marketing copy across control flow rather than externalizing it as data. Adding a new day or tier requires editing the control flow itself, and the marketing-copy strings live mixed into the codepaths instead of in a single editable data structure. The data-driven shape is the OPPOSITE of branching control flow on the lookup key.'>A) The templates and tiered email strings should be selected via an if-elif-else chain on day-of-week or influencer-tier so the runtime can choose the appropriate string at the moment it&apos;s needed.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Marketing copy IS data, externalized from runtime control flow. The pitch templates, hashtag day-of-week mappings, and email tier templates all live in module-level data structures (lists and dicts) that the runtime reads from — the runtime never branches on which template/hashtag/tier is needed; it indexes or keys into the data. Editing a hashtag or template is a single-line edit to data, not a control-flow change. Same data-driven externalization shape as architecture_save_load schema, pathfinding terrain-cost dict, behavior-trees child-list-order, decision-making personality dict, procedural generation seed, and publishing_executables .spec file (chat-70 at BUILD-CONFIG scope), now applied at MARKETING-COPY scope. The press kit, store-page metadata, and tiered email templates are the marketing pipeline&apos;s contract with PR/influencer/community channels — the data IS the contract.'>B) Marketing copy is data the project externalizes from runtime source code; the runtime indexes/keys into the data rather than branching on it, so editing a template or hashtag is a single-line change to data without touching control flow.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Hardcoding the strings inline at each call site duplicates the marketing copy across many locations and makes it impossible to update consistently. The reason marketing copy is collected into a data structure in the first place is to give it a single source of truth that the runtime renders at the appropriate moment. Putting the strings inline at the f-string call sites is the anti-pattern this design is solving.'>C) The strings should be inlined at each f-string call site for performance, since dictionary and list lookups add unnecessary indirection compared to direct string literals at the point of use.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> The lesson&apos;s <code>MarketingAnalytics.get_conversion_funnel()</code> method returns a five-stage funnel <code>['Awareness', 'Interest', 'Consideration', 'Purchase', 'Retention']</code> and computes <code>(funnel[stages[i+1]] / funnel[stages[i]]) * 100</code> as the conversion rate between each pair of adjacent stages. Why does the funnel surface five stages with four edge-conversion signals rather than collapsing to a single &ldquo;total reach&rdquo; or &ldquo;total conversion&rdquo; number?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Multiplying all four conversion rates into a single overall rate hides exactly the information the funnel is built to surface: which stage is the bottleneck. Two campaigns with the same overall conversion rate can have completely different stage profiles — one might lose users at Awareness→Interest while another loses them at Consideration→Purchase, and the optimization investment for those two is completely different. Collapsing to a single number erases the per-edge signal that tells you where to invest.'>A) The five stages should be collapsed into a single multiplied-through conversion rate (Awareness→Retention overall) for cleaner reporting, since downstream optimization always cares about end-to-end yield rather than per-stage detail.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='The funnel is a pipeline of filters where each stage&apos;s drop-off is its own independent signal — doubling Awareness without improving Awareness→Interest produces zero downstream gain (the next stage absorbs the same percentage and the absolute increment is wasted), and a healthy Awareness→Interest can be undone by a broken Consideration→Purchase. Five stages give four edge metrics that each point to a different optimization target: brand discoverability (Awareness→Interest), store-page copy (Interest→Consideration), pricing/reviews (Consideration→Purchase), and retention systems (Purchase→Retention). Same proper-composition-vs-flat-aggregation shape as graphics_ui_hud&apos;s UIElement-protocol-vs-isinstance-branches and graphics_procedural&apos;s height-vs-moisture-independence, applied at MARKETING-METRICS scope where each stage transition is a separate optimization target.'>B) The funnel is a pipeline of filters where each stage&apos;s drop-off rate is its own independent optimization signal — collapsing to one number hides which stage is the bottleneck, and four edge metrics point to four different remedies (brand discovery, store-page copy, pricing/reviews, retention systems).</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Five-stage funnels are an industry convention specifically because they expose four edge metrics that each correspond to a distinct lever (awareness, interest, consideration, purchase, retention). The architectural choice is intentional and matches what marketing teams actually optimize against; it is not a marketing-team preference grafted onto a dashboard. The information density is exactly the four edges; reducing stage count would lose actionable signal, and removing edges to lower information density would defeat the whole point of the funnel.'>C) Five stages exists to maximize visual real estate on the marketing dashboard rather than for analytical reasons; three or two stages would be statistically equivalent but harder to fit on a slide for marketing-team meetings.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> The lesson&apos;s Marketing Timeline Gantt chart shows six tracks (Social Media 180d, Dev Blog 165d, Press Kit 90d, Trailer 30d, Influencer Outreach 45d, Launch Campaign 15d) all starting at different days and converging at the launch date. How does this marketing pipeline relate to chat-70&apos;s build pipeline (the PyInstaller .spec→executable pipeline) at the same publishing-domain stage?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='The marketing pipeline runs on calendar cadences spanning 15-180 days and starts long before any executable exists. Social Media starts at day 0 when there is nothing to ship; the press kit is built before the trailer; the trailer is built before the launch campaign. Holding marketing until the build pipeline finishes would mean starting marketing on launch day, which contradicts the entire marketing-timeline-as-as-early-as-possible discipline the lesson opens with.'>A) The build pipeline must finish first because the marketing pipeline depends on having a shippable executable to point at; marketing tracks should be held back until the build pipeline produces its output.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Marketing tracks run on calendar cadences spanning 15-180 days while chat-70&apos;s build pipeline runs on-demand whenever the developer presses build; the two pipelines are temporally decoupled but share the launch date as their convergence anchor. Neither blocks the other: a delayed build doesn&apos;t pause Social Media&apos;s 180-day cadence, and a paused influencer-outreach track doesn&apos;t break the build. They&apos;re independent pipelines composing through the shared launch-date anchor at adjacent publishing-domain stages (chat-70 build = compiles source code; chat-71 marketing = produces press materials). Same independent-data-composes-via-shared-anchor pattern as graphics_postprocessing&apos;s ping-pong-effects-dict, graphics_ui_hud&apos;s UIElement-protocol, and graphics_procedural&apos;s height-vs-moisture-independence, applied at PUBLISHING-PIPELINE scope.'>B) The marketing pipeline runs on calendar cadences (15–180 days) while the build pipeline runs on-demand from source code; they&apos;re temporally decoupled and share only the launch date as a convergence anchor — neither blocks the other.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='The .spec file and the marketing tracks are owned by separate concerns and edited independently. The build pipeline&apos;s configuration (datas/hiddenimports/excludes) doesn&apos;t belong in the marketing schedule, and the marketing schedule (Social Media duration, press kit start day) doesn&apos;t belong in the .spec file. Coupling them into one file would mean every marketing-cadence change forces a rebuild and every build-config change forces re-publishing the marketing schedule, which is exactly the temporal coupling the two-pipeline split avoids.'>C) The marketing tracks should be encoded directly in the .spec file alongside the build configuration, since a single source-of-truth file simplifies the publishing pipeline and ensures marketing and build stay in sync.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

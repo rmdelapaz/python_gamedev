@@ -978,19 +978,140 @@ class LazyLoader:
             <h2 id="practice-exercise-build-publishing-performance">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Three Axes, One Hot Path — Profile Bars + Spatial Hash + Surface Cache in One Pygame Window</h3>
+                <p><strong>Objective:</strong> Build a ~95-line pygame demo with 150 bouncing circles colliding pairwise, where three independent toggles let you observe profile-first measurement, O(n²)→O(n) algorithmic improvement, and pre-built Surface caching in one window. Press P to toggle a per-phase profile-bar overlay (update / collide / render bars in milliseconds via time.perf_counter() deltas wrapping each phase) — without it, FPS drops are visible but their cause is not. Press S to toggle naive O(n²) pair-iteration vs spatial-hash O(n) collision detection — at N=150 the algorithmic difference is roughly an 8× pair-test reduction, and at N=1000 it grows to roughly 55× as N²/N. Press C to toggle pre-built CIRCLE_CACHE Surface blits vs per-frame pygame.draw.circle calls — the cached path pays the rasterization cost once at startup and amortizes it across every subsequent frame as a memory copy, while the uncached path runs the full midpoint-circle algorithm on every blit. The three axes are orthogonal: each toggle changes a different category of optimization fix, and the profile bars (when on) make the per-axis impact visible as live ms deltas.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Open an 800×500 pygame window with a Clock and a font for the HUD.</li>
+                    <li>Build CIRCLE_CACHE = {radius: pre-rendered Surface} once before the main loop by calling pygame.draw.circle into a per-radius pygame.Surface with SRCALPHA — that is the cache axis paid once at startup.</li>
+                    <li>Spawn 150 Obj instances with random position, velocity, and radius; bounce each off the play-area edges in update.</li>
+                    <li>Implement collide_naive(items) with the canonical nested-i-j O(n²) pair iteration and elastic velocity-swap on overlap.</li>
+                    <li>Implement collide_spatial(items) by bucketing each Obj into a CELL=40 spatial-hash key (int(x//CELL), int(y//CELL)), then for each Obj checking only the ±1-cell neighbors — that is the algorithmic axis O(n) toggle.</li>
+                    <li>Each frame, wrap each phase (update / collide / render) in a time.perf_counter() pair; render three colored horizontal bars proportional to the measured ms when profile_on is true — that is the measurement axis.</li>
+                    <li>Use S/C/P keys to toggle each axis independently; show their state plus FPS and per-phase ms in the HUD so the per-axis impact is visible as live numbers.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The three axes correspond to the lesson&apos;s three central disciplines — measure-before-you-optimize (Best Practice #1), focus-on-hotspots-with-the-right-category-of-fix (Best Practice #2: algorithmic before constant-factor), and cache-everything-that-only-depends-on-startup-state (Best Practice #3). Wrap each loop phase in a time.perf_counter() pair to get per-phase ms. Build CIRCLE_CACHE = {r: Surface} once before the main loop and key into it by each Obj&apos;s radius for the cache-on path. The spatial-hash O(n) collision uses CELL = 40 and bucket-key (int(x // CELL), int(y // CELL)), so each Obj only checks ±1-cell neighbors instead of every other Obj — that is the algorithmic complexity-class change visible as a live ms drop on the &apos;collide&apos; bar when you press S.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame, random, time
+
+W, H = 800, 500
+pygame.init()
+screen = pygame.display.set_mode((W, H))
+clock = pygame.time.Clock()
+font = pygame.font.Font(None, 18)
+
+# Pre-built cached circle surfaces by radius (CACHE axis: pay-once at startup)
+CIRCLE_CACHE = {}
+for r in range(4, 16):
+    s = pygame.Surface((r*2+2, r*2+2), pygame.SRCALPHA)
+    pygame.draw.circle(s, (200, 100, 50), (r+1, r+1), r)
+    CIRCLE_CACHE[r] = s
+
+class Obj:
+    def __init__(self):
+        self.x = random.uniform(20, W-20)
+        self.y = random.uniform(20, H-110)
+        self.vx = random.uniform(-150, 150)
+        self.vy = random.uniform(-150, 150)
+        self.r = random.randint(4, 15)
+    def update(self, dt):
+        self.x += self.vx * dt
+        self.y += self.vy * dt
+        if self.x &lt; self.r or self.x &gt; W - self.r:
+            self.vx *= -1
+        if self.y &lt; self.r or self.y &gt; H - 130:
+            self.vy *= -1
+
+objs = [Obj() for _ in range(150)]
+
+CELL = 40
+
+def collide_naive(items):
+    n = len(items)
+    for i in range(n):
+        for j in range(i+1, n):
+            a, b = items[i], items[j]
+            dx, dy = a.x - b.x, a.y - b.y
+            if dx*dx + dy*dy &lt; (a.r + b.r) ** 2:
+                a.vx, b.vx = b.vx, a.vx
+                a.vy, b.vy = b.vy, a.vy
+
+def collide_spatial(items):
+    buckets = {}
+    for o in items:
+        k = (int(o.x // CELL), int(o.y // CELL))
+        buckets.setdefault(k, []).append(o)
+    for o in items:
+        cx, cy = int(o.x // CELL), int(o.y // CELL)
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                for n in buckets.get((cx+dx, cy+dy), ()):
+                    if n is o:
+                        continue
+                    ddx, ddy = o.x - n.x, o.y - n.y
+                    if ddx*ddx + ddy*ddy &lt; (o.r + n.r) ** 2:
+                        o.vx, n.vx = n.vx, o.vx
+                        o.vy, n.vy = n.vy, o.vy
+
+profile_on, spatial_on, cache_on = True, True, True
+running = True
+while running:
+    dt = clock.tick(60) / 1000.0
+    for e in pygame.event.get():
+        if e.type == pygame.QUIT:
+            running = False
+        elif e.type == pygame.KEYDOWN:
+            if e.key == pygame.K_p:
+                profile_on = not profile_on
+            elif e.key == pygame.K_s:
+                spatial_on = not spatial_on
+            elif e.key == pygame.K_c:
+                cache_on = not cache_on
+
+    t0 = time.perf_counter()
+    for o in objs:
+        o.update(dt)
+    t_update = (time.perf_counter() - t0) * 1000
+
+    t0 = time.perf_counter()
+    (collide_spatial if spatial_on else collide_naive)(objs)
+    t_collide = (time.perf_counter() - t0) * 1000
+
+    t0 = time.perf_counter()
+    screen.fill((20, 20, 30))
+    if cache_on:
+        for o in objs:
+            screen.blit(CIRCLE_CACHE[o.r], (int(o.x)-o.r-1, int(o.y)-o.r-1))
+    else:
+        for o in objs:
+            pygame.draw.circle(screen, (200, 100, 50), (int(o.x), int(o.y)), o.r)
+    t_render = (time.perf_counter() - t0) * 1000
+
+    hud = [f'FPS: {clock.get_fps():.0f}   Objs: {len(objs)}',
+           f'[S] Spatial hash: {"ON " if spatial_on else "OFF"}   (algorithmic axis)',
+           f'[C] Cached blits: {"ON " if cache_on else "OFF"}   (cache axis)',
+           f'[P] Profile bars: {"ON " if profile_on else "OFF"}   (measurement axis)']
+    for i, line in enumerate(hud):
+        screen.blit(font.render(line, True, (220, 220, 220)), (10, H-95 + i*18))
+
+    if profile_on:
+        bx, by = 380, H - 95
+        m = max(t_update, t_collide, t_render, 0.001) * 1.2
+        for label, ms, col in [('update ', t_update, (100, 200, 100)),
+                                ('collide', t_collide, (220, 100, 100)),
+                                ('render ', t_render, (100, 150, 220))]:
+            w = int((ms / m) * 200)
+            pygame.draw.rect(screen, col, (bx, by, w, 12))
+            screen.blit(font.render(f'{label}: {ms:.2f}ms', True, (220, 220, 220)),
+                        (bx + 210, by - 2))
+            by += 18
+
+    pygame.display.flip()
+pygame.quit()</code></pre>
                 </details>
             </div>
 
@@ -998,31 +1119,31 @@ class LazyLoader:
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> When you toggle the profile bars (P key) ON, what is the PRIMARY benefit they provide for an optimization workflow?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Wrong direction — profile bars add a small overhead for the time.perf_counter() calls and the bar rendering. Profilers are diagnostic instruments, not curative; their value is informational, not performant.'>A) Profile bars themselves speed up the simulation by reducing per-frame work.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Right. Without per-phase measurement, you optimize what FEELS slow, which intuition consistently misidentifies because it tracks code complexity rather than execution count × per-call cost. Best Practice #1: &quot;Profile First — Always measure before optimizing.&quot;'>B) Profile bars make per-phase costs visible so you optimize the slow phase, not the fast one.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='The entire premise of cProfile, line_profiler, and py-spy is that human intuition is unreliable for predicting hot paths. Even senior developers commonly misidentify the slow code on first guess; the profiler is the empirical instrument that replaces guessing.'>C) Profile bars are decorative; experienced developers can predict per-phase costs from source code.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> Why is replacing an O(n²) inner loop with an O(n) one (e.g., naive pair iteration → spatial hash) usually a BIGGER win at large N than a 10× constant-factor speedup of the per-iteration body?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='The lesson&apos;s own asset section explicitly cites pygame Surface.convert_alpha as a real 5×–10× per-blit constant-factor speedup, and convert / convert_alpha are described as &quot;Huge performance impact&quot; in the basics module. Constant-factor speedups are real and worth pursuing — they&apos;re just dominated by algorithmic wins on the hot path.'>A) Constant-factor speedups don&apos;t actually exist; they&apos;re a marketing claim from graphics-library vendors.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Right. Big-O describes how cost scales with N. For N=1000, naive O(n²) ≈ 499,500 pair-tests; 10× faster naive ≈ 49,950; spatial-hash O(n) ≈ 9,000. The algorithmic gap grows as N²/N — the bigger your simulation, the bigger the algorithmic win. Best Practice #2: &quot;Optimize Hotspots&quot; implies fixing the complexity class first.'>B) For large N the algorithmic change scales harder: 10× faster O(n²) at N=1000 still does roughly 50,000 pair-tests; O(n) does roughly 9,000.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Constant-factor speedups apply across both CPU and GPU code — cache-line layout, branch prediction, instruction pipelining, and SIMD are all CPU-side constant-factor wins. The CPU/GPU distinction isn&apos;t what separates algorithmic from constant-factor; the distinction is whether the fix changes the complexity class or just multiplies the per-iteration cost by k.'>C) Constant-factor speedups apply only to GPU code; CPU code can only be optimized algorithmically.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> Why is pre-building CIRCLE_CACHE = {radius: Surface} once at startup and blitting from it (key C ON) faster than calling pygame.draw.circle per object per frame (key C OFF)?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='pygame.draw.circle just rasterizes pixels into the destination Surface — there&apos;s no GC-triggering side-effect. The performance difference is purely about whether the circle pixels are computed fresh or copied from a pre-rasterized buffer.'>A) pygame.draw.circle has a side-effect that triggers garbage collection on every call.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Right. The circle&apos;s pixels depend only on radius and color, both known before the main loop starts — so the rasterization is paid once at startup and becomes a memory copy thereafter. Same write-once-amortize-thereafter principle as the lesson&apos;s MemoizedFunction, texture_cache, and static_background pre-render. Best Practice #3: &quot;Cache Everything — Avoid repeated calculations.&quot;'>B) Rastering circle pixels is computed once at startup; per-frame cost drops to a memory copy (blit), amortizing rasterization across every frame the cached Surface is reused.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='pygame is software-rendered CPU-only by default — both pygame.Surface.blit and pygame.draw.circle run on the CPU. The speed difference is that blit copies pre-computed pixels (fast memory transfer) while pygame.draw.circle rasterizes circle pixels via the midpoint-circle algorithm with alpha blending on every call (slower per-pixel computation).'>C) screen.blit runs on the GPU while pygame.draw.circle runs on the CPU.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

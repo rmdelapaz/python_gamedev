@@ -764,19 +764,163 @@ async function purchaseItem(itemId, price) {
             <h2 id="practice-exercise-build-publishing-platforms">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Four Adapters, One Game — Polymorphic Dispatch + Runtime Capability Probe + Build-Target Dict in One Pygame Window</h3>
+                <p><strong>Objective:</strong> Build a runnable pygame program (~95 lines) that distills the lesson's SteamIntegration / ItchIOAPI / AppStoreConnect per-platform wrappers into one cohesive demonstration of three orthogonal publishing-domain disciplines visible per frame on a 1088×540 window split into three vertical panels (left = Build Targets data dict, middle = Polymorphic Dispatch Log, right = Runtime Capability Probe). Three orthogonal disciplines visible per frame: (a) Platform-abstraction-layer as polymorphic-dispatch via shared protocol at PLATFORM-API scope — a `PlatformAdapter` ABC declares `unlock_achievement(name)` / `submit_score(score)` / `set_presence(key, val)` / `post_devlog(title)` as the uniform interface; SteamAdapter / ItchAdapter / MobileAdapter / WebAdapter subclasses implement each method backed by their respective backend libraries (Steamworks SetAchievement / itch REST devlog / GameCenter.report / localStorage.setItem); the game calls `ADAPTERS[current].unlock_achievement('FIRST_LAUNCH')` once and Python's MRO routes the call to the right backend with no isinstance branches anywhere in the game's update loop. Same UIManager-polymorphic-dispatch pattern from chat-67 graphics_ui_hud (UIElement protocol with HealthBar / Minimap / DialogBox implementations dispatching update/render polymorphically; no isinstance branches in UIManager) applied at PLATFORM-API scope where each adapter provides the same interface backed by different platform-native implementations; adding a new platform = one new adapter class + zero edits to caller code (Open/Closed Principle satisfied). (b) Platform-capability-detection at runtime via try-import / sys.platform / hasattr at PLATFORM-CAPABILITY scope — a `detect_capabilities()` function loops over the TARGETS dict and probes each platform's library availability via the canonical `try: import lib except ImportError: caps[key] = (False, ...)` pattern (mirroring the lesson's `try: import steamworks except ImportError: steamworks = None` plus `if not steamworks: return False` in SteamIntegration.initialize); the right panel displays each platform's probe result as OK or MISSING with the exception message visible. F-key toggles the simulated availability of the current platform and re-runs the probe, demonstrating that capability is a runtime fact discovered by attempting the import, not a build-time fact baked into the binary; the left panel's per-platform OK/MISSING badges update live as availability changes. Same design-time-validation-vs-runtime-discovery pattern as chat-47 platformer_level_design's validate() vs is_solid() (validate at design-time catches structural errors before shipping; is_solid at runtime catches gameplay edge cases) and chat-70 publishing_executables's hidden_imports static-AST-vs-runtime-discovery (static AST parsing misses dynamic imports; the hiddenimports list is the explicit declaration that bridges what static analysis missed) and chat-72 publishing_performance's profile-bars vs intuition (profiler output IS the runtime discovery instrument that replaces design-time intuition about hot paths) applied at PLATFORM-CAPABILITY scope where the design-time hypothesis is 'this feature is available on this platform' and the runtime discovery is the actual import / API call succeeding or raising = FOURTH lesson reinforcing the design-time-validation-vs-runtime-discovery pattern across Phase 8, FIRST applied at PLATFORM-CAPABILITY scope. (c) Build-target-as-data-externalization at BUILD-TARGET scope — a module-level TARGETS dict maps platform-key → {name, split, entry, color} carrying every per-platform fact the rendering and dispatch loops need; adding a new platform like 'amazon_fire' or 'epic' or 'gog' is a single TARGETS dict-entry edit with zero changes to the rendering loop, the capability-detection loop, or the per-platform key bindings (which iterate over the dict). The same shape mirrors the lesson's `MobileBuildConfig.config = {"android": {package_name, version_code, min_sdk, target_sdk, permissions, signing}, "ios": {bundle_id, version, build, min_ios, device_capabilities, orientations, info_plist}}` dict-of-platform-configs and the Platform Overview comparison table (Steam 70/30 $100 + itch.io PWYW Free + Epic 88/12 Curated + GOG 70/30 Curated + Google Play 70/30→85/15 $25 + Apple 70/30→85/15 $99/year). Same data-driven externalization pattern as architecture_save_load schema (chat-58 at SAVE-FORMAT scope), pathfinding terrain-cost dict (chat-60 at PATHFINDING-COST scope), behavior-trees child-list-order (chat-61 at PRIORITY scope), decision-making personality dict (chat-62 at AGENT-BEHAVIOR scope), procedural generation seed (chat-68 at WORLD-IDENTITY scope), publishing_executables .spec file (chat-70 at BUILD-CONFIG scope), and publishing_marketing pitch templates + hashtag day-of-week dict + email tier templates (chat-71 at MARKETING-COPY scope), applied at BUILD-TARGET scope where the platform list IS data the build pipeline iterates over = FIFTEENTH lesson reinforcing data-driven externalization across Phase 8, FIRST applied at BUILD-TARGET scope where adding a new platform target is a single dict-entry edit rather than scattered control-flow changes. Cross-references chat-70 publishing_executables (.spec file IS data the build pipeline reads at BUILD-CONFIG scope; chat-73's TARGETS dict IS data the build pipeline iterates over at BUILD-TARGET scope; chat-70 declares HOW to build, chat-73 declares WHERE to build to as adjacent publishing-domain stages).</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Open a 1088×540 pygame window split into three vertical panels: left (0–400) for the Build Targets data dict, middle (400–800) for the Polymorphic Dispatch Log, right (800–1088) for the Runtime Capability Probe.</li>
+                    <li>Define a module-level TARGETS dict mapping each platform key ('steam', 'itch', 'mobile', 'web') to a config dict {'name', 'split', 'entry', 'color'} — this is the single source of truth for every per-platform fact in the demo (rendering uses it, capability probe iterates it, key bindings select from it).</li>
+                    <li>Define a `PlatformAdapter` ABC with abstract methods `unlock_achievement(name)`, `submit_score(score)`, `set_presence(key, val)`, `post_devlog(title)`; implement four concrete subclasses (SteamAdapter / ItchAdapter / MobileAdapter / WebAdapter) where each method returns a string showing what the platform-native API call would look like (e.g., SteamAdapter.unlock_achievement returns f"Steamworks.SetAchievement('{n}')"; ItchAdapter.post_devlog returns the REST endpoint; MobileAdapter.submit_score returns the GameCenter / PlayGames call).</li>
+                    <li>Build a `detect_capabilities()` function that loops over TARGETS and for each platform attempts a simulated `try: import lib except ImportError` probe (use a SIM_AVAILABLE dict to stub the result so the demo runs without real platform libraries installed); return a dict mapping each key → (is_available, message) tuple.</li>
+                    <li>Wire keys 1/2/3/4 to switch the active platform among 'steam', 'itch', 'mobile', 'web'; wire keys A/S/P/D to call `unlock_achievement` / `submit_score` / `set_presence` / `post_devlog` on the active adapter via polymorphic dispatch (no isinstance branches — just `ADAPTERS[current].unlock_achievement(...)`); push every result onto a rolling 8-line log; wire F to toggle the current platform's simulated availability and re-run the probe; wire R to reset everything.</li>
+                    <li>In the left panel, render each TARGETS entry as a row showing name + revenue split + entry cost + an OK / MISSING badge driven by the capability probe; highlight the currently-selected row with a brighter background.</li>
+                    <li>In the middle panel, render the active adapter name + key-binding hints + the rolling polymorphic-dispatch log; in the right panel, render each platform's runtime probe result with green for OK and red for the ImportError message; HUD F-key and R-key hints in the bottom corner.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The central insight is that all three axes are independent levers solving different parts of the multi-platform problem and none is reducible to the others. Polymorphic dispatch (axis a) gives you a uniform call site at the cost of one ABC and one adapter class per platform — without it, every game-logic site that wants to unlock an achievement has to know which platform is active, which scatters platform-check branches across the entire codebase. Runtime capability detection (axis b) handles the fact that you cannot statically know whether a given user's machine has the steamworks library, the GameCenter framework, or the localStorage browser API — the `try: import / except ImportError` IS the discovery instrument, and folding the conditional into the import machinery lets every method that uses the library guard with a single `if not self.initialized: return False` check rather than wrapping every call in its own try/except. Build-target externalization (axis c) means the platform list is data, not control flow — when you add a new storefront like Epic Games Store, you add one TARGETS dict entry and the rendering loop, capability probe, and key-binding routing all pick it up automatically because they iterate the dict instead of branching on hard-coded platform names. The three axes are layered: the TARGETS dict (c) drives WHICH platforms exist; the capability probe (b) drives WHICH of those are available right now; the polymorphic dispatch (a) drives HOW to call into them once selected. Removing any one axis collapses the design: lose (a) and you scatter platform-check branches across game logic; lose (b) and your game crashes on first launch when the user doesn't have Steam installed; lose (c) and adding a new platform requires editing every loop that touches platforms.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame, sys
+from abc import ABC, abstractmethod
+
+# === (c) Build-target-as-data: TARGETS dict externalized ===
+TARGETS = {
+    'steam':  {'name': 'Steam',     'split': '70/30', 'entry': '$100',    'color': (102, 192, 244)},
+    'itch':   {'name': 'itch.io',   'split': 'PWYW',  'entry': 'Free',    'color': (250,  92,  92)},
+    'mobile': {'name': 'Mobile',    'split': '70/30', 'entry': '$25-99',  'color': (164, 198,  57)},
+    'web':    {'name': 'Web/HTML5', 'split': '0/100', 'entry': 'Hosting', 'color': (255, 173,  51)},
+}
+
+# === (b) Platform-capability-detection at runtime ===
+SIM_AVAILABLE = {'steam': True, 'itch': True, 'mobile': True, 'web': True}
+
+def detect_capabilities():
+    caps = {}
+    for key in TARGETS:
+        try:
+            # Real code: try: import steamworks  except ImportError: ...
+            if not SIM_AVAILABLE.get(key, True):
+                raise ImportError(f"{key} library not installed")
+            caps[key] = (True, 'imported OK')
+        except ImportError as e:
+            caps[key] = (False, str(e))
+    return caps
+
+# === (a) Polymorphic dispatch via shared protocol ===
+class PlatformAdapter(ABC):
+    @abstractmethod
+    def unlock_achievement(self, name): ...
+    @abstractmethod
+    def submit_score(self, score): ...
+    @abstractmethod
+    def set_presence(self, key, val): ...
+    @abstractmethod
+    def post_devlog(self, title): ...
+
+class SteamAdapter(PlatformAdapter):
+    def unlock_achievement(self, n): return f"Steamworks.SetAchievement('{n}')"
+    def submit_score(self, s):       return f"Steamworks.UploadScore({s})"
+    def set_presence(self, k, v):    return f"Friends.SetRichPresence('{k}', '{v}')"
+    def post_devlog(self, t):        return f"[Steam: announcement post '{t}']"
+
+class ItchAdapter(PlatformAdapter):
+    def unlock_achievement(self, n): return f"[itch: client-side flag '{n}']"
+    def submit_score(self, s):       return f"[itch: external leaderboard {s}]"
+    def set_presence(self, k, v):    return f"[itch: not supported]"
+    def post_devlog(self, t):        return f"POST /api/1/game/X/devlog '{t}'"
+
+class MobileAdapter(PlatformAdapter):
+    def unlock_achievement(self, n): return f"GameCenter.report('{n}')"
+    def submit_score(self, s):       return f"PlayGames.submit({s})"
+    def set_presence(self, k, v):    return f"[mobile: not applicable]"
+    def post_devlog(self, t):        return f"[mobile: store update notes]"
+
+class WebAdapter(PlatformAdapter):
+    def unlock_achievement(self, n): return f"localStorage.setItem('ach_{n}', 1)"
+    def submit_score(self, s):       return f"fetch('/api/score', body={s})"
+    def set_presence(self, k, v):    return f"document.title = '{v}'"
+    def post_devlog(self, t):        return f"[web: blog RSS '{t}']"
+
+ADAPTERS = {'steam': SteamAdapter(), 'itch': ItchAdapter(),
+            'mobile': MobileAdapter(), 'web': WebAdapter()}
+
+pygame.init()
+W, H = 1088, 540
+screen = pygame.display.set_mode((W, H))
+pygame.display.set_caption('Four Adapters, One Game')
+font = pygame.font.SysFont('consolas', 14)
+big  = pygame.font.SysFont('consolas', 18, bold=True)
+clock = pygame.time.Clock()
+
+current, log = 'steam', []
+caps = detect_capabilities()
+
+def call(action):
+    a = ADAPTERS[current]                        # polymorphic dispatch
+    if   action == 'A': r = a.unlock_achievement('FIRST_LAUNCH')
+    elif action == 'S': r = a.submit_score(1000)
+    elif action == 'P': r = a.set_presence('status', 'Playing')
+    elif action == 'D': r = a.post_devlog('Patch 1.1 released')
+    log.insert(0, f"{TARGETS[current]['name']}: {r}")
+    del log[8:]
+
+running = True
+while running:
+    for e in pygame.event.get():
+        if e.type == pygame.QUIT: running = False
+        elif e.type == pygame.KEYDOWN:
+            sw = {pygame.K_1:'steam', pygame.K_2:'itch', pygame.K_3:'mobile', pygame.K_4:'web'}
+            if e.key in sw: current = sw[e.key]
+            elif e.key in (pygame.K_a, pygame.K_s, pygame.K_p, pygame.K_d):
+                call(chr(e.key).upper())
+            elif e.key == pygame.K_f:
+                SIM_AVAILABLE[current] = not SIM_AVAILABLE.get(current, True)
+                caps = detect_capabilities()
+            elif e.key == pygame.K_r:
+                log.clear()
+                for k in SIM_AVAILABLE: SIM_AVAILABLE[k] = True
+                caps = detect_capabilities()
+
+    screen.fill((20, 20, 28))
+    # LEFT panel: TARGETS data dict (axis c)
+    screen.blit(big.render('Build Targets (data dict)', True, (200, 220, 255)), (16, 12))
+    y = 44
+    for key, t in TARGETS.items():
+        ok, _ = caps[key]
+        sel = (current == key)
+        pygame.draw.rect(screen, (50, 50, 70) if sel else (30, 30, 40), (12, y, 372, 56))
+        pygame.draw.rect(screen, t['color'], (12, y, 6, 56))
+        screen.blit(big.render(t['name'], True, t['color']), (28, y + 4))
+        screen.blit(font.render(f"split {t['split']}  entry {t['entry']}", True, (200, 200, 220)), (28, y + 30))
+        screen.blit(font.render('OK' if ok else 'MISSING', True, (60, 200, 90) if ok else (220, 90, 90)), (320, y + 20))
+        y += 64
+    # MIDDLE panel: polymorphic dispatch log (axis a)
+    mx = 400
+    screen.blit(big.render('Polymorphic Dispatch Log', True, (200, 220, 255)), (mx + 12, 12))
+    screen.blit(font.render(f"active: {TARGETS[current]['name']}  (1/2/3/4 switch)", True, (255, 220, 100)), (mx + 12, 40))
+    screen.blit(font.render('A=achievement  S=score  P=presence  D=devlog', True, (160, 180, 200)), (mx + 12, 60))
+    for i, line in enumerate(log):
+        screen.blit(font.render(line[:54], True, (220, 220, 220)), (mx + 12, 92 + i * 22))
+    # RIGHT panel: runtime capability probe (axis b)
+    rx = 800
+    screen.blit(big.render('Runtime Capability Probe', True, (200, 220, 255)), (rx + 12, 12))
+    screen.blit(font.render('try: import lib except ImportError', True, (160, 180, 200)), (rx + 12, 40))
+    y = 70
+    for key, t in TARGETS.items():
+        ok, msg = caps[key]
+        screen.blit(font.render(f"{t['name']}:", True, (200, 200, 220)), (rx + 12, y))
+        screen.blit(font.render(msg, True, (90, 220, 120) if ok else (240, 110, 110)), (rx + 12, y + 16))
+        y += 44
+    screen.blit(font.render('F = toggle current avail', True, (255, 220, 100)), (rx + 12, H - 50))
+    screen.blit(font.render('R = reset all', True, (255, 220, 100)), (rx + 12, H - 30))
+
+    pygame.display.flip()
+    clock.tick(60)
+
+pygame.quit()
+sys.exit()</code></pre>
                 </details>
             </div>
 
@@ -784,31 +928,31 @@ async function purchaseItem(itemId, price) {
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> The demo's PlatformAdapter ABC declares <code>unlock_achievement</code> / <code>submit_score</code> / <code>set_presence</code> / <code>post_devlog</code> as abstract methods, with SteamAdapter / ItchAdapter / MobileAdapter / WebAdapter subclasses each implementing every method backed by their respective platform-native API (Steamworks SetAchievement / itch REST devlog endpoint / GameCenter.report / localStorage.setItem). The game's input handler does <code>ADAPTERS[current].unlock_achievement(&apos;FIRST_LAUNCH&apos;)</code> with no isinstance branches and no platform-name string checks. Why is this polymorphic-dispatch-via-shared-protocol shape preferred over an if-elif-else chain on the active platform name scattered across every game-logic site that needs to call into a publishing platform?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint="Performance is not the driver. The polymorphic call site does one MRO lookup to dispatch to the right subclass method, which is nanoseconds; an if-elif chain on platform name is also nanoseconds; both are immeasurable next to the actual platform-API call (which involves real I/O, network, or kernel transitions). The driver is maintainability and the Open/Closed Principle, not call-site speed; conflating performance with architectural design here gets the cause-effect backwards.">A) Polymorphic dispatch is faster than if-elif-else branching at the call site, so the game runs at higher FPS when many achievement-unlocks fire per frame.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation="Correct. With if-elif branches scattered across every game-logic site that calls into a platform, adding a new storefront like Epic Games Store requires editing every site that contains an `if platform == &apos;steam&apos;: ... elif platform == &apos;itch&apos;: ...` chain to add a new `elif platform == &apos;epic&apos;: ...` branch. With the PlatformAdapter ABC + per-platform subclass shape, adding Epic = one new EpicAdapter class subclassing PlatformAdapter and one new dict entry in ADAPTERS; the game-logic call sites stay unchanged because they call through the protocol, not the subclass. Same UIManager-polymorphic-dispatch pattern from chat-67 graphics_ui_hud (UIElement protocol with HealthBar / Minimap / DialogBox implementations dispatching update/render polymorphically; no isinstance branches in UIManager) applied at PLATFORM-API scope. The Open/Closed Principle phrases this exactly: software entities should be open for extension (add a new adapter) but closed for modification (no edits to caller code). Production publishing systems including Steamworks SDK + Game Center + Google Play Games + Apple GameKit all expose conceptually-equivalent operations (achievements, scores, presence, devlogs) but with platform-native call shapes, which is exactly the case the adapter protocol pattern is designed to handle.">B) Adding a new platform like Epic Games Store requires only one new EpicAdapter class plus one new dict entry in ADAPTERS, with zero edits to any game-logic site that calls into platforms; the if-elif-else alternative requires editing every chain across the codebase to add the new branch (Open/Closed Principle).</button>
+                        <button class="quiz-option" data-correct='false' data-hint="Memory cost is irrelevant at this scale. Four adapter instances are ~4 small Python objects, each holding a method-dispatch table and zero per-instance state; the memory cost is in the bytes-per-instance range, not megabytes; adding ten more adapters would still be negligible. The Open/Closed Principle drives the design choice, not memory efficiency; if anything, the if-elif-else alternative would have lower object overhead but vastly higher maintenance cost — and the maintenance cost is what the adapter pattern is designed to address, not memory.">C) Each adapter instance occupies less memory than an equivalent if-elif-else dispatch table, so the polymorphic shape uses less RAM when the game has many active platform integrations.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> The demo's <code>detect_capabilities()</code> function loops over TARGETS and probes each platform via <code>try: ... raise ImportError(...) except ImportError as e: caps[key] = (False, str(e))</code> — mirroring the lesson's <code>try: import steamworks except ImportError: steamworks = None</code> followed by <code>if not steamworks: return False</code> in <code>SteamIntegration.initialize()</code>. The F-key toggles the simulated availability of the current platform and re-runs the probe; the right panel updates live to show OK or MISSING with the exception message. Why is this runtime try-import probe the right way to determine which platforms a given user's installed copy of the game can actually reach, rather than baking platform support into the binary at build time or asking the user to declare it during install?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint="Build-time hardcoding of platform support breaks the moment the user environment changes after install. A user with Steam installed today might have Steam uninstalled tomorrow; a Steam Deck user might unplug their dock and lose access to mouse-only platforms; a mobile build running in airplane mode loses access to Game Center until reconnect. The runtime probe runs every time the platform integration is needed precisely because availability is a runtime fact that changes during the application's lifetime, not a build-time fact that can be baked into the binary; pre-shipping a per-OS build avoids the runtime probe at the cost of needing N separate binaries that all break the same way when post-install conditions change.">A) Pre-shipping a per-platform binary at build time is more reliable than runtime detection because the build pipeline can verify platform support before shipping, eliminating the runtime probe entirely and saving the cost of a try-import at every game launch.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation="Correct. You cannot statically know at build time whether a given user's machine has the steamworks library installed, the GameCenter framework available, or the localStorage browser API exposed — these are runtime facts that depend on the user's installation choices, OS configuration, and current execution environment, none of which the build pipeline can predict. The `try: import lib except ImportError` IS the runtime discovery instrument, and folding the conditional logic into the language's normal import machinery lets every method that uses the library guard with a single `if not self.initialized: return False` check rather than wrapping every call in its own try/except. Same design-time-validation-vs-runtime-discovery pattern as chat-47 platformer_level_design's validate() vs is_solid() (validate at design-time catches structural errors before shipping; is_solid at runtime catches gameplay edge cases) and chat-70 publishing_executables's hidden_imports static-AST-vs-runtime-discovery (static AST parsing misses dynamic imports; the hiddenimports list is the explicit declaration that bridges what static analysis missed) and chat-72 publishing_performance's profile-bars vs intuition (profiler output IS the runtime discovery instrument that replaces design-time intuition about hot paths) applied at PLATFORM-CAPABILITY scope where the design-time hypothesis is &apos;this feature is available on this platform&apos; and the runtime discovery is the actual import / API call succeeding or raising. FOURTH lesson reinforcing the design-time-validation-vs-runtime-discovery pattern across Phase 8, FIRST applied at PLATFORM-CAPABILITY scope.">B) The user's installed library set is a runtime fact that the build pipeline cannot predict; the try-import probe IS the discovery instrument, and folding the conditional into the import machinery lets every callsite guard with one `if not self.initialized: return False` check rather than wrapping every API call in its own try/except — same design-time-validation-vs-runtime-discovery pattern as chat-47 / chat-70 / chat-72 applied at PLATFORM-CAPABILITY scope.</button>
+                        <button class="quiz-option" data-correct='false' data-hint="Asking the user to declare platform support during install is a usability disaster (most users don't know what Steamworks is) and is also wrong on the merits because the user's answer can become stale (they install Steam after they install your game; they uninstall the GameCenter framework as part of an OS reinstall; their browser updates and removes the localStorage API). Runtime probing handles all of these gracefully with no user interaction; install-time declaration creates a static record that goes stale the moment the user environment changes.">C) Asking the user to declare platform support during install is more accurate than runtime detection because the user knows their own machine better than any automated probe could, and the install-time declaration becomes a stable per-machine setting that doesn't need to be re-checked on every game launch.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> The demo's TARGETS dict externalizes every per-platform fact (name, revenue split, entry cost, color) into one module-level data structure that the rendering loop, capability-detection loop, key-binding routing, and adapter lookup all iterate or key into. Adding Epic Games Store requires one new entry like <code>&apos;epic&apos;: {&apos;name&apos;: &apos;Epic&apos;, &apos;split&apos;: &apos;88/12&apos;, &apos;entry&apos;: &apos;Curated&apos;, &apos;color&apos;: (40, 40, 40)}</code> plus one new EpicAdapter — and the rendering loop, capability probe, and key binding 5 all pick it up automatically because they iterate the dict. Why is this build-target-as-data-externalization shape preferred over scattering per-platform facts across if-elif branches in the rendering loop, the capability probe, and the key handler?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint="Memory is not the driver. The TARGETS dict holds four small dict entries totaling a few hundred bytes; replacing it with hardcoded if-elif branches in each loop would actually use SLIGHTLY less memory (no dict overhead) but would cost vastly more in maintenance: every per-platform fact would have to be repeated in three or four different loops, and adding a new platform would require simultaneous edits to every one of those loops in lockstep. The driver is maintainability and the single-source-of-truth property, not memory efficiency.">A) The dict-keyed-by-platform-name lookup uses less RAM than the equivalent if-elif chain in the rendering loop, so the demo runs in less memory when many platforms are active.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation="Correct. The TARGETS dict makes the platform list itself the single source of truth: every loop that touches platforms (rendering, capability probe, key routing, adapter lookup) iterates or keys into the same dict, so adding a new platform is a single dict-entry edit and the loops pick it up automatically because they iterate `for key, t in TARGETS.items()` rather than branching on a hard-coded set of names. Replacing the dict with if-elif branches in each loop would mean every per-platform fact (name, split, entry cost, color) is repeated across the rendering loop, the capability probe, and the adapter lookup — and adding Epic Games Store would require simultaneous edits to all of those loops, with the inevitable bug of forgetting to update one of them and shipping a state where Epic renders correctly but its adapter lookup returns None. Same data-driven externalization pattern as architecture_save_load schema (chat-58 at SAVE-FORMAT scope), pathfinding terrain-cost dict (chat-60 at PATHFINDING-COST scope), behavior-trees child-list-order (chat-61 at PRIORITY scope), decision-making personality dict (chat-62 at AGENT-BEHAVIOR scope), procedural generation seed (chat-68 at WORLD-IDENTITY scope), publishing_executables .spec file (chat-70 at BUILD-CONFIG scope), and publishing_marketing pitch templates + hashtag day-of-week dict + email tier templates (chat-71 at MARKETING-COPY scope), applied at BUILD-TARGET scope where the platform list IS data the build pipeline iterates over = FIFTEENTH lesson reinforcing data-driven externalization across Phase 8, FIRST applied at BUILD-TARGET scope where adding a new platform target is a single dict-entry edit rather than scattered control-flow changes. Cross-references chat-70 publishing_executables (.spec file IS data the build pipeline reads at BUILD-CONFIG scope; chat-73's TARGETS dict IS data the build pipeline iterates over at BUILD-TARGET scope; chat-70 declares HOW to build, chat-73 declares WHERE to build to as adjacent publishing-domain stages).">B) The TARGETS dict makes the platform list the single source of truth — adding a new platform is one dict-entry edit and every loop that iterates the dict picks it up automatically with zero per-loop edits; scattering platform facts across if-elif branches in each loop forces simultaneous edits to every loop when adding a platform, with the inevitable bug of forgetting one. Same data-driven externalization pattern as chat-58 / chat-60 / chat-61 / chat-62 / chat-68 / chat-70 / chat-71 applied at BUILD-TARGET scope = FIFTEENTH lesson reinforcing this pattern across Phase 8.</button>
+                        <button class="quiz-option" data-correct='false' data-hint="Type safety isn't the driver here either. Python dicts and if-elif chains both rely on runtime string matching with the same kinds of typo risks; neither one prevents you from writing &apos;stem&apos; instead of &apos;steam&apos; somewhere in the codebase. If type-safety were the goal, the right tool would be an enum (e.g., `class Platform(Enum): STEAM = &apos;steam&apos;; ITCH = &apos;itch&apos;`) which is orthogonal to the dict-vs-if-elif choice and would apply equally well in both shapes. The driver is single-source-of-truth + zero-edit-extension, not type safety.">C) Dict-keyed lookups give compile-time type safety while if-elif-else chains rely on runtime string matching, so the dict catches typos in platform names at build time before they ship.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

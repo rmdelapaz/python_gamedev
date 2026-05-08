@@ -726,19 +726,121 @@ VSVersionInfo(
             <h2 id="practice-exercise-build-publishing-executables">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Three Strategies, One Asset — sys._MEIPASS Resolution + .spec File as Build Schema + Hidden Imports Bridge in One Pygame Window</h3>
+                <p><strong>Objective:</strong> Build a runnable pygame window in roughly 95 lines that shows three orthogonal publishing-domain disciplines visible per frame on a 1088×480 window: a 768×480 demo area split into three vertical columns (one per resource-path resolution strategy) plus a 280px right-side panel showing the auto-synthesized .spec file. The demo simulates dev-vs-frozen mode via key F (a global FROZEN_SIM bool) since we cannot literally freeze the demo at runtime. Three strategies attempt to resolve the same asset <code>player.png</code> against the current simulated mode: Strategy A uses a hardcoded absolute path <code>C:\game\assets\player.png</code> that breaks the moment the user moves the .exe; Strategy B uses <code>os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets', 'player.png')</code> which succeeds in dev but fails in frozen mode because <code>__file__</code> points into the bootstrap loader rather than the extracted MEIPASS directory; Strategy C uses <code>getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))</code> plus <code>os.path.join(base, 'assets', 'player.png')</code> which is the canonical PyInstaller idiom that works in BOTH modes because the conditional logic is folded into the getattr lookup itself rather than a separate <code>if frozen:</code> branch. (a) sys._MEIPASS detection and dev-vs-frozen path-resolution duality: each strategy's column shows its resolved path string and an OK/FAIL status; toggling F flips the columns visibly — Strategy A stays FAIL in both modes (broken whenever the literal path doesn't match runtime location); Strategy B flips OK→FAIL (works in dev, breaks in frozen); Strategy C stays OK→OK (the only universal solution). (b) .spec file as build-configuration data externalization at BUILD-CONFIG scope: the right-side panel renders a synthesized .spec file from three module-level lists DECLARED_ASSETS / HIDDEN_IMPORTS / EXCLUDES, formatting <code>Analysis(datas=[...], hiddenimports=[...], excludes=[...])</code> plus <code>EXE(name='MyGame', console=False, ...)</code> — the .spec file IS data the game declares about itself for the build pipeline, externalized from the game's runtime source code. Same data-driven externalization shape as architecture_save_load schema, pathfinding terrain-cost dict, behavior-trees child-list-order, and decision-making personality dict, now applied at BUILD-CONFIG scope. (c) Hidden imports as static-analysis-vs-runtime-discovery asymmetry: keys 1/2/3 simulate three import-discovery scenarios — 1 leaves the baseline unchanged (a plain <code>import pygame</code> statically detected by AST parse, no hidden_imports needed); 2 appends <code>'importlib_plugin'</code> to HIDDEN_IMPORTS (simulating a dynamic <code>importlib.import_module(plugin_name)</code> call invisible to PyInstaller's static AST parser); 3 appends <code>'pygame._sdl2_extra'</code> (simulating a library-internal lazy load). Pressing 2 or 3 visibly grows HIDDEN_IMPORTS and the .spec panel updates live, demonstrating that hidden_imports is the explicit declaration that bridges what static analysis missed — same design-time-validation-vs-runtime-discovery pattern as platformer_level_design's <code>validate()</code> (catches design-time errors before shipping; cost: one .spec file edit) vs <code>is_solid()</code> (catches runtime errors; cost: a shipped game crashing with <code>ModuleNotFoundError</code> when the user opens it) applied at build-time-vs-ship-time scope. R resets HIDDEN_IMPORTS to the baseline. HUD shows current mode (DEV / FROZEN), simulated <code>sys._MEIPASS</code> value (<code>None</code> in dev, <code>/tmp/_MEIxyz12</code> in frozen), per-strategy resolved paths, and key bindings — three orthogonal publishing-domain disciplines visible per frame as concrete strings and OK/FAIL status flags. OPENS the publishing module 0/5 → 1/5 partial; module-completeness stays 11/13 since publishing doesn't close in one chat (4 publishing lessons remain after this one: marketing / performance / platforms / updates).</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Define three module-level lists: <code>DECLARED_ASSETS = ['player.png', 'jump.wav', 'tilemap.png']</code>, <code>HIDDEN_IMPORTS = ['pygame._sdl2']</code>, <code>EXCLUDES = ['matplotlib', 'tkinter']</code>. Define a global <code>FROZEN_SIM = False</code> that key F toggles. Define <code>SIMULATED_MEIPASS = '/tmp/_MEIxyz12'</code> as the path that simulated frozen mode reports (a stand-in for the real PyInstaller TEMP directory).</li>
+                    <li>Implement three resource-path resolution functions: <code>strategy_a(asset, frozen)</code> returns the hardcoded path <code>'C:\\game\\assets\\' + asset</code>; <code>strategy_b(asset, frozen)</code> returns <code>None</code> if frozen else <code>os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets', asset)</code>; <code>strategy_c(asset, frozen)</code> returns <code>os.path.join(SIMULATED_MEIPASS if frozen else os.path.dirname(os.path.abspath(__file__)), 'assets', asset)</code>.</li>
+                    <li>Implement <code>check_path(p)</code> that returns True if <code>p</code> is non-None, contains <code>'assets'</code>, and does not start with the hardcoded <code>'C:\\game'</code> prefix; otherwise False. Implement <code>render_spec()</code> that returns a multi-line string formatting <code>Analysis(datas=[...], hiddenimports=[...], excludes=[...])</code> plus <code>EXE(name='MyGame', console=False)</code>.</li>
+                    <li>Initialize pygame at 1088×480. Lay out three columns at x=24, x=280, x=536 (each ~240px wide) plus a .spec panel at x=792 (~280px wide). Use Consolas/Courier monospace fonts at sizes 14 and 18.</li>
+                    <li>Per-frame: draw column headers (<code>'A: Hardcoded'</code> / <code>'B: __file__-only'</code> / <code>'C: _MEIPASS-aware'</code>); under each header render the resolved path string (wrapped) and an OK/FAIL status colored green/red; render the .spec panel with the synthesized content; render the HUD at the bottom showing mode, simulated <code>sys._MEIPASS</code> value, and key bindings.</li>
+                    <li>Handle keys: F toggles <code>FROZEN_SIM</code>; 2 appends <code>'importlib_plugin'</code> to <code>HIDDEN_IMPORTS</code> if not already present; 3 appends <code>'pygame._sdl2_extra'</code> if not already present; R resets <code>HIDDEN_IMPORTS</code> to <code>['pygame._sdl2']</code>. The .spec panel re-renders every frame from the current lists, so additions appear live.</li>
+                    <li>Verify the three orthogonal axes are visible per frame: (a) toggling F flips Strategy B's status from OK to FAIL while Strategy C's status stays OK — same input asset, three strategies, different success/failure across the dev-vs-frozen flip; (b) the .spec panel updates live as <code>HIDDEN_IMPORTS</code> grows when keys 2/3 fire — the .spec file IS data; (c) the strategy columns each render a different resolved-path STRING based on the same input asset name — same input, three strategies, three outputs, only one universally correct.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The whole point of the demo is that <strong>one code path works in both dev mode AND frozen mode</strong> via the canonical <code>getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))</code> idiom. Strategy C succeeds where A and B fail because the conditional logic (which base path to use) is folded into the <code>getattr</code> lookup itself rather than a separate <code>if frozen:</code> branch — same runtime polymorphism via attribute lookup pattern as Python's general &ldquo;look up the right thing in the right namespace&rdquo; idiom. For the .spec panel, a simple multi-line f-string formatting <code>Analysis(datas=[...], hiddenimports=[...], ...)</code> is enough — you don't need to actually run PyInstaller; the visual point is that the .spec file IS data the game declares about itself for the build pipeline. For the hidden-imports demo, the static-analysis vs runtime-discovery distinction is the key insight — the list grows with each dynamic-import simulation key (2 or 3) because PyInstaller wouldn't have detected those imports without the explicit declaration.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import os
+import sys
+import pygame
+
+W, H = 1088, 480
+FPS = 60
+
+DECLARED_ASSETS = ['player.png', 'jump.wav', 'tilemap.png']
+HIDDEN_IMPORTS = ['pygame._sdl2']
+EXCLUDES = ['matplotlib', 'tkinter']
+SIMULATED_MEIPASS = '/tmp/_MEIxyz12'
+
+FROZEN_SIM = False
+
+def strategy_a(asset, frozen):
+    return 'C:\\game\\assets\\' + asset  # hardcoded; broken if user moves exe
+
+def strategy_b(asset, frozen):
+    if frozen:
+        return None  # __file__ points to bootstrap, not MEIPASS
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets', asset)
+
+def strategy_c(asset, frozen):
+    base = SIMULATED_MEIPASS if frozen else os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base, 'assets', asset)
+
+def check_path(p):
+    return p is not None and 'assets' in p and not p.startswith('C:\\game')
+
+def render_spec():
+    datas = ', '.join(f"('{a}', 'assets')" for a in DECLARED_ASSETS)
+    hi = ', '.join(f"'{i}'" for i in HIDDEN_IMPORTS)
+    ex = ', '.join(f"'{e}'" for e in EXCLUDES)
+    return (f"# game.spec\n"
+            f"a = Analysis(\n"
+            f"  ['main.py'],\n"
+            f"  datas=[{datas}],\n"
+            f"  hiddenimports=[{hi}],\n"
+            f"  excludes=[{ex}],\n"
+            f")\n"
+            f"exe = EXE(pyz, a.scripts,\n"
+            f"  name='MyGame', console=False,\n"
+            f")")
+
+pygame.init()
+screen = pygame.display.set_mode((W, H))
+clock = pygame.time.Clock()
+small = pygame.font.SysFont('Consolas', 14)
+big = pygame.font.SysFont('Consolas', 18, bold=True)
+
+COLS = [(24, 'A: Hardcoded', strategy_a, (255, 110, 110)),
+        (280, 'B: __file__-only', strategy_b, (255, 200, 80)),
+        (536, 'C: _MEIPASS-aware', strategy_c, (110, 220, 140))]
+
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_f:
+                FROZEN_SIM = not FROZEN_SIM
+            elif event.key == pygame.K_2 and 'importlib_plugin' not in HIDDEN_IMPORTS:
+                HIDDEN_IMPORTS.append('importlib_plugin')
+            elif event.key == pygame.K_3 and 'pygame._sdl2_extra' not in HIDDEN_IMPORTS:
+                HIDDEN_IMPORTS.append('pygame._sdl2_extra')
+            elif event.key == pygame.K_r:
+                HIDDEN_IMPORTS = ['pygame._sdl2']
+
+    screen.fill((20, 20, 28))
+
+    for col_x, label, fn, color in COLS:
+        screen.blit(big.render(label, True, color), (col_x, 20))
+        path = fn('player.png', FROZEN_SIM)
+        ok = check_path(path)
+        status = 'OK' if ok else 'FAIL'
+        sc = (110, 220, 140) if ok else (255, 110, 110)
+        screen.blit(big.render(status, True, sc), (col_x, 60))
+        path_str = str(path) if path else '(None)'
+        for i in range(0, len(path_str), 24):
+            screen.blit(small.render(path_str[i:i+24], True, (200, 200, 210)),
+                        (col_x, 100 + (i // 24) * 18))
+
+    pygame.draw.rect(screen, (40, 40, 50), (792, 10, 280, 460), border_radius=4)
+    spec_text = render_spec()
+    for i, line in enumerate(spec_text.split('\n')):
+        screen.blit(small.render(line, True, (180, 200, 220)), (800, 24 + i * 18))
+
+    mode = 'FROZEN' if FROZEN_SIM else 'DEV'
+    meipass = SIMULATED_MEIPASS if FROZEN_SIM else 'None'
+    hud = f"Mode: {mode}  |  sys._MEIPASS: {meipass}  |  F=toggle 2/3=add hidden R=reset"
+    screen.blit(small.render(hud, True, (200, 200, 220)), (24, 450))
+
+    pygame.display.flip()
+    clock.tick(FPS)
+
+pygame.quit()</code></pre>
                 </details>
             </div>
 
@@ -746,31 +848,31 @@ VSVersionInfo(
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> Why is the canonical PyInstaller resource-path idiom <code>getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))</code> rather than just hardcoding an absolute path or using <code>__file__</code> directly?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Hardcoded paths break the moment the user moves the .exe to a different folder, drive, or installation location. The entire PyInstaller --add-data and _MEIPASS mechanism exists specifically to avoid hardcoded paths.'>A) A hardcoded absolute path is the most reliable approach because once the .exe is built, the path is locked in and never needs to change.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='In dev mode sys._MEIPASS does not exist (the attribute is missing), so getattr returns the __file__-relative fallback; in frozen mode PyInstaller sets sys._MEIPASS to the path of the TEMP directory where assets were extracted, so getattr returns the MEIPASS path. The same code path works in both contexts because the conditional logic is folded into the getattr lookup itself rather than a separate if-frozen branch — one code path, two execution contexts, both correct. Same runtime polymorphism via attribute lookup pattern as Python&apos;s general look-up-the-right-thing-in-the-right-namespace idiom.'>B) The getattr pattern is the bridge that makes one resource-path code path work in BOTH dev mode AND frozen mode without an explicit branch — sys._MEIPASS exists only in frozen mode, so getattr returns the __file__-relative fallback in dev and the MEIPASS path in frozen.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='In PyInstaller frozen mode, __file__ points to the bootstrap loader location inside the bundled archive, NOT to the extracted MEIPASS directory where the actual assets live. The canonical idiom uses __file__ as the FALLBACK for dev mode where _MEIPASS is missing, but in frozen mode _MEIPASS MUST be checked first.'>C) Using <code>os.path.dirname(os.path.abspath(__file__))</code> alone works in both dev and frozen modes because <code>__file__</code> always points to the script&apos;s location regardless of whether PyInstaller is involved.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> What is the architectural significance of PyInstaller&apos;s .spec file containing <code>Analysis(datas=[...], hiddenimports=[...], excludes=[...])</code> as a Python data-construction call rather than as command-line flags or hardcoded inside PyInstaller&apos;s source?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='The .spec file IS executable Python and that matters: build-time logic like a sys.platform branch appending platform-specific datas is a routine pattern. Replacing the .spec with JSON would lose the conditional-data-construction capability that designers use for cross-platform builds. The data-externalization point is that the Analysis() args are data, not that the file format is declarative.'>A) The Python-syntax .spec file is just a convenience for syntax highlighting and could be replaced with JSON/YAML with no semantic difference; the file format is incidental.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='The .spec file&apos;s Analysis() tuple is build-configuration DATA externalized from the game&apos;s runtime source code at BUILD-CONFIG scope — same data-driven externalization shape as architecture_save_load&apos;s save-file schema, pathfinding&apos;s terrain-cost dict, behavior-trees&apos; child-list-order, and decision-making&apos;s personality dict, now applied at build-pipeline scope. Editing the spec file changes the build without touching the game&apos;s source code; checking the spec file into version control gives byte-identical builds across machines (deterministic-output-from-deterministic-input from chat-43 random&apos;s Always Use Seeds Best Practice applied at build-pipeline scope rather than per-game-event RNG scope).'>B) The .spec file externalizes build configuration as data the project owns, separate from the game&apos;s runtime source code — same data-driven externalization pattern as save-file schemas and terrain-cost dicts at earlier scopes, now applied at BUILD-CONFIG scope, enabling reproducible byte-identical builds via version control.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='The canonical PyInstaller workflow is: run pyinstaller --onefile main.py ONCE to generate the initial .spec file, then EDIT the .spec file to add datas/hiddenimports/excludes, then run pyinstaller game.spec for subsequent builds. The .spec file is the SOURCE OF TRUTH for the build configuration and lives in the repo alongside the code.'>C) The .spec file is auto-generated by PyInstaller from command-line args at every build and shouldn&apos;t be checked into version control — it&apos;s an ephemeral artifact, not source.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> Why does the .spec file&apos;s <code>hiddenimports=['pygame._sdl2', 'pkg_resources.py2_warn']</code> list exist as an explicit declaration when PyInstaller&apos;s Analysis phase already walks the import graph?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='PyInstaller does NOT execute the script during analysis. Running arbitrary user code at build time would be a security and stability disaster, and would also produce non-deterministic builds depending on what code paths happened to fire during the analysis run. Static AST parsing is the deliberate choice, and hiddenimports is the explicit escape hatch for the static-analysis blind spots.'>A) PyInstaller actually runs main.py during the build to discover all imports dynamically, and hiddenimports is just a legacy mechanism from before runtime discovery was added — modern PyInstaller versions don&apos;t really need it.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='PyInstaller&apos;s Analysis phase walks the import graph STATICALLY by parsing the AST of all source files looking for import X, from X import Y, and import X as Y statements; it does NOT execute the code, so it cannot detect runtime-only imports like importlib.import_module(plugin_name), __import__(name), conditional imports inside eval()-called functions, plugin discovery loops that scan a directory at runtime, or library-internal lazy loads like pygame._sdl2. The hiddenimports list is the explicit declaration that bridges what static analysis missed — same design-time-validation-vs-runtime-discovery pattern as platformer_level_design&apos;s validate() (catches design-time errors before shipping; cost: one .spec file edit) vs is_solid() (catches runtime errors; cost: a shipped game crashes with ModuleNotFoundError when the user opens it).'>B) PyInstaller&apos;s Analysis phase walks the import graph STATICALLY (AST parsing, not execution), so it cannot detect dynamic imports like <code>importlib.import_module()</code> or library-internal lazy loads like pygame._sdl2; <code>hiddenimports</code> is the explicit declaration that bridges what static analysis missed — same design-time-validation-vs-runtime-discovery pattern as platformer_level_design&apos;s validate() vs is_solid().</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Hidden imports are needed whenever ANY code uses dynamic imports, regardless of whether it is third-party or first-party: a plugin system in your own code that uses importlib.import_module(plugin_name) to load plugins from a plugins/ directory will silently miss every plugin because PyInstaller&apos;s static analysis cannot see what plugin_name will be at runtime. Hidden imports remain a routine concern in any non-trivial production codebase, not a legacy-only issue.'>C) Hidden imports only matter for third-party libraries that PyInstaller&apos;s hooks haven&apos;t been written for, and PyInstaller&apos;s hook system already covers all major libraries — so hiddenimports is mostly a legacy concern for older third-party packages.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

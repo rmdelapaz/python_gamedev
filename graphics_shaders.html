@@ -1017,19 +1017,132 @@ class ShaderRenderer:
             <h2 id="practice-exercise-build-graphics-shaders">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Three Effects, Three Axes — Pixelate (Sampling-Rate Reduction) + Chromatic Aberration (Per-Channel Decomposition) + Wave (Coordinate Displacement) in One Pygame Window</h3>
+                <p><strong>Objective:</strong> Build a runnable pygame program (~95 lines) that distills the lesson&apos;s WebGL fragment-shader playground (8-effect canvas demo) plus the moderngl `ShaderRenderer` + `PostProcessing` GLSL classes into a 2D pygame demo so each fragment-shader operating principle is visible per frame. The window is 1088×480 split into a 768×480 scene area (a colorful test pattern of bright shapes against a dark background — a high-contrast source whose details survive each effect) and a 320px sidebar. Three orthogonal fragment-shader effect categories are implemented as 2D pygame surface operations that mirror the GLSL shapes from the lesson&apos;s playground without writing a single line of GLSL. <strong>(a) Pixelate as SAMPLING-RATE REDUCTION</strong> — the lesson&apos;s GLSL `vec2 quantized = floor(uv / pixelSize) * pixelSize; gl_FragColor = texture2D(u_texture, quantized);` quantizes UV coordinates so many adjacent output pixels sample from the same input texel. The pygame distillation `down = pygame.transform.scale(scene, (W//N, H//N)); pixelated = pygame.transform.scale(down, (W, H))` is the same operation at surface scope: the downsample step throws away (1 − 1/N²) of the spatial detail by keeping only one source pixel per N×N block; the nearest-neighbor upsample repaints each kept pixel as an N×N block of identical color. P toggles pixelate ON/OFF, +/− adjust N (range 2–32). <strong>(b) Chromatic aberration as PER-CHANNEL DECOMPOSITION</strong> — the lesson&apos;s GLSL `col.r = texture2D(u_tex, uv + offset).r; col.g = texture2D(u_tex, uv).g; col.b = texture2D(u_tex, uv − offset).b;` reads each color channel from a different UV offset, then composes the three independent samples into one output RGB. The pygame distillation uses numpy `arr_r = np.roll(arr[..., 0], +shift, axis=1)` for red and `arr_b = np.roll(arr[..., 2], −shift, axis=1)` for blue (green untouched) — same per-channel-offset shape: each output channel gets its data from a different source location. Visible at high-contrast edges as red/cyan and blue/yellow fringes — the canonical lens-aberration look. C toggles ON/OFF, T/Y adjust shift in pixels. <strong>(c) Wave distortion as COORDINATE DISPLACEMENT</strong> — the lesson&apos;s GLSL `pos.y += sin(pos.x * 10.0 + u_time) * 0.05;` (vertex form) or equivalently `uv.y += sin(uv.x * 10.0 + u_time) * 0.05;` (fragment form) modifies the SAMPLE POSITION before the texture lookup, so the output color of pixel (x, y) is the input color at (x, y + sin_offset). The pygame distillation builds each output column x by sampling rows at indices `(np.arange(H) + int(amplitude * sin(2π * x / period + phase))) % H` — the input rows themselves don&apos;t move, the SAMPLE POSITIONS move per output column. W toggles ON/OFF, A/Z adjust amplitude (0–30 px). The three effects span three orthogonal axes of fragment-shader pixel work: SAMPLING-RATE REDUCTION (input quantization), PER-CHANNEL DECOMPOSITION (output composition), and COORDINATE DISPLACEMENT (input position shift). Cross-references chat-65 graphics_lighting (chromatic aberration&apos;s three-independent-samples-into-one-output is the same many-things-sum-into-one accumulation shape as multi-light additive composition, applied at per-COLOR-CHANNEL scope rather than per-light-source scope), chat-66 graphics_postprocessing (wave + pixelate + chromatic each fit naturally as one more entry in the chat-66 ping-pong-effects-dict pipeline — all three are fragment-shader pixel-processing passes that read one buffer and write another), chat-67 graphics_ui_hud (UI is screen-space and 2D-blit-driven, NOT shader-driven; this lesson&apos;s effects are content-space and shader-driven — providing the contrast: shaders for content/effects, 2D blits for UI), chat-68 graphics_procedural (procedural noise produces a heightmap that a fragment shader then samples to color terrain — same producer-consumer pattern: chat-68 produces data, chat-69 shaders consume data), and chat-43 game_mathematics_trigonometry (the wave&apos;s `sin(2π * x / period + phase)` is the same parametric-sinusoid shape as chat-43&apos;s parametric-circle formula `x = cx + r*cos(θ), y = cy + r*sin(θ)`, applied at per-column-x scope rather than per-orbit-angle scope). CLOSES the graphics module 4/5 → 5/5 = 11th complete Phase-8 module advancing module-completeness 10/13 → 11/13 (joining pygame_basics + sprites + game_mathematics + physics + platformer + polish + networking + architecture + ai + effects).</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Set up a 1088×480 pygame window (W=1088, H=480) with a 768×480 scene area on the left and a 320px sidebar on the right. Build a static scene_surface in code as the source for all effects: fill black, then draw a few brightly-colored shapes (white/red/cyan/yellow rectangles plus a colored triangle and a few high-contrast bands) so chromatic fringes and wave bends are visibly readable against the dark background. Pre-convert the scene_surface to a numpy array via `pygame.surfarray.pixels3d(scene_surface).copy()` once at startup so the per-effect numpy operations don&apos;t re-read pixels each frame.</li>
+                    <li>Implement <code>apply_pixelate(surf, n)</code>: `down = pygame.transform.scale(surf, (max(1, W_S//n), max(1, H_S//n)))` followed by `up = pygame.transform.scale(down, (W_S, H_S))`. Return `up`. The double-scale round-trip implements UV quantization at surface scope — the first call kills detail by averaging N×N source pixels into one destination pixel; the second call magnifies that destination pixel back to an N×N block of identical color via nearest-neighbor expansion.</li>
+                    <li>Implement <code>apply_chromatic(arr, shift)</code>: build an output array by per-channel `np.roll` along axis=1 (the column/x-axis): `out[..., 0] = np.roll(arr[..., 0], +shift, axis=1)` for red, `out[..., 1] = arr[..., 1]` for green (untouched, anchors the geometry), `out[..., 2] = np.roll(arr[..., 2], −shift, axis=1)` for blue. Each output pixel&apos;s RGB is composed from THREE INDEPENDENT samples taken at three different x-positions in the source. Convert back via `pygame.surfarray.make_surface(out)`.</li>
+                    <li>Implement <code>apply_wave(arr, amplitude, period, phase)</code>: pre-compute one row of column shifts `shifts = (amplitude * np.sin(2 * np.pi * np.arange(W_S) / period + phase)).astype(int)` (one int per output column). For each output column x, write `out[x, :, :] = np.roll(arr[x, :, :], shifts[x], axis=0)` — the source rows shift up or down per column, which when blitted produces a wobbling sinusoidal distortion. The displacement happens to SAMPLE POSITIONS not to color values.</li>
+                    <li>Wire the three effect toggles + parameter knobs into the event loop: P toggles pixelate, C toggles chromatic, W toggles wave; +/− adjust pixel block size N (clamped to [2, 32]); T/Y adjust chromatic shift (clamped to [0, 30]); A/Z adjust wave amplitude (clamped to [0, 30]). The wave&apos;s `phase` advances `+= 2.0 * dt` per frame so the wave animates over time. Effects compose by application order: chromatic→wave→pixelate per frame (wave first against the array, chromatic on the array, pixelate last on the resulting surface) — pass order is non-commutative the way chat-66 graphics_postprocessing&apos;s ping-pong pipeline showed.</li>
+                    <li>Render: blit the post-effect surface to the scene area; in the sidebar, render keybinding hints, ON/OFF state for each effect, current N / shift / amplitude values, and FPS via `clock.get_fps()`. Verify visually by toggling each effect alone — pixelate alone produces a blocky retro look; chromatic alone produces red/blue fringing on edges with no geometric distortion; wave alone produces a wobbling sinusoidal bend with no color shift; all three together compose into a heavily-stylized retro CRT-glitch aesthetic.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>Build the source `scene_arr` numpy array ONCE at startup; effects read from `scene_arr` and write to fresh per-frame output arrays so re-toggling effects doesn&apos;t require rebuilding the source. `pygame.surfarray.pixels3d` returns a writable view sharing pixel memory with the surface, while `pygame.surfarray.make_surface` and `array3d` produce fresh independent arrays — use `.copy()` after `pixels3d` to avoid surface lock issues. Pygame surface arrays are indexed `[x, y, channel]` (column-major) NOT `[y, x, channel]` like most numpy image conventions, so `np.roll(arr[..., channel], shift, axis=1)` shifts along the y-axis (row) and `axis=0` shifts along the x-axis (column) — the wave displacement uses `axis=0` per column to shift rows. Convert numpy results back to a pygame Surface via `pygame.surfarray.make_surface(out_arr)` which expects the same `(W, H, 3)` column-major shape. The compose order in the loop matters: applying pixelate first then chromatic gives a blocky-then-fringed look; applying chromatic first then pixelate fringes the source edges then quantizes the fringed result — same passes, different finals (chat-66 non-commutativity at one-line scope). Picking compose-order chromatic→wave→pixelate produces the most legible retro look because pixelate runs last and the blocky structure is what the eye reads as the dominant signal.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import math
+import numpy as np
+import pygame
+
+W, H = 1088, 480
+W_S, H_S = 768, 480  # scene area
+FPS = 60
+
+def build_scene():
+    surf = pygame.Surface((W_S, H_S))
+    surf.fill((10, 10, 18))
+    # bright shapes against dark background — high-contrast edges for fringe + wave
+    pygame.draw.rect(surf, (255, 255, 255), (60, 60, 220, 140))
+    pygame.draw.rect(surf, (235,  60,  60), (320, 80, 160, 100))
+    pygame.draw.rect(surf, ( 60, 220, 235), (520, 60, 180, 200))
+    pygame.draw.polygon(surf, (255, 220,  60),
+                        [(120, 280), (260, 280), (190, 410)])
+    pygame.draw.rect(surf, (180, 240, 120), (300, 320, 380,  20))
+    pygame.draw.rect(surf, (220, 120, 220), (300, 360, 380,  20))
+    pygame.draw.rect(surf, ( 80, 200, 250), (300, 400, 380,  20))
+    return surf
+
+def apply_pixelate(surf, n):
+    n = max(2, n)
+    down = pygame.transform.scale(surf, (max(1, W_S // n), max(1, H_S // n)))
+    return pygame.transform.scale(down, (W_S, H_S))
+
+def apply_chromatic(arr, shift):
+    out = arr.copy()
+    out[..., 0] = np.roll(arr[..., 0],  shift, axis=0)  # red shifts +x
+    out[..., 2] = np.roll(arr[..., 2], -shift, axis=0)  # blue shifts -x
+    # green untouched — anchors the geometry
+    return out
+
+def apply_wave(arr, amplitude, period, phase):
+    out = arr.copy()
+    cols = np.arange(W_S)
+    shifts = (amplitude * np.sin(2.0 * np.pi * cols / period + phase)).astype(np.int32)
+    for x in range(W_S):
+        out[x, :, :] = np.roll(arr[x, :, :], int(shifts[x]), axis=0)
+    return out
+
+def main():
+    pygame.init()
+    screen = pygame.display.set_mode((W, H))
+    pygame.display.set_caption(&apos;Three Effects, Three Axes&apos;)
+    font = pygame.font.SysFont(&apos;consolas&apos;, 16)
+    clock = pygame.time.Clock()
+
+    scene_surf = build_scene()
+    scene_arr  = pygame.surfarray.pixels3d(scene_surf).copy()
+
+    pix_on, chr_on, wav_on = True, True, True
+    pix_n, chr_shift, wav_amp = 6, 8, 12
+    wav_period, wav_phase = 80.0, 0.0
+
+    running = True
+    while running:
+        dt = clock.tick(FPS) / 1000.0
+        wav_phase += 2.0 * dt
+
+        for e in pygame.event.get():
+            if e.type == pygame.QUIT:
+                running = False
+            elif e.type == pygame.KEYDOWN:
+                if   e.key == pygame.K_p: pix_on = not pix_on
+                elif e.key == pygame.K_c: chr_on = not chr_on
+                elif e.key == pygame.K_w: wav_on = not wav_on
+                elif e.key in (pygame.K_PLUS, pygame.K_EQUALS):
+                    pix_n = min(32, pix_n + 1)
+                elif e.key == pygame.K_MINUS:
+                    pix_n = max(2, pix_n - 1)
+                elif e.key == pygame.K_t: chr_shift = min(30, chr_shift + 1)
+                elif e.key == pygame.K_y: chr_shift = max(0,  chr_shift - 1)
+                elif e.key == pygame.K_a: wav_amp = min(30, wav_amp + 1)
+                elif e.key == pygame.K_z: wav_amp = max(0,  wav_amp - 1)
+
+        # compose order: wave -> chromatic on array, then pixelate on surface
+        cur = scene_arr
+        if wav_on: cur = apply_wave(cur, wav_amp, wav_period, wav_phase)
+        if chr_on: cur = apply_chromatic(cur, chr_shift)
+        out_surf = pygame.surfarray.make_surface(cur)
+        if pix_on: out_surf = apply_pixelate(out_surf, pix_n)
+
+        screen.fill((6, 6, 10))
+        screen.blit(out_surf, (0, 0))
+        pygame.draw.line(screen, (60, 60, 70), (W_S, 0), (W_S, H_S), 1)
+
+        lines = [
+            &apos;Three Effects, Three Axes&apos;,
+            f&apos;P pixelate   {&quot;ON &quot; if pix_on else &quot;OFF&quot;}   N={pix_n}&apos;,
+            f&apos;C chromatic  {&quot;ON &quot; if chr_on else &quot;OFF&quot;}   shift={chr_shift}&apos;,
+            f&apos;W wave       {&quot;ON &quot; if wav_on else &quot;OFF&quot;}   amp={wav_amp}&apos;,
+            &apos;&apos;,
+            &apos;+/-  pixel block size&apos;,
+            &apos;T/Y  chromatic shift&apos;,
+            &apos;A/Z  wave amplitude&apos;,
+            &apos;&apos;,
+            f&apos;FPS  {clock.get_fps():5.1f}&apos;,
+        ]
+        for i, line in enumerate(lines):
+            screen.blit(font.render(line, True, (220, 230, 240)),
+                        (W_S + 16, 16 + i * 22))
+
+        pygame.display.flip()
+    pygame.quit()
+
+if __name__ == &apos;__main__&apos;:
+    main()</code></pre>
                 </details>
             </div>
 
@@ -1037,31 +1150,31 @@ class ShaderRenderer:
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> The lesson&apos;s WebGL pixelate shader writes `vec2 quantized = floor(uv / pixelSize) * pixelSize; gl_FragColor = texture2D(u_texture, quantized);`. The pygame distillation in this exercise uses `down = pygame.transform.scale(surf, (W//N, H//N)); pixelated = pygame.transform.scale(down, (W, H))` — a downsample-then-nearest-neighbor-upsample round-trip. Both approaches produce the same blocky retro aesthetic. What architectural operation does pixelate fundamentally implement?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Pixelate runs in a fragment shader that writes every output pixel of the FULL-RESOLUTION framebuffer; the framebuffer dimensions don&apos;t change at all, only the SAMPLE PATTERN changes via UV quantization. Many output pixels read from the same input texel via `floor(uv/pixelSize)*pixelSize`, but the framebuffer still has full resolution and full pixel count. Production GPU pipelines like Unreal&apos;s PostProcessVolume and Unity&apos;s URP volume use UV-quantization for pixelate effects rather than reducing the framebuffer because reducing the framebuffer would also reduce UI/overlay clarity, which should stay sharp at full resolution while the gameplay content pixelates.'>A) Pixelate works by reducing the OUTPUT RESOLUTION of the framebuffer — the GPU renders fewer total pixels and the display upscales them at the hardware level. The `floor(uv / pixelSize) * pixelSize` and `transform.scale → transform.scale` are teaching scaffolding for what production engines do as framebuffer dimension change.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Pixelate is canonical SAMPLING-RATE REDUCTION at SPATIAL-COORDINATE scope — the rate at which the source texture is sampled drops by a factor of N×N, the spatial-domain analog of audio sample-rate downsampling. The GLSL `floor(uv / pixelSize) * pixelSize` snaps every UV coordinate down to a pixelSize-aligned grid, so many adjacent output pixels then sample from the same input texel because their floor-quantized UVs match — spatial frequencies above 1/pixelSize are eliminated from the rendered image. The pygame round-trip `transform.scale(W//N, H//N) → transform.scale(W, H)` is mathematically equivalent at surface scope: the first downsample throws away (1 − 1/N²) of the spatial detail by keeping one source pixel per N×N block; the second upsample uses nearest-neighbor expansion to repaint each kept source pixel as an N×N block of identical color. Same blocky aesthetic, same loss of fine detail, same preservation of broad shapes. Same &quot;fewer-samples-than-pixels&quot; pattern as chat-66 graphics_postprocessing&apos;s separable Gaussian blur (samples per pixel reduced from N² to N+N) but at the OPPOSITE extreme: separable Gaussian preserves spatial detail through a correctness-preserving algorithmic decomposition; pixelate deliberately destroys spatial detail as an aesthetic effect. NINETEENTH lesson reinforcing data-driven externalization across Phase 8 — the pixelSize value IS the design knob, one float adjusts how blocky the effect is from imperceptibly chunky to fully retro at any pixelSize without shader edits.'>B) Pixelate is canonical SAMPLING-RATE REDUCTION at spatial-coordinate scope — the rate at which the source texture is sampled drops by a factor of N×N. The GLSL `floor(uv / pixelSize) * pixelSize` snaps UVs to a pixelSize-aligned grid so many output pixels read from the same input texel; the pygame `transform.scale → transform.scale` round-trip throws away (1 − 1/N²) of spatial detail in the downsample and repaints each kept pixel as an N×N block via nearest-neighbor in the upsample. Same operation at surface scope as the GLSL operation at fragment-shader scope. Same &quot;fewer-samples-than-pixels&quot; pattern as chat-66 graphics_postprocessing&apos;s separable Gaussian (N² → N+N) but at the OPPOSITE extreme: separable preserves detail correctness-preservingly; pixelate deliberately destroys detail as an aesthetic effect.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Pixelate quantizes UV COORDINATES, not color values. Running color quantization through `floor(rgb * 8) / 8` would produce POSTERIZATION (a different effect that reduces the color depth of each pixel), which is structurally distinct from pixelate (which reduces the spatial resolution of the sample pattern). The lesson&apos;s GLSL shader literally writes `vec2 quantized = floor(uv / pixelSize) * pixelSize; gl_FragColor = texture2D(u_texture, quantized)` operating on UV coordinates not on color components, and the pygame distillation `transform.scale → transform.scale` operates on spatial dimensions, not on color depth.'>C) Pixelate quantizes per-pixel COLOR values to a reduced palette (e.g., 8-bit color quantization or dithered indexed-palette rendering); the `floor(uv / pixelSize) * pixelSize` and `transform.scale → transform.scale` are alternate ways of expressing color reduction. The blocky look comes from the limited color count, not from spatial resolution change.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> The lesson&apos;s WebGL chromatic-aberration shader writes `col.r = texture2D(u_tex, uv + offset).r; col.g = texture2D(u_tex, uv).g; col.b = texture2D(u_tex, uv − offset).b; gl_FragColor = vec4(col, 1.0);`. The pygame distillation in this exercise uses `out[..., 0] = np.roll(arr[..., 0], +shift, axis=0)` for red and `out[..., 2] = np.roll(arr[..., 2], −shift, axis=0)` for blue, leaving green untouched. The visible result is the canonical color-fringing-at-edges look: high-contrast edges show red/cyan fringes on one side and blue/yellow fringes on the other. What architectural pattern does chromatic aberration fundamentally implement?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Chromatic aberration doesn&apos;t transform color VALUES at all — it transforms SAMPLE POSITIONS, taking three independent samples from three different positions in the source texture and stitching them together as the output. A color LUT operates on a single sample&apos;s RGB value and outputs a different RGB value, which is a fundamentally different operation. The lesson&apos;s GLSL shader `vec3 col; col.r = texture2D(u_tex, uv + offset).r; col.g = texture2D(u_tex, uv).g; col.b = texture2D(u_tex, uv − offset).b` clearly does three sample LOOKUPS with different positions, not three color-table mappings. Production engines like Unreal expose chromatic aberration and color-grading LUTs as separate post-process effects because they do different things.'>A) Chromatic aberration is a color-correction LUT (lookup table) that remaps RGB triples through a 3D table, similar to color grading or tone mapping. The per-channel UV offsets are an implementation detail of computing the LUT&apos;s output color from the input color; the channels happen to cross-pollinate because the LUT&apos;s indexing is offset per-channel.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Chromatic aberration is canonical PER-CHANNEL DECOMPOSITION — each output pixel&apos;s RGB is composed from THREE INDEPENDENT samples taken from THREE DIFFERENT positions in the source texture. The GLSL code runs the texture sample three times with three different UV offsets, one per output color channel, then composes the three channels into the output `gl_FragColor = vec4(r, g, b, 1.0)`. The pygame `np.roll(arr[..., 0], +shift) / np.roll(arr[..., 2], −shift)` per-channel offset is the same shape: each output channel gets its data from a different source location. The visible result is the canonical lens-aberration look that real lenses produce when different wavelengths refract at slightly different angles, which is why every CRT filter / retro-camera effect / glitch-aesthetic shader uses this exact per-channel-offset structure. The same many-things-composed-into-one structural pattern as chat-65 graphics_lighting&apos;s multi-light additive composition (per-pixel lightmap sums N light contributions into one accumulator) and chat-68 graphics_procedural&apos;s multi-octave fBm (per-pixel noise sums N octaves at different frequencies into one accumulator), applied here at per-COLOR-CHANNEL scope where each channel is one independent sample composed into one final RGB triple. SIXTH lesson applying the many-things-into-one accumulation shape across Phase 8 (chat-44 impulse summation + chat-65 multi-light additive lightmap + chat-66 post-process pass accumulation + chat-67 UIManager render dispatch + chat-68 multi-octave fBm = 5 prior; chat-69 Q2 here is SIXTH and FIRST applied at per-color-channel scope where each color channel is one of three independent samples composed into one final RGB triple).'>B) Chromatic aberration is canonical PER-CHANNEL DECOMPOSITION — each output pixel&apos;s RGB is composed from THREE INDEPENDENT samples taken from THREE DIFFERENT positions in the source texture. The GLSL runs the same `texture2D` lookup three times with three different UV offsets (one per channel) and composes the three results into one output RGB; the pygame `np.roll` per-channel offset replicates this at array scope. The visible result is the canonical lens-aberration look that real lenses produce when different wavelengths refract at slightly different angles. Same many-things-composed-into-one structural pattern as chat-65 graphics_lighting&apos;s multi-light additive composition and chat-68 graphics_procedural&apos;s multi-octave fBm, applied here at per-COLOR-CHANNEL scope where each channel is one of three independent samples composed into one final RGB triple.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Chromatic aberration is the OPPOSITE of anti-aliasing: anti-aliasing tries to REMOVE visible fringes by averaging sub-pixel samples to produce a smoothed edge; chromatic aberration deliberately CREATES visible color fringes at edges as an aesthetic effect. The offsets are usually 2–10 pixels not sub-pixel, and the per-channel split is the actual mechanism not scaffolding. Production engines treat MSAA / FXAA / TAA as separate effects from chromatic aberration because they operate in opposite directions — anti-aliasing reduces fringing, chromatic aberration adds it.'>C) Chromatic aberration is a sub-pixel anti-aliasing technique that samples the same surface at three sub-pixel offsets to create an averaged anti-aliased result. The per-channel split is teaching scaffolding for what is fundamentally an edge-smoothing operation; in production these techniques merge with FXAA / MSAA into one anti-aliasing pass.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> The lesson&apos;s WebGL wave shader runs `pos.y += sin(pos.x * 10.0 + u_time) * 0.05;` (vertex form) or equivalently `uv.y += sin(uv.x * 10.0 + u_time) * 0.05;` (fragment form) BEFORE the texture sample, then the sampling proceeds normally with the modified position. The pygame distillation builds each output column x by sampling the input rows at indices `(np.arange(H) + int(amplitude * sin(2π * x / period + phase))) % H` — the displacement is applied to the SAMPLE POSITION before reading the source pixel. What architectural axis does wave distortion occupy that chromatic aberration (Q2) does NOT?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Wave distortion doesn&apos;t change color values at all — it changes WHICH SOURCE PIXEL each output pixel reads from via `uv.y += sin(...)` BEFORE the texture sample. The output color is whatever color happens to be at the displaced source position. Modulating output colors would produce a flickering/pulsing effect (a different aesthetic) rather than the bending/wobbling effect that wave distortion produces. Production engines like Unreal&apos;s Distortion node and Unity&apos;s UV Distortion shader-graph node both operate on UV INPUTS not on color OUTPUTS because the operation is fundamentally about sample-position-shift, not color-shift.'>A) Wave modulates the OUTPUT COLOR values by adding a sinusoidal shimmer pattern to the rendered RGB, similar to a per-pixel brightness oscillation or color-cycling effect. The displacement operates on color components rather than sample positions; the bending appearance comes from the perceived color gradient.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Wave is canonical COORDINATE DISPLACEMENT — it modifies the SAMPLE POSITION (the input UV) before the texture lookup, leaving the source texture untouched. Chromatic aberration operates on the OUTPUT COLOR (composes three sampled RGB values into one final RGB), wave operates on the INPUT POSITION (displaces UV before sampling). The output color of pixel (x, y) under wave is the input color at (x, y + sin_offset) — the source content doesn&apos;t move, the SAMPLING does. The pygame `out[x, :, :] = np.roll(arr[x, :, :], shifts[x], axis=0)` mirrors this exactly: each output column reads displaced rows from the source array; the source rows themselves don&apos;t move. Together pixelate (sampling-rate reduction at INPUT scope), chromatic (per-channel decomposition at OUTPUT scope), and wave (coordinate displacement at INPUT scope) span the three major axes of fragment-shader pixel work without overlapping. Same parametric-sinusoid shape as chat-43 game_mathematics_trigonometry&apos;s parametric-circle formula `x = cx + r*cos(θ), y = cy + r*sin(θ)` where cos/sin generate per-frame on-circle positions; the wave shader applies the same sin(parametric-input) shape but at per-output-column scope rather than per-orbit-angle scope, and at sample-position-displacement scope rather than sprite-position scope. FOURTH lesson explicitly reinforcing the modify-input-coordinate-vs-modify-output-value distinction across Phase 8 (chat-66 graphics_postprocessing&apos;s pass-order non-commutativity demonstrates that the order of operations matters when transformations affect each other&apos;s inputs and outputs; chat-67 graphics_ui_hud&apos;s minimap-vs-camera distinguishes proportional projection from translation; chat-68 graphics_procedural&apos;s two-independent-noise-layers-vs-derived-moisture distinguishes independent inputs from derived inputs = 3 prior; chat-69 Q3 here is FOURTH and FIRST applied at modify-input-coordinate-before-sampling scope where the displacement happens to the SOURCE POSITION rather than to the OUTPUT COLOR).'>B) Wave is canonical COORDINATE DISPLACEMENT — it modifies the SAMPLE POSITION (input UV) before the texture lookup. Chromatic operates on OUTPUT COLOR (composes three sampled values into one); wave operates on INPUT POSITION (displaces UV before sampling). The output color of pixel (x, y) under wave is the input color at (x, y + sin_offset) — the source content doesn&apos;t move, the SAMPLING does. Pixelate (sampling-rate reduction at input scope), chromatic (per-channel decomposition at output scope), and wave (coordinate displacement at input scope) together span the three major axes of fragment-shader pixel work. Same parametric-sinusoid shape as chat-43 game_mathematics_trigonometry&apos;s parametric-circle formula, applied at per-output-column scope rather than per-orbit-angle scope.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='For full-screen post-process effects like the lesson&apos;s WebGL playground, wave is a fragment-shader UV displacement applied to a single full-screen quad, not a vertex-shader operation on game-world meshes. Vertex displacement IS used in some scenarios (water surfaces, flag waving, character cloak — and the lesson HAS a vertex-displacement shader for a single mesh) but those are different applications from full-screen post-process distortion. The canonical post-process wave effect uses a fragment shader that displaces the UV before sampling because the rendered geometry is just a screen-filling quad with no internal vertices to deform. The lesson&apos;s WebGL playground wave shader explicitly modifies fragment-shader UV coordinates not vertex positions.'>C) Wave is implemented by physically deforming the rendered mesh&apos;s VERTEX POSITIONS before rasterization, displacing actual screen-space geometry up and down so the rendered triangles wobble. The fragment-shader UV-displacement form is teaching scaffolding for what production engines do as vertex-shader mesh deformation; the operation is geometric, not sampling.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

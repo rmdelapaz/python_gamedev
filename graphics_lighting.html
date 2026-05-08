@@ -396,19 +396,146 @@ class SpotLight(Light):
             <h2 id="practice-exercise-build-graphics-lighting">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Four Lights, One Pixel — Multi-Light Additive Composition, Per-Light-Type Falloff, Ambient Floor in One Pygame Window</h3>
+                <p><strong>Objective:</strong> Build a runnable pygame program (~95 lines) that distills the lesson's GLSL fragment-shader pipeline into a 2D pygame demo so each architectural discipline is visible per frame. The window is 1088×480 split into a 768×480 lit world (a gray checkerboard ground that serves as the diffuse layer) and a 320px sidebar. Four light sources composit additively into a per-pixel <em>lightmap</em> surface that is then BLEND_RGB_MULT-blended onto the diffuse layer to produce the final lit scene — the 2D analog of the lesson's GLSL fragment-shader main() that sums per-light radiance into one accumulator and then multiplies by albedo. Three orthogonal multi-light disciplines are visible per frame: <strong>(a) Multi-light additive composition</strong> — the lightmap starts at the AMBIENT base color (e.g., (15, 18, 28) cool moonlight) and each enabled light contributes via pygame.BLEND_RGB_ADD, the exact 2D analog of the lesson's `for(int i = 0; i &lt; u_light_count; i++) color += calculatePBR(...)` summing each light into the same accumulator. Light is additive at per-pixel scope (two flashlights on the same wall give brighter wall, not 'red OR blue chosen by priority'), so the right composition operator is sum, not max-of-N or priority-pick. <strong>(b) Per-light-type falloff function</strong> — the demo runs four kinds of light, each with the lesson's matching falloff: AMBIENT is a constant RGB floor (no distance term, no direction term — it just IS), DIRECTIONAL SUN provides constant illumination across the entire scene (a pre-tinted full-window fill, no falloff because the sun is 'infinitely far' so all pixels see the same intensity), POINT LIGHTS use the lesson's exact attenuation `1.0 / (1.0 + 0.018*d + 0.0008*d*d)` (the lesson's 0.09 / 0.032 constants retuned for 2D pixel scale where 1 unit ≈ 1 pixel), pre-rendered once at startup as circular RGB splats blitted at light position with BLEND_RGB_ADD, and SPOT LIGHT combines the lesson's cone-angle smoothstep `intensity = smoothstep(0.9, 0.95, theta)` (where theta = dot(light_dir_to_pixel, light_facing_dir)) with point-light distance attenuation, rebuilt per frame because facing tracks the mouse cursor relative to the WASD-controlled player. Different falloff functions encode different physical situations — candle/torch is point, sun is directional, flashlight is spot — and the lesson's shader literally branches on `light.type == 0/1/2` to apply the right one, mirrored here by four separate code paths each gated on a toggle flag. <strong>(c) Ambient term as constant base added LAST, not multiplied</strong> — the lightmap starts filled with AMBIENT before any other light is added, modeling the lesson's `color += ambient` as the LAST line of the fragment-shader main() (after the per-light loop). Ambient is the 'sky scatter / indirect bounce' floor that prevents pure-black areas where no point/spot light reaches, providing visual reference (the world is still visible outside any light's range) AND a global mood knob (cool dim ambient = moonlit night, warm bright ambient = sunny day, near-zero ambient = dungeon-with-explicit-lights atmosphere). Adding ambient (color += ambient) keeps it independent of direct-light intensity; multiplying ambient against the per-light sum would couple the two so that doubling ambient also doubles every direct light — the additive form is what makes ambient a clean designer-tunable floor without side effects on the lights. Keys 1/2/3/4/5 toggle each light type ON/OFF independently so each discipline's contribution is directly visible: turn AMBIENT off and outside areas snap to pure black; turn DIRECTIONAL off and the global brightness drops uniformly; turn POINT 1 off and the warm-orange pool disappears; turn POINT 2 off and the cool-blue pool disappears; turn SPOT off and the mouse-aimed cone is gone. WASD moves the player (the spot light's origin); the mouse cursor sets the spot's facing direction. Sidebar shows: keybinding hints, live RGB values sampled from the lightmap at the cursor position (the per-pixel additive sum visible as concrete numbers), per-light enabled/disabled checkboxes, player position, and FPS. Cross-references chat-64 particle_effects (additive composition shape — chat-64 had N short-lived particles each contributing +RGB to a temp surface with BLEND_RGB_ADD; chat-65 has M long-lived light sources each contributing +RGB to a lightmap with the same BLEND_RGB_ADD operator at frame-stable per-light scope), chat-49 polish_tweening (the smoothstep cone gate for the spot light is the lesson's GLSL `smoothstep(edge0, edge1, x)` applied to dot-product cosine — same easing-on-t shape as polish_tweening's eased-progress reshape, applied at per-pixel cone-falloff scope rather than per-tween-progress scope), chat-46 platformer_camera (the lesson's quadratic point-light attenuation `1 / (1 + Kl*d + Kq*d²)` is the same approach-toward-a-target shape as platformer_camera's smooth-follow exponential decay — both produce the visual feel of 'falls off as distance grows' via a smooth math function rather than a hard step), and chat-43 game_mathematics_vectors (the spot light's facing direction comes from `face = (mouse - player).normalize()` and theta = facing.dot(light_dir_to_pixel) is the same dot-product-as-front/behind-classifier from the chat-43 vectors lesson, applied here at cone-membership scope where theta &gt; 0.9 means 'pixel is within ~26° of the spot's facing direction'). OPENS the graphics module 0/5 → 1/5 partial at chat-65 M1 (4 graphics lessons remain: postprocessing / procedural / shaders / ui_hud); module-completeness stays 10/13 since graphics doesn't close in one chat.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Set up the 1088×480 pygame window (768×480 lit world + 320×480 sidebar) with a 60 FPS clock and a small monospace font for the sidebar HUD.</li>
+                    <li>Pre-render the gray checkerboard ground surface at module scope (32-pixel cells alternating between two gray shades) so the lightmap has a diffuse layer to multiply against — the visible cell pattern proves the lighting is multiplicative, not just being drawn directly to screen.</li>
+                    <li>Pre-render two POINT LIGHT splats (warm orange (255, 130, 60) and cool blue (60, 140, 255)) at startup as 400×400 RGB surfaces using a per-pixel loop that evaluates the lesson's quadratic falloff `1.0 / (1.0 + 0.018*d + 0.0008*d*d)` (with a small floor subtraction so the splat fades to 0 at the radius edge); set_colorkey((0, 0, 0)) so transparent border pixels don't pollute the BLEND_RGB_ADD blits.</li>
+                    <li>Each frame, build the lightmap surface fresh: fill with AMBIENT (or pure black if ambient is toggled off), then BLEND_RGB_ADD-blit the directional sun fill (a pre-tinted full-window surface that adds a constant warmth to every pixel), then BLEND_RGB_ADD-blit each enabled point light splat at its position, then BLEND_RGB_ADD-blit the spot light surface.</li>
+                    <li>The spot light surface is rebuilt per frame because facing tracks the mouse: compute face = (mouse - player).normalize(), then loop over the spot's bounding box and set each pixel via cone = smoothstep(0.9, 0.95, theta) where theta = dot(facing, pixel_direction_from_player), multiplied by the same point-light distance attenuation — only pixels with theta &gt;= 0.9 (within the cone) and d &lt; SPOT_RAD (within range) light up.</li>
+                    <li>Composite the final scene by copying the ground surface and BLEND_RGB_MULT-blitting the lightmap onto it: lightmap RGB values in [0, 255] become a per-channel multiplier where 255 means 'full diffuse pass-through' and 0 means 'pure black'. The lit ground is then blitted to (0, 0) on the main screen.</li>
+                    <li>Render the sidebar at (WORLD_W, 0): keybinding hints, the lightmap RGB value sampled at the cursor (proving the additive sum is concrete), per-light enable/disable lines, player position, and FPS.</li>
+                    <li>Toggle each light independently (1=ambient, 2=sun, 3=point1, 4=point2, 5=spot) and verify the contribution is visually isolable: ambient off makes outside areas pure black; sun off drops global brightness; each point light off removes its colored pool; spot off removes the mouse-aimed cone.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The pre-rendered point-light splat is the key efficiency move: per-pixel attenuation math runs once at startup (a 400×400 = 160k cell loop that takes &lt; 1 second), and each frame the splat is just a fast BLEND_RGB_ADD blit. The spot light has to rebuild per frame because facing changes, but using a 2-pixel stride in the bounding-box loop (range(0, SPOT_RAD*2, 2) and pygame.draw.rect for 2×2 cells) keeps it under 1ms per frame. For the cone gate, smoothstep(edge0, edge1, x) is `t = clamp((x - edge0) / (edge1 - edge0), 0, 1); return t*t*(3 - 2*t)` — the standard cubic Hermite smoothstep from the GLSL spec that the lesson's shader uses verbatim. Use BLEND_RGB_ADD (not BLEND_ADD which is a pre-pygame-2 alias) for the lightmap composition and BLEND_RGB_MULT for the final ground × lightmap product. The sample swatch in the sidebar (a small rect filled with the cursor's lightmap color) is a good sanity check — hover over a point-light's center and the swatch shows that light's color saturated; hover over an unlit area with only ambient enabled and the swatch shows the dim ambient floor.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import math, pygame
+pygame.init()
+
+WORLD_W, WORLD_H, SIDE_W = 768, 480, 320
+SCREEN_W = WORLD_W + SIDE_W
+screen = pygame.display.set_mode((SCREEN_W, WORLD_H))
+clock = pygame.time.Clock()
+font = pygame.font.SysFont(&apos;consolas&apos;, 13)
+
+# --- Lesson&apos;s GLSL falloff translated to 2D Python ---
+def point_attenuation(d):
+    return 1.0 / (1.0 + 0.018 * d + 0.0008 * d * d)
+
+def make_point_splat(radius, color):
+    surf = pygame.Surface((radius * 2, radius * 2))
+    surf.set_colorkey((0, 0, 0))
+    for x in range(radius * 2):
+        for y in range(radius * 2):
+            d = math.hypot(x - radius, y - radius)
+            if d &gt; radius: continue
+            a = max(0.0, point_attenuation(d) - 0.04)
+            r = min(255, int(color[0] * a))
+            g = min(255, int(color[1] * a))
+            b = min(255, int(color[2] * a))
+            if r or g or b: surf.set_at((x, y), (r, g, b))
+    return surf
+
+AMBIENT = (15, 18, 28)
+SUN = (50, 42, 28)
+P1_POS, P1_RAD = (240, 200), 200
+P2_POS, P2_RAD = (560, 320), 200
+SPOT_RAD = 240
+P1 = make_point_splat(P1_RAD, (255, 130, 60))
+P2 = make_point_splat(P2_RAD, (60, 140, 255))
+
+ground = pygame.Surface((WORLD_W, WORLD_H))
+for ty in range(0, WORLD_H, 32):
+    for tx in range(0, WORLD_W, 32):
+        c = 110 if (tx // 32 + ty // 32) % 2 == 0 else 80
+        pygame.draw.rect(ground, (c, c, c), (tx, ty, 32, 32))
+
+flags = {&apos;ambient&apos;: True, &apos;sun&apos;: True, &apos;p1&apos;: True, &apos;p2&apos;: True, &apos;spot&apos;: True}
+player = pygame.Vector2(380, 240)
+running = True
+while running:
+    dt = clock.tick(60) / 1000.0
+    mx, my = pygame.mouse.get_pos()
+    for ev in pygame.event.get():
+        if ev.type == pygame.QUIT: running = False
+        if ev.type == pygame.KEYDOWN:
+            if ev.key == pygame.K_1: flags[&apos;ambient&apos;] = not flags[&apos;ambient&apos;]
+            if ev.key == pygame.K_2: flags[&apos;sun&apos;] = not flags[&apos;sun&apos;]
+            if ev.key == pygame.K_3: flags[&apos;p1&apos;] = not flags[&apos;p1&apos;]
+            if ev.key == pygame.K_4: flags[&apos;p2&apos;] = not flags[&apos;p2&apos;]
+            if ev.key == pygame.K_5: flags[&apos;spot&apos;] = not flags[&apos;spot&apos;]
+    keys = pygame.key.get_pressed()
+    spd = 200 * dt
+    if keys[pygame.K_a]: player.x -= spd
+    if keys[pygame.K_d]: player.x += spd
+    if keys[pygame.K_w]: player.y -= spd
+    if keys[pygame.K_s]: player.y += spd
+    player.x = max(0, min(WORLD_W, player.x))
+    player.y = max(0, min(WORLD_H, player.y))
+
+    lightmap = pygame.Surface((WORLD_W, WORLD_H))
+    lightmap.fill(AMBIENT if flags[&apos;ambient&apos;] else (0, 0, 0))
+    if flags[&apos;sun&apos;]:
+        sun = pygame.Surface((WORLD_W, WORLD_H)); sun.fill(SUN)
+        lightmap.blit(sun, (0, 0), special_flags=pygame.BLEND_RGB_ADD)
+    if flags[&apos;p1&apos;]:
+        lightmap.blit(P1, (P1_POS[0] - P1_RAD, P1_POS[1] - P1_RAD), special_flags=pygame.BLEND_RGB_ADD)
+    if flags[&apos;p2&apos;]:
+        lightmap.blit(P2, (P2_POS[0] - P2_RAD, P2_POS[1] - P2_RAD), special_flags=pygame.BLEND_RGB_ADD)
+    if flags[&apos;spot&apos;]:
+        spot = pygame.Surface((SPOT_RAD * 2, SPOT_RAD * 2))
+        face = pygame.Vector2(mx - player.x, my - player.y)
+        if face.length() &gt; 0:
+            face = face.normalize()
+            for x in range(0, SPOT_RAD * 2, 2):
+                for y in range(0, SPOT_RAD * 2, 2):
+                    dx, dy = x - SPOT_RAD, y - SPOT_RAD
+                    d = math.hypot(dx, dy)
+                    if d &gt; SPOT_RAD or d &lt; 1: continue
+                    theta = (dx / d) * face.x + (dy / d) * face.y
+                    if theta &lt; 0.9: continue
+                    t = min(1.0, max(0.0, (theta - 0.9) / 0.05))
+                    cone = t * t * (3 - 2 * t)
+                    a = max(0.0, point_attenuation(d) - 0.04) * cone
+                    pygame.draw.rect(spot, (min(255, int(255*a)), min(255, int(240*a)), min(255, int(220*a))), (x, y, 2, 2))
+        spot.set_colorkey((0, 0, 0))
+        lightmap.blit(spot, (int(player.x) - SPOT_RAD, int(player.y) - SPOT_RAD), special_flags=pygame.BLEND_RGB_ADD)
+
+    final = ground.copy()
+    final.blit(lightmap, (0, 0), special_flags=pygame.BLEND_RGB_MULT)
+    screen.fill((10, 10, 12))
+    screen.blit(final, (0, 0))
+    pygame.draw.rect(screen, (25, 28, 36), (WORLD_W, 0, SIDE_W, WORLD_H))
+    sx, sy = max(0, min(WORLD_W - 1, mx)), max(0, min(WORLD_H - 1, my))
+    sample = lightmap.get_at((sx, sy))[:3]
+    lines = [
+        &apos;1/2/3/4/5 toggle ambient/sun/p1/p2/spot&apos;,
+        &apos;WASD: player    Mouse: spot facing&apos;,
+        &apos;&apos;,
+        &apos;Lightmap @ cursor RGB: %3d %3d %3d&apos; % sample,
+        &apos;&apos;,
+        &apos;[%s] ambient   base RGB floor&apos; % (&apos;X&apos; if flags[&apos;ambient&apos;] else &apos; &apos;),
+        &apos;[%s] direct sun constant fill&apos; % (&apos;X&apos; if flags[&apos;sun&apos;] else &apos; &apos;),
+        &apos;[%s] point 1   warm orange&apos; % (&apos;X&apos; if flags[&apos;p1&apos;] else &apos; &apos;),
+        &apos;[%s] point 2   cool blue&apos; % (&apos;X&apos; if flags[&apos;p2&apos;] else &apos; &apos;),
+        &apos;[%s] spot      mouse-aimed&apos; % (&apos;X&apos; if flags[&apos;spot&apos;] else &apos; &apos;),
+        &apos;&apos;,
+        &apos;Player: %d, %d&apos; % (player.x, player.y),
+        &apos;FPS: %d&apos; % int(clock.get_fps()),
+    ]
+    for i, line in enumerate(lines):
+        screen.blit(font.render(line, True, (220, 225, 235)), (WORLD_W + 16, 16 + i * 18))
+    pygame.draw.rect(screen, sample, (WORLD_W + 16, 320, 200, 32))
+    pygame.draw.rect(screen, (90, 95, 110), (WORLD_W + 16, 320, 200, 32), 1)
+    pygame.display.flip()
+
+pygame.quit()</code></pre>
                 </details>
             </div>
 
@@ -416,31 +543,31 @@ class SpotLight(Light):
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> In the lesson&apos;s GLSL fragment shader, the main() function loops over u_lights[0..u_light_count] and writes `color += calculatePBR(...)` inside the loop — each light&apos;s computed contribution is added into the SAME `color` accumulator that will be written to the framebuffer. The 2D pygame demo mirrors this with BLEND_RGB_ADD blits onto a shared lightmap surface. Which statement most accurately describes WHY this additive composition is the right operator for combining N light contributions into one final per-pixel result, rather than (for example) taking the maximum of the N contributions or sorting lights by intensity and picking the top one?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint="Max-of-lights would mean two flashlights pointed at the same spot produce no more brightness than one alone, contradicting how light physically combines and what the shader literally does (color += per light, not color = max(color, per light)).">A) Maximum-of-N is the canonical lighting composition because it preserves the brightest light&apos;s color cleanly without &quot;washing out&quot; into white when many lights overlap; the lesson&apos;s `+=` is shorthand for an internal max() call that the GPU optimizes.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation="Light is an additive RGB quantity at every pixel — photons from multiple sources literally arrive at the same surface together — so the right composition operator is sum, not max-of-N or priority-pick. Two flashlights on the same wall make that spot brighter, three brighter still, with no special-case logic for overlapping lights. The shader&apos;s `for(int i = 0; i &lt; u_light_count; i++) color += calculatePBR(...)` literally implements this superposition. Beyond physical correctness, additive composition gives data-driven externalization at lighting-config scope: u_lights[32] is an array of light-data structs that the shader iterates blindly, so adding a fifth or fiftieth light is one push to a CPU-side list and one uniform upload, never a shader edit. The 2D demo&apos;s BLEND_RGB_ADD blits onto the lightmap surface implement the same N-light superposition at per-pixel-blit scope.">B) Light is an additive RGB quantity, so two lights on the same pixel literally add their contributions together (matching how photons combine physically); the shader iterates lights blindly summing into one accumulator, which also gives data-driven externalization at lighting-config scope where adding a new light is one entry in u_lights[32] with no shader edit.</button>
+                        <button class="quiz-option" data-correct='false' data-hint="Production engines do NOT prioritize-and-cull lights at the per-pixel composition step. They DO cull lights at the visibility / range step (lights too far from a pixel are skipped entirely — chat-65 demo&apos;s splat radius does this), but every light that survives the visibility check contributes additively to the pixel; physical light has no &quot;priority&quot; mechanism, two real flashlights both deliver photons simultaneously and those photons literally add at the surface.">C) Lights are sorted by intensity once per frame and only the strongest few contribute to each pixel; this is what the &quot;Light Count: Limit dynamic lights for performance&quot; Best Practice from the lesson is referencing, and the demo&apos;s `+=` is a degenerate case where N is small enough to skip sorting.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> The lesson&apos;s GLSL fragment shader contains an `if (light.type == 0) ... else if (light.type == 1) ... else if (light.type == 2) ...` branch that applies a different per-light-type formula: directional lights use `lightDir = normalize(-light.direction)` with attenuation = 1.0; point lights use `attenuation = 1.0 / (1.0 + 0.09*distance + 0.032*distance*distance)`; spot lights additionally multiply by `intensity = smoothstep(0.9, 0.95, theta)` where theta is the dot product of light direction and cone-axis direction. The 2D pygame demo encodes the same three-way distinction via separate code paths for ambient/sun/point/spot. Which statement most accurately describes WHY the per-light-type branching exists in the shader, rather than (for example) a single universal falloff function applied to every light?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint="The lesson&apos;s shader has THREE different formulas for the three light types because each type models a DIFFERENT physical situation; one universal formula would either make spot lights waste compute on a cone-mask they don&apos;t have, or directional sun lights fade out over distance which contradicts how the sun appears in a scene. Production engines including Unreal, Unity, and the lesson&apos;s shader all branch on light type for exactly this reason.">A) Production engines actually use a single inverse-square falloff for all light types because that&apos;s what physics demands; the per-type branching in the lesson&apos;s shader is teaching scaffolding that pre-optimization compilers fold into one universal formula, and the demo&apos;s separate code paths exist only because pygame can&apos;t express the unified math without GLSL.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation="Each light type models a DIFFERENT physical situation, so the shader branches to apply the right formula per situation. Point lights model candle / torch / lamp — a localized emitter radiating spherically with intensity falling off as distance grows, captured by the lesson&apos;s linear+quadratic attenuation `1 / (1 + Kl*d + Kq*d²)`. Directional lights model the sun — the source is so far away that within the scene the rays are essentially parallel and intensity is essentially uniform, so attenuation is 1.0 (no distance term) and lightDir is constant for every pixel via `normalize(-light.direction)`. Spot lights model a flashlight or theater spotlight — a directional emitter with a beam constraint, captured by the lesson&apos;s smoothstep cone gate multiplied with point-light distance falloff. A single universal formula would either force spot lights to waste compute on a cone-mask they don&apos;t have (every light would need cone parameters even when they&apos;re unused), or force directional sun lights to fade out over distance (the sun visibly does NOT fade across a scene because the rays are essentially parallel — a uniform falloff would produce the wrong visual). The branching IS the right architecture, not pre-optimization-folding-into-one-formula. Same context-determines-correct-choice rhetorical shape as chat-49 polish_tweening (camera no-overshoot vs polish-feel overshoot — same math family, opposite design choices), chat-50 polish_difficulty (DDA target performance band as the right knob), and chat-54 architecture_state_machines (two-layer transition gate as required separation — design-time vs runtime) — the right operator depends on what is being modeled.">B) Each light type models a different physical situation — point = candle/torch/lamp (spherical emitter, distance falloff), directional = sun (parallel rays at infinity, no distance falloff), spot = flashlight (directional cone gate on top of distance falloff) — so the shader branches to apply the right formula per situation. A single universal formula would either force spot lights to carry an unused cone-mask or force directional sun to fade with distance, both producing wrong visuals.</button>
+                        <button class="quiz-option" data-correct='false' data-hint="PointLight has a `range` field but the shader&apos;s attenuation is the smooth `1 / (1 + Kl*d + Kq*d²)` formula, not a step function. Range is used for early-exit culling at large distances where attenuation is already negligible, not for hard-cutting brightness. A hard distance cap would produce visible disc-shaped halos at exactly the range boundary, which the smooth quadratic falloff explicitly avoids — the smooth math is the discipline, the cap is just a performance hint.">C) Lights have a hard distance cap at `light.range` that kills brightness past that radius and within range every pixel gets uniform intensity; the per-type branching in the shader exists only to choose between three different range thresholds (point=50, spot=20, directional=infinite), and the demo&apos;s separate code paths reflect this range-as-gate distinction.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> The lesson&apos;s GLSL fragment shader main() ends with two final lines AFTER the per-light loop: `vec3 ambient = u_ambient_color * u_albedo * u_ao;` then `color += ambient;`. The 2D pygame demo mirrors this with `lightmap.fill(AMBIENT)` as the very first step before any direct-light blit, with key 1 toggling ambient ON/OFF. Which statement most accurately describes WHY ambient is added (color += ambient) rather than (for example) being applied only when no direct light reached a pixel, or being multiplied with the direct-light sum?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint="The lesson&apos;s shader UNCONDITIONALLY adds ambient at the end regardless of how much direct light contributed to each pixel — there is no `if (color == 0)` gate. Ambient-as-fallback would create a visible discontinuity at the boundary between &quot;just barely lit&quot; pixels (full direct light, no ambient added) and &quot;barely-not-lit&quot; pixels (full ambient instead) with the seam visible as a hard edge in the rendered scene; the additive-everywhere shape produces a smooth blend with no visible boundary because every pixel gets the same ambient floor.">A) Ambient is applied only as a fallback to pixels that received zero direct-light contribution; the `color += ambient` line is wrapped in an implicit `if (color == 0)` check that the GLSL compiler inserts automatically, so well-lit pixels skip the ambient term to avoid double-counting indirect bounce.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation="Ambient is added (`color += ambient`) UNCONDITIONALLY after the per-light loop because it models the indirect-light-bouncing-everywhere reality (sky scatter, light reflecting off neighboring surfaces — the part of real-world light that direct simulation can&apos;t easily compute) AND provides a controllable global-mood knob designers tune per-scene. Without ambient, anything outside a direct light&apos;s reach would be pixel-perfect black, which looks unnaturally harsh because real-world environments always have some indirect bounce illumination. Adding ambient (rather than multiplying it against the direct-light sum) keeps the two terms independent: doubling ambient lifts the floor without scaling direct-light intensity, and brightening a point light doesn&apos;t scale the ambient floor. Multiplying would couple them so that doubling ambient also doubles every direct light&apos;s contribution — breaking the per-scene mood control. The same data-driven externalization shape as the lights array but at GLOBAL SCENE PARAMETER scope: u_ambient_color is one uniform tunable per-scene without shader edits (cool dim ambient (0.05, 0.05, 0.10) for moonlit night, bright warm (0.30, 0.28, 0.25) for sunny day, near-zero (0.02, 0.02, 0.03) for explicit-light-required dungeon atmosphere). Same context-determines-correct-choice rhetoric as Q2 — the right OPERATOR (add vs multiply vs gate) depends on what role ambient plays, and the lesson&apos;s additive-unconditional shape is the canonical choice across production engines (Unreal&apos;s SkyLight, Unity&apos;s ambient probe, Godot&apos;s WorldEnvironment all add ambient unconditionally).">B) Ambient is added unconditionally after the per-light loop because it models indirect-light-bouncing-everywhere (sky scatter, neighboring-surface bounce) that direct simulation can&apos;t easily compute, AND provides a global-mood knob designers tune per-scene; adding (not multiplying) keeps ambient independent of direct-light intensity so designers can adjust the floor and the lights as separate concerns.</button>
+                        <button class="quiz-option" data-correct='false' data-hint="The line is literally `color += ambient` (addition), not multiplication. Multiplying ambient against the direct-light sum would couple the two so that doubling ambient also doubles every direct-light contribution — a designer trying to brighten the &quot;mood floor&quot; for a moonlit-night scene would also accidentally amplify all the lanterns and torches, breaking the per-scene mood-control knob entirely. The additive form is what makes ambient a clean independent knob.">C) Ambient is multiplied against the direct-light sum so brighter ambient automatically makes direct lights also brighter; this is what the lesson&apos;s `vec3 ambient = u_ambient_color * u_albedo * u_ao` line does, and the `color +=` is a typo or visual shorthand for the multiplication operation that GLSL&apos;s arithmetic-precedence rules resolve at compile time.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

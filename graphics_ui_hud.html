@@ -466,19 +466,190 @@ class TooltipSystem:
             <h2 id="practice-exercise-build-graphics-ui-hud">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: One Manager, Four Elements — Polymorphic Dispatch + Exponential Bar Smoothing + Proportional Minimap Projection in One Pygame Window</h3>
+                <p><strong>Objective:</strong> Build a runnable pygame program (~95 lines) that distills the lesson&apos;s UIElement / HealthBar / Minimap / DialogBox / UIManager architecture into one runnable pygame demo so each architectural discipline is visible per frame. The window is 1088×480 split into a 768×480 game scene (a dark backdrop standing in for whatever the &quot;real game&quot; would render) and a 320px sidebar HUD. A single `UIManager` holds an elements dict (`health`, `minimap`, `dialog`) plus a list of transient `FloatNumber` elements, and dispatches `update(dt)` / `render(surface)` polymorphically over both via `for e in self.elements.values(): e.update(dt) / e.render(surf)` — the lesson&apos;s exact UIManager.update / UIManager.render shape. Three orthogonal UI/HUD disciplines are visible per frame: <strong>(a) UIManager polymorphic dispatch as the type-agnostic-loop architecture</strong> — the manager iterates one collection without knowing which concrete subclass each element is, calling each element&apos;s `update` and `render` methods through the UIElement protocol. HealthBar.update runs exponential-smoothing math, Minimap.update is a no-op (the minimap reads its target&apos;s position directly each render), DialogBox.update advances the typewriter character index by `cps * dt`, FloatNumber.update advances the rise-and-fade animation and returns False when life expires — four completely different update bodies, but UIManager calls them all via the same `e.update(dt)` line with no isinstance checks anywhere. Adding a new UI element type (Tooltip, NotificationFeed, Compass, Inventory, MarchingDirectionalArrow) requires creating a class that inherits from UIElement and provides `update`/`render`, adding it to the elements dict, and zero changes to UIManager itself — the textbook Open/Closed Principle: open for extension via new element types, closed for modification of the dispatch loop. The same data-driven externalization shape as chat-56 architecture_component_systems (systems iterate components type-agnostically), chat-57 architecture_event_systems (publishers iterate listeners-by-event-type without subscriber identity), chat-65 graphics_lighting (per-pixel additive accumulator iterates lights without knowing types), and chat-66 graphics_postprocessing (`process()` iterates effects dict without knowing pass types) at UI-element-protocol scope. <strong>(b) Exponential smoothing for HealthBar fill animation</strong> — the lesson&apos;s exact `animated_health += diff * dt * 5` pattern, expressed in the demo as `self.shown += (self.target - self.shown) * min(dt * 5, 1.0)` (the `min(dt * 5, 1.0)` clamp prevents overshoot at huge dt values like the first frame after a tab-switch where dt could be seconds). This is the FIRST-ORDER LOW-PASS FILTER / EXPONENTIAL APPROACH: each tick the displayed value moves a fraction of the remaining gap toward the target — fast when far, slow when close, naturally easing out without any `if abs(diff) &lt; epsilon` clamp logic. Compare alternatives: `shown = target` (instant snap, jarring, removes the visual feedback signal that &quot;you took damage&quot; in the half-second the eye needs to register the change); `shown += sign(diff) * SPEED * dt` (constant rate, can OVERSHOOT when SPEED * dt &gt; |diff| in a single frame, requires extra clamp logic to avoid oscillation, and feels mechanical because the bar drains at the same pixels-per-second whether the player took 1 damage or 99). The exponential approach naturally settles, never overshoots (the multiplier is &lt; 1 so each step is always smaller than the gap), and is frame-rate independent with `dt`. The same mathematical shape as chat-46 platformer_camera&apos;s smooth-follow `camera_x += (target_x - camera_x) * smooth_speed * dt` (camera approaches player at exponential rate), chat-44 physics_bounce_friction&apos;s `velocity *= (1 - decay * dt)` (velocity decays exponentially toward zero), and chat-49 polish_tweening&apos;s ease-out curves — same formula, applied here at UI-element-animation scope rather than camera-pursuit / velocity-decay / per-tween-progress scope. <strong>(c) Minimap proportional projection as a fundamentally different coordinate transform from camera viewport scrolling</strong> — the lesson&apos;s `world_to_map(world_pos)` returns `(rect.x + (world_x / world_width) * rect.width, rect.y + (world_y / world_height) * rect.height)`, compressing the WHOLE world (1200×1200 in the demo) onto the small minimap surface (130×130). Every world point has a corresponding minimap point. Compare to chat-46 platformer_camera&apos;s `screen_x = world_x - camera_x` (translation: the screen shows a SLICE of the world at full 1:1 scale, with `camera_x` deciding which slice; most world points outside the camera&apos;s slice have NO corresponding screen point). Two different projections for two different design intents: camera viewport shows a small region at fine detail (immediate-vicinity gameplay), minimap shows the whole world at compressed scale (global-structure navigation). The choice of projection IS the design intent — same orthogonal-coordinate-system-selection rhetoric as chat-43 game_mathematics_coordinates (screen vs world coords as orthogonal axes the developer chooses between for the situation) and chat-47 platformer_level_design (editor-time `snap = round(v / GRID) * GRID` vs runtime `world_to_tile = int(wx // GRID)` — different operators because they answer different questions about the same world), applied here at world-projection scope where the choice is between proportional-scaling-of-whole vs translation-of-slice. Cross-references chat-66 graphics_postprocessing (UI/HUD typically renders OVER the post-processed scene as an unaffected overlay layer because UI must remain crisp and readable when bloom and tone-mapping would otherwise blur it — the post-processing chain ends and then UI draws on top, the canonical late-stage render-pass ordering; the chat-67 demo&apos;s `screen.fill(...)` then `ui.render(screen)` mirrors this ordering at a simplified 2D scope), chat-64 particle_effects (the FloatNumber rise-and-fade transient elements use the SAME alive-flag-then-cull pattern from particle_effects: each FloatNumber.update returns a bool that the manager filters via `self.floats = [f for f in self.floats if f.update(dt)]` — same boolean-return-enables-one-line-cull idiom from chat-64 applied at UI-transient-element scope rather than particle-emitter scope), chat-49 polish_tweening (damage-number rise-and-fade animation uses linear interpolation on a per-element `life / max_life` ratio that&apos;s a generalization of polish_tweening&apos;s `t / duration` parameter at per-FloatNumber scope), and chat-43 game_mathematics_coordinates (UI-anchor coordinate systems use screen-relative anchors like `(20, 20)` for the health bar at top-left and `(WORLD_W - 150, 20)` for the minimap at top-right rather than world-space coordinates — the same orthogonal-coordinate-system-selection from chat-43 applied at UI-element-positioning scope). Advances the graphics module 2/5 → 3/5 partial at chat-67 M1; 2 graphics lessons remain (procedural / shaders); module-completeness stays 10/13 since graphics doesn&apos;t close at chat 67 either.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Set up the 1088×480 pygame window (768×480 game scene + 320×480 sidebar) with a 60 FPS clock and two `pygame.font.SysFont` instances at sizes 13 (sidebar HUD lines) and 17 (in-scene UI labels). Define `WORLD_W, WORLD_H, SIDE_W = 768, 480, 320` and `SCREEN_W = WORLD_W + SIDE_W` so all the in-scene UI elements can be positioned with WORLD_W as the right-edge reference for top-right widgets like the minimap.</li>
+                    <li>Define `UIElement` as the abstract base class with no-op default `update(dt)` and `render(surf)` methods — every concrete subclass overrides one or both, and UIManager calls them through this protocol without knowing which concrete class it&apos;s talking to (Python&apos;s duck-typing means the base class isn&apos;t strictly necessary, but defining it documents the protocol explicitly).</li>
+                    <li>Implement `HealthBar(UIElement)` with `target` (the canonical HP value, mutated by damage/heal events), `shown` (the displayed value that lerps toward target), and `maxv` (max HP). `update(dt)` runs `self.shown += (self.target - self.shown) * min(dt * 5, 1.0)` — the exponential approach. `render(surf)` draws the empty bar background, the filled portion sized as `(shown / maxv) * rect.w` (so the visible width tracks the smoothing animation, not the snap-target), the bar border, and a centered text label showing `&apos;HP %d / %d&apos; % (int(shown), maxv)`.</li>
+                    <li>Implement `Minimap(UIElement)` with `world = (1200, 1200)` (the full world dimensions, deliberately larger than the visible 768×480 scene area to show the projection compresses), `player = [600.0, 600.0]` (the player&apos;s world position, mutated by the keyboard movement loop), and `world_to_map(wx, wy)` returning `(rect.x + int((wx / world[0]) * rect.w), rect.y + int((wy / world[1]) * rect.h))`. `render(surf)` paints a dark background, four grid lines for visual orientation, the player as a small green circle at the projected map position, and the minimap border.</li>
+                    <li>Implement `DialogBox(UIElement)` with `text` (full string), `shown` (currently-revealed prefix), `progress` (float character index), `cps = 28.0` (typewriter speed in chars/sec), and `active` (visibility flag). A `show(text)` method resets state and activates the box. `update(dt)` advances `progress += cps * dt` while `progress &lt; len(text)`, slicing `shown = text[:int(progress)]`. `render(surf)` paints the dialog background + border, then word-wraps `shown` to the box width using `font_md.size(...)` to measure each candidate line.</li>
+                    <li>Implement `FloatNumber(UIElement)` as the transient damage/heal numbers that rise and fade. State: `(x, y, value, color, life=0.0, max_life=1.0)`. `update(dt)` increments life, decrements y by `40 * dt` (rise), and returns `self.life &lt; self.max_life` (the boolean alive-flag from chat-64 — True keeps the element in UIManager&apos;s float list, False removes it). `render(surf)` computes `alpha = max(0, 255 - int(255 * life / max_life))` for the linear fade, renders the value text with `&apos;+&apos;` prefix when value is positive, applies the alpha, and blits at (x, y).</li>
+                    <li>Implement `UIManager` with `elements` dict (`health` / `minimap` / `dialog`) and a `floats` list. `update(dt)` runs `for e in self.elements.values(): e.update(dt)` then `self.floats = [f for f in self.floats if f.update(dt)]` (boolean-return cull). `render(surf)` runs `for e in self.elements.values(): e.render(surf)` then `for f in self.floats: f.render(surf)` so transient floats draw on top of the persistent elements. `damage(n)` and `heal(n)` mutate the HealthBar&apos;s target and append a colored FloatNumber.</li>
+                    <li>Run the main loop: clock tick + event handling (key 1 = `ui.damage(15)`; key 2 = `ui.heal(10)`; key D = `ui.elements[&apos;dialog&apos;].show(...)`); arrow-key polling moves `ui.elements[&apos;minimap&apos;].player` at 220 px/s clamped to `[0, 1200]`; `ui.update(dt)` then `screen.fill(...)` then `ui.render(screen)` then sidebar HUD rendering with live values for the HealthBar target and shown, the Minimap player coordinate, and the FloatNumber alive count — every signal feeding the polymorphic loop is on screen as concrete numbers per frame, so the abstract UIManager-dispatch / exponential-approach / proportional-projection / bool-return-cull shapes become directly observable.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The polymorphic dispatch loop (`for e in self.elements.values(): e.update(dt)`) requires every element class to define `update(dt)` and `render(surf)` even when one is a no-op — if Minimap omits update entirely, the dispatch loop crashes with AttributeError when it tries to call `e.update(dt)` on a Minimap instance. Defining no-op stubs on the UIElement base class (or on each concrete class) keeps the dispatch loop type-agnostic without requiring the loop to check `hasattr(e, &apos;update&apos;)` per iteration. The exponential smoothing&apos;s `min(dt * 5, 1.0)` clamp matters: at the first frame after a tab-switch or window-resize stall, dt could be 2 seconds, and `(target - shown) * dt * 5 = (target - shown) * 10` would overshoot the target by 9x and the bar would visibly bounce — the `min(..., 1.0)` clamp caps the per-frame approach at 100% of the remaining gap so the worst case is &quot;snap to target&quot; rather than &quot;overshoot then oscillate&quot;. For the FloatNumber alpha fade, `surf.set_alpha(...)` (the per-surface alpha) only works on surfaces created with `pygame.Surface((w, h), pygame.SRCALPHA)` OR on rendered text surfaces from `font.render(text, True, color)` because pygame.font.Font.render returns surfaces that support alpha; if you tried this on a plain `pygame.Surface((w, h))` (no SRCALPHA flag), the alpha set call silently does nothing and the fade is invisible. The minimap proportional projection&apos;s integer cast `int((wx / world[0]) * rect.w)` floors the result — don&apos;t pass `wx / world[0] * rect.w` directly to `pygame.draw.circle` because pygame expects integer pixel coordinates and floats trigger DeprecationWarning since pygame 2.0. The DialogBox word-wrap uses `font.size(test)[0]` to measure pixel width of a candidate line; this is per-character font-metrics and works correctly for the default monospace and proportional fonts, but if you switch to a font with kerning pairs (custom TTF) the width may not exactly match the rendered width — for production-grade dialog boxes, render the line and check `surface.get_width()` instead of pre-measuring.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame
+pygame.init()
+WORLD_W, WORLD_H, SIDE_W = 768, 480, 320
+SCREEN_W = WORLD_W + SIDE_W
+screen = pygame.display.set_mode((SCREEN_W, WORLD_H))
+clock  = pygame.time.Clock()
+font_sm = pygame.font.SysFont(&apos;consolas&apos;, 13)
+font_md = pygame.font.SysFont(&apos;consolas&apos;, 17)
+
+# UIElement: abstract base -- every concrete element supplies update + render
+class UIElement:
+    def update(self, dt): pass
+    def render(self, surf): pass
+
+class HealthBar(UIElement):
+    def __init__(self, x, y, w, h):
+        self.rect = pygame.Rect(x, y, w, h)
+        self.target = 100; self.shown = 100.0; self.maxv = 100
+    def update(self, dt):
+        # Exponential approach: ease-out, no overshoot, frame-rate independent
+        self.shown += (self.target - self.shown) * min(dt * 5, 1.0)
+    def render(self, surf):
+        pygame.draw.rect(surf, (35, 35, 45), self.rect)
+        fw = int((self.shown / self.maxv) * self.rect.w)
+        pygame.draw.rect(surf, (220, 60, 60), (self.rect.x, self.rect.y, fw, self.rect.h))
+        pygame.draw.rect(surf, (200, 200, 210), self.rect, 2)
+        txt = font_sm.render(&apos;HP %d / %d&apos; % (int(self.shown), self.maxv), True, (240, 240, 240))
+        surf.blit(txt, txt.get_rect(center=self.rect.center))
+
+class Minimap(UIElement):
+    def __init__(self, x, y, sz):
+        self.rect = pygame.Rect(x, y, sz, sz)
+        self.world = (1200, 1200)              # WORLD bigger than scene area
+        self.player = [600.0, 600.0]
+    def world_to_map(self, wx, wy):
+        # Proportional projection: whole world compressed into rect.w x rect.h
+        mx = self.rect.x + int((wx / self.world[0]) * self.rect.w)
+        my = self.rect.y + int((wy / self.world[1]) * self.rect.h)
+        return mx, my
+    def render(self, surf):
+        pygame.draw.rect(surf, (15, 22, 35), self.rect)
+        for i in range(1, 5):
+            x = self.rect.x + i * self.rect.w // 5
+            y = self.rect.y + i * self.rect.h // 5
+            pygame.draw.line(surf, (40, 50, 70), (x, self.rect.y), (x, self.rect.bottom), 1)
+            pygame.draw.line(surf, (40, 50, 70), (self.rect.x, y), (self.rect.right, y), 1)
+        px, py = self.world_to_map(*self.player)
+        pygame.draw.circle(surf, (90, 220, 100), (px, py), 4)
+        pygame.draw.rect(surf, (200, 200, 210), self.rect, 2)
+
+class DialogBox(UIElement):
+    def __init__(self, x, y, w, h):
+        self.rect = pygame.Rect(x, y, w, h)
+        self.text = &apos;&apos;; self.shown = &apos;&apos;; self.progress = 0.0
+        self.cps = 28.0; self.active = False
+    def show(self, text):
+        self.text = text; self.shown = &apos;&apos;; self.progress = 0.0; self.active = True
+    def update(self, dt):
+        if not self.active: return
+        if self.progress &lt; len(self.text):
+            self.progress += self.cps * dt
+            self.shown = self.text[:int(self.progress)]
+    def render(self, surf):
+        if not self.active: return
+        pygame.draw.rect(surf, (20, 20, 30), self.rect)
+        pygame.draw.rect(surf, (139, 115, 85), self.rect, 3)
+        words, line, lines = self.shown.split(&apos; &apos;), [], []
+        for w in words:
+            test = &apos; &apos;.join(line + [w])
+            if font_md.size(test)[0] &gt; self.rect.w - 20:
+                if line: lines.append(&apos; &apos;.join(line)); line = [w]
+                else:    lines.append(w)
+            else:        line.append(w)
+        if line: lines.append(&apos; &apos;.join(line))
+        for i, ln in enumerate(lines[:3]):
+            surf.blit(font_md.render(ln, True, (240, 240, 240)),
+                      (self.rect.x + 12, self.rect.y + 10 + i * 22))
+
+class FloatNumber(UIElement):
+    &quot;&quot;&quot;Transient UI element -- bool-return cull pattern from chat-64.&quot;&quot;&quot;
+    def __init__(self, x, y, value, color):
+        self.x, self.y, self.value, self.color = x, y, value, color
+        self.life = 0.0; self.max_life = 1.0
+    def update(self, dt):
+        self.life += dt; self.y -= 40 * dt
+        return self.life &lt; self.max_life      # alive flag drives one-line cull
+    def render(self, surf):
+        a = max(0, 255 - int(255 * self.life / self.max_life))
+        s = (&apos;+%d&apos; if self.value &gt; 0 else &apos;%d&apos;) % self.value
+        txt = font_md.render(s, True, self.color); txt.set_alpha(a)
+        surf.blit(txt, (self.x, self.y))
+
+class UIManager:
+    def __init__(self):
+        self.elements = {
+            &apos;health&apos;:  HealthBar(20, 20, 220, 26),
+            &apos;minimap&apos;: Minimap(WORLD_W - 150, 20, 130),
+            &apos;dialog&apos;:  DialogBox(WORLD_W // 2 - 260, WORLD_H - 110, 520, 90),
+        }
+        self.floats = []
+    def update(self, dt):
+        for e in self.elements.values(): e.update(dt)        # polymorphic dispatch
+        self.floats = [f for f in self.floats if f.update(dt)]   # bool-return cull
+    def render(self, surf):
+        for e in self.elements.values(): e.render(surf)      # same dispatch shape
+        for f in self.floats: f.render(surf)
+    def damage(self, n):
+        h = self.elements[&apos;health&apos;]; h.target = max(0, h.target - n)
+        self.floats.append(FloatNumber(60, 32, -n, (255, 90, 90)))
+    def heal(self, n):
+        h = self.elements[&apos;health&apos;]; h.target = min(h.maxv, h.target + n)
+        self.floats.append(FloatNumber(60, 32, n, (90, 230, 110)))
+
+ui = UIManager()
+ui.elements[&apos;dialog&apos;].show(&apos;1 damage  2 heal  arrows move  D dialog. Bar uses exponential approach.&apos;)
+running = True
+while running:
+    dt = clock.tick(60) / 1000.0
+    for ev in pygame.event.get():
+        if ev.type == pygame.QUIT: running = False
+        elif ev.type == pygame.KEYDOWN:
+            if   ev.key == pygame.K_1: ui.damage(15)
+            elif ev.key == pygame.K_2: ui.heal(10)
+            elif ev.key == pygame.K_d:
+                ui.elements[&apos;dialog&apos;].show(
+                    &apos;Polymorphic dispatch: each UIElement subclass implements update and render. &apos;
+                    &apos;UIManager iterates one collection without knowing concrete types.&apos;)
+    keys = pygame.key.get_pressed()
+    p = ui.elements[&apos;minimap&apos;].player
+    if keys[pygame.K_LEFT]:  p[0] = max(   0, p[0] - 220 * dt)
+    if keys[pygame.K_RIGHT]: p[0] = min(1200, p[0] + 220 * dt)
+    if keys[pygame.K_UP]:    p[1] = max(   0, p[1] - 220 * dt)
+    if keys[pygame.K_DOWN]:  p[1] = min(1200, p[1] + 220 * dt)
+    ui.update(dt)
+    screen.fill((28, 36, 52))
+    ui.render(screen)                          # HUD draws OVER the scene
+    pygame.draw.rect(screen, (18, 22, 32), (WORLD_W, 0, SIDE_W, WORLD_H))
+    hb = ui.elements[&apos;health&apos;]; mm = ui.elements[&apos;minimap&apos;]
+    lines = [
+        &apos;1 / 2   damage / heal&apos;,
+        &apos;arrows  move  (world is 1200 x 1200)&apos;,
+        &apos;D       trigger dialog typewriter&apos;,
+        &apos;&apos;,
+        &apos;UIManager polymorphic dispatch:&apos;,
+        &apos;  for e in elements: e.update(dt)&apos;,
+        &apos;  for e in elements: e.render(surf)&apos;,
+        &apos;&apos;,
+        &apos;HealthBar exponential smoothing:&apos;,
+        &apos;  shown += (target - shown) * dt * 5&apos;,
+        &apos;  target  : %d&apos; % hb.target,
+        &apos;  shown   : %.2f&apos; % hb.shown,
+        &apos;&apos;,
+        &apos;Minimap proportional projection:&apos;,
+        &apos;  map_x = rect.x + (wx / world_w) * rect.w&apos;,
+        &apos;  player  : (%d, %d)&apos; % (int(mm.player[0]), int(mm.player[1])),
+        &apos;&apos;,
+        &apos;FloatNumber bool-return cull:&apos;,
+        &apos;  alive   : %d&apos; % len(ui.floats),
+        &apos;&apos;,
+        &apos;FPS: %d&apos; % int(clock.get_fps()),
+    ]
+    for i, line in enumerate(lines):
+        screen.blit(font_sm.render(line, True, (210, 220, 235)), (WORLD_W + 12, 10 + i * 17))
+    pygame.display.flip()
+pygame.quit()</code></pre>
                 </details>
             </div>
 
@@ -486,31 +657,31 @@ class TooltipSystem:
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> The lesson&apos;s `UIManager.update(dt)` and `UIManager.render(surface)` both run `for element in self.elements.values(): element.update(dt) / element.render(surface)` — a single uniform loop that calls each element&apos;s methods without an `isinstance` chain or type-dispatch table. The 2D pygame demo mirrors this with a `UIManager` whose `elements` dict holds heterogeneous subclasses (`HealthBar` / `Minimap` / `DialogBox`) and whose update / render loops iterate the dict values without knowing which concrete class each value is. Which statement most accurately describes WHY this polymorphic-dispatch shape is used (rather than an explicit per-type if/elif chain or a type-keyed dispatch table)?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Polymorphism is structural in Python (each instance carries its own update / render via method resolution order against the instance&apos;s class), not lookup-based. UIManager does not perform any type-check or dispatch-table lookup at runtime; the for-loop simply calls `e.update(dt)` and Python&apos;s MRO resolves `update` to the right method on each instance. Performance is essentially identical between the polymorphic loop and a hand-written isinstance chain (both compile to similar bytecode and call the same methods); the driver of the design is design-time extensibility (adding a new UI type requires zero edits to UIManager), not runtime throughput.'>A) Polymorphism is just syntactic sugar over an internal isinstance / type-dispatch table that Python builds at class-definition time, with the for-loop being shorthand for what would otherwise be a chain of `if isinstance(e, HealthBar): ...; elif isinstance(e, Minimap): ...` branches. The performance benefit comes from caching the dispatch table once instead of evaluating isinstance N times per frame, which makes the polymorphic form 5–10x faster on long element lists.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='UIManager is type-agnostic over the UIElement protocol: it depends only on the SHAPE of each element (must have `update(dt)` and `render(surface)` methods), not on the specific concrete class. Each element supplies its own update and render bodies via Python&apos;s standard method-resolution-order (MRO) lookup, and UIManager calls them through the for-loop without ever asking &quot;what kind of thing is this?&quot;. Adding a new UI element type — Tooltip, NotificationFeed, Compass, Inventory, MarchingDirectionalArrow — requires only (1) creating a class that inherits from UIElement and provides update/render, (2) adding an instance to the elements dict; UIManager itself never changes. This is the Open/Closed Principle in action: open for extension via new element types, closed for modification of the dispatch loop. The same shape as chat-56 architecture_component_systems (systems iterate components type-agnostically via the required-components filter), chat-57 architecture_event_systems (publishers iterate listeners-by-event-type without subscriber identity), chat-65 graphics_lighting (per-pixel additive accumulator iterates lights without knowing types), and chat-66 graphics_postprocessing (`process()` iterates effects dict without knowing pass types). SEVENTEENTH lesson reinforcing data-driven externalization across Phase 8 (chat-44 lockstep replay buffer + chat-46 is_solid + chat-47 tile-palette + chat-54 explicit transition table + chat-55 scene-stack lifecycle hooks + chat-56 required-components list + chat-57 listeners-by-event dict + chat-58 dataclass schema + chat-59 per-state perception + chat-60 terrain cost dict + chat-61 RUNNING-state stickiness + chat-61 child-list order + chat-62 personality dict + chat-64 alive-flag-then-cull + chat-65 multi-light additive composition + chat-66 ping-pong-pair effects-dict = 16 prior; chat-67 Q1 here is SEVENTEENTH and FIRST applied at UI-element-protocol-and-UIManager-dispatch scope where the manager iterates one heterogeneous collection through the protocol without runtime type-check.'>B) UIManager depends only on the SHAPE of each element (must have update / render methods), not on the specific concrete class — each element supplies its own update and render via Python&apos;s standard method-resolution-order. Adding a new UI element type requires creating a UIElement subclass with update/render and adding it to the elements dict; UIManager itself never changes. This is the Open/Closed Principle: open for extension via new element types, closed for modification of the dispatch loop. The same protocol-and-iteration shape used in production game engines for any heterogeneous collection (Unity&apos;s Update / LateUpdate methods on every MonoBehaviour, Unreal&apos;s Tick on every UObject), where the manager never asks &quot;what type is this?&quot; and entity authors can add new types without touching the engine&apos;s core dispatch loop.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Performance is not the driver. A for-loop over 3–5 UI elements is ~5–10 microseconds per frame regardless of dispatch style; an isinstance chain over the same 3–5 elements is also microseconds per frame. The iteration cost is dwarfed by the actual work each element does (rendering text, drawing rects, applying alpha), so &quot;the for-loop is faster&quot; would be true only at unrealistic element counts (thousands), and even then only by a small constant factor. The real driver is design-time extensibility: adding a UI type doesn&apos;t require editing UIManager. Performance microbenchmark arguments mistake the goal of the architecture for what it&apos;s optimizing.'>C) The for-loop is faster than an isinstance / type-dispatch chain because Python&apos;s interpreter optimizes uniform iteration over a collection (&quot;list comprehension&quot;-style fast paths in CPython), while explicit isinstance branches force per-iteration type-checks that add ~50 nanoseconds each. At 3–5 UI elements per frame this is microseconds saved per frame, but at 30+ elements it becomes a measurable difference, which is why production UI systems prefer the polymorphic loop over explicit dispatch.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> The lesson&apos;s `HealthBar.update(dt)` runs `diff = self.current_health - self.animated_health; self.animated_health += diff * dt * 5`, smoothly approaching the target health. The 2D pygame demo expresses this as `self.shown += (self.target - self.shown) * min(dt * 5, 1.0)` so a press of the damage key (which sets `target` instantly to a lower value) produces a visible smooth drain rather than a snap, while the bar never overshoots the new target. Which statement most accurately describes WHY this exponential-approach formula is used (rather than `shown = target` instant assignment, or `shown += sign(diff) * SPEED * dt` constant-rate easing)?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Players visually need ~100–200 ms to register that something changed, and instant snap removes the &quot;you took damage&quot; feedback signal entirely — the bar is already at the new value before the eye can track the change, so the visual cue is gone. Animation latency between game state and visual representation is FEEDBACK DESIGN, not a polish-only nicety; production health bars in Hollow Knight, Celeste, Dark Souls, World of Warcraft all use some form of smoothed animation precisely because the smoothing is the player-facing communication channel for &quot;health changed by N&quot;.'>A) Instant assignment (`shown = target`) is functionally fine and players adjust to it after a few minutes of play; the smoothing animation is purely a polish nicety added by the designer for game-feel reasons unrelated to feedback. Production engines often disable smoothing in performance-sensitive contexts (large MMO raid HUDs with 40+ bars updating 60 times per second) because the per-bar smoothing cost adds up.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Exponential approach gives three properties simultaneously that the alternatives lack: (1) ease-out behavior — the move is large when the gap is large and small when the gap is small, so the bar drains fast initially then settles gently into the target value, matching the natural &quot;something happened, fading to rest&quot; perceptual rhythm; (2) no overshoot — the multiplier is always &lt; 1 (specifically `dt * 5` clamped to &lt;= 1.0 in the demo), so each step moves a fraction of the remaining gap; the gap shrinks each tick and so does the move, naturally converging without ever passing target; (3) frame-rate independence with `dt` — the same percentage approach happens per second regardless of frame rate, so the bar drains at the same wall-clock speed on a 60 FPS machine and a 144 FPS machine. Compare the alternatives: instant snap removes the visual feedback signal entirely (the eye needs ~100–200 ms to register the change; in the next frame the bar is already at the new value); constant-rate easing `shown += sign(diff) * SPEED * dt` can OVERSHOOT when SPEED * dt &gt; |diff| in a single frame (e.g., SPEED = 100 px/s and dt = 0.1s gives a 10-px move; if the remaining gap is only 5 px, the bar flies 5 px past target and bounces around it, requiring an explicit clamp `if abs(diff) &lt; threshold: shown = target` to suppress the oscillation), and feels mechanical because the bar drains at the same px/s whether the player took 1 damage or 99. The same exponential-approach mathematical shape as chat-46 platformer_camera`s smooth-follow `camera_x += (target_x - camera_x) * smooth_speed * dt` (camera approaches player at exponential rate), chat-44 physics_bounce_friction&apos;s `velocity *= (1 - decay * dt)` (velocity decays exponentially toward zero), and chat-49 polish_tweening&apos;s ease-out curves — same formula at camera-pursuit / velocity-decay / per-tween-progress scopes; chat-67 Q2 here is the FOURTH lesson applying the exponential-approach shape, FIRST applied at UI-element-bar-fill-animation scope where N independent bars (HP, mana, XP, stamina) each animate via the same per-bar approach with their own per-bar target values and shared smoothing constant.'>B) Exponential approach gives three properties simultaneously: ease-out (large move when gap is large, small move when gap is small — natural perceptual rhythm), no overshoot (the multiplier is &lt; 1 so each step moves a fraction of the remaining gap that automatically shrinks each tick without crossing zero), and frame-rate independence (with `dt`). Instant snap removes the visual feedback signal entirely (eye needs ~100–200 ms to register the change). Constant-rate easing `shown += sign(diff) * SPEED * dt` can OVERSHOOT when SPEED * dt &gt; |diff| in a single frame and requires explicit clamp logic to avoid oscillation, plus it feels mechanical (same px/s drain regardless of damage magnitude). The exponential approach naturally settles without any conditional code — same formula as chat-46 platformer_camera&apos;s smooth-follow at a different scope.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Predictable pixel velocity is not the design goal of bar smoothing; the goal is to communicate &quot;the value changed&quot; in a way that fits the perceptual rhythm of the change. Constant-rate is mechanical and easy to overshoot (when SPEED * dt &gt; |diff| in one frame, the bar flies past target and oscillates without a clamp). Exponential approach has a known steady-state behavior (convergence rate proportional to the multiplier) and never overshoots, which is what production systems actually want — the &quot;players can time effects to match&quot; argument is a cosmetic side-effect that doesn&apos;t outweigh the overshoot risk and feel-mechanical-ness of constant rate.'>C) Linear constant-rate is preferred because the velocity is predictable: pixels-per-second is a known quantity at every moment, so designers can synchronize particle effects, audio cues, and screen shake to match the bar drain. Exponential approach has variable velocity that&apos;s hard to coordinate with other effects, so AAA games actually use linear bar drains (with explicit clamps to prevent overshoot) for the timing predictability.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> The lesson&apos;s `Minimap.world_to_map(world_pos)` returns `(rect.x + (world_pos[0] / world_size[0]) * rect.width, rect.y + (world_pos[1] / world_size[1]) * rect.height)` — a proportional scaling that compresses the WHOLE world (e.g., 1000×1000 in the lesson, 1200×1200 in the demo) onto the small minimap surface. Compare this to chat-46 platformer_camera&apos;s `world_to_screen` which translates by camera offset: `screen_x = world_x - camera_x`, showing only the slice of world currently in the camera&apos;s viewport at full 1:1 scale. Which statement most accurately describes the relationship between these two coordinate transforms (and which projection is appropriate for which purpose)?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Camera world-to-screen in the chat-46 lesson is pure translation (`screen_x = world_x - camera_x`), with no zoom factor. Even when a camera adds a zoom multiplier (`(world_x - camera_x) * zoom`), the minimap is still a fundamentally different projection because it does not track the player&apos;s position — it shows the WHOLE world, with the player as a moving dot inside a fixed window onto the world; a zoomed-out camera would still center on the player and only show the area around them, not the whole world. Camera and minimap are not the same operation at different scale parameters; they answer different design questions (what slice am I looking at vs how is the whole world structured).'>A) The minimap is just the camera viewport with `zoom = 0.1`: same `world_to_screen = (world - camera) * zoom` formula, different scale parameter. Setting camera_x to player_x and zoom to 1.0 gives the camera viewport; setting camera_x to 0 (origin) and zoom to 0.1 gives the minimap. Production engines unify these as one Camera class with a zoom field, and the apparent &quot;different projection&quot; is just teaching scaffolding that separates the two as didactic exercises.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Camera viewport and minimap are two FUNDAMENTALLY DIFFERENT projection types that happen to both map world space to screen space, but they answer different design questions and use different coordinate transforms. Camera viewport is TRANSLATION: `screen_x = world_x - camera_x`, with the camera offset deciding which SLICE of the world is currently visible at full 1:1 scale. Most world points (those outside the camera&apos;s slice) have NO corresponding screen point at any moment — they&apos;re off-screen. The design intent is to show fine detail of the immediate gameplay vicinity. Minimap is PROPORTIONAL SCALING: `map_x = rect.x + (world_x / world_width) * rect.width`, with the whole world (e.g., 1200×1200) compressed onto the small minimap surface (130×130). Every world point has a corresponding minimap point at any moment. The design intent is to show global structure for navigation. The two transforms aren&apos;t variations of one parametric formula — they&apos;re structurally different operations: translation vs scaling. The choice of projection IS the design intent: camera shows local detail, minimap shows global structure. Same orthogonal-coordinate-system-selection rhetoric as chat-43 game_mathematics_coordinates (screen vs world coords as orthogonal axes the developer chooses between for the situation), chat-47 platformer_level_design (editor-time `snap = round(v / GRID) * GRID` rounds to nearest vs runtime `world_to_tile = int(wx // GRID)` floors to containing cell — different operators because they answer different questions about the same world), and chat-66 graphics_postprocessing&apos;s pass order matters because passes are non-commutative (ordering encodes design intent, not free optimization detail) — chat-67 Q3 here is the FOURTH lesson reinforcing that the right operator is determined by the question being asked, FIRST applied at world-projection-of-whole-vs-slice scope where the choice between proportional scaling and translation IS the difference between &quot;show me the whole map&quot; and &quot;show me where I am&quot;.'>B) Camera viewport and minimap are fundamentally different projection types: camera viewport is TRANSLATION (`screen_x = world_x - camera_x`, showing a SLICE of the world at 1:1 scale, most world points off-screen), minimap is PROPORTIONAL SCALING (`map_x = rect.x + (world_x / world_w) * rect.w`, compressing the WHOLE world onto a small surface, every world point present). Camera shows local detail for fine gameplay; minimap shows global structure for navigation. The choice of projection encodes design intent — same orthogonal-coordinate-system-selection rhetoric as chat-43 game_mathematics_coordinates and chat-47 platformer_level_design (editor `snap = round(v / GRID) * GRID` vs runtime `world_to_tile = int(wx // GRID)` — different operators because they answer different questions).</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Aspect-ratio handling is independent of projection type — both camera viewports and minimaps can have aspect-ratio mismatches (a wide 16:9 camera onto a square world; a square minimap of a wide world), and both handle it the same way (per-axis scaling by `world_w / map_w` and `world_h / map_h` independently). The fundamental difference between the two transforms is NOT aspect-ratio computation; it&apos;s WHICH SUBSET OF WORLD POINTS each transform handles — camera handles only the slice in view (most world points get no screen point), minimap handles every world point (every point gets a map point). Aspect-ratio is a secondary concern that applies orthogonally to either projection.'>C) Minimap math is fundamentally different from camera math because it requires per-axis aspect-ratio correction to handle non-square worlds onto square minimap surfaces (e.g., a 1600×900 world onto a 130×130 minimap requires different x and y scale factors), while camera viewport always renders at 1:1 pixel-to-pixel and so never needs aspect-ratio correction. The structural difference between the two transforms IS the aspect-ratio computation — take that away and they reduce to the same parametric formula.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

@@ -1300,19 +1300,148 @@ class BloomEffect(PostProcessEffect):
             <h2 id="practice-exercise-build-graphics-postprocessing">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Three Passes, One Ping-Pong — Selective-Bloom + Vignette + Tone-Mapping in One Pygame Window</h3>
+                <p><strong>Objective:</strong> Build a runnable pygame program (~95 lines) that distills the lesson&apos;s moderngl + GLSL fragment-shader post-processing pipeline into a 2D pygame demo so each architectural discipline is visible per frame. The window is 1088×480 split into a 768×480 scene of moving bright-and-dim colored circles on a dark background and a 320px sidebar. The scene is rendered to a source surface, then run through three orthogonal post-processing passes — bloom, vignette, tone-mapping/grade — using two reusable temporary <em>ping</em> / <em>pong</em> float32 numpy arrays alternating per-pass-write-target, the 2D analog of the lesson&apos;s `framebuffers.ping` / `framebuffers.pong` HDR framebuffer pair plus the explicit `process()` pipeline ordering that walks each enabled effect in sequence. Three orthogonal post-processing disciplines are visible per frame: <strong>(a) Pass-chain ping-pong architecture</strong> — each pass reads from one buffer and writes to the other (`pong = pass_bloom(ping, ...)` then `ping = pass_vignette(pong)` then `pong = pass_grade(ping)`), with the two buffers reused across all passes rather than allocating a fresh full-resolution buffer per pass. The lesson&apos;s `process()` method walks `for effect_name, effect in self.effects.items(): if effect.enabled: current_texture = effect.apply(current_texture)` exactly this shape — one current-texture handle that swings between the ping and pong attachment-points each pass. Pressing O swaps pass order (bloom-then-vignette-then-grade vs vignette-then-bloom-then-grade) and produces a visibly different final composite: bloom-then-vignette gives bright glow on the bright circles with the corners darkened by the radial vignette mask after the glow already contributed; vignette-then-bloom dims the bright circles below threshold BEFORE bloom runs at the corners, so the bright-pass mask finds nothing to glow on at the corner pixels — same three passes, same source frame, two different finals because the order of operations matters when each pass is non-commutative with the others. <strong>(b) Selective bloom via BT.709 luminance threshold</strong> — the lesson&apos;s exact `dot(color, vec3(0.2126, 0.7152, 0.0722))` perceptually-weighted brightness gate from the bloom fragment shader is implemented in numpy as `arr @ LUMA` per-pixel (with `LUMA = np.array([0.2126, 0.7152, 0.0722], dtype=np.float32)`), and only luminance &gt; threshold pixels survive the gate to enter the blur stages — the rest are masked to black via `mask = (luma &gt; t)[..., None]; bright = arr * mask`. The BT.709 weights are not arbitrary; they encode the human eye&apos;s perceptual sensitivity to each primary (green is brightest because the M-cone has the highest photopic luminous efficiency, blue is darkest because S-cones contribute least to brightness perception, red sits between), so the gate fires on perceptually-bright pixels rather than on pixels with high R+G+B sums that may not <em>look</em> bright (a saturated pure-blue pixel (0, 0, 255) has R+G+B sum of 255 but BT.709 luminance of only 18.4 — correctly identified as dim — while a saturated pure-green pixel (0, 255, 0) has the same sum but BT.709 luminance of 182.5 — correctly identified as bright). T raises the threshold (fewer pixels glow); Y lowers it (more pixels glow); the threshold value displayed in the sidebar makes the design knob directly observable. <strong>(c) Two-pass separable Gaussian blur as N+N vs N² algorithmic decomposition</strong> — the lesson&apos;s shader has a `u_horizontal == 1` / `u_horizontal == 0` branch that runs the SAME blur kernel along one axis at a time, processing horizontal-blur-into-temp then vertical-blur-of-temp instead of doing a single 2D N×N convolution per output pixel. This exploits the mathematical identity G_2D(x,y) = G_1D(x) · G_1D(y) — the 2D Gaussian kernel is the outer product of two 1D Gaussian kernels, so blurring once horizontally then once vertically produces the SAME mathematical result as one full 2D blur, but with N+N samples per pixel instead of N² samples. At radius 4 (2·4+1 = 9-tap kernel) that&apos;s 18 samples per pixel for the separable version vs 81 samples per pixel for the full 9×9 — about 4.5× fewer texture reads with identical visual output. The demo runs `bright = blur_axis(bright, 4, axis=1); bright = blur_axis(bright, 4, axis=0)` mirroring this two-call shape. The decomposition is correctness-preserving (not an approximation), and it scales asymptotically — at radius 8 it&apos;s 34 vs 289 samples (8.5× fewer), at radius 16 it&apos;s 66 vs 1089 samples (16.5× fewer) — which is why every production bloom implementation including Unreal&apos;s, Unity&apos;s, and the lesson&apos;s shader uses the separable two-pass form rather than a single N² convolution. Cross-references chat-65 graphics_lighting (the chat-66 demo&apos;s input source surface IS conceptually the chat-65 lit-scene output — the lightmap-multiplied-by-diffuse final composite from graphics_lighting is exactly what production post-processing pipelines feed into bloom/vignette/tone-mapping; chat-66 builds the next layer of the graphics-module pipeline on top of chat-65&apos;s foundation), chat-49 polish_tweening (the smoothstep curve used in the vignette mask&apos;s radial darkening is the same easing-on-t shape from polish_tweening applied here at radial-falloff scope rather than per-tween-progress scope), chat-44 physics_collisions (the separable-Gaussian-blur algorithmic decomposition mirrors physics&apos;s separate-then-resolve two-phase ordering at a different domain — both are correctness-via-decomposition rather than monolithic single-step computation), and chat-43 game_mathematics_vectors (the BT.709 luminance dot-product `dot(color, vec3(0.2126, 0.7152, 0.0722))` is the same dot-product-as-shaped-projection from the chat-43 vectors lesson&apos;s dot-product-as-front/behind-classifier shape, applied here at perceptual-luminance-weighting scope rather than vision-cone-membership scope — same mathematical operator, different geometric interpretation). Advances the graphics module 1/5 → 2/5 partial at chat-66 M1; 3 graphics lessons remain (procedural / shaders / ui_hud); module-completeness stays 10/13 since graphics doesn&apos;t close at chat 66.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Set up the 1088×480 pygame window (768×480 scene + 320×480 sidebar) with a 60 FPS clock, a small monospace font for the sidebar HUD, and `import numpy as np` at module scope (numpy carries the per-pixel post-processing math because pure-Python loops over 768×480 = 368k pixels per frame would not maintain 60 FPS).</li>
+                    <li>Define `LUMA = np.array([0.2126, 0.7152, 0.0722], dtype=np.float32)` as the BT.709 perceptual-luminance weights used by the bloom threshold gate, plus mutable state for `thresh = 0.55` (bloom threshold, T/Y adjustable) and `swap = False` (pass-order toggle, O adjustable).</li>
+                    <li>Pre-compute a vignette mask once at startup as a (H, W, 1) float32 array using `np.mgrid` to generate per-pixel distance-from-center, normalize by the corner distance, then run smoothstep over the (0.35, 0.95) range to build the radial darkening factor (1.0 at center, 0.0 at corners) — this mask multiplies into the post-bloom array per pass, so doing it once at startup avoids ~370k smoothstep evaluations every frame.</li>
+                    <li>Define a small list of moving circles (3 bright: red / cyan / yellow at high RGB values that exceed the BT.709 threshold; 2 dim: dark navy / dark olive at low RGB values that fall below the threshold) with `pos`/`vel`/`radius`/`color` fields; each frame integrate position, bounce off scene boundaries, and clamp to the play area — the bright circles are what bloom will glow on, the dim circles are what bloom will leave alone (visible proof the threshold gate is selecting on perceptual luminance not just any pixel).</li>
+                    <li>Render the scene per frame: fill the source surface with a dark background (10, 12, 18) so dim circles are visibly dim against it, then draw all five circles at their current positions — this is the source surface that will enter the post-processing chain.</li>
+                    <li>Convert the source surface to a float32 numpy array via `pygame.surfarray.array3d(src).astype(np.float32).transpose(1, 0, 2) / 255.0` (transpose because pygame surfarray returns (W, H, 3) but numpy convention is (H, W, 3); divide by 255 to get the [0, 1] HDR-style float range the lesson&apos;s shaders work in). This is the `ping` array that enters the pass chain.</li>
+                    <li>Run the three passes via the ping-pong pattern, switching write-target each pass: by default `pong = pass_bloom(ping, thresh); ping = pass_vignette(pong); pong = pass_grade(ping)`; when `swap` is True instead `pong = pass_vignette(ping); ping = pass_bloom(pong, thresh); pong = pass_grade(ping)` — same three passes, different order, visibly different output. Each pass takes a (H, W, 3) float32 array and returns one of the same shape. `pass_bloom` masks by luma threshold then runs `blur_axis(bright, 4, axis=1)` followed by `blur_axis(bright, 4, axis=0)` (the two-pass separable Gaussian) and returns `arr + bright * intensity` (additive composite). `pass_vignette` returns `arr * VIG`. `pass_grade` runs a Reinhard-style tone map `arr / (arr + 0.5)` then a small saturation lift around BT.709 luminance.</li>
+                    <li>Convert the final array back to a surface via `pygame.image.frombuffer(np.clip(pong, 0, 1).__mul__(255).astype(np.uint8).tobytes(), (WORLD_W, WORLD_H), &apos;RGB&apos;)`, blit it to the screen, then render the sidebar HUD: keybinding hints, the live pass-order line (`bloom -&gt; vignette -&gt; grade` vs `vignette -&gt; bloom -&gt; grade`), the bloom threshold value, the BT.709 LUMA weights as concrete numbers (R 0.2126 / G 0.7152 / B 0.0722), the separable-blur sample-count comparison (radius 4: 18 samples vs 81 samples = 4.5× cheaper), and FPS. Press O and watch the final scene visibly change without re-rendering the source; press T/Y and watch the bloom selection tighten or widen.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The numpy operations are the key efficiency move: a pure-Python double loop over 368k pixels per frame would take ~5 seconds, but vectorized numpy runs the same work in ~5 milliseconds because the per-pixel math compiles down to optimized C in the numpy backend. `arr @ LUMA` is the matrix-multiply-as-dot-product idiom that computes per-pixel BT.709 luminance in a single numpy call: arr is (H, W, 3), LUMA is (3,), and the `@` operator broadcasts over the leading two dimensions to produce an (H, W) per-pixel scalar luminance map — same operation as a triple nested for-loop, ~1000× faster. For the separable blur, `np.roll(arr, k, axis=1)` shifts the array k columns horizontally with wrap-around — looping `for r in range(-radius, radius+1): acc += np.roll(arr, r, axis=1)` then dividing by `2*radius+1` gives a box-blur approximation of the Gaussian (a true Gaussian needs proper kernel weights, but a box blur is a valid simplification that demonstrates the same separability identity and is a common production simplification for performance). The vignette mask is pre-computed once because the radial distance from center never changes across frames; recomputing it per frame would waste ~10ms per frame on work that has a static answer. For pygame.image.frombuffer the bytes order must be (H, W, 3) row-major (H rows of W pixels each, RGB triplets) — that&apos;s what numpy gives you natively from a (H, W, 3) array&apos;s .tobytes(), no extra transpose at the end. Use `pygame.surfarray.array3d` (returns a copy) rather than `pygame.surfarray.pixels3d` (returns a view that locks the surface) so the source surface stays drawable for the next frame.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import math, pygame, numpy as np
+pygame.init()
+
+WORLD_W, WORLD_H, SIDE_W = 768, 480, 320
+SCREEN_W = WORLD_W + SIDE_W
+screen = pygame.display.set_mode((SCREEN_W, WORLD_H))
+clock = pygame.time.Clock()
+font = pygame.font.SysFont(&apos;consolas&apos;, 13)
+
+# --- Lesson&apos;s GLSL bloom-threshold luma weights translated to numpy ---
+LUMA = np.array([0.2126, 0.7152, 0.0722], dtype=np.float32)  # BT.709
+thresh = 0.55
+swap = False  # O toggles pass order
+
+# Pre-compute vignette mask once (H, W, 1) using smoothstep on radial distance
+def make_vig(w, h):
+    cx, cy = w / 2.0, h / 2.0
+    maxd = math.hypot(cx, cy)
+    ys, xs = np.mgrid[0:h, 0:w].astype(np.float32)
+    d = np.sqrt((xs - cx) ** 2 + (ys - cy) ** 2) / maxd
+    t = np.clip((d - 0.35) / 0.6, 0.0, 1.0)
+    smooth = 1.0 - t * t * (3.0 - 2.0 * t)        # smoothstep falloff
+    return smooth[..., None].astype(np.float32)
+
+VIG = make_vig(WORLD_W, WORLD_H)
+
+# 3 bright circles (above luma threshold) + 2 dim (below) prove selective bloom
+circles = [
+    {&apos;p&apos;: pygame.Vector2(180, 200), &apos;v&apos;: pygame.Vector2( 80,  60), &apos;r&apos;: 32, &apos;c&apos;: (255,  80,  60)},
+    {&apos;p&apos;: pygame.Vector2(420, 280), &apos;v&apos;: pygame.Vector2(-60,  90), &apos;r&apos;: 28, &apos;c&apos;: ( 60, 200, 255)},
+    {&apos;p&apos;: pygame.Vector2(560, 150), &apos;v&apos;: pygame.Vector2( 70, -50), &apos;r&apos;: 24, &apos;c&apos;: (255, 230, 100)},
+    {&apos;p&apos;: pygame.Vector2(300, 400), &apos;v&apos;: pygame.Vector2(-90, -70), &apos;r&apos;: 36, &apos;c&apos;: ( 60,  60,  80)},
+    {&apos;p&apos;: pygame.Vector2(620, 380), &apos;v&apos;: pygame.Vector2( 50, -80), &apos;r&apos;: 22, &apos;c&apos;: ( 80,  70,  60)},
+]
+
+# Box-blur approximation of Gaussian via np.roll, separable per axis
+def blur_axis(arr, radius, axis):
+    n = 2 * radius + 1
+    acc = np.zeros_like(arr)
+    for r in range(-radius, radius + 1):
+        acc += np.roll(arr, r, axis=axis)
+    return acc / n
+
+# Pass functions: each takes float32 (H, W, 3) in [0, 1] and returns same shape
+def pass_bloom(arr, t):
+    luma = arr @ LUMA                              # BT.709 per-pixel luminance
+    mask = (luma &gt; t).astype(np.float32)[..., None] # selective threshold gate
+    bright = arr * mask                            # only bright pixels survive
+    bright = blur_axis(bright, 4, axis=1)          # horizontal blur (1st pass)
+    bright = blur_axis(bright, 4, axis=0)          # vertical   blur (2nd pass)
+    return arr + bright * 1.6                      # additive composite
+
+def pass_vignette(arr):
+    return arr * VIG
+
+def pass_grade(arr):
+    tm = arr / (arr + 0.5)                         # Reinhard tone-map
+    gray = (tm @ LUMA)[..., None]
+    return gray + (tm - gray) * 1.2                # mild saturation lift
+
+running = True
+while running:
+    dt = clock.tick(60) / 1000.0
+    for ev in pygame.event.get():
+        if ev.type == pygame.QUIT: running = False
+        if ev.type == pygame.KEYDOWN:
+            if ev.key == pygame.K_o: swap = not swap
+            if ev.key == pygame.K_t: thresh = min(0.95, thresh + 0.05)
+            if ev.key == pygame.K_y: thresh = max(0.05, thresh - 0.05)
+
+    # Render source scene to a pygame surface
+    src = pygame.Surface((WORLD_W, WORLD_H))
+    src.fill((10, 12, 18))
+    for c in circles:
+        c[&apos;p&apos;] += c[&apos;v&apos;] * dt
+        if c[&apos;p&apos;].x &lt; c[&apos;r&apos;] or c[&apos;p&apos;].x &gt; WORLD_W - c[&apos;r&apos;]: c[&apos;v&apos;].x *= -1
+        if c[&apos;p&apos;].y &lt; c[&apos;r&apos;] or c[&apos;p&apos;].y &gt; WORLD_H - c[&apos;r&apos;]: c[&apos;v&apos;].y *= -1
+        c[&apos;p&apos;].x = max(c[&apos;r&apos;], min(WORLD_W - c[&apos;r&apos;], c[&apos;p&apos;].x))
+        c[&apos;p&apos;].y = max(c[&apos;r&apos;], min(WORLD_H - c[&apos;r&apos;], c[&apos;p&apos;].y))
+        pygame.draw.circle(src, c[&apos;c&apos;], (int(c[&apos;p&apos;].x), int(c[&apos;p&apos;].y)), c[&apos;r&apos;])
+
+    # Surface -&gt; float32 (H, W, 3) ping array, then run 3 passes ping-pong
+    ping = pygame.surfarray.array3d(src).astype(np.float32).transpose(1, 0, 2) / 255.0
+    if not swap:
+        pong = pass_bloom(ping, thresh)        # ping -&gt; pong
+        ping = pass_vignette(pong)             # pong -&gt; ping
+        pong = pass_grade(ping)                # ping -&gt; pong
+    else:
+        pong = pass_vignette(ping)             # ping -&gt; pong
+        ping = pass_bloom(pong, thresh)        # pong -&gt; ping
+        pong = pass_grade(ping)                # ping -&gt; pong
+
+    # Float (H, W, 3) -&gt; bytes -&gt; pygame surface (no end transpose needed)
+    out8 = (np.clip(pong, 0.0, 1.0) * 255).astype(np.uint8)
+    final = pygame.image.frombuffer(out8.tobytes(), (WORLD_W, WORLD_H), &apos;RGB&apos;)
+
+    screen.blit(final, (0, 0))
+    pygame.draw.rect(screen, (25, 28, 36), (WORLD_W, 0, SIDE_W, WORLD_H))
+    order = &apos;vignette -&gt; bloom -&gt; grade&apos; if swap else &apos;bloom -&gt; vignette -&gt; grade&apos;
+    lines = [
+        &apos;O      swap pass order&apos;,
+        &apos;T / Y  raise / lower bloom threshold&apos;,
+        &apos;&apos;,
+        &apos;Pass order:&apos;,
+        &apos;  &apos; + order,
+        &apos;&apos;,
+        &apos;Bloom threshold (BT.709 luma): %.2f&apos; % thresh,
+        &apos;&apos;,
+        &apos;BT.709 luma weights:&apos;,
+        &apos;  R 0.2126   G 0.7152   B 0.0722&apos;,
+        &apos;&apos;,
+        &apos;Separable blur (radius 4):&apos;,
+        &apos;  2-pass H+V = 18 samples / px&apos;,
+        &apos;  full 9x9   = 81 samples / px&apos;,
+        &apos;  -&gt; 4.5x cheaper, same result&apos;,
+        &apos;&apos;,
+        &apos;FPS: %d&apos; % int(clock.get_fps()),
+    ]
+    for i, line in enumerate(lines):
+        screen.blit(font.render(line, True, (220, 225, 235)), (WORLD_W + 16, 16 + i * 18))
+    pygame.display.flip()
+
+pygame.quit()</code></pre>
                 </details>
             </div>
 
@@ -1320,31 +1449,31 @@ class BloomEffect(PostProcessEffect):
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> The lesson&apos;s `PostProcessingPipeline.init_pipeline()` allocates exactly two non-scene framebuffers named `ping` and `pong`, and `process()` walks each enabled effect via `current_texture = effect.apply(current_texture)` so the same handle swings between the two attachments across passes. The 2D pygame demo mirrors this with two reusable float32 numpy arrays alternating as the write-target across `pass_bloom` → `pass_vignette` → `pass_grade`, and pressing O swaps the order of bloom and vignette to produce a visibly different final composite. Which statement most accurately describes WHY the lesson uses a ping-pong pair (not three or N-many fresh buffers per pass) AND why the order in which passes run actually changes the visible output?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint="Production engines do NOT allocate one fresh full-resolution HDR framebuffer per pass for parallelism. The lesson&apos;s pipeline.process() loop runs passes sequentially (`for effect_name, effect in self.effects.items(): if effect.enabled: current_texture = effect.apply(current_texture)`) — each pass depends on the previous pass&apos;s output, so they cannot run in parallel; the data dependency chain is fundamental to the pipeline shape. Order doesn&apos;t cancel out either: bloom-then-vignette and vignette-then-bloom give visibly different finals because the passes are non-commutative (bloom&apos;s threshold gate makes its output depend on which pixels were bright BEFORE this pass, so dimming them with vignette first changes which pixels glow).">A) Each pass needs its own full-resolution HDR framebuffer to enable parallel pass execution on the GPU; the ping-pong naming is teaching scaffolding for what production engines do as N-buffer arrays. Pass order is interchangeable because each pass is mathematically commutative when computed in HDR float space — bloom and vignette commute exactly, only the final tone-map needs to be last for display-range mapping.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation="Two buffers are sufficient because each post-processing pass reads from one buffer and writes to the other, with the next pass swapping their roles — no pass ever needs more than one input and one output simultaneously, so the same two buffers can be reused across all N passes. Allocating N fresh buffers (one per pass) would waste 1080p × 4 channels × 4 bytes/channel × 2 extra buffers = ~16 MB of GPU memory per skipped pass, multiplied by however many passes the engine supports — the ping-pong shape is the production-correct minimum-allocation pattern, used in Unreal&apos;s post-process chain, Unity&apos;s URP/HDRP, and every shipping AAA renderer. Pass order matters because the passes are non-commutative: bloom&apos;s BT.709 threshold gate decides which pixels glow based on the CURRENT pixel values when bloom runs, so doing vignette first (which dims the corners) reduces the corner pixels below the bloom threshold and they don&apos;t glow at all in the swapped order; doing bloom first lets the corner pixels glow before vignette dims the now-glowing-and-vignetted corners. Same source frame, two valid orderings, two different finals — the order is a design choice that production engines expose to artists as part of post-process volume settings, not a free-to-rearrange optimization detail.">B) Two buffers are sufficient because each pass reads from one and writes to the other with the next pass swapping roles — no pass needs more than one input plus one output simultaneously, and reusing the same two buffers across N passes saves the per-pass allocation cost (1080p × 4ch × 4 bytes × N buffers). Pass order matters because the passes are non-commutative: bloom&apos;s threshold gate decides which pixels glow based on current pixel values, so dimming the corners with vignette first reduces them below threshold and they don&apos;t glow when bloom runs after — same source, two valid orderings, two different finals.</button>
+                        <button class="quiz-option" data-correct='false' data-hint="Pong is not a screenshot history. The lesson&apos;s framebuffers.pong is a write-target paired with framebuffers.ping that swaps roles each pass; both buffers contain transient intermediate results that get overwritten on the next pass. Bloom-vignette ordering differences come from non-commutativity (the threshold gate&apos;s decisions depend on current pixel values), not from a frame-history versus current-pixel comparison.">C) `ping` is the live working buffer and `pong` is a one-frame-old screenshot kept as a reference for temporal effects like motion blur; the bloom pass compares against pong to decide which pixels are temporally bright. Pass order matters because changing it switches which buffer is live versus archival, and bloom-then-vignette compares this frame&apos;s glow against last frame&apos;s vignette while vignette-then-bloom does the reverse comparison.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> The lesson&apos;s bloom fragment shader contains the line `float brightness = dot(color, vec3(0.2126, 0.7152, 0.0722));` then gates blur work behind `if(brightness &gt; u_threshold)`. The 2D pygame demo mirrors this with `LUMA = np.array([0.2126, 0.7152, 0.0722], dtype=np.float32)` and `luma = arr @ LUMA; mask = (luma &gt; t)[..., None]; bright = arr * mask`. Which statement most accurately describes WHY these specific weights are used (rather than equal R+G+B averaging, or arbitrary tunable per-engine constants)?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint="BT.709 weights are not chosen for performance — every set of three constants takes the same one multiply-add per channel. They are chosen for PERCEPTUAL CORRECTNESS: they encode the human eye&apos;s sensitivity to each primary color so the gate fires on perceptually-bright pixels rather than on pixels with high R+G+B sums that may not look bright. A saturated pure-blue pixel (0, 0, 255) has R+G+B sum 255 but BT.709 luma 18.4 because S-cones contribute little to brightness perception; equal-weight averaging would call it as bright as a saturated pure-green pixel (0, 255, 0) which has BT.709 luma 182.5 — the equal-weight answer is wrong by a factor of ~10 perceptually.">A) The (0.2126, 0.7152, 0.0722) weights are chosen for compute performance — they sum to exactly 1.0 so the multiplication can be folded into the shader&apos;s register-allocator without an extra normalization pass; engines free to pick any three constants summing to 1.0 typically prefer simpler values like (0.33, 0.34, 0.33) for equal-weight averaging which has the same speed and produces equivalent visual results.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation="The (0.2126, 0.7152, 0.0722) coefficients are the BT.709 / Rec.709 luminance weights standardized by the ITU for HD video, and they encode the human eye&apos;s perceptual sensitivity to each primary color: green dominates because the M-cone has the highest photopic luminous efficiency in the visible spectrum, blue contributes the least because S-cones are the rarest in the retina (~5% of cones) and contribute primarily to color perception rather than brightness, red sits between. The bloom threshold needs to fire on PERCEPTUALLY bright pixels (a saturated pure-green light visibly glows even when its R+G+B sum is no higher than a saturated pure-blue light), and equal-weight averaging would misidentify a saturated pure-blue pixel (0, 0, 255) — perceptually dim, BT.709 luma 18.4 — as equally bright to a saturated pure-green pixel (0, 255, 0) — perceptually very bright, BT.709 luma 182.5. The same BT.709 weights appear in the JPEG compression standard, in HDTV broadcast luminance, and in essentially every modern color-managed pipeline, because the underlying physiology is the same regardless of the engine. The weights are not arbitrary tunable constants — they are physiologically derived and standardized; an engine that picked different weights would produce visibly wrong bloom selections (some bright-looking pixels failing to glow, some dim-looking pixels glowing) until a colorist fixed it back to BT.709-equivalent values.">B) The (0.2126, 0.7152, 0.0722) weights are the BT.709 / Rec.709 luminance weights that encode the human eye&apos;s perceptual sensitivity to each primary color (green dominant because M-cones have the highest photopic luminous efficiency, blue smallest because S-cones contribute primarily to color rather than brightness perception); the gate must fire on PERCEPTUALLY bright pixels because those are what visibly glow, so equal-weight averaging would misclassify a saturated pure-blue pixel as equally bright to a saturated pure-green pixel when perception treats them as ~10× different. The same weights appear in JPEG, HDTV broadcast luminance, and every color-managed pipeline because the underlying physiology is the same.</button>
+                        <button class="quiz-option" data-correct='false' data-hint="BT.709 weights are not anti-aliasing constants — they are perceptual-luminance weights from ITU broadcast standards, completely unrelated to MSAA, FXAA, or any aliasing-prevention technique. Bloom and anti-aliasing are different post-processing concerns: bloom cares about which pixels are perceptually bright enough to glow; anti-aliasing cares about smoothing high-contrast edges between pixels. The lesson has a separate FXAA pass (also implementing edge detection via luma gradients, but as a different effect from bloom).">C) The weights are anti-aliasing constants derived from FXAA&apos;s edge-detection kernel; they happen to also work for bloom because bright edges are where the eye notices aliasing most. The (0.2126, 0.7152, 0.0722) values are the FXAA-3.11 reference weights for sub-pixel quality scoring and the bloom shader reuses them only because including the same constants twice would waste shader register space.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> The lesson&apos;s bloom shader runs the SAME blur kernel through a `u_horizontal == 1` / `u_horizontal == 0` shader-uniform branch — first horizontally, then vertically — over two separate fragment-shader invocations rather than one pass with a single 2D N×N convolution per output pixel. The 2D pygame demo mirrors this with `bright = blur_axis(bright, 4, axis=1); bright = blur_axis(bright, 4, axis=0)` running the same axis-aligned blur twice. Which statement most accurately describes WHY production bloom implementations use this two-pass separable form rather than a single 2D convolution?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint="GPU samplers can sample any 2D texture coordinate; there is no hardware restriction to single-axis sampling per shader invocation. Modern fragment shaders sample arbitrary 2D offsets routinely (the lesson&apos;s SSAO and DoF passes both sample multiple 2D offsets in a single shader invocation). The two-pass form is chosen for ALGORITHMIC efficiency (fewer total samples per pixel), not for any sampling-hardware limitation; you could express a single-pass 2D blur in one shader invocation but you would do strictly more work per output pixel.">A) GPU texture samplers can only fetch one axis per shader invocation, so a 2D N×N convolution would require N² separate shader passes with one sample per pass; the separable two-pass form is a hardware-imposed lower bound rather than an algorithmic choice. Engines that target older GPUs without separable-blur support fall back to full N² convolution which is why bloom is significantly slower on legacy hardware.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation="The 2D Gaussian kernel has a special algebraic property: G_2D(x, y) = G_1D(x) · G_1D(y), meaning it factors into the outer product of two 1D Gaussian kernels. So blurring once horizontally with the 1D kernel, then once vertically with the same 1D kernel, produces the IDENTICAL mathematical result as one full 2D blur with the N×N kernel — but with N+N samples per output pixel instead of N² samples. At radius 4 (kernel width 9) that&apos;s 18 samples per pixel for the separable version vs 81 samples per pixel for the full 9×9 — about 4.5× fewer texture reads with bit-identical visual output. The savings scale super-linearly: at radius 8 it&apos;s 34 vs 289 (8.5× fewer), at radius 16 it&apos;s 66 vs 1089 (16.5× fewer). The decomposition is correctness-preserving (not an approximation) — it&apos;s a pure algorithmic restructuring exploiting the Gaussian&apos;s mathematical separability, the same kind of decomposition that makes the FFT N log N instead of N² for convolution. Same context-determines-correct-choice rhetoric as chat-65 graphics_lighting Q2 (per-light-type branching as right-formula-per-physical-situation), chat-62 ai_decision_making (response curves shape behavior — same input, different output shapes per curve), and chat-44 physics_collisions (separate-then-resolve as two-phase ordering preserving correctness via decomposition); the separable blur here is the algorithmic-decomposition instantiation at GPU-sample-count scope where the decomposition cost (two passes instead of one) is dominated by the savings (N+N samples instead of N² per pixel), so the decomposition is a clear win at every radius the algorithm is used at. Used in every production bloom implementation including Unreal&apos;s, Unity&apos;s URP/HDRP, Godot&apos;s, and the lesson&apos;s GLSL shader for exactly this reason.">B) The 2D Gaussian kernel has the mathematical property G_2D(x, y) = G_1D(x) · G_1D(y) (it factors as the outer product of two 1D kernels), so blurring once horizontally then once vertically produces the IDENTICAL result as one full 2D blur — but with N+N samples per pixel instead of N². At radius 4 that&apos;s 18 vs 81 samples per pixel (4.5× fewer); at radius 8 it&apos;s 34 vs 289 (8.5× fewer); at radius 16 it&apos;s 66 vs 1089 (16.5× fewer). The decomposition is correctness-preserving (not an approximation) and the savings scale super-linearly, so production bloom always uses the separable form.</button>
+                        <button class="quiz-option" data-correct='false' data-hint="L1-cache-fitting is not why separable blur is used. The savings come from doing strictly fewer texture samples per pixel (N+N vs N²), not from cache locality. Both passes touch every pixel of the input texture, so total memory traffic is similar between separable and monolithic forms; the difference is in per-pixel COMPUTE (sample count), not memory access patterns. Cache-aware bloom optimizations like compute-shader thread-group tile loading are a separate further optimization layered on top of the separable form, not the reason for it.">C) A single 2D N×N convolution would exceed the GPU&apos;s L1 texture cache for kernels larger than 5×5, causing cache thrashing that destroys throughput. The two-pass form fits each pass&apos;s working set in L1 by processing one axis at a time, and the speedup comes entirely from cache locality — the sample count is the same in both forms but the cache behavior differs by orders of magnitude.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

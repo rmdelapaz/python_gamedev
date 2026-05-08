@@ -1199,19 +1199,118 @@ if __name__ == "__main__":
             <h2 id="practice-exercise-build-particle-effects">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Fountain of 200 — Per-Particle Random Spawn, Bool-Return Cull, Lifetime-Fade in One Pygame Window</h3>
+                <p><strong>Objective:</strong> Build a single ~70-line pygame program with an emitter at (400, 540) on an 800×600 screen. Each press of SPACE spawns a fountain BURST of 200 short-lived particles — each particle holds (x, y, vx, vy, lifetime, max_lifetime, color, size) with vx/vy drawn from an upward cone (vx ∈ [−150, 150], vy ∈ [−450, −250]), lifetime ∈ [0.6, 1.4] seconds, color HSV-randomized in the warm range (hue ∈ [0, 60]), and size ∈ [2, 5]. Three orthogonal multi-particle simulation disciplines must be visible per frame: <strong>(a)</strong> per-particle random attribute spawn (every particle is independent at spawn — the variation in (vx, vy, lifetime, color, size) is what makes the burst feel organic; particles are the degenerate case of chat-63 ai_flocking where N is large but rule-count is 1 and inter-entity interaction is 0); <strong>(b)</strong> boolean-return-enables-one-line-cull during update (each <code>Particle.update(dt)</code> ends with <code>return self.lifetime &gt; 0</code>, and <code>ParticleSystem.update</code> rebuilds its list each tick via <code>self.particles = [p for p in self.particles if p.update(dt)]</code> — a single comprehension that updates AND culls in one pass, no separate find-dead loop, no modify-while-iterating bug); <strong>(c)</strong> lifetime/max_lifetime → alpha fade during draw (<code>max_lifetime</code> is captured once at spawn because <code>lifetime -= dt</code> mutates each tick; the ratio <code>alpha = int(255 * (lifetime / max_lifetime))</code> maps from 1.0 fresh to 0.0 dying regardless of which random spawn-lifetime each particle drew — the same shape as chat-46 platformer_camera's smooth-follow exponential decay and chat-49 polish_tweening's easing-on-t at per-particle scope). Particles render through per-particle <code>pygame.Surface(..., pygame.SRCALPHA)</code> so the alpha channel composites correctly. Gravity = 900 px/s² is positive (Pygame down-Y — chat-43 game_mathematics_coordinates) so vy += GRAVITY*dt produces the parabolic fountain arc. HUD shows tick count, alive-particle count, total spawn count, and one alive particle's lifetime/max_lifetime ratio — three orthogonal multi-particle simulation disciplines visible per frame as concrete numbers and visibly-fading particle alphas. CLOSES the effects module 0/1 → 1/1 = 10th complete Phase-8 module joining pygame_basics + sprites + game_mathematics + physics + platformer + polish + networking + architecture + ai, advancing module-completeness 9/13 → 10/13.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Set up an 800×600 Pygame window at 60 FPS with a near-black background (10, 10, 20) and a dark grey ground rect at y=555.</li>
+                    <li>Define a <code>Particle</code> class with attributes <code>x</code>, <code>y</code>, <code>vx</code>, <code>vy</code>, <code>lifetime</code>, <code>max_lifetime</code>, <code>color</code>, and <code>size</code>. <strong>Save <code>self.max_lifetime = self.lifetime</code> as a write-once spawn-time copy</strong> — the fade ratio in step 4 depends on it.</li>
+                    <li>Implement <code>Particle.update(dt)</code> to (a) apply gravity via <code>self.vy += GRAVITY * dt</code> with GRAVITY=900, (b) Euler-integrate position via <code>self.x += self.vx * dt; self.y += self.vy * dt</code>, (c) decrement lifetime via <code>self.lifetime -= dt</code>, and (d) <strong>return <code>self.lifetime &gt; 0</code></strong> as the boolean alive-flag.</li>
+                    <li>Implement <code>Particle.draw(dest)</code> to render through a per-particle <code>pygame.Surface((size*2, size*2), pygame.SRCALPHA)</code> with <code>alpha = int(255 * (self.lifetime / self.max_lifetime))</code> so the fade ratio drives the alpha channel; blit the per-particle surface onto the destination at <code>(self.x - size, self.y - size)</code> for centred placement.</li>
+                    <li>Define a <code>ParticleSystem</code> class holding <code>self.particles = []</code>. Implement <code>ParticleSystem.update(dt)</code> as a <strong>single line</strong>: <code>self.particles = [p for p in self.particles if p.update(dt)]</code> to update AND cull in one pass.</li>
+                    <li>Implement <code>ParticleSystem.burst(x, y, n)</code> to append <code>n</code> fresh <code>Particle(x, y)</code> instances; have the Particle's <code>__init__</code> draw vx, vy, lifetime, color, and size from <code>random.uniform</code> / <code>random.randint</code> calls so each spawn is independent.</li>
+                    <li>In the main loop: handle QUIT and KEYDOWN K_SPACE (call <code>system.burst(EMITTER_X, EMITTER_Y, 200)</code>), call <code>system.update(dt)</code>, fill the screen, draw the ground rect, call <code>system.draw(screen)</code>, then render the HUD: tick count, alive-particle count, total-spawned count, and one alive particle's lifetime/max_lifetime ratio.</li>
+                    <li>Press SPACE multiple times rapidly to confirm bursts compound and decay independently — each burst's particles fade to alpha 0 over their own random spawn-lifetime, never via reset or extension; the HUD's alive-count climbs on each press and decays smoothly between presses as particles cull.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>Three details that are easy to miss: (1) save <code>self.max_lifetime = self.lifetime</code> ONCE at spawn — <code>lifetime</code> mutates each tick (<code>lifetime -= dt</code>), so by draw time the original is gone; the ratio <code>lifetime / max_lifetime</code> only stays meaningful if max_lifetime is the spawn-time snapshot. (2) <code>self.particles = [p for p in self.particles if p.update(dt)]</code> UPDATES every particle (the comprehension calls <code>p.update(dt)</code> on each one) AND filters out dead ones (the <code>if</code> filter keeps only those whose update returned True) in a single pass — don't add a second find-dead loop. (3) per-particle fade requires a fresh <code>pygame.Surface((s*2, s*2), pygame.SRCALPHA)</code> per draw so the alpha channel composites correctly; calling <code>pygame.draw.circle</code> directly on the main screen surface ignores per-call alpha values because the screen surface is opaque RGB.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame, random, colorsys
+
+pygame.init()
+SCREEN_W, SCREEN_H = 800, 600
+EMITTER_X, EMITTER_Y = 400, 540
+GRAVITY = 900           # px/s^2 (positive = falls in Pygame down-Y)
+BURST = 200
+
+screen = pygame.display.set_mode((SCREEN_W, SCREEN_H))
+pygame.display.set_caption("Fountain of 200")
+clock = pygame.time.Clock()
+font = pygame.font.SysFont(None, 22)
+
+
+def hsv_to_rgb(h, s, v):
+    r, g, b = colorsys.hsv_to_rgb(h / 360.0, s, v)
+    return (int(r * 255), int(g * 255), int(b * 255))
+
+
+class Particle:
+    def __init__(self, x, y):
+        self.x, self.y = x, y
+        self.vx = random.uniform(-150, 150)
+        self.vy = random.uniform(-450, -250)
+        self.lifetime = random.uniform(0.6, 1.4)
+        self.max_lifetime = self.lifetime    # write-once spawn-time snapshot
+        self.color = hsv_to_rgb(random.uniform(0, 60), 1.0, 1.0)
+        self.size = random.randint(2, 5)
+
+    def update(self, dt):
+        self.vy += GRAVITY * dt              # positive gravity = falls
+        self.x += self.vx * dt
+        self.y += self.vy * dt
+        self.lifetime -= dt
+        return self.lifetime &gt; 0             # boolean alive-flag
+
+    def draw(self, dest):
+        ratio = self.lifetime / self.max_lifetime    # 1.0 fresh, 0.0 dying
+        alpha = max(0, min(255, int(255 * ratio)))
+        s = self.size
+        psurf = pygame.Surface((s * 2, s * 2), pygame.SRCALPHA)
+        pygame.draw.circle(psurf, (*self.color, alpha), (s, s), s)
+        dest.blit(psurf, (self.x - s, self.y - s))
+
+
+class ParticleSystem:
+    def __init__(self):
+        self.particles = []
+        self.spawned = 0
+
+    def burst(self, x, y, n):
+        for _ in range(n):
+            self.particles.append(Particle(x, y))
+        self.spawned += n
+
+    def update(self, dt):
+        # one-pass update + cull via list comprehension:
+        self.particles = [p for p in self.particles if p.update(dt)]
+
+    def draw(self, dest):
+        for p in self.particles:
+            p.draw(dest)
+
+
+system = ParticleSystem()
+tick = 0
+running = True
+while running:
+    dt = clock.tick(60) / 1000.0
+    tick += 1
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+            system.burst(EMITTER_X, EMITTER_Y, BURST)
+
+    system.update(dt)
+    screen.fill((10, 10, 20))
+    pygame.draw.rect(screen, (40, 40, 40), (0, 555, SCREEN_W, 45))    # ground
+    system.draw(screen)
+
+    if system.particles:
+        p0 = system.particles[0]
+        sample = p0.lifetime / p0.max_lifetime
+    else:
+        sample = 0.0
+    hud = f"tick {tick} | alive {len(system.particles)} | spawned {system.spawned} | sample ratio {sample:.2f}"
+    screen.blit(font.render(hud, True, (220, 220, 220)), (10, 10))
+    screen.blit(font.render("SPACE = burst 200 | close window to quit", True, (180, 180, 180)), (10, 30))
+
+    pygame.display.flip()
+
+pygame.quit()</code></pre>
                 </details>
             </div>
 
@@ -1219,31 +1318,31 @@ if __name__ == "__main__":
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> Each <code>Particle.update(dt)</code> ends with <code>return self.lifetime &gt; 0</code> after decrementing lifetime, and <code>ParticleSystem.update</code> calls it via <code>self.particles = [p for p in self.particles if p.update(dt)]</code>. What does this two-step pattern accomplish in one pass, and why is it preferred over the alternatives?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Tracing the comprehension shows the system rebuilds its list each tick from particles whose update returned True; cleanup is immediate, not deferred to the garbage collector.'>A) It defers all dead-particle cleanup until each Particle&apos;s <code>__del__</code> method fires when Python&apos;s garbage collector decides to run; the boolean return is just a debug convenience for asserting alive-state in tests.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='The boolean alive-flag delegates removal from the particle (which doesn&apos;t hold a reference back to the system) to the system itself, and the list-comprehension rebuild sidesteps the classic for-loop-list.remove bug where deleting elements during iteration silently skips the next one because the iterator&apos;s internal index moves forward while the list shifts left. The comprehension iterates the OLD self.particles, calls update(dt) on each (mutating physics + decrementing lifetime), and KEEPS each one in the new list only if update returned True; self.particles then points at the new list with dead particles dropped — no separate find-dead loop needed and no modify-while-iterating bug. Production particle systems including Unity&apos;s Built-in Particle System and Unreal&apos;s Niagara use the same alive-flag-then-cull-via-rebuild pattern at the data-oriented C++ scope rather than per-particle Python objects, but the architectural shape is identical.'>B) It updates every particle AND filters out dead ones in a single pass — the comprehension iterates the OLD <code>self.particles</code>, calls <code>update(dt)</code> on each (mutating physics + decrementing lifetime), and KEEPS each one in the new list only if update returned True; <code>self.particles</code> then points at the new list with dead particles dropped, no separate find-dead loop and no modify-while-iterating bug.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='There is no second loop and no dead list in the lesson&apos;s pattern — the comprehension does both jobs at once. Introducing a dead_list would double per-tick allocation work without any benefit.'>C) It collects dead particles into a separate <code>self.dead</code> list during update, which a second loop then removes from <code>self.particles</code> every few ticks for amortized O(1) removal cost.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> The <code>Particle.__init__</code> saves <code>self.max_lifetime = self.lifetime</code> ONCE at spawn, even though it never re-reads <code>max_lifetime</code> to extend or reset the lifetime. What role does this write-once snapshot play, and what would break without it?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Trace where max_lifetime is read — only in draw(), only to compute alpha. Nothing in the code resets or extends lifetime; once a particle&apos;s lifetime reaches zero its update() returns False and the system culls it next tick.'>A) <code>max_lifetime</code> caps the runtime lifetime and resets it back to itself when the particle re-enters the visible viewport, looping the fade animation forever; without it, particles would die instantly the moment they cross the screen edge.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Per-particle fade needs a normalized 0–1 progress signal. lifetime decays toward zero each tick (lifetime -= dt), so by the time draw() computes alpha, the original spawn-time value is gone; max_lifetime preserves it so the fade ratio lifetime / max_lifetime correctly maps from 1.0 (fresh) down to 0.0 (about to die), regardless of which random spawn-lifetime each particle drew from random.uniform(0.6, 1.4). Without the snapshot the ratio degrades to lifetime / lifetime = 1.0 always, killing the fade entirely — every particle would render at full alpha until the moment it&apos;s culled, producing a jarring pop-out instead of a smooth fade. The pattern is the per-particle parallel of chat-46 platformer_camera&apos;s smooth-follow exponential decay (camera approaches target over time) and chat-49 polish_tweening&apos;s easing-on-t (each tween stores t_start so elapsed/duration stays meaningful as t advances) — different scales (camera-scale vs tween-scale vs particle-scale) but identical &quot;preserve original value as a write-once snapshot to make the ratio meaningful&quot; shape.'>B) <code>lifetime</code> decays toward zero each tick (<code>lifetime -= dt</code>), so by the time draw() computes alpha the original spawn-time value is gone; <code>max_lifetime</code> preserves it so the fade ratio <code>lifetime / max_lifetime</code> correctly maps from 1.0 (fresh) down to 0.0 (about to die), regardless of which random spawn-lifetime each particle drew.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Pygame&apos;s audio engine has nothing to do with particle alpha; trace max_lifetime&apos;s uses in the Particle class only. There is no profiling integration in the lesson&apos;s code.'>C) <code>max_lifetime</code> is a profiling counter the Pygame mixer audio engine reads when rendering glow surfaces; particles still fade correctly without it, just slower.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> The lesson&apos;s <code>FireEffect</code> sets <code>config.gravity = -50  # Fire rises</code> while <code>ExplosionEffect</code> sets <code>config.gravity = 50</code> for falling debris. What does the sign accomplish in the per-tick update line <code>self.vy += self.gravity * dt</code>, and why is it the OPPOSITE of math-class Newtonian intuition?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Draw order is set by iteration order in ParticleSystem.draw(), independent of any per-particle physics constant. Gravity affects velocity each tick, full stop — layered rendering would require explicit layer attributes like the chat-42 sprite_groups_layers LayeredUpdates pattern.'>A) The sign reverses the particle&apos;s draw order so fire renders on top of smoke and explosion debris renders below; the absolute value is what affects motion.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Pygame&apos;s screen Y axis grows DOWNWARD (top=0, bottom=window_height), so positive vy means moving down the screen. Each tick vy += gravity * dt: positive gravity pulls vy positive → particle moves DOWN (explosion debris falls); negative gravity pulls vy negative → particle moves UP (flames rise). The sign convention is INVERTED relative to math-class Y-up where gravity is conventionally negative — Pygame&apos;s &quot;up&quot; is the negative direction, so &quot;fire rises&quot; literally requires a negative gravity constant to swim against the screen&apos;s natural down direction. This is chat-43 game_mathematics_coordinates&apos; Pygame-down-Y convention crossed with chat-44 physics_gravity&apos;s gravity-as-additive-acceleration at per-particle scope. The lesson shows the contrast directly in code: FireEffect gravity=-50 (rises), ExplosionEffect gravity=50 (falls), MagicSparkles gravity=-20 (drifts up gently), SmokeEffect gravity=-20 (rises slowly) — the sign IS the rise-or-fall flag, no separate is_rising boolean needed.'>B) Pygame&apos;s screen Y axis grows DOWNWARD (top=0, bottom=window_height), so positive vy means moving down the screen. Each tick <code>vy += gravity * dt</code>: positive gravity pulls vy positive → particle moves DOWN (explosion debris falls); negative gravity pulls vy negative → particle moves UP (flames rise). The sign convention is INVERTED relative to math-class Y-up where gravity is conventionally negative.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Python accepts signed and unsigned floats interchangeably; gravity=50 and gravity=-50 are both syntactically valid and produce different runtime behavior because the sign multiplies into vy each tick. The sign is mathematically meaningful, not syntactic decoration.'>C) Negative-signed floats are a syntax-error guard required by Pygame&apos;s C-extension type checker; both signs work identically at runtime, the negative sign is just a marker that the field is allowed to be unsigned.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

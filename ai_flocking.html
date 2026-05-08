@@ -1526,19 +1526,124 @@ class Boid:
             <h2 id="practice-exercise-build-ai-flocking">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Reynolds Boids — Three Forces, Local Rules, Emergent Flock in One Pygame Window</h3>
+                <p><strong>Objective:</strong> Build a runnable pygame window in roughly 90 lines that shows three orthogonal Reynolds boids disciplines visible per frame on a 768×480 play area plus a 320px force-vector sidebar (1088×480 total). 30 boids spawn at random positions with random initial velocities and apply three additive steering forces every tick — separation (avoid crowding neighbors via inverse-distance-weighted repulsion), alignment (match neighbor average velocity), and cohesion (steer toward neighbor centroid) — within a vision_range of 50px and vision_angle of 270 degrees, with all forces summed into acceleration then Euler-integrated. (a) <strong>Local rules → emergent global behavior:</strong> each boid does ZERO global computation and only sees neighbors within its vision cone; the three additive steering forces each compute a small per-tick adjustment; the global flock pattern emerges from the bottom up with no central FlockManager — multi-agent emergent behavior, the orthogonal axis to chat-62&apos;s single-agent utility-AI ranking. (b) <strong>Reynolds steering formula <code>steer = desired − current_velocity</code> capped by max_force:</strong> every rule ends with the same shape — compute desired velocity from neighbors, normalize to max_speed, subtract current velocity, cap magnitude at max_force; the cap is what makes turns gradual over many frames rather than snap-pivots, the same incremental-adjustment-toward-target shape as the chat-46 platformer_camera smooth-follow exponential decay. (c) <strong>Distance-weighted separation via inverse-distance scaling:</strong> the separation rule&apos;s <code>diff.normalize().divide(distance)</code> makes the steering force grow hyperbolically as boids get closer, so a near-collision pushes much harder than a comfortable-spacing nudge — natural collision-avoidance shape rather than uniform avoidance. Keys 1/2/3 toggle each force ON/OFF independently so each rule&apos;s absence is visible (turning off separation makes boids clump into a single point; turning off alignment makes the flock lose direction; turning off cohesion makes the flock disperse). R resets all three to ON. Sidebar shows a representative boid&apos;s three force vectors as colored arrows (red=separation, green=alignment, blue=cohesion) plus the resulting velocity in white, scaled for visibility. HUD shows separation/alignment/cohesion ON/OFF state, average flock speed, and the legend — three orthogonal Reynolds boids disciplines visible per frame as toggleable forces and concrete force-vector lengths.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Create a Vector2D helper class with add / subtract / multiply / divide / magnitude / normalize / limit methods (the lesson&apos;s Vector2D shape; needed for all three rules&apos; vector arithmetic).</li>
+                    <li>Create a Boid class with position / velocity / acceleration vectors plus a stored last_forces tuple of (separation, alignment, cohesion) for sidebar visualization. Implement a vision-cone neighbors check (within VISION_RANGE=50px and VISION_ANGLE=270° of the boid&apos;s current heading via dot-product comparison).</li>
+                    <li>Implement separation(neighbors) using <code>steer += diff.normalize().divide(distance)</code> for every neighbor inside DESIRED_SEP=25px — the inverse-distance weighting is what makes urgent collisions push harder than comfortable spacings. Average across neighbors, then end with the Reynolds steering pattern <code>steer = (averaged.normalize() * MAX_SPEED) − current_velocity</code>, limited to MAX_FORCE.</li>
+                    <li>Implement alignment(neighbors) as the average neighbor velocity, then the same Reynolds steering pattern.</li>
+                    <li>Implement cohesion(neighbors) as steer toward the neighbor centroid, then the same Reynolds steering pattern.</li>
+                    <li>Per-tick update: compute neighbors once, compute the three forces, multiply each by its weight (0 if toggled off, 1.5 / 1.0 / 1.0 default for sep / ali / coh), sum into acceleration, integrate <code>velocity += acceleration; position += velocity * dt</code>, wrap position around play area edges via modulo.</li>
+                    <li>Render: blue boid dots in the play area; sidebar with a representative boid plus its three force-vector arrows (red / green / blue) and resulting velocity arrow (white). HUD shows toggle state and average speed.</li>
+                    <li>Wire keys 1 / 2 / 3 to toggle separation / alignment / cohesion individually; key R to reset all three to ON. Verify by toggling: sep-off boids clump to one point, ali-off boids point random ways, coh-off boids disperse to grid edges.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The Reynolds steering pattern repeats three times — extract a helper <code>reynolds(desired, vel)</code> that does <code>desired.normalize().multiply(MAX_SPEED).subtract(vel).limit(MAX_FORCE)</code>. The vision-cone check is a dot-product comparison: angle between (other − self) and self.velocity must be less than VISION_ANGLE / 2. Keep MAX_FORCE small (~0.2) — that&apos;s the per-tick steering cap that produces smooth gradual turns; a larger value snap-pivots the boid each tick. Distance-weighted separation requires you to call <code>.divide(distance)</code> AFTER <code>.normalize()</code> so the weighting is by 1/distance not by 1/distance². Position-wrap (<code>position.x %= PLAY_W</code>) keeps boids on screen forever without edge-collision logic.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre class="language-python"><code>import pygame, random, math
+
+W, H, PLAY_W = 1088, 480, 768
+N, VISION_RANGE, VISION_ANGLE = 30, 50, math.radians(270)
+MAX_SPEED, MAX_FORCE, DESIRED_SEP = 150, 0.2, 25
+
+class V:
+    def __init__(s, x=0, y=0): s.x, s.y = x, y
+    def add(s, o): return V(s.x + o.x, s.y + o.y)
+    def sub(s, o): return V(s.x - o.x, s.y - o.y)
+    def mul(s, k): return V(s.x * k, s.y * k)
+    def div(s, k): return V(s.x / k, s.y / k) if k else V()
+    def mag(s): return math.hypot(s.x, s.y)
+    def norm(s):
+        m = s.mag()
+        return s.div(m) if m else V()
+    def limit(s, m):
+        return s.norm().mul(m) if s.mag() &gt; m else s
+
+def reynolds(desired, vel):
+    return desired.norm().mul(MAX_SPEED).sub(vel).limit(MAX_FORCE)
+
+class Boid:
+    def __init__(s, x, y):
+        s.p, s.a = V(x, y), V()
+        ang = random.uniform(0, 2 * math.pi)
+        s.v = V(math.cos(ang) * 80, math.sin(ang) * 80)
+        s.last = (V(), V(), V())
+
+    def can_see(s, o):
+        d = o.p.sub(s.p); m = d.mag()
+        if m == 0 or m &gt;= VISION_RANGE: return False
+        if s.v.mag() == 0: return True
+        cos_a = (d.x * s.v.x + d.y * s.v.y) / (m * s.v.mag())
+        return cos_a &gt; math.cos(VISION_ANGLE / 2)
+
+    def step(s, boids, ws, dt):
+        ns = [o for o in boids if o is not s and s.can_see(o)]
+        sep = V(); n = 0
+        for o in ns:
+            d = s.p.sub(o.p); m = d.mag()
+            if 0 &lt; m &lt; DESIRED_SEP:
+                sep = sep.add(d.norm().div(m)); n += 1  # inverse-distance
+        sep = reynolds(sep.div(n), s.v) if n else V()
+        if ns:
+            avg_v = V()
+            for o in ns: avg_v = avg_v.add(o.v)
+            ali = reynolds(avg_v.div(len(ns)), s.v)
+            cen = V()
+            for o in ns: cen = cen.add(o.p)
+            coh = reynolds(cen.div(len(ns)).sub(s.p), s.v)
+        else:
+            ali = coh = V()
+        sep, ali, coh = sep.mul(ws[0]), ali.mul(ws[1]), coh.mul(ws[2])
+        s.last = (sep, ali, coh)
+        s.a = sep.add(ali).add(coh)
+        s.v = s.v.add(s.a).limit(MAX_SPEED)
+        s.p = s.p.add(s.v.mul(dt))
+        s.p.x %= PLAY_W; s.p.y %= H
+
+pygame.init()
+screen = pygame.display.set_mode((W, H))
+clock = pygame.time.Clock()
+font = pygame.font.SysFont("Courier", 14)
+boids = [Boid(random.uniform(0, PLAY_W), random.uniform(0, H)) for _ in range(N)]
+on = [True, True, True]
+weights = [1.5, 1.0, 1.0]
+
+while True:
+    dt = clock.tick(60) / 1000.0
+    for e in pygame.event.get():
+        if e.type == pygame.QUIT: pygame.quit(); raise SystemExit
+        if e.type == pygame.KEYDOWN:
+            if e.key == pygame.K_1: on[0] = not on[0]
+            if e.key == pygame.K_2: on[1] = not on[1]
+            if e.key == pygame.K_3: on[2] = not on[2]
+            if e.key == pygame.K_r: on = [True, True, True]
+    ws = [weights[i] if on[i] else 0 for i in range(3)]
+    for b in boids: b.step(boids, ws, dt)
+    screen.fill((20, 30, 50))
+    for b in boids:
+        pygame.draw.circle(screen, (180, 220, 255), (int(b.p.x), int(b.p.y)), 4)
+    pygame.draw.line(screen, (80, 80, 80), (PLAY_W, 0), (PLAY_W, H))
+    bx, by = PLAY_W + 160, H // 2
+    pygame.draw.circle(screen, (255, 200, 100), (bx, by), 8)
+    sep, ali, coh = boids[0].last
+    for vec, col in [(sep, (255, 80, 80)), (ali, (80, 255, 80)), (coh, (80, 80, 255))]:
+        ex, ey = bx + int(vec.x * 250), by + int(vec.y * 250)
+        pygame.draw.line(screen, col, (bx, by), (ex, ey), 3)
+    vx, vy = bx + int(boids[0].v.x * 0.4), by + int(boids[0].v.y * 0.4)
+    pygame.draw.line(screen, (255, 255, 255), (bx, by), (vx, vy), 3)
+    avg = sum(b.v.mag() for b in boids) / N
+    lines = [f"sep={'ON' if on[0] else 'OFF'}  ali={'ON' if on[1] else 'OFF'}  coh={'ON' if on[2] else 'OFF'}",
+             "1/2/3 toggle  R reset",
+             f"avg speed={avg:.0f}",
+             "red=sep  grn=ali  blu=coh  wht=v"]
+    for i, t in enumerate(lines):
+        screen.blit(font.render(t, True, (240, 240, 240)), (PLAY_W + 10, 10 + i * 18))
+    pygame.display.flip()</code></pre>
                 </details>
             </div>
 
@@ -1546,31 +1651,31 @@ class Boid:
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> In Reynolds boids (separation + alignment + cohesion), how does the global flock pattern arise from the per-boid code?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='A central FlockManager would compute a global solution and broadcast each boid&apos;s velocity. But the lesson&apos;s Boid.flock(boids) loops over neighbors and sums three local forces with no shared state outside the boid itself.'>A) A central FlockManager class computes the global flock shape each tick and broadcasts each boid&apos;s next velocity, so the per-boid code only needs to apply the broadcast value.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Reynolds 1987&apos;s key insight: each boid does ZERO global computation. It sees only its neighbors (within vision_range and vision_angle), computes three small steering forces from purely local information, sums them into acceleration, and Euler-integrates one tick. No central authority. The global flock pattern (V-formation, swirling vortex, defensive ball) EMERGES from the bottom up because all N boids run the same three-rule program against their own local neighborhoods. This is multi-agent emergent behavior — the orthogonal axis to chat-62&apos;s single-agent utility AI; flocking is what happens when N agents each run a tiny utility-style decision against local neighbors and the global pattern emerges from N independent local computations rather than one central one.'>B) Each boid runs three local steering rules against only its own neighbors and integrates the result; the global pattern emerges from N agents running the same local program simultaneously, with no central coordinator.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Reynolds 1987 demonstrated emergent flocking with exactly the three rules separation + alignment + cohesion; the lesson&apos;s presets (tight, loose, vortex, migration) all use these same three forces and just vary the weights.'>C) The three rules separation + alignment + cohesion alone aren&apos;t enough for realistic flocking; you need at least a fourth leader-following or goal-seeking rule, otherwise the boids dissolve into noise.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> All three boid rules end with the same shape: <code>steer = desired.normalize().multiply(MAX_SPEED).subtract(velocity).limit(MAX_FORCE)</code>. What does the <code>limit(MAX_FORCE)</code> step contribute that just returning <code>desired</code> directly would not?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Setting velocity to the desired value directly would teleport the boid&apos;s heading every tick — instant snap-pivot with zero turn radius. The lesson&apos;s code never does this; every rule ends with the subtract-then-limit pattern precisely to avoid that snap behavior.'>A) Returning <code>desired</code> directly is equivalent — both forms make the boid head toward the target heading, and the limit step is just a defensive guard against numerical NaN values.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='The Reynolds steering pattern <code>desired − current_velocity</code> turns absolute target into a per-tick adjustment, and <code>limit(MAX_FORCE)</code> caps that adjustment&apos;s magnitude so it can only nudge the velocity by a small amount each frame. With MAX_FORCE=0.2 and MAX_SPEED=150, a boid takes many ticks to rotate toward a new heading — the boid SMOOTHLY APPROACHES the desired velocity rather than snapping to it. Without the cap, the boid would jump to the desired velocity in one tick (snap-pivot), producing rigid mechanical motion. With the cap, turns spread over many frames, producing organic-looking gradual rotation. Same incremental-adjustment-toward-a-target shape as chat-46 platformer_camera&apos;s smooth-follow exponential decay (camera approaches but never instantly reaches target) — different scales (single-camera vs N-boids) but identical &quot;approach but never reach&quot; pattern. MAX_FORCE is a designer feel-knob controlling turn radius, not a numerical-stability gate.'>B) The cap shapes the boid&apos;s effective TURN RADIUS by limiting per-tick velocity change, producing smooth gradual rotation over many frames instead of instant snap-pivots — the same incremental-adjustment shape as chat-46 platformer_camera&apos;s smooth-follow.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='MAX_FORCE values like 0.2 are well within float range and produce no NaN risk. The cap shapes turn-radius feel; the steering math itself doesn&apos;t need the limit for numerical correctness, it needs it for visual smoothness.'>C) The cap is a numerical-stability fix to prevent the float multiplication <code>desired * MAX_SPEED</code> from overflowing when velocity is near zero; without it the boid&apos;s position would NaN out within a few frames.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> The separation rule weights closer neighbors more strongly via <code>diff.normalize().divide(distance)</code>. Why this inverse-distance scaling instead of treating every in-range neighbor equally?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='The distance gate <code>if 0 &lt; distance &lt; DESIRED_SEP</code> already filters far neighbors out before the divide ever runs. Every neighbor that reaches the divide is by definition close enough to push against; the divide is shaping force MAGNITUDE for those passing neighbors, not skipping any.'>A) It&apos;s a performance optimization — dividing by distance lets the rule cheaply skip neighbors that are far away without an explicit distance check, which would otherwise cost an extra branch per neighbor.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Inverse-distance scaling makes the steering force grow HYPERBOLICALLY as boids get closer: at distance 24 (just inside DESIRED_SEP=25) the per-neighbor force is ~0.04, at distance 5 it&apos;s 0.2 (5x stronger), at distance 1 it&apos;s 1.0 (25x stronger). A near-collision pushes much harder than a comfortable-spacing nudge, which is exactly the natural collision-avoidance shape — urgent situations demand urgent response, comfortable situations need only a soft suggestion. Equal weighting (no <code>.divide(distance)</code>) would push both pairs with the same force regardless of urgency, producing rigid jittery avoidance where two boids brushing (distance 24) push as hard as two boids overlapping (distance 1). The <code>.divide(distance)</code> shapes the response curve to match physical intuition: closer = scarier = stronger response. Same response-curve-shapes-behavior insight as chat-62&apos;s utility-AI response curves at single-agent scope, applied here at multi-agent local-rule scope; the divisor is the designer&apos;s knob for tuning collision-avoidance feel without changing the rule&apos;s structure.'>B) It shapes the steering force to grow hyperbolically as boids get closer — a near-collision pushes much harder than a comfortable-spacing nudge — producing the natural collision-avoidance shape where urgency scales with proximity rather than being uniform.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Equal weighting actually CAUSES the jitter problem. Two boids at distance 0.1 push with the same force as two boids at distance 24, producing identical avoidance regardless of urgency — oscillation around the boundary. Inverse-distance scaling makes the response proportional to urgency, which damps the oscillation naturally.'>C) It prevents asymptotic-near-zero jitter when two boids overlap — equal weighting would let the steering force spike to infinity at distance 0, while the divide caps the force naturally as boids approach contact.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

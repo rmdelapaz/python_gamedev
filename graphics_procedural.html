@@ -407,19 +407,126 @@ tree_rules = {
             <h2 id="practice-exercise-build-graphics-procedural">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: One Seed, Two Layers, Six Biomes — Seeded Multi-Octave Perlin + Independent Moisture Layer + Threshold-Rule Biome Composition in One Pygame Window</h3>
+                <p><strong>Objective:</strong> Build a runnable pygame program (~95 lines) that distills the lesson&apos;s `noise.pnoise2` + multi-octave fBm + biome-composition pattern into one runnable pygame demo so each procedural-generation discipline is visible per frame. The window is 1088×480 with a 272×107 internal map at 4× SCALE filling the upper area (1088×428 of the 480 height) and a 52-pixel HUD strip at the bottom showing seed and octave count. A single `generate(seed, octaves)` function is called on key press to produce two normalized [0, 1] map arrays — a height map and a moisture map — each computed from independent `random.uniform(-1000, 1000)`-derived (offset_x, offset_y) seed offsets so the same world-grid coordinate samples noise from completely different regions of pnoise2 space across the two layers. After generation, `render_biomes()` iterates every (x, y) cell, calls `biome(h, m)` to get a label, and draws a SCALE×SCALE rect in the matching biome color — the standard biome composition step from the lesson&apos;s `get_biome` reduced from (h, m, t) to (h, m) for the demo&apos;s tighter focus. Three orthogonal procedural-generation disciplines visible per frame: <strong>(a) seed-as-world-identity</strong> — the same integer seed always reproduces the same biome map; pressing R picks a new random seed and the world entirely changes; pressing 1–6 keeps the seed but changes the octave count and the map redraws with the same overall structure but more or less detail. The seed IS the world&apos;s identity at procedural-generation scope: saving the seed (one int) is sufficient to regenerate the entire 272×107 map deterministically — same compact-persistence pattern Minecraft uses to save 100+ MB of world data as an 8-byte seed; same seed-as-contract shape as chat-58 architecture_save_load&apos;s schema-as-contract applied at world-state-recovery scope. <strong>(b) Multi-octave fBm</strong> — `fbm(x, y, octaves, ox, oy)` sums N pnoise2 calls at each cell, with `amp *= PERSISTENCE` between iterations (so amplitude shrinks geometrically: 1.0, 0.5, 0.25, 0.125, ...) and `freq *= LACUNARITY` (so spatial frequency doubles: 1.0, 2.0, 4.0, 8.0, ...). The first octave gives the broad landmass shape; each subsequent octave adds higher-frequency lower-amplitude variation that compounds detail across scales without dominating the broad shape. The visible difference between 1 octave and 6 octaves at the same seed is dramatic: 1 octave is smooth blobs, 6 octaves is recognizably-terrain with ridges and inlets at multiple scales. Same many-things-sum-into-one accumulation pattern as chat-65 graphics_lighting&apos;s multi-light-additive composition (per-pixel lightmap sums N light contributions) applied here across spatial frequency rather than across light sources. <strong>(c) Layered-independent-noise biome composition</strong> — `h_map` and `m_map` are TWO independent noise layers, each from a DIFFERENT `random.uniform()` seed-offset within the same seed scope. The `biome(h, m)` rule reads BOTH layers per pixel and returns biome from the (h, m) tuple via threshold cascade: ocean if h &lt; WATER_LEVEL, beach in a thin band above, snow/mountain above MOUNTAIN_LEVEL, desert/grassland/forest in the lowlands selected by moisture (drier→desert, wetter→forest). The independence of the two layers IS the design intent: the same elevation can be desert OR forest depending on the moisture sample at that pixel. Deriving moisture from height (e.g., `moisture = 1 - h`) would collapse every low-elevation cell to one biome — every coast wet (forest) and every plateau dry (desert) — eliminating low-elevation desert and high-elevation forest as possibilities. Same independent-data-composes-via-shared-spatial-grid pattern from chat-66 graphics_postprocessing&apos;s ping-pong-effects-dict (multiple INDEPENDENT effects sequence into one final image) and chat-67 graphics_ui_hud&apos;s UIElement-protocol-and-UIManager-dispatch (multiple INDEPENDENT UI elements coexist via shared protocol) applied here at biome-data-from-(h, m) scope.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Set up a 1088×480 pygame window plus a 272×107 internal biome-map grid at 4× SCALE filling the upper 428 pixels of the window. Define a BIOMES dict mapping seven labels (OCEAN/BEACH/DESERT/GRASSLAND/FOREST/MOUNTAIN/SNOW) to RGB color tuples, plus threshold constants WATER_LEVEL = 0.30, MOUNTAIN_LEVEL = 0.72, SNOW_LEVEL = 0.85.</li>
+                    <li>Implement multi-octave Perlin fBm as a helper `fbm(x, y, octaves, ox, oy)`: initialize amp=1.0, freq=1.0, total=0.0; for each of `octaves` iterations, compute `sx = (x + ox) / NOISE_SCALE * freq` and `sy = (y + oy) / NOISE_SCALE * freq`, accumulate `total += pnoise2(sx, sy) * amp`, then `amp *= PERSISTENCE` (e.g. 0.5) and `freq *= LACUNARITY` (e.g. 2.0). Return `total`.</li>
+                    <li>Build `generate(seed, octaves)` that calls `random.seed(seed)`, then picks FOUR `random.uniform(-1000, 1000)` offsets — `(hx, hy)` for the height layer and `(mx, my)` for the moisture layer — so the two layers vary independently across the same world-grid coordinates. Build `h_map[y][x] = fbm(x, y, octaves, hx, hy)` and `m_map[y][x] = fbm(x, y, octaves, mx, my)` for every (x, y), then min-max-normalize each map separately to [0, 1] so threshold constants apply consistently regardless of seed.</li>
+                    <li>Implement `biome(h, m)` as a threshold cascade returning a label string: OCEAN if h &lt; WATER_LEVEL; BEACH if h &lt; WATER_LEVEL + 0.04; SNOW if h &gt; SNOW_LEVEL; MOUNTAIN if h &gt; MOUNTAIN_LEVEL; otherwise pick from the lowland set by moisture: DESERT if m &lt; 0.35, GRASSLAND if m &lt; 0.65, FOREST otherwise.</li>
+                    <li>Implement `render_biomes(screen, h_map, m_map)`: nested loop over every (x, y), look up `BIOMES[biome(h_map[y][x], m_map[y][x])]` for the color, draw a `(x*SCALE, y*SCALE, SCALE, SCALE)` rect on screen. Below the biome map, draw the HUD strip with `seed`, `octaves`, and the key-binding hint; render a biome-color legend below the HUD line.</li>
+                    <li>Wire interactive controls in the event loop: R = `seed = random.randint(0, 99999)` then `h_map, m_map = generate(seed, octaves)` (re-roll the world); number keys 1–6 = `octaves = e.key - pygame.K_0` then re-generate at the SAME seed (detail-level changes, world-identity persists at any fixed octave count). Verify that pressing R then pressing 1, 2, 3, ..., 6 in succession shows the same broad landmass with progressively-finer detail; pressing R again jumps to a completely new world.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>Re-generation only happens on key press — every press calls a single `generate()` function that returns two normalized [0, 1] map arrays. The `biome(h, m)` function is a pure-functional threshold cascade — same (h, m) inputs always produce the same biome label, so a fixed seed + fixed octaves always produces the exact same map (deterministic; the seed IS the world&apos;s identity), and changing the seed produces a new world while keeping the same algorithmic shape. The two `random.uniform()` calls inside `generate()` MUST happen AFTER `random.seed(seed)` so the (hx, hy) and (mx, my) offsets are themselves deterministic functions of the seed — otherwise the offsets would drift between runs even with the same seed. Use `pygame.draw.rect` for the SCALE×SCALE biome cells rather than per-pixel `screen.set_at` (rect is faster and produces visible biome blocks at SCALE=4). The min-max normalization (`(v - lo) / (hi - lo)`) is per-map and per-generate — pnoise2&apos;s raw range is roughly [-0.7, +0.7] and varies slightly with octave count, so always normalize to the actual sampled range rather than assuming a fixed range.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import random
+import pygame
+from noise import pnoise2
+
+W, H = 1088, 480
+MAP_W, MAP_H, SCALE = 272, 107, 4
+NOISE_SCALE = 28.0
+PERSISTENCE = 0.5
+LACUNARITY = 2.0
+
+WATER_LEVEL = 0.30
+BEACH_BAND = 0.04
+MOUNTAIN_LEVEL = 0.72
+SNOW_LEVEL = 0.85
+
+BIOMES = {
+    &apos;OCEAN&apos;:     ( 30,  90, 180),
+    &apos;BEACH&apos;:     (220, 200, 130),
+    &apos;DESERT&apos;:    (210, 180,  90),
+    &apos;GRASSLAND&apos;: (110, 180,  90),
+    &apos;FOREST&apos;:    ( 40, 110,  60),
+    &apos;MOUNTAIN&apos;:  (140, 130, 120),
+    &apos;SNOW&apos;:      (240, 240, 245),
+}
+
+def fbm(x, y, octaves, ox, oy):
+    amp, freq, total = 1.0, 1.0, 0.0
+    for _ in range(octaves):
+        sx = (x + ox) / NOISE_SCALE * freq
+        sy = (y + oy) / NOISE_SCALE * freq
+        total += pnoise2(sx, sy) * amp
+        amp *= PERSISTENCE
+        freq *= LACUNARITY
+    return total
+
+def _normalize(m):
+    flat = [v for row in m for v in row]
+    lo, hi = min(flat), max(flat)
+    span = hi - lo if hi &gt; lo else 1.0
+    return [[(v - lo) / span for v in row] for row in m]
+
+def generate(seed, octaves):
+    random.seed(seed)
+    # TWO INDEPENDENT noise layers — each from its own seed-offset
+    hx, hy = random.uniform(-1000, 1000), random.uniform(-1000, 1000)
+    mx, my = random.uniform(-1000, 1000), random.uniform(-1000, 1000)
+    h_map = [[fbm(x, y, octaves, hx, hy) for x in range(MAP_W)] for y in range(MAP_H)]
+    m_map = [[fbm(x, y, octaves, mx, my) for x in range(MAP_W)] for y in range(MAP_H)]
+    return _normalize(h_map), _normalize(m_map)
+
+def biome(h, m):
+    if h &lt; WATER_LEVEL: return &apos;OCEAN&apos;
+    if h &lt; WATER_LEVEL + BEACH_BAND: return &apos;BEACH&apos;
+    if h &gt; SNOW_LEVEL: return &apos;SNOW&apos;
+    if h &gt; MOUNTAIN_LEVEL: return &apos;MOUNTAIN&apos;
+    if m &lt; 0.35: return &apos;DESERT&apos;
+    if m &lt; 0.65: return &apos;GRASSLAND&apos;
+    return &apos;FOREST&apos;
+
+def render_biomes(screen, h_map, m_map):
+    for y in range(MAP_H):
+        row_h, row_m = h_map[y], m_map[y]
+        for x in range(MAP_W):
+            color = BIOMES[biome(row_h[x], row_m[x])]
+            pygame.draw.rect(screen, color, (x * SCALE, y * SCALE, SCALE, SCALE))
+
+def main():
+    pygame.init()
+    screen = pygame.display.set_mode((W, H))
+    pygame.display.set_caption(&apos;One Seed, Two Layers, Six Biomes&apos;)
+    font = pygame.font.SysFont(&apos;consolas&apos;, 16)
+    clock = pygame.time.Clock()
+
+    seed, octaves = 42, 4
+    h_map, m_map = generate(seed, octaves)
+
+    running = True
+    while running:
+        for e in pygame.event.get():
+            if e.type == pygame.QUIT:
+                running = False
+            elif e.type == pygame.KEYDOWN:
+                if e.key == pygame.K_r:
+                    seed = random.randint(0, 99999)
+                    h_map, m_map = generate(seed, octaves)
+                elif pygame.K_1 &lt;= e.key &lt;= pygame.K_6:
+                    octaves = e.key - pygame.K_0
+                    h_map, m_map = generate(seed, octaves)
+
+        screen.fill((10, 10, 14))
+        render_biomes(screen, h_map, m_map)
+        pygame.draw.rect(screen, (10, 10, 14), (0, MAP_H * SCALE, W, H - MAP_H * SCALE))
+        hud = f&apos;seed={seed}   octaves={octaves}   R: re-roll seed   1-6: octave count&apos;
+        screen.blit(font.render(hud, True, (220, 230, 240)), (12, MAP_H * SCALE + 12))
+        legend = &apos;OCEAN  BEACH  DESERT  GRASS  FOREST  MTN  SNOW&apos;
+        screen.blit(font.render(legend, True, (160, 170, 185)), (12, MAP_H * SCALE + 30))
+
+        pygame.display.flip()
+        clock.tick(60)
+    pygame.quit()
+
+if __name__ == &apos;__main__&apos;:
+    main()</code></pre>
                 </details>
             </div>
 
@@ -427,31 +534,31 @@ tree_rules = {
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> This demo&apos;s R key picks a new `random.randint(0, 99999)` seed and re-runs `generate(seed, octaves)` to produce a brand-new biome map. If a particular run printed `seed=42` and you wrote that integer down, then closed and re-opened the demo and re-typed `seed = 42` into the source, the resulting biome map would be IDENTICAL to the original — same coastlines, same desert patches, same forest borders, down to the per-pixel biome label. Why is this property — that the seed alone determines the entire generated world — central to procedural-content workflows in production games?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Seeded random REMOVES per-run variation rather than adding it; randomness without a seed (e.g., `random.seed()` with no argument, which uses the current system time) is what produces different worlds between runs. The seed is the mechanism that REPRODUCES the same world. Procedural generation without seeds would still feel fresh — every run would be different. The seed is what makes a particular world REPLAYABLE and SHAREABLE, not what makes worlds different from each other.'>A) The seed adds randomness so each playthrough produces different content, which is what makes procedural games feel fresh and replayable. Without a seed the worlds would be identical between runs, defeating the purpose of procedural generation; the seed is the source of the per-run variation.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='The seed IS the world&apos;s identity at procedural-generation scope: saving the seed (a single integer, often 4–8 bytes) is sufficient to regenerate the entire map deterministically. This is how Minecraft persists 100+ MB of world data as an 8-byte seed (rather than serializing every chunk), how speedrunners share specific &quot;good seeds&quot; for runs, and how multiplayer procedural games keep all clients in sync without network-replicating world content (every client runs the same `generate(seed)` and produces bit-identical worlds). Same seed-as-contract shape as chat-58 architecture_save_load&apos;s schema-as-contract: the seed is the minimal-byte representation that, combined with the deterministic generator, reproduces a much-larger artifact. Generalizes the chat-43 game_mathematics_random &quot;Always Use Seeds&quot; Best Practice from per-game-event randomness (loot drops, enemy spawns) up to whole-world generation — the same principle (deterministic output requires deterministic input) applied at the largest possible scope. Worlds are content; the seed is the address of that content in the deterministic-generator&apos;s output space.'>B) The seed IS the world&apos;s identity at procedural-generation scope: saving the seed (one integer) is sufficient to regenerate the entire map deterministically. Minecraft persists 100+ MB worlds as 8-byte seeds; speedrunners share &quot;good seeds&quot;; multiplayer procedural games sync clients by sharing the seed rather than the generated world. Same seed-as-contract shape as chat-58 architecture_save_load&apos;s schema-as-contract, applied here at world-state-recovery scope rather than save-file-format scope.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='`pnoise2(x, y)` is a pure function of (x, y) with no accumulating state — it computes the same value for the same coordinate every call, regardless of how many calls preceded it or what hardware it runs on. The `noise` package uses deterministic integer-hash-based gradient lookups internally, not floating-point reduction over a stream, so two runs of the same seed produce bit-identical biome maps with no drift over time and no hardware dependence. The Minecraft-style &quot;100+ MB world from 8-byte seed&quot; pattern works precisely because procedural generation is bit-exactly deterministic; if floating-point drift were a real issue the entire compact-persistence approach would be impossible.'>C) The seed only fixes the first frame of generation; subsequent frames diverge slightly due to floating-point rounding inside `pnoise2`, so two runs of the same seed produce slightly different worlds after several minutes of play (especially across different CPUs with different IEEE-754 rounding modes). This is why production games use checkpointing and snapshot-based saves rather than seed-only persistence.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> This demo&apos;s `fbm(x, y, octaves, ox, oy)` runs `total += pnoise2(sx*freq, sy*freq) * amp` repeated N times per cell with `amp *= 0.5` (PERSISTENCE) and `freq *= 2.0` (LACUNARITY) between iterations. The visible effect of pressing 1 vs 6 in the demo is dramatic: 1 octave gives smooth blobs of biome with no detail, 6 octaves gives recognizable terrain with ridges and inlets at multiple scales overlaid on the same broad landmass. Why does this multi-octave structure produce more natural-looking terrain than a single `pnoise2(sx, sy)` call?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='fBm SUMS samples at progressively DIFFERENT scales (each octave samples at a different spatial frequency), it does not average samples at the same scale. Averaging would lose detail (the high frequencies would cancel against the low frequencies) — fBm ADDS detail by stacking high-frequency variation on top of the broad shape. The `total += pnoise2(...) * amp` accumulator is a SUM with no division by N — if you replaced the SUM with a MEAN, the high-frequency contributions would average toward zero with high octave counts and the result would look LESS detailed than single-octave noise, not more.'>A) Multi-octave noise averages N independent samples to smooth out artifacts in any single noise sample, similar to running an image-blur filter over a single noise image. The averaging is what produces the natural look — single-octave noise has visible periodicity and multi-octave averages the periodicities together to mask them.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Each octave adds higher-frequency variation at lower amplitude (`amp *= persistence` with persistence &lt; 1, `freq *= lacunarity` with lacunarity &gt; 1) so the result has the broad landmass from the first octave with progressively-finer ridges, hills, and inlets layered on top from successive octaves — detail compounds across spatial scales the way real terrain does (continents → mountain ranges → individual peaks → boulders → pebbles, each at a smaller spatial scale and with smaller height variation). This is fractal Brownian motion (fBm), the canonical noise-stacking pattern for natural-looking terrain; the geometric series of amplitudes (1.0 + 0.5 + 0.25 + 0.125 + ... = 2.0 in the limit) ensures the higher octaves never dominate the broad shape — they decorate it. Same many-things-sum-into-one accumulation pattern as chat-65 graphics_lighting&apos;s multi-light-additive composition (per-pixel lightmap sums N light contributions, each at its own falloff radius and color) and chat-44 physics_collisions&apos; impulse-summation (a body&apos;s post-collision velocity is the sum of N independent impulse contributions) — the structural shape of summing-at-progressive-scales-into-one-accumulator generalizes across light sources, force impulses, and noise frequencies; chat-68 Q2 here is the same shape applied at SPATIAL-FREQUENCY scope where each &quot;source&quot; is one noise octave.'>B) Each octave adds higher-frequency variation at lower amplitude (PERSISTENCE &lt; 1 shrinks amp, LACUNARITY &gt; 1 grows freq) so the result has the broad landmass from the first octave with progressively-finer ridges, hills, and inlets layered on top — detail compounds across spatial scales the way real terrain does (continents → mountain ranges → peaks → boulders, each at a smaller scale with smaller height variation). This is fractal Brownian motion (fBm). Same many-things-sum-into-one accumulation pattern as chat-65 graphics_lighting&apos;s multi-light-additive composition (lightmap sums N light contributions), applied here across spatial frequency rather than across light sources.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='The persistence-weighting math goes the OTHER way: higher-octave contributions have LOWER amplitude (because `amp *= persistence` with persistence &lt; 1 shrinks amp geometrically: 1.0, 0.5, 0.25, ...), so they ADD DETAIL without DOMINATING. The first octave (amplitude 1.0) is the primary signal — broad landmasses; subsequent octaves at amplitudes 0.5, 0.25, ... add finer variation on top WITHOUT rewriting the broad shape. The visual experience is &quot;broad shapes with rich detail&quot;, not &quot;high-frequency edges that dominate the field&quot;. If persistence were &gt;= 1, then yes higher octaves would dominate and the terrain would look like static — that is exactly why persistence &lt; 1 is required for natural-looking terrain.'>C) Higher octave counts produce sharper edges than single octave because higher frequencies dominate the sum at large octave counts — by octave 4 the cumulative amplitude is 1.0 + 0.5 + 0.25 + 0.125 = 1.875, with the highest-frequency octave contributing 0.125/1.875 ≈ 7% of the total but visually dominating because the eye preferentially detects edges over magnitude. This is what makes mountain ridges look defined.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> The biome rule in this demo reads height AND moisture from TWO separately-generated noise maps (each computed from a different `random.uniform(-1000, 1000)`-derived seed offset within the same seed scope) and decides biome from the (h, m) tuple via a threshold cascade: ocean if h &lt; WATER_LEVEL, beach in a thin band above, snow/mountain above MOUNTAIN_LEVEL, and desert/grassland/forest in the lowlands selected by moisture thresholds (drier → desert, wetter → forest). Why are two independent noise layers required for this biome rule to work, rather than deriving moisture from height (e.g., `moisture = 1 - h` so coasts are wet and plateaus are dry)?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='The issue isn&apos;t performance — it&apos;s expressivity (which biome combinations the rule can REACH). Whether moisture computes in parallel or sequentially is irrelevant; the question is what biomes the rule CAN produce. Even at 100% serial computation, two independent layers still allow the same elevation to be either desert or forest depending on moisture. Even at 100% parallel computation, derived moisture still collapses every elevation to one biome. The architectural choice is about reachable biome combinations, not throughput.'>A) Independent layers compute faster than derived ones because both can be filled in parallel (e.g. via concurrent np.fromfunction calls), while deriving moisture from height would force a sequential dependency where moisture has to wait for the height array to finish. At 272×107 cells × 4 octaves the parallel speedup is roughly 2× per `generate()` call.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Two independent noise layers let the SAME elevation appear as desert OR forest depending on the moisture sample at that pixel. Deriving moisture from height (`moisture = 1 - h` or any other function of h alone) collapses every cell at a given elevation to exactly one biome — every low-elevation cell becomes the same biome (whichever the rule picks for &quot;low + wet&quot;), every plateau becomes the same biome (whichever the rule picks for &quot;high + dry&quot;), and the biome lookup becomes effectively a 1D function of height. The independence of the layers IS the design intent: &quot;what biome lives here&quot; depends on multiple physical phenomena (elevation, precipitation, temperature) that vary INDEPENDENTLY across a real world, not on one parameter that derives the others; coastal deserts (Atacama, Namib) and high-elevation forests (Pacific Northwest temperate rainforest at 1500m) both EXIST in real geography, and only an independent-moisture model can produce them. Same independent-data-composes-via-shared-spatial-grid pattern from chat-66 graphics_postprocessing&apos;s ping-pong-effects-dict (multiple INDEPENDENT effects compose into one final image via ordered passes) and chat-67 graphics_ui_hud&apos;s UIElement-protocol-and-UIManager-dispatch (multiple INDEPENDENT UI elements coexist in one heterogeneous collection via shared protocol), applied here at biome-data-from-(h, m) scope where the (height, moisture) tuple is the shared spatial grid that two independent data layers compose over. Generalizes from chat-43 game_mathematics_random&apos;s controlled-randomness discipline: random number streams should be independent when the phenomena they model are independent — coupling them via derivation forces correlations the world doesn&apos;t actually have.'>B) Two independent noise layers let the SAME elevation appear as desert OR forest depending on the moisture sample at that pixel; deriving moisture from height (`moisture = 1 - h`) collapses every cell at a given elevation to exactly one biome — every low-elevation cell becomes &quot;low + wet&quot;, every plateau becomes &quot;high + dry&quot;, and biome reduces to a 1D function of height. The independence IS the design intent: &quot;what biome lives here&quot; depends on multiple physical phenomena that vary independently (elevation, precipitation, temperature), not on one parameter deriving the others; coastal deserts and high-elevation forests both EXIST in real geography. Same independent-data-composes-via-shared-spatial-grid pattern from chat-66 ping-pong-effects-dict and chat-67 UIElement-protocol-and-UIManager-dispatch, applied here at biome-data scope.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='`pnoise2` does have repeatx/repeaty parameters but they are OPT-IN — by default the function does not tile, and a 272×107 sample area is well under any practical periodicity limit. The two layers in the lesson exist to model two INDEPENDENT physical phenomena (elevation and moisture) that compose into biome — not to dodge a library limitation. You could implement biome from height alone and the resulting map would still cover the entire 272×107 area without periodicity issues; what it would lack is biome variety per elevation.'>C) The lesson uses two layers because the `noise` package&apos;s `pnoise2` has a maximum coordinate range beyond which the function repeats (the `repeatx`/`repeaty` parameters set this period), so a single layer covering the full 272×107 map would hit the periodicity limit and tile visibly. The second layer at a different offset shifts to a fresh region of pnoise2 space, avoiding the tiling artifact.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

@@ -392,19 +392,134 @@ MAJOR.MINOR.PATCH
             <h2 id="practice-exercise-build-publishing-updates">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Five Tiers, Three Pipelines, One Game — CADENCES Dict + MIGRATIONS Chain + Live-Ops Decoupling in One Pygame Window</h3>
+                <p><strong>Objective:</strong> Build a single ~90-line pygame demo that exercises three orthogonal post-launch update disciplines simultaneously: (a) <em>update tiers as data</em> via a <code>CADENCES</code> dict mapping tier name to (cadence_hours, priority, semver_field, color) tuple — five entries hotfix/patch/content/major/dlc — that drives both the auto-ship loop and the per-tier visualization, so adding a sixth tier (e.g., seasonal) is a single dict-entry edit rather than scattered if/elif branches across the planner, ship script, and dashboard; (b) <em>save-format backward compat as a chained handshake</em> via a <code>MIGRATIONS</code> dict keyed by (from_version, to_version) tuples mapping to per-step migration functions, with <code>load_save()</code> walking the chain v1→v2→v3→…→target so each migration is a frozen contract that knows exactly which fields to add/rename/default for its specific version pair, extending chat-58&apos;s schema-as-frozen-contract pattern from &apos;one frozen contract&apos; to &apos;a chain of frozen contracts that bridge between adjacent versions&apos;; (c) <em>live-ops vs binary-update temporal decoupling</em> where daily challenges, seasonal events, and login bonuses roll over on calendar boundaries (server-side day-rollover, date windows) completely independent of binary update cadence (which runs on Steam&apos;s update cadence ~weeks or app store review 1–2 weeks), with the two pipelines composing via the shared &apos;today&apos;s date&apos; anchor but neither blocking the other — a delayed binary patch doesn&apos;t pause Halloween skins, a holiday event ending doesn&apos;t break the binary. Three independent disciplines, three keyboard surfaces, one pygame window where each axis is visible per frame as a concrete UI region.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Open an 1088×540 pygame window with three labeled regions: left panel (10–490) titled <em>Update Cadences (CADENCES dict)</em>, top-right panel (500–1078) titled <em>SemVer + Save Migration</em>, bottom panel (10–1078) titled <em>Live-Ops vs Binary Updates (independent pipelines)</em>.</li>
+                    <li>Define <code>CADENCES = {tier: (cadence_hours, priority, semver_field, color)}</code> with five entries: hotfix (48h, Critical, patch, red), patch (168h, High, patch, orange), content (720h, Medium, minor, yellow), major (2160h, Medium, major, green), dlc (4380h, Low, major, blue).</li>
+                    <li>Run a sim-time clock advancing 12 hours per real second. Maintain per-tier <code>elapsed = {tier: 0.0}</code> counters; each frame, increment elapsed[t] by sim-hours-this-frame and call <code>ship(t)</code> when elapsed[t] reaches CADENCES[t][0]. Iterate the entire CADENCES dict via <code>for t in CADENCES</code> — never branch on tier names.</li>
+                    <li>Define <code>MIGRATIONS = {(from_v, to_v): fn}</code> with three chained migrations: v1→v2 adds <code>currency: 0</code>, v2→v3 renames <code>hp</code>→<code>health</code>, v3→v4 adds <code>inventory: []</code>. Implement <code>load_save(raw, target)</code> that walks the chain: while raw[&apos;version&apos;] &lt; target, dispatch <code>MIGRATIONS[(cur, cur+1)]</code>.</li>
+                    <li>Maintain live-ops state separately from semver state: <code>live = {&apos;daily&apos;: str, &apos;season&apos;: bool, &apos;login&apos;: bool}</code>. Bind D = day rollover (regenerate daily challenge, reset login_claimed); S = toggle season active; L = claim login bonus. None of these bumps semver — they are calendar-driven, not binary-driven.</li>
+                    <li>Bind keys 1–5 to manual ship of hotfix/patch/content/major/dlc; key 4 (major) additionally bumps <code>SAVE_FMT</code> to simulate when a save-format migration becomes necessary; key M loads the legacy <code>old_save = {&apos;version&apos;: 1, &apos;hp&apos;: 100}</code> through the migration chain to current SAVE_FMT and shows the resulting dict.</li>
+                    <li>Render each frame: left panel = five horizontal cadence bars filling toward each tier&apos;s cadence_hours threshold (color from CADENCES); top-right = current SemVer string + save-format version + old_save and migrated dicts side-by-side + MIGRATIONS keys list; bottom = sim_day counter, daily challenge string, season-active and login-claimed booleans, binary version (echoed from semver), and a separator note &apos;(daily/season/login roll on day boundary; binary ships on cadence boundary)&apos; making the temporal decoupling visible as text.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>Three axes, three independent levers, one shared screen. The CADENCES dict <em>is</em> the post-launch update schedule expressed as data — every site that touches tiers (the auto-ship loop in update(), the bar renderer in render(), a future &apos;what tier is overdue?&apos; report) iterates the same dict, so adding a sixth tier is a single edit at one source-of-truth, not a coordinated multi-site refactor. The MIGRATIONS dict is the same idea applied at a different scope: each (from_v, to_v) key declares a frozen contract for one version transition, and load_save() chains them by walking from raw[&apos;version&apos;] up to the target version. The trick is that no migration ever needs to know about non-adjacent versions; v1→v2 doesn&apos;t care that v4 will eventually exist, because v3→v4 will handle that step when its turn comes. Live-ops is the third lever: daily challenges, seasonal events, and login bonuses are server-side calendar logic that the binary was already coded to honor at v1.0.0 — flipping today&apos;s date is enough to activate Halloween content without shipping a new binary, and conversely, shipping a hotfix doesn&apos;t reset the daily challenge. The shared anchor (today&apos;s date) is what lets the two pipelines compose without either blocking the other. When you find yourself writing if/elif on tier names, version numbers, or platform names, that is the cue to externalize into a dict and iterate.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame, random
+
+W, H = 1088, 540
+pygame.init()
+screen = pygame.display.set_mode((W, H))
+pygame.display.set_caption("Five Tiers, Three Pipelines, One Game")
+font = pygame.font.SysFont("consolas", 14)
+big  = pygame.font.SysFont("consolas", 18, bold=True)
+
+# Axis A: CADENCES dict externalizes update tiers as data (UPDATE-CADENCE scope)
+CADENCES = {
+    "hotfix":  (48,    "Critical", "patch", (255,  80,  80)),
+    "patch":   (168,   "High",     "patch", (255, 160,  80)),
+    "content": (720,   "Medium",   "minor", (255, 220,  80)),
+    "major":   (2160,  "Medium",   "major", ( 80, 200, 100)),
+    "dlc":     (4380,  "Low",      "major", (100, 140, 255)),
+}
+
+# Axis B: MIGRATIONS dict; load_save walks the chain (SAVE-MIGRATION scope)
+def m12(s): return {**s, "version": 2, "currency": 0}
+def m23(s): return {"version": 3, "health": s.get("hp", 100), "currency": s["currency"]}
+def m34(s): return {**s, "version": 4, "inventory": []}
+MIGRATIONS = {(1, 2): m12, (2, 3): m23, (3, 4): m34}
+
+def load_save(raw, target):
+    cur = dict(raw)
+    while cur["version"] &lt; target:
+        cur = MIGRATIONS[(cur["version"], cur["version"] + 1)](cur)
+    return cur
+
+sver = [1, 0, 0]; SAVE_FMT = 1
+sim_day = 0.0; HRS_PER_SEC = 12
+elapsed = {t: 0.0 for t in CADENCES}
+old_save = {"version": 1, "hp": 100}
+migrated = None
+live = {"daily": "Defeat 10 enemies", "season": False, "login": False}
+log = []
+
+def note(m):
+    log.insert(0, m)
+    if len(log) &gt; 6: log.pop()
+
+def ship(tier):
+    fld = CADENCES[tier][2]
+    if   fld == "major": sver[0] += 1; sver[1] = 0; sver[2] = 0
+    elif fld == "minor": sver[1] += 1; sver[2] = 0
+    elif fld == "patch": sver[2] += 1
+    elapsed[tier] = 0.0
+    note(f"shipped {tier} -&gt; v{sver[0]}.{sver[1]}.{sver[2]}")
+
+clock = pygame.time.Clock(); running = True
+while running:
+    dt_s = clock.tick(60) / 1000.0
+    dh = dt_s * HRS_PER_SEC
+    sim_day += dh / 24.0
+    for t in CADENCES:
+        elapsed[t] += dh
+        if elapsed[t] &gt;= CADENCES[t][0]: ship(t)
+    for ev in pygame.event.get():
+        if ev.type == pygame.QUIT: running = False
+        elif ev.type == pygame.KEYDOWN:
+            k = ev.key
+            if   k == pygame.K_q: running = False
+            elif k == pygame.K_1: ship("hotfix")
+            elif k == pygame.K_2: ship("patch")
+            elif k == pygame.K_3: ship("content")
+            elif k == pygame.K_4: ship("major"); SAVE_FMT += 1; note(f"save fmt -&gt; v{SAVE_FMT}")
+            elif k == pygame.K_5: ship("dlc")
+            elif k == pygame.K_d:
+                sim_day += 1
+                live["daily"] = random.choice(["Defeat 10 enemies", "Find 5 chests", "Win 3 PvP", "Craft 7 items"])
+                live["login"] = False
+                note("day rollover (server-side)")
+            elif k == pygame.K_s:
+                live["season"] = not live["season"]; note(f"season {'ON' if live['season'] else 'OFF'}")
+            elif k == pygame.K_l: live["login"] = True; note("login bonus claimed")
+            elif k == pygame.K_m:
+                migrated = load_save(old_save, SAVE_FMT)
+                note(f"migrated v{old_save['version']} -&gt; v{migrated['version']}")
+    screen.fill((20, 24, 32))
+    pygame.draw.rect(screen, (35, 40, 50), (10, 10, 480, 250))
+    screen.blit(big.render("Update Cadences (CADENCES dict)", True, (255,255,255)), (20, 18))
+    y = 50
+    for t, (hrs, pri, fld, col) in CADENCES.items():
+        r = min(elapsed[t] / hrs, 1.0)
+        pygame.draw.rect(screen, (60, 60, 70), (140, y, 250, 20))
+        pygame.draw.rect(screen, col, (140, y, int(250 * r), 20))
+        screen.blit(font.render(f"{t} ({pri})", True, (255,255,255)), (20, y + 3))
+        screen.blit(font.render(f"{int(elapsed[t])}/{hrs}h -&gt; {fld}", True, (220,220,220)), (400, y + 3))
+        y += 32
+    pygame.draw.rect(screen, (35, 40, 50), (500, 10, 578, 250))
+    screen.blit(big.render("SemVer + Save Migration", True, (255,255,255)), (510, 18))
+    screen.blit(big.render(f"v{sver[0]}.{sver[1]}.{sver[2]}", True, (120,220,120)), (510, 50))
+    screen.blit(font.render(f"save format version: v{SAVE_FMT}", True, (200,200,255)), (510, 90))
+    screen.blit(font.render(f"old_save = {old_save}", True, (180,180,180)), (510, 115))
+    screen.blit(font.render(f"migrated = {migrated}" if migrated else "(press M to migrate)", True, (255,220,140)), (510, 138))
+    screen.blit(font.render(f"MIGRATIONS keys: {list(MIGRATIONS.keys())}", True, (180,180,255)), (510, 165))
+    pygame.draw.rect(screen, (35, 40, 50), (10, 270, 1068, 200))
+    screen.blit(big.render("Live-Ops vs Binary Updates (independent pipelines)", True, (255,255,255)), (20, 280))
+    screen.blit(font.render(f"sim day: {int(sim_day)}", True, (255,255,255)), (20, 310))
+    screen.blit(font.render(f"daily challenge (server-side): {live['daily']}", True, (200,255,200)), (20, 332))
+    screen.blit(font.render(f"season active: {live['season']}   login claimed: {live['login']}", True, (200,255,200)), (20, 354))
+    screen.blit(font.render(f"binary version (Steam side): v{sver[0]}.{sver[1]}.{sver[2]}", True, (255,200,200)), (20, 380))
+    screen.blit(font.render("(daily/season/login roll on day boundary; binary ships on cadence boundary)", True, (180,180,180)), (20, 408))
+    pygame.draw.rect(screen, (35, 40, 50), (10, 480, 1068, 50))
+    screen.blit(font.render("[1-5] ship tier  [M] migrate save  [D] day rollover  [S] toggle season  [L] claim login  [Q] quit", True, (200,200,200)), (20, 488))
+    screen.blit(font.render(f"log: {' | '.join(log[:3])}", True, (255,220,140)), (20, 510))
+    pygame.display.flip()
+
+pygame.quit()</code></pre>
                 </details>
             </div>
 
@@ -412,31 +527,31 @@ MAJOR.MINOR.PATCH
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> A team&apos;s roadmap planner, ship script, and dashboard all currently contain the same five-way <code>if update_type == &apos;hotfix&apos;: cadence = 48; priority = &apos;Critical&apos; elif update_type == &apos;patch&apos;: cadence = 168; priority = &apos;High&apos; elif update_type == &apos;content&apos;: cadence = 720 elif update_type == &apos;major&apos;: cadence = 2160 elif update_type == &apos;dlc&apos;: cadence = 4380</code> branch. Product wants to add a sixth tier <code>seasonal</code> (every 2160 hours, Medium priority) for holiday-event content. What is the canonical refactor?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Performance is a misleading framing here — Python dict lookups are O(1) and far cheaper than a five-way if/elif branch at runtime; the architectural concern is maintainability across multiple call sites, not per-frame cost. Adding a sixth tier in three sites means three near-identical edits that can drift out of sync.'>A) Inline the new sixth-tier branch in every site that has the existing five-tier branches; performance demands hard-coded values for the dashboard&apos;s per-frame render loop.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Externalizing the tier list as a CADENCES dict makes adding the sixth tier a single-line dict-entry edit at one source-of-truth; the planner&apos;s for t in CADENCES, the ship script&apos;s CADENCES[t] lookup, and the dashboard&apos;s for t, (hrs, pri, _) in CADENCES.items() all pick up the new tier automatically. Same data-driven externalization pattern as architecture_save_load schema (chat-58), pathfinding terrain-cost dict (chat-60), behavior-trees child-list-order (chat-61), decision-making personality dict (chat-62), procedural generation seed (chat-68), publishing_executables .spec file (chat-70), publishing_marketing pitch templates (chat-71), publishing_performance algorithmic-axis toggles (chat-72), and publishing_platforms TARGETS+ADAPTERS dicts (chat-73) — sixteenth Phase-8 lesson reinforcing the pattern, first applied at UPDATE-CADENCE scope.'>B) Externalize the tier list into a <code>CADENCES = {tier_name: (cadence_hours, priority, semver_field)}</code> dict the planner, ship script, and dashboard all iterate over; adding <code>seasonal</code> is a single new dict entry and every site picks it up automatically.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='This conflates two separate concerns. The static config (the tier list itself) belongs in source code as a CADENCES dict; the runtime state (which tiers are due to ship right now) is a separate elapsed dict that gets mutated each frame. A globally-mutable runtime config invites bugs where the tier list itself accidentally drifts at runtime, and YAML loading at startup adds a parsing step with no maintainability win over a Python dict literal.'>C) Replace the if/elif branches with a YAML config file loaded once at startup into a global mutable list; the runtime mutates the list as developers ship updates.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> Your game v1.0.0 shipped with a save format <code>{&apos;version&apos;: 1, &apos;hp&apos;: 100}</code>. v2.0.0 added <code>currency: 0</code>. v3.0.0 renamed <code>hp</code> to <code>health</code>. v4.0.0 added <code>inventory: []</code>. A player who hasn&apos;t launched in months has a v1 save file and just installed v4.0.0. What is the canonical loader pattern?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Rejecting a v1 save loses player data unnecessarily; the version field exists precisely to enable this kind of long-distance migration. Players who haven&apos;t played for months are exactly the audience that needs migration to work — they are the players most likely to have a stale save format AND the most likely to churn permanently if asked to start over.'>A) The v4 loader rejects the file with &apos;save incompatible — please start a new game&apos;; backward compatibility across three intermediate versions is unsafe because too many fields might be missing or named wrong.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='The chained-migration pattern lets each migration function be tiny and focused — v1→v2 adds currency, v2→v3 renames hp to health, v3→v4 adds inventory; none of them needs to know about non-adjacent versions, because adjacent migrations compose to bridge any distance. Same shape as chat-58 architecture_save_load&apos;s schema-as-frozen-contract, extended here from one frozen contract to a chain of frozen contracts each bridging adjacent versions; same shape as chat-67 graphics_ui_hud&apos;s UIElement-protocol-vs-isinstance-branches applied at SAVE-VERSION scope where the loader indexes into a per-version migration dict rather than branching on version values inside one mega-loader function.'>B) Maintain a <code>MIGRATIONS = {(from_v, to_v): migration_fn}</code> dict and a <code>load_save(raw, target)</code> that walks the chain v1→v2→v3→v4, dispatching <code>MIGRATIONS[(cur, cur+1)]</code> until cur reaches target; each migration function is a frozen contract for its specific version pair, and the chain composes naturally.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='This conflates field-absent-because-added-in-later-version with field-absent-because-intentionally-not-set. A v3 save with health: 0 is a legitimate state (player at 0 HP from death); a v1 save has hp: 100 and no health field. Without an explicit version field, the loader cannot tell these apart, and any field-default-fallback logic risks silently corrupting save state at every future version bump.'>C) Have the v4 loader use <code>getattr</code> with defaults for every field; if <code>hp</code> is missing default to 100, if <code>health</code> is missing fall back to <code>hp</code>, if <code>currency</code> is missing default to 0, if <code>inventory</code> is missing default to <code>[]</code>. This avoids needing a version field at all.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> Your game has daily challenges (rotate at server midnight), seasonal Halloween skins (active Oct 15–Nov 5), and a Steam binary update cadence (hotfix as needed; major every quarter). The Halloween skin needs to activate on Oct 15 even though no binary update ships until Oct 17 (next hotfix slot). What is the canonical architecture?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='This couples two pipelines that should stay independent. If the Oct 15 binary patch fails Steam certification or hits a build error, the entire Halloween event window slips by days. Live-ops calendars and binary cadences serve different purposes and have different reliability requirements; coupling them means the slowest pipeline gates the whole experience.'>A) Block the Halloween skin behind a binary update — ship a v1.0.5 patch on Oct 15 that flips an internal flag; this guarantees the skin and the binary stay synchronized.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='The binary contains the rendering and data-loading logic for the Halloween skin from day one; the activation decision lives in server-side calendar logic (or a date-window check the binary performs against today&apos;s date). On Oct 15 the skin appears without any binary work because the binary was already coded to honor today within Halloween window then render skin. Same independent-pipelines-compose-via-shared-anchor pattern as chat-66 ping-pong-effects-dict, chat-67 UIElement-protocol, chat-68 height-vs-moisture-independence, chat-71 publishing_marketing&apos;s marketing-vs-build-pipeline temporal-decoupling, and chat-73 publishing_platforms&apos;s per-platform pipeline independence applied at LIVE-OPS scope.'>B) The Halloween skin&apos;s activation reads a server-side feature flag / date window the binary was already coded to honor at v1.0.0; binary update cadence and live-ops calendar are independent pipelines that compose via the shared &apos;today&apos;s date&apos; anchor, and neither blocks the other.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Manual player action creates an &quot;I forgot to flip the toggle&quot; support nightmare and a community management problem (&quot;why isn&apos;t Halloween appearing for half my players?&quot;). The whole point of seasonal events is automatic activation; pushing the activation choice onto each player defeats the purpose and segments the player base into haves and have-nots based on whether they happened to find the toggle.'>C) Bundle the Halloween skin into the v1.0.0 binary but gate it behind an in-game &apos;activate Halloween mode&apos; toggle the player flips manually; this avoids server dependency entirely.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

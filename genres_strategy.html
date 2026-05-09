@@ -1471,19 +1471,103 @@
             <h2 id="practice-exercise-build-genres-strategy">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Three Pillars of RTS Architecture — Construction-Gate-at-onComplete + Stats-Table-Externalization + Snapshot-Research-Bonus in One Canvas Window</h3>
+                <p><strong>Objective:</strong> Build a runnable HTML5 canvas + JS program (roughly 60–65 lines) that distills the lesson's GameMap + Unit + Building + AIController + gameState architecture into one cohesive demo where three orthogonal RTS-architecture disciplines are visible per frame on a single 800×420 canvas split into three labeled regions plus a HUD strip. (a) Building-lifecycle gate at <code>onComplete()</code> at BUILDING-LIFECYCLE scope — <code>Building.update(dt)</code> ramps <code>this.progress += dt * 25</code> until ≥ 100 then flips <code>this.complete = true</code> AND calls <code>this.onComplete()</code>, the EXCLUSIVE site that writes <code>state.income += this.ratePerSec</code>; during construction (progress &lt; 100) the building exists on the canvas and occupies its slot but contributes ZERO income to the global tally, so the LEFT region renders three buildings (Farm, Mine, Barracks) under construction with per-building progress bars + a 'income/s' readout that stays at 0 until each building's progress hits 100, then ticks up at that building's per-second rate as a side-effect of the gate firing exactly once per building. The two-layer separation (data: <code>ratePerSec</code> in the constructor; gate: <code>this.complete</code> boolean check) is the same shape as chat-46 platformer_tilemap's is_solid-True-OOB invariant (default-to-deny at the boundary), chat-54 architecture_state_machines' on_exit→reassign→on_enter strict ordering, chat-56 architecture_component_systems' components-hold-state-systems-hold-per-tick-logic separation, and chat-57 architecture_event_systems' queued-emit-vs-immediate-emit timing modes, applied here at building-construction-lifecycle scope. (b) Stats-table externalization at UNIT/BUILDING-TYPE-DEFINITION scope — DATA-DRIVEN EXTERNALIZATION; the <code>Unit</code> constructor holds a per-type dict literal <code>UNIT_STATS = { worker: {...}, soldier: {...}, archer: {...} }</code> and runs <code>Object.assign(this, UNIT_STATS[type])</code> at every spawn; the MIDDLE region renders unit-spawn area where key 2 spawns soldiers using the dict lookup AND key H mutates <code>UNIT_STATS.soldier.hp += 20</code> at runtime so the next-spawned soldier shows the new HP value while extant soldiers retain their old HP — mutation propagates ONLY to subsequent spawns because <code>Object.assign</code> COPIES the dict's current values into the new instance at the moment of construction, never re-reading the dict thereafter. Same data-driven-externalization shape as the long second-half-Phase-8 streak — chat-46 is_solid + chat-47 tile-palette JSON + chat-54 explicit transition table + chat-55 scene-stack lifecycle hooks + chat-56 required-components list + chat-57 listeners-by-event dict + chat-58 dataclass schema + chat-59 per-state perception + chat-60 TERRAIN_COST dict + chat-61 RUNNING-state stickiness + Selector child-list order + chat-62 personality-as-weighted-modifier dict + chat-63 local-rule additive forces + chat-79 skill-prerequisites-as-declarative-data-records — applied here at UNIT-AND-BUILDING-TYPE-DEFINITION scope (the stats dict IS the canonical per-type definition the constructor consults exactly once per spawn). (c) Research bonus applied at creation time, not retroactively, at RESEARCH-EFFECT-TIMING scope — CONTEXT-DETERMINES-CORRECT-CHOICE pattern; the <code>Unit</code> constructor checks <code>if (state.researched.has('military')) this.attack *= 1.25</code> AT CONSTRUCTION TIME and the result is captured on the instance's own <code>attack</code> field forever, so a soldier spawned BEFORE the R key is pressed keeps its baseline attack (15) for the rest of its life while only soldiers spawned AFTER the R key receive the bonus (15 × 1.25 = 18.75). The RIGHT region renders a research panel with key R that flips <code>state.researched.add('military')</code> AND the HUD shows the soldier-count split into pre-R vs post-R cohorts with their average attack values, so the snapshot-vs-retroactive design choice is visible as concrete numbers per cohort. The alternative architecture — live retroactive multiplier walking every extant unit after research completes — is a legitimately different design choice with different gameplay rhythm: snapshot timing produces 'tech-up-THEN-rebuild' pacing where players must replace existing units to fully benefit (think AoE2's late-game army-replacement cycle); live timing produces 'research instantly empowers everything' pacing (think Civ's instant-tech-effect model). Both are valid; the lesson picks snapshot as a deliberate architectural choice. Same context-determines-correct-choice rhetoric as chat-49 polish_tweening / chat-50 polish_difficulty / chat-50 polish_playtesting / chat-52 client_server / chat-53 lag_compensation / chat-54 lobby / chat-60 pathfinding heuristic / chat-61 Selector vs Sequence / chat-62 utility-AI vs BT / chat-63 flocking emergence / chat-79 enum-roundtrip-vs-live-comparison-by-name — chat-80/81 case is FIRST to make the snapshot-vs-retroactive distinction explicit at RESEARCH-EFFECT-TIMING scope. The HUD shows current income/s, total income accumulated, current <code>UNIT_STATS.soldier.hp</code> value, pre-R soldier count + average attack, post-R soldier count + average attack, and a researched: YES/NO indicator — three orthogonal RTS-architecture disciplines visible per frame as concrete numbers and visibly-divergent cohort statistics. ADVANCES the genres module 5/9 → 6/9 partial at chat-81 M1; module-completeness stays 12/13 since genres doesn't close in one chat (3 genres lessons remain after chat-81: strategy_python / tower_defense / tower_defense_python).</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Add a <code>&lt;canvas id=&apos;rts&apos; width=&apos;800&apos; height=&apos;420&apos;&gt;&lt;/canvas&gt;</code> element to the page and grab a 2D rendering context.</li>
+                    <li>Define a <code>UNIT_STATS</code> dict literal at module scope mapping each unit type (worker / soldier / archer) to <code>{hp, attack, color}</code> — this is the externalized stats table the <code>Unit</code> constructor will consult once per spawn.</li>
+                    <li>Define a <code>Building</code> class whose <code>update(dt)</code> ramps <code>this.progress</code> until ≥ 100 then flips <code>this.complete = true</code> AND calls <code>this.onComplete()</code> EXACTLY ONCE; <code>onComplete()</code> is the EXCLUSIVE site that writes <code>state.income += this.ratePerSec</code>.</li>
+                    <li>Define a <code>Unit</code> class whose constructor calls <code>Object.assign(this, UNIT_STATS[type])</code> to copy the type's stats onto the instance, then checks <code>state.researched.has(&apos;military&apos;)</code> AT CONSTRUCTION TIME and applies <code>this.attack *= 1.25</code> if true — capturing the research-snapshot on the instance's own field forever.</li>
+                    <li>Initialize a <code>state</code> object holding <code>income: 0</code>, three <code>Building</code> instances (Farm, Mine, Barracks), an empty <code>soldiers</code> array, and an empty <code>researched</code> Set.</li>
+                    <li>Wire keyboard handlers: key 2 pushes a new <code>Unit(&apos;soldier&apos;)</code> into <code>state.soldiers</code>; key H runs <code>UNIT_STATS.soldier.hp += 20</code> (mutates the dict, propagates ONLY to subsequent spawns); key R runs <code>state.researched.add(&apos;military&apos;)</code> (flips snapshot result for next spawn only).</li>
+                    <li>In the animation loop, advance every building via <code>state.buildings.forEach(b =&gt; b.update(dt))</code>, accumulate <code>state.totalIncome += state.income * dt</code>, then render the three regions plus a HUD that shows income/s, total, current <code>UNIT_STATS.soldier.hp</code>, pre-R vs post-R soldier counts with average attack per cohort, and the researched flag.</li>
+                    <li>Verify all three axes by interacting: watch a building's progress bar fill, see income tick up the moment it crosses 100; press 2 to spawn a soldier with hp 100, press H to bump <code>UNIT_STATS.soldier.hp</code> to 120, press 2 again to see the new soldier spawn at hp 120 while the prior soldier stays at hp 100; press 2 a few times pre-R then press R then press 2 a few more times to see the post-R cohort show average attack 18.75 while the pre-R cohort stays at 15.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The three axes are three independent SHAPES of the same data — the canvas is a window onto the same in-memory state from three orthogonal viewing angles per frame. Each renderer-read is O(1) per frame because the state is denormalized into the form the renderer wants: <code>state.income</code> is the running sum the gate maintains, the <code>Unit</code> instance's own <code>attack</code> field is the snapshot-frozen value, and <code>UNIT_STATS.soldier.hp</code> is the dict the next constructor will read. The maintenance cost lives in the WRITE paths: forgetting to call <code>onComplete()</code> exactly once at the gate boundary means income never starts (BUILDING-LIFECYCLE failure mode); reading <code>UNIT_STATS</code> in <code>render()</code> instead of capturing in the constructor means runtime mutations would propagate retroactively to extant units (UNIT-TYPE-DEFINITION failure mode); recomputing the research bonus in <code>render()</code> instead of capturing on the instance means pre-R cohorts would magically become post-R the frame R is pressed (RESEARCH-EFFECT-TIMING failure mode). Each axis has a specific failure mode if its discipline is broken, and each renderer-read stays cheap precisely because the discipline keeps the data in the right shape at the right time.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>const ctx = document.getElementById('rts').getContext('2d');
+const W = 800, H = 420;
+
+// Axis B: Stats-table externalization — adding a unit type = one dict entry
+const UNIT_STATS = {
+    worker:  { hp: 50,  attack: 5,  color: '#7fb069' },
+    soldier: { hp: 100, attack: 15, color: '#d62828' },
+    archer:  { hp: 60,  attack: 12, color: '#fcbf49' }
+};
+
+// Axis A: Building-lifecycle gate at onComplete()
+class Building {
+    constructor(name, x, ratePerSec) {
+        this.name = name; this.x = x; this.ratePerSec = ratePerSec;
+        this.progress = 0; this.complete = false;
+    }
+    update(dt) {
+        if (this.complete) return;
+        this.progress = Math.min(100, this.progress + dt * 25);
+        if (this.progress &gt;= 100) { this.complete = true; this.onComplete(); }
+    }
+    onComplete() { state.income += this.ratePerSec; }
+}
+
+// Axis C: Snapshot at construction — bonus captured on instance forever
+class Unit {
+    constructor(type) {
+        Object.assign(this, UNIT_STATS[type]);   // Axis B: copy stats once
+        this.type = type;
+        this.researchedAtSpawn = state.researched.has('military');
+        if (this.researchedAtSpawn) this.attack *= 1.25;
+    }
+}
+
+const state = {
+    income: 0, totalIncome: 0,
+    buildings: [
+        new Building('Farm',     60,  2),
+        new Building('Mine',    180,  5),
+        new Building('Barracks', 300, 0)
+    ],
+    soldiers: [],
+    researched: new Set()
+};
+
+window.addEventListener('keydown', e =&gt; {
+    if (e.key === '2') state.soldiers.push(new Unit('soldier'));
+    if (e.key === 'h') UNIT_STATS.soldier.hp += 20;       // mutates dict; propagates to next spawn only
+    if (e.key === 'r') state.researched.add('military');  // flips snapshot for future spawns only
+});
+
+let last = performance.now();
+function frame(now) {
+    const dt = (now - last) / 1000; last = now;
+    state.buildings.forEach(b =&gt; b.update(dt));
+    state.totalIncome += state.income * dt;
+
+    ctx.fillStyle = '#1a1a2e'; ctx.fillRect(0, 0, W, H);
+    state.buildings.forEach(b =&gt; {
+        ctx.fillStyle = b.complete ? '#06d6a0' : '#555';
+        ctx.fillRect(b.x, 60, 80, 80 * (b.progress / 100));
+        ctx.strokeStyle = '#fff'; ctx.strokeRect(b.x, 60, 80, 80);
+        ctx.fillStyle = '#fff'; ctx.font = '11px monospace';
+        ctx.fillText(b.name + ' ' + Math.floor(b.progress) + '%', b.x, 50);
+    });
+    const pre  = state.soldiers.filter(s =&gt; !s.researchedAtSpawn);
+    const post = state.soldiers.filter(s =&gt;  s.researchedAtSpawn);
+    const avg  = arr =&gt; arr.length ? (arr.reduce((s, u) =&gt; s + u.attack, 0) / arr.length).toFixed(2) : '—';
+    ctx.fillStyle = '#fff'; ctx.font = '13px monospace';
+    ctx.fillText('income/s: ' + state.income.toFixed(1) + '   total: ' + state.totalIncome.toFixed(0), 20, 200);
+    ctx.fillText('UNIT_STATS.soldier.hp: ' + UNIT_STATS.soldier.hp, 20, 240);
+    ctx.fillText('pre-R  soldiers: ' + pre.length  + '   avg attack ' + avg(pre),  20, 280);
+    ctx.fillText('post-R soldiers: ' + post.length + '   avg attack ' + avg(post), 20, 300);
+    ctx.fillText('researched military: ' + (state.researched.has('military') ? 'YES' : 'NO'), 20, 340);
+    ctx.fillText('Keys: 2 = spawn soldier   H = +20 HP   R = research military', 20, 400);
+    requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);</code></pre>
                 </details>
             </div>
 
@@ -1491,31 +1575,31 @@
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> In the demo, <code>Building.update(dt)</code> ramps <code>this.progress</code> each frame but ONLY <code>this.onComplete()</code> writes <code>state.income += this.ratePerSec</code>, and <code>onComplete()</code> is called exactly once when <code>this.progress</code> first crosses 100. What does this construction-gate-at-<code>onComplete</code> design accomplish at BUILDING-LIFECYCLE scope?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='This frames the gate as a runtime-throughput optimization. The architectural reason is correctness: a building&apos;s income/maxPopulation/sight effects must STRICTLY FOLLOW completion, never overlap with construction. Even if the per-frame writes were nearly free, applying income during construction would mean a half-built barracks contributes the same income as a finished one — that is a gameplay bug, not a performance issue.'>A) It batches per-frame writes into one event so the income tally stays cache-friendly and the per-frame collision loop runs faster.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Correct. Folding income/maxPopulation/sight into the single <code>onComplete()</code> exclusive write site collapses two concerns — &quot;is this building done?&quot; AND &quot;has its effect already been applied?&quot; — into one boolean (<code>this.complete</code>) plus one EXCLUSIVE write path. During construction the building exists and occupies its slot but contributes zero, and the moment progress crosses 100 the gate fires exactly once writing the income delta forever. Same fail-safe-defaults / strict-ordering shape as chat-46 platformer_tilemap&apos;s is_solid-True-OOB invariant, chat-54 architecture_state_machines&apos; on_exit→reassign→on_enter ordering, chat-56 architecture_component_systems&apos; components-hold-state-systems-hold-per-tick-logic separation, and chat-57 architecture_event_systems&apos; queued-emit-vs-immediate-emit timing modes, applied here at building-construction-lifecycle scope where income/maxPopulation/sight effects strictly FOLLOW completion and the gate is the discipline that enforces &quot;follow&quot; via a single exclusive write site.'>B) It enforces a strict-ordering invariant — income/maxPopulation/sight effects STRICTLY FOLLOW completion via a single exclusive write site at <code>onComplete()</code> — so a half-built building cannot accidentally contribute income while construction is still in progress.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='This frames the gate as a memory-management trick. The architectural reason is correctness, not heap footprint: the income/maxPopulation/sight effects must STRICTLY FOLLOW completion, and the exclusive write site is what enforces that ordering invariant. JavaScript closure costs and hidden-class transitions are nanoseconds per call regardless of which architectural shape you pick; the design driver is the strict-ordering contract between construction and effect, not memory layout.'>C) It avoids a JavaScript closure allocation that would otherwise be created for the per-frame income write, keeping V8&apos;s hidden-class shape stable across frames.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> The demo&apos;s <code>UNIT_STATS</code> dict literal lives at module scope, and <code>Unit</code>&apos;s constructor runs <code>Object.assign(this, UNIT_STATS[type])</code> at every spawn rather than holding a reference to <code>UNIT_STATS[type]</code>. Pressing H runs <code>UNIT_STATS.soldier.hp += 20</code> — the next-spawned soldier shows the new HP while extant soldiers retain their old HP. Why does the demo use this stats-table externalization shape at UNIT/BUILDING-TYPE-DEFINITION scope?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='This frames the dict as a performance optimization. The dict-vs-if-elif difference is nanoseconds per spawn and irrelevant at typical spawn rates. The architectural driver is that adding a new unit type (mage, healer, spy) is ONE dict entry rather than scattered if/elif edits across the constructor, the renderer, the AI, and the production loop — the maintainability win, not call-site speed.'>A) Dict lookups are faster than if-elif chains in JavaScript so the spawn path runs at higher frame rates when many units are produced per second.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Correct. The stats dict IS the canonical per-type definition the constructor consults exactly once per spawn. Adding a new unit type — mage, healer, spy — is ONE dict entry, with zero edits to the renderer, the AI&apos;s targeting code, the production loop, or the spawn handler because they all read fields off the instance after <code>Object.assign</code>. The runtime-mutation behavior (H bumping <code>UNIT_STATS.soldier.hp</code> propagates ONLY to subsequent spawns) is a direct consequence of <code>Object.assign</code> COPYING values into the new instance at construction time rather than holding a live reference: the instance carries its own <code>hp</code> field forever after construction. Same data-driven externalization pattern as chat-46 is_solid + chat-47 tile-palette JSON + chat-54 explicit transition table + chat-55 scene-stack lifecycle hooks + chat-56 required-components list + chat-57 listeners-by-event dict + chat-58 dataclass schema + chat-59 per-state perception + chat-60 TERRAIN_COST dict + chat-61 RUNNING-state stickiness + Selector child-list order + chat-62 personality dict + chat-63 local-rule additive forces + chat-79 skill-prerequisites-as-data, applied here at UNIT-AND-BUILDING-TYPE-DEFINITION scope where the dict IS the canonical per-type definition the constructor consults exactly once per spawn.'>B) The dict centralizes per-type stats so adding a new unit type is one dict entry rather than scattered if/elif edits across constructor / renderer / AI / production loop, and <code>Object.assign</code>&apos;s copy-at-construction semantics give the snapshot behavior the demo demonstrates with the H key.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='This frames the dict as a memory-saving choice. Three small per-type entries take a few hundred bytes regardless of whether they live in a dict literal or scattered as named constants — RAM is not the design driver. The architectural reason is single-source-of-truth maintainability: the dict IS the canonical per-type definition, and adding a new unit type is one dict edit rather than scattered control-flow changes.'>C) The dict shares a single underlying object across all unit instances of the same type, halving heap usage compared to giving each instance its own copy of the stats fields.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> The demo&apos;s <code>Unit</code> constructor checks <code>if (state.researched.has(&apos;military&apos;)) this.attack *= 1.25</code> AT CONSTRUCTION TIME and the result is captured on the instance&apos;s own <code>attack</code> field forever. After the player spawns three soldiers, presses R, then spawns three more soldiers, the HUD shows pre-R soldiers at average attack 15 and post-R soldiers at average attack 18.75. Why does the demo apply the research bonus at creation time rather than retroactively walking every extant unit when R is pressed?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='This frames the snapshot as a performance optimization. Walking N extant units to apply a multiplier is microseconds per research-event, which is rare (one keypress) and irrelevant to per-frame budget. The architectural reason is gameplay-rhythm design: snapshot timing produces &quot;tech-up-then-rebuild&quot; pacing where existing units must be replaced to fully benefit, while live-retroactive timing produces &quot;research instantly empowers everything&quot; pacing — both are valid architectural choices that produce different gameplay experiences.'>A) Walking every extant unit on the research-event would be O(N) and slow down the research keypress noticeably when many units are alive, so the snapshot avoids the per-event cost.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Correct. Snapshot-vs-retroactive is a CONTEXT-DETERMINES-CORRECT-CHOICE design decision with different gameplay rhythms. Snapshot timing produces &quot;tech-up-THEN-rebuild&quot; pacing where players must replace existing units to fully benefit — think AoE2&apos;s late-game army-replacement cycle where researching Elite-Berserker upgrade only affects newly-trained Berserkers, so committed players retire their veteran army and produce a fresh post-research one. Live retroactive timing produces &quot;research instantly empowers everything&quot; pacing — think Civilization&apos;s instant-tech-effect model where finishing a tech immediately upgrades every unit globally on the next turn. Both are valid architectural choices that produce visibly different gameplay experiences with different strategic emphases (army-replacement decisions vs instant-empowerment decisions). The lesson picks snapshot as a deliberate architectural choice expressed at construction time. Same context-determines-correct-choice rhetoric as chat-49 polish_tweening (camera no-overshoot vs polish-feel overshoot) + chat-50 polish_difficulty (DDA target performance band) + chat-50 polish_playtesting (p-value AND effect size both required) + chat-52 client_server (favor-the-shooter trade-off) + chat-53 lag_compensation + chat-54 lobby + chat-60 pathfinding heuristic + chat-61 Selector vs Sequence + chat-62 utility-AI vs BT + chat-63 flocking emergence + chat-79 enum-roundtrip-vs-live-comparison-by-name — chat-81 case here is FIRST to make the snapshot-vs-retroactive distinction explicit at RESEARCH-EFFECT-TIMING scope.'>B) Snapshot-vs-retroactive is a deliberate gameplay-rhythm design choice — snapshot produces &quot;tech-up-then-rebuild&quot; pacing (think AoE2 army-replacement) while retroactive produces &quot;research instantly empowers everything&quot; pacing (think Civ instant-tech-effects); the lesson chose snapshot as the intended pacing.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='This frames the snapshot as a JavaScript-mechanics constraint. JavaScript Sets and instance fields are perfectly mutable at runtime — there is no language-level barrier to walking <code>state.soldiers</code> on the research keypress and applying <code>u.attack *= 1.25</code> to each existing unit. The retroactive design is fully expressible in JS; the demo chose snapshot because of the gameplay-rhythm difference (tech-up-then-rebuild vs instant-empowerment), not because of any technical constraint.'>C) JavaScript&apos;s Set semantics make it impossible to apply a side-effect across all existing units when an entry is added, so the snapshot is the only architecture the language supports.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

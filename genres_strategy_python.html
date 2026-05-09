@@ -1021,19 +1021,143 @@ if __name__ == "__main__":
             <h2 id="practice-exercise-build-genres-strategy-python">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Three Pillars of Python RTS Architecture in One Pygame Window</h3>
+                <p><strong>Objective:</strong> Build a runnable pygame program (~85 lines) that distills the lesson's UnitType/BuildingType‐Enum + per‐type stats dict + Building.is_complete gate + research_tech retroactive‐mutation architecture into one cohesive pygame demo where three orthogonal Python‐RTS‐architecture disciplines are visible per frame on a 1088×540 window split into three vertical panels (LEFT = Building‐lifecycle gate at <code>is_complete</code> + global income tally / MIDDLE = Enum‐keyed UNIT_STATS dict + spawn cohort + runtime mutation / RIGHT = retroactive research_tech walk over extant soldier cohort). (a) <strong>Building‐lifecycle gate at <code>is_complete</code> boolean checked at every consumer site</strong> at BUILDING‐LIFECYCLE scope: each <code>Building</code> ramps <code>progress</code> per frame until <code>&gt;= 100</code> then flips <code>is_complete = True</code>; downstream consumers ALL guard via <code>if b.is_complete:</code> checks before adding income / running production / firing tower attacks — so during construction (progress &lt; 100) the building exists on the map but contributes ZERO income to the global tally. <strong>Python‐idiomatic delta from chat‐81's <code>onComplete()</code> method</strong>: chat‐81 (JS) centralized the side‐effects into one <code>onComplete()</code> method called exactly once at the moment progress crossed 100; chat‐82 (Python) distributes the side‐effect‐gating across N consumer‐site checks. Both are valid; the JS‐vs‐Python implementations differ at the call‐site‐distribution‐vs‐callback‐centralization level even though the architectural intent is identical (gate side effects on lifecycle completion). The two‐layer separation (data: <code>income_per_sec</code> in the building record; gate: <code>is_complete</code> flag check) is the same default‐to‐deny‐at‐the‐boundary shape as platformer_tilemap's is_solid‐True‐OOB invariant + architecture_state_machines' on_exit→reassign→on_enter strict ordering + architecture_event_systems' queued‐emit‐vs‐immediate‐emit timing modes + chat‐81 genres_strategy's onComplete‐as‐gate, applied here at BUILDING‐LIFECYCLE scope with the consumer‐check Python‐idiomatic delta. (b) <strong><code>Enum</code>‐keyed stats dict at UNIT‐TYPE‐DEFINITION scope</strong>: a module‐level <code>UNIT_STATS: dict[UnitType, dict]</code> holds per‐type stat records keyed by <code>UnitType</code> Enum MEMBERS (not string literals); <code>Unit.__init__</code> reads <code>UNIT_STATS[t]['hp']</code> and <code>UNIT_STATS[t]['attack']</code> exactly once per spawn. <strong>Python‐idiomatic delta from chat‐81's JS object‐literal <code>UNIT_STATS = { worker: {...} }</code></strong>: chat‐82 uses Enum members as keys, which means a typo at the spawn site (<code>Unit(UnitType.WROKER)</code>) raises <code>AttributeError</code> at IMPORT time before the constructor even runs; the equivalent JS typo (<code>new Unit(&apos;wroker&apos;)</code>) silently produces a unit with all‐undefined stats that crashes much later or runs as a glitched zero‐stat unit. Adding a new unit type is one new <code>UnitType</code> enum member + one new <code>UNIT_STATS</code> entry rather than scattered if/elif edits across <code>__init__</code> / <code>update()</code> / <code>render()</code>. SEVENTH design‐time‐validation‐vs‐runtime‐discovery lesson reinforcing the pattern across Phase 8, FIRST applied at STATS‐DICT‐KEY‐IDENTITY scope where Enum‐member‐as‐key replaces string‐as‐key. The H key mutates <code>UNIT_STATS[UnitType.SOLDIER]['hp'] += 20</code> at runtime so subsequent spawned soldiers show the new HP while extant soldiers retain their old HP — a property of constructor‐snapshot semantics and module‐level dict identity rather than a property of the Enum‐key shape itself. (c) <strong>Retroactive research bonus applied to all extant units once at research moment, NOT snapshotted at creation time</strong> at RESEARCH‐EFFECT‐TIMING scope: pressing R triggers <code>for u in soldiers: u.attack = int(u.attack * 1.2)</code> mutating every extant soldier's attack stat IN PLACE at the moment research completes, with NO corresponding hook in <code>Unit.__init__</code> to consult a researched‐techs set for future spawns. The HUD shows <code>Pre‐R: [15, 15, 15]</code> static and <code>Post‐R: [18, 18, 18]</code> live so the retroactive walk is visible as a single‐frame transition across the existing cohort. <strong>OPPOSITE design choice from chat‐81's snapshot‐at‐creation</strong>: chat‐81 (JS) had <code>this.attack *= 1.25</code> inside <code>Unit</code>'s constructor guarded by <code>gameState.researched.has(&apos;military&apos;)</code> so future spawns get the bonus and extant units retain baseline; chat‐82 (Python) does live‐retroactive at the research call site so extant units get the bonus and future spawns get baseline. Both are legitimate design choices producing different gameplay rhythms — snapshot encourages &apos;tech‐up THEN rebuild&apos; army‐replacement pacing (AoE2‐style late‐game cycle); retroactive encourages &apos;tech‐up empowers your existing army immediately&apos; instant‐effect pacing (Civ‐style instant‐tech). The chat‐82 lesson picking the OPPOSITE side from chat‐81 is a deliberate pedagogical contrast that lets the JS‐then‐pygame paired companion lessons demonstrate the SAME architectural axis (RESEARCH‐EFFECT‐TIMING) from BOTH sides of the design‐spectrum, making the context‐determines‐correct‐choice rhetoric visible as the pair. SECOND lesson at RESEARCH‐EFFECT‐TIMING scope (after chat‐81) and FIRST to demonstrate the retroactive side at this scope. HUD shows time, gold income tally, current <code>UNIT_STATS[UnitType.SOLDIER]['hp']</code> value, research‐on/off flag, and the legend — three orthogonal Python‐RTS‐architecture disciplines visible per frame as concrete numbers and panel deltas. ADVANCES the genres module 6/9 → 7/9 partial at chat‐82 M1; module‐completeness stays 12/13 since genres doesn't close in one chat (2 genres lessons remain after chat‐82: tower_defense / tower_defense_python).</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Define <code>class UnitType(Enum)</code> with members <code>WORKER</code>, <code>SOLDIER</code>, <code>ARCHER</code> mirroring the lesson's pattern (string values are fine but the Enum members themselves are what matter for keying).</li>
+                    <li>Define a module‐level <code>UNIT_STATS</code> dict whose keys are the <code>UnitType</code> Enum members and whose values are <code>{&apos;hp&apos;: int, &apos;attack&apos;: int}</code> records.</li>
+                    <li>Define <code>class Unit</code> whose <code>__init__(self, t)</code> reads <code>UNIT_STATS[t]</code> once and assigns <code>self.hp</code> and <code>self.attack</code> from the record.</li>
+                    <li>Define a <code>@dataclass Building</code> with fields <code>name: str</code>, <code>rate: float</code>, <code>income_per_sec: float</code>, <code>progress: float = 0.0</code>, <code>is_complete: bool = False</code>; create three instances (Mine / Farm / Barracks) at staggered rates so they finish at visibly different times.</li>
+                    <li>In the per‐frame loop, ramp each building's <code>progress += rate * dt</code> and flip <code>is_complete = True</code> at <code>progress &gt;= 100</code>; gate the income tally with <code>if b.is_complete: gold += b.income_per_sec * dt</code> so only complete buildings contribute to gold.</li>
+                    <li>Bind keys 1/2/3 to spawn worker/soldier/archer via <code>Unit(UnitType.WORKER)</code> / etc; bind H to <code>UNIT_STATS[UnitType.SOLDIER][&apos;hp&apos;] += 20</code> at runtime so the next soldier spawned shows the new HP while extant soldiers retain old HP.</li>
+                    <li>Pre‐spawn 3 soldiers and snapshot their attack values as <code>pre_attack_snapshot</code>; bind R to walk the cohort with <code>for u in soldiers: u.attack = int(u.attack * 1.2)</code> exactly once (gate on a <code>research_done</code> flag so subsequent R presses do nothing) so the HUD shows the visible single‐frame transition across the existing cohort.</li>
+                    <li>Render three vertical panels with thin separator lines at x=362 and x=724; per‐panel HUD lines + per‐building progress bars + per‐spawn unit list + per‐soldier circles colored green after research; verify the demo runs at 60 FPS with all three axes responding correctly to keyboard input before submitting.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The <code>is_complete</code> consumer‐check pattern means EVERY consumer of the building (income, production, tower attacks in the full lesson code) does <code>if b.is_complete:</code> at its own call site — do NOT try to centralize the side‐effects into a single <code>on_complete()</code> method (that would be the chat‐81 JS pattern; the Python‐idiomatic shape is distributed checks). The <code>UNIT_STATS</code> dict MUST be module‐level (not local to <code>Unit.__init__</code>) for the H‐key mutation to propagate to subsequent spawns; the lesson's actual code keeps stats local to the constructor which means runtime mutation isn't visible — hoist it to module level for the demo. The retroactive research walk is a SINGLE pass over the extant <code>soldiers</code> list at the moment R is pressed; do NOT add any check inside <code>Unit.__init__</code> for a researched‐techs flag (that would be chat‐81's snapshot pattern; the Python‐idiomatic shape here is the OPPOSITE choice). Use <code>int(u.attack * 1.2)</code> not <code>u.attack * 1.2</code> to match the lesson's integer‐floored arithmetic so the HUD shows clean integer values.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame
+from enum import Enum
+from dataclasses import dataclass
+
+pygame.init()
+W, H = 1088, 540
+screen = pygame.display.set_mode((W, H))
+font = pygame.font.SysFont(None, 18)
+clock = pygame.time.Clock()
+
+class UnitType(Enum):
+    WORKER = &apos;worker&apos;
+    SOLDIER = &apos;soldier&apos;
+    ARCHER = &apos;archer&apos;
+
+# Axis B: module-level Enum-keyed stats dict
+UNIT_STATS = {
+    UnitType.WORKER:  {&apos;hp&apos;: 50,  &apos;attack&apos;: 5},
+    UnitType.SOLDIER: {&apos;hp&apos;: 100, &apos;attack&apos;: 15},
+    UnitType.ARCHER:  {&apos;hp&apos;: 60,  &apos;attack&apos;: 12},
+}
+
+class Unit:
+    def __init__(self, t):
+        self.type = t
+        self.hp = UNIT_STATS[t][&apos;hp&apos;]      # KeyError if t isn&apos;t a UnitType member
+        self.attack = UNIT_STATS[t][&apos;attack&apos;]
+
+@dataclass
+class Building:
+    name: str
+    rate: float            # progress per second
+    income_per_sec: float
+    progress: float = 0.0
+    is_complete: bool = False
+
+# Axis A: 3 buildings under construction, gate via is_complete
+buildings = [
+    Building(&apos;Mine&apos;,     rate=33.0, income_per_sec=2.0),  # ~3s to complete
+    Building(&apos;Farm&apos;,     rate=20.0, income_per_sec=1.5),  # ~5s to complete
+    Building(&apos;Barracks&apos;, rate=14.0, income_per_sec=0.0),  # ~7s, produces units only
+]
+gold = 0.0
+
+# Axis C: 3 pre-spawned soldiers, retroactive research bonus
+soldiers = [Unit(UnitType.SOLDIER) for _ in range(3)]
+research_done = False
+pre_attack_snapshot = [u.attack for u in soldiers]   # [15, 15, 15]
+
+spawned = []   # middle-panel spawn list
+WHITE=(240,240,240); GREY=(90,90,100); GREEN=(80,180,90)
+BLUE=(80,130,220); YELLOW=(220,200,80)
+
+running = True
+while running:
+    dt = clock.tick(60) / 1000.0
+    for e in pygame.event.get():
+        if e.type == pygame.QUIT: running = False
+        elif e.type == pygame.KEYDOWN:
+            if e.key == pygame.K_1: spawned.append(Unit(UnitType.WORKER))
+            elif e.key == pygame.K_2: spawned.append(Unit(UnitType.SOLDIER))
+            elif e.key == pygame.K_3: spawned.append(Unit(UnitType.ARCHER))
+            elif e.key == pygame.K_h:
+                UNIT_STATS[UnitType.SOLDIER][&apos;hp&apos;] += 20  # propagates only to subsequent spawns
+            elif e.key == pygame.K_r and not research_done:
+                for u in soldiers: u.attack = int(u.attack * 1.2)  # retroactive walk
+                research_done = True
+
+    # Axis A: building update + income consumer-check
+    for b in buildings:
+        if not b.is_complete:
+            b.progress += b.rate * dt
+            if b.progress &gt;= 100:
+                b.progress = 100; b.is_complete = True
+        if b.is_complete:                  # consumer-check pattern
+            gold += b.income_per_sec * dt
+
+    # Render
+    screen.fill((22, 26, 32))
+    pygame.draw.line(screen, GREY, (362, 0), (362, H))
+    pygame.draw.line(screen, GREY, (724, 0), (724, H))
+
+    # LEFT: Axis A
+    screen.blit(font.render(&apos;A: is_complete gate&apos;, True, YELLOW), (12, 8))
+    screen.blit(font.render(f&apos;gold = {gold:.1f}&apos;, True, WHITE), (12, 28))
+    for i, b in enumerate(buildings):
+        y = 70 + i * 90
+        screen.blit(font.render(f&apos;{b.name}  income/s={b.income_per_sec}&apos;, True, WHITE), (12, y))
+        bar_w = int(330 * (b.progress / 100))
+        col = GREEN if b.is_complete else BLUE
+        pygame.draw.rect(screen, GREY, (12, y + 22, 330, 18), 1)
+        pygame.draw.rect(screen, col, (12, y + 22, bar_w, 18))
+        screen.blit(font.render(f&apos;progress={b.progress:.0f}/100  is_complete={b.is_complete}&apos;, True, WHITE), (12, y + 46))
+
+    # MIDDLE: Axis B
+    screen.blit(font.render(&apos;B: Enum-keyed UNIT_STATS&apos;, True, YELLOW), (374, 8))
+    cur_hp = UNIT_STATS[UnitType.SOLDIER][&apos;hp&apos;]
+    screen.blit(font.render(f"UNIT_STATS[UnitType.SOLDIER]['hp'] = {cur_hp}", True, WHITE), (374, 28))
+    screen.blit(font.render(&apos;keys: 1=W  2=S  3=A    H=hp+=20&apos;, True, WHITE), (374, 50))
+    for i, u in enumerate(spawned[-12:]):
+        y = 90 + i * 28
+        screen.blit(font.render(f&apos;{u.type.name:8s}  hp={u.hp}  atk={u.attack}&apos;, True, WHITE), (374, y))
+
+    # RIGHT: Axis C
+    screen.blit(font.render(&apos;C: Retroactive research&apos;, True, YELLOW), (734, 8))
+    screen.blit(font.render(&apos;R = research_tech (extant only)&apos;, True, WHITE), (734, 28))
+    screen.blit(font.render(f&apos;Pre-R:  {pre_attack_snapshot}&apos;, True, WHITE), (734, 60))
+    cur_attack = [u.attack for u in soldiers]
+    label = &apos;Post-R&apos; if research_done else &apos;Now   &apos;
+    screen.blit(font.render(f&apos;{label}: {cur_attack}&apos;, True, GREEN if research_done else WHITE), (734, 84))
+    for i, u in enumerate(soldiers):
+        col = GREEN if research_done else BLUE
+        pygame.draw.circle(screen, col, (754 + i * 70, 150), 14)
+        screen.blit(font.render(f&apos;atk={u.attack}&apos;, True, WHITE), (734 + i * 70, 175))
+
+    pygame.display.flip()
+
+pygame.quit()</code></pre>
                 </details>
             </div>
 
@@ -1041,31 +1165,31 @@ if __name__ == "__main__":
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> Why does the demo gate the global income tally with <code>if b.is_complete: gold += b.income_per_sec * dt</code> rather than letting every building contribute income from the moment it's placed on the map?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='The construction time being short doesn&apos;t make the gate optional &mdash; the architectural intent is to pause side effects during construction regardless of how long the construction takes. In a real game with multi-minute build times, or a building that&apos;s destroyed mid-construction, the gate is essential for coherent semantics; the demo&apos;s short ramp times are pedagogical compression of a pattern that scales to longer game-time scales.'>A) The gate is unnecessary in this demo because construction completes in only 3&ndash;7 seconds; in a production RTS with longer build times the gate would matter, but here removing the <code>is_complete</code> check would have no observable effect.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='The is_complete gate at every consumer site (income tally here, production queue + tower-attack steps in the full lesson code) is what enforces the architectural invariant that side effects are paused during construction &mdash; default-to-deny-at-the-boundary. Same shape as platformer_tilemap is_solid-True-OOB invariant, architecture_state_machines on_exit-reassign-on_enter strict ordering, architecture_event_systems queued-emit-vs-immediate-emit timing modes, and chat-81 genres_strategy onComplete-as-gate. The Python-idiomatic delta from chat-81 is that chat-82 distributes the gate across N consumer-site checks rather than centralizing it in one onComplete() callback &mdash; both are valid; the consumer-check pattern is more discoverable in code review since each gate sits at the consumer site.'>B) Without the gate, side effects (income, production, tower attacks) would fire from the moment a building is placed, regardless of whether it has finished construction; the gate enforces the architectural invariant that side effects are paused until <code>progress &gt;= 100</code>. The Python-idiomatic shape is to distribute the check across N consumer sites rather than centralize it in a single <code>on_complete()</code> callback.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Both the consumer-check pattern (chat-82 Python) and the centralized onComplete callback pattern (chat-81 JS) are valid implementations of the same architectural axis. Pythonic style favors explicit-over-implicit so distributed consumer checks fit Python idiom well, but a centralized callback registry is also valid and is sometimes preferred when the side-effect set is large. Calling either pattern strictly correct misses the architectural truth that both implement the same invariant.'>C) The consumer-check pattern is strictly incorrect &mdash; the only architecturally valid way to gate lifecycle side effects is the centralized <code>on_complete()</code> callback pattern from chat-81. The chat-82 distributed checks should be refactored into a single callback for code-quality reasons.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> The lesson uses <code>UNIT_STATS = {UnitType.WORKER: {...}, UnitType.SOLDIER: {...}, ...}</code> with <code>UnitType</code> Enum members as dict keys, then reads <code>UNIT_STATS[unit_type]</code> in the <code>Unit</code> constructor. What architectural property does the Enum-member-as-key shape provide that string-as-key (<code>UNIT_STATS = {&quot;worker&quot;: {...}, ...}</code>) does not?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Both Enum-key and string-key dict lookups are O(1) amortized in Python and the per-call cost difference is nanoseconds &mdash; immeasurable next to the per-frame budget. The architectural driver is design-time validation at the spawn site, not lookup speed; conflating performance with type-safety here gets the cause-effect backwards.'>A) Enum-keyed dicts have faster hash-table lookup than string-keyed dicts because Enum members hash via integer identity rather than string-content hashing, so the constructor runs at higher FPS when many units spawn per frame.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Enum-member-as-key gives design-time validation at the spawn site: a typo like Unit(UnitType.WROKER) raises AttributeError at IMPORT/PARSE time before any constructor runs because UnitType has no member WROKER &mdash; the typo is caught the moment Python parses the module. The equivalent string-key typo Unit(&quot;wroker&quot;) silently produces a KeyError at runtime when the constructor tries UNIT_STATS[&quot;wroker&quot;], or worse, runs as a glitched zero-stat unit if the code uses .get() with a default. SEVENTH design-time-validation-vs-runtime-discovery lesson reinforcing the pattern across Phase 8 (after chat-47 platformer_level_design + chat-70 publishing_executables + chat-72 publishing_performance + chat-73 publishing_platforms + chat-76 genres_puzzle_python + chat-79 genres_rpg_python = 6 prior cases), FIRST applied at STATS-DICT-KEY-IDENTITY scope where Enum-member-as-key replaces string-as-key for compile-time/import-time typo detection.'>B) Enum-member-as-key gives design-time validation at the spawn site &mdash; a typoed Enum reference like <code>Unit(UnitType.WROKER)</code> raises <code>AttributeError</code> at import time, before any constructor runs, while the equivalent string-key typo <code>Unit(&quot;wroker&quot;)</code> only fails (silently or with a runtime <code>KeyError</code>) when the constructor actually executes. The Enum shape catches typos at parse time rather than at runtime spawn time.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='A startup-time validator that walks every spawn site checking strings against a known-valid set requires writing the validator AND remembering to call it AND keeping its set in sync with the legal value list &mdash; three layers of manual discipline that Enum-as-key replaces with a single language-level guarantee. The validator also runs after the typo is already in the source, while Python catches Enum-member typos at parse time before any code executes; the two approaches are not equivalent in when the typo is detected.'>C) String keys can be validated equivalently via a startup-time validator function that walks every spawn site checking the string against a known-valid set, so the Enum shape is redundant and provides no validation property that string keys with a validator wouldn&apos;t also provide.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> chat-81's <code>genres_strategy.html</code> (JS canvas) implements research bonuses as a SNAPSHOT taken in <code>Unit</code>'s constructor (future spawns get the bonus, extant units retain baseline). chat-82's <code>genres_strategy_python.html</code> (pygame) implements research bonuses as a RETROACTIVE walk over the extant cohort at the moment <code>research_tech()</code> is called (extant units get the bonus, future spawns retain baseline). Which framing best captures the relationship between the two design choices?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='The retroactive-walk pattern is not a bug &mdash; it&apos;s a deliberate design choice that produces a specific gameplay rhythm. Civ-style instant-tech is BUILT on retroactive empowerment: when the player completes a tech, their existing army immediately benefits because the player just spent their tech budget and expects an immediate effect. The inconsistent semantics with future spawns is a tolerable trade-off for the instant-effect pacing; the alternative AoE2-pacing is also valid but they&apos;re not bug-vs-correct, they&apos;re two different valid pacing models.'>A) chat-82's retroactive-walk pattern is a bug because it produces inconsistent game state between research-time and post-research spawns; the snapshot pattern from chat-81 is the architecturally correct choice and chat-82 should be revised to match.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Both timing choices are valid implementations of the same architectural axis (RESEARCH-EFFECT-TIMING) producing different gameplay rhythms &mdash; snapshot encourages tech-up-THEN-rebuild army-replacement pacing (AoE2-style late-game cycle), retroactive encourages tech-up-empowers-existing-army instant-effect pacing (Civ-style instant-tech). The choice belongs to designers based on intended pacing, not engineers based on technical correctness. Same context-determines-correct-choice rhetoric as chat-49 polish_tweening + chat-50 polish_difficulty/playtesting + chat-52 client_server + chat-53 lag_compensation + chat-54 lobby + chat-60 pathfinding heuristic + chat-61 Selector vs Sequence + chat-62 utility-AI vs BT + chat-63 flocking emergence + chat-79 enum-roundtrip-vs-live-comparison + chat-81 snapshot-at-RESEARCH-EFFECT-TIMING. The chat-81-then-chat-82 paired companion lessons demonstrate the SAME architectural axis from BOTH sides of the design-spectrum, making the context-determines-correct-choice rhetoric visible as the pair: chat-81 picks snapshot, chat-82 picks the OPPOSITE retroactive side, and both ship as production patterns in real RTSes.'>B) Both timing choices are valid implementations of the same architectural axis &mdash; they produce different gameplay rhythms (snapshot = army-replacement pacing AoE2-style, retroactive = instant-empowerment pacing Civ-style), and the choice belongs to designers based on intended pacing rather than engineers based on technical correctness. The chat-81-then-chat-82 paired companion lessons demonstrate the same axis from both sides of the design-spectrum.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Neither pacing model is universally better &mdash; production RTSes have shipped both shapes successfully (Civ for retroactive, AoE2 for snapshot, with most games sitting somewhere on the spectrum). Calling snapshot strictly cleaner ignores the design intent of retroactive pacing in instant-tech games, where the inconsistent-cohort-state IS the desired gameplay feel. The lesson cohort makes the contrast deliberate to teach context-determines-correct-choice; calling one pattern strictly better erases the lesson&apos;s pedagogical point.'>C) chat-81's snapshot pattern is strictly cleaner because it produces consistent semantics across all units of a given cohort; the only reason to use retroactive is engine-perf concerns about iterating extant units at research time, and modern engines handle that iteration trivially so retroactive should be considered legacy.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

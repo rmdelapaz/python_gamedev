@@ -1300,19 +1300,117 @@ function updateLOD(object, distance) {
             <h2 id="practice-exercise-build-genres-racing">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Three Tracks, Three Tires, One Race — Track-as-Checkpoint-and-Wall-Data + Slip-Angle-Driven Tire-Grip Saturation + Checkpoint-Index Lap-Progression in One HTML5 Canvas</h3>
+                <p><strong>Objective:</strong> Build a runnable HTML5 canvas + JS program in roughly 70 lines that distills the lesson's Vehicle Physics + Steering Dynamics + Drift Mechanics + Track Design + Timing Systems content into one cohesive demo where three orthogonal racing-genre disciplines are visible per frame on a 900×600 canvas split into a 700×600 track area and a 200px right-side HUD. (a) <strong>Track-as-checkpoint-and-wall-data at TRACK-GEOMETRY scope:</strong> a TRACKS object maps track name to a builder function (buildCircuit / buildSprint / buildRally) and each builder returns a {checkpoints, walls} bundle of axis-aligned rectangles; checkpoints is an array of {x, y, w, h} rects in the order the racer must hit them, walls is an array of {x, y, w, h} rects for AABB wall-collision; the SAME bundle drives rendering (draw walls in gray + checkpoints in cyan with the next one highlighted), wall-collision (AABB overlap test against every wall), AI path-following (target the next checkpoint by index), and lap-completion (sequential checkpoint indexing) all simultaneously, so adding a new track variant is one new buildXTrack() function plus one new entry in TRACKS with zero edits to the rendering, collision, AI, or lap-completion loops; same data-driven externalization pattern as architecture_save_load schema (chat-58), pathfinding terrain-cost dict (chat-60), behavior-trees child-list-order (chat-61), decision-making personality dict (chat-62), procedural generation seed (chat-68), publishing_executables .spec file (chat-70), publishing_marketing pitch templates (chat-71), publishing_performance algorithmic-axis toggles (chat-72), publishing_platforms TARGETS+ADAPTERS dicts (chat-73), publishing_updates CADENCES+MIGRATIONS dicts (chat-74), genres_puzzle 2D-array board (chat-75), and genres_puzzle_python 2D-array board (chat-76) applied at TRACK-GEOMETRY scope = NINETEENTH lesson reinforcing data-driven externalization across Phase 8, FIRST applied at TRACK-GEOMETRY scope where the track IS data the rendering / collision / AI / lap-completion loops all read. (b) <strong>Per-tire-grip saturation as slip-angle-driven attenuation at TIRE-FORCE-BUDGET scope:</strong> slipAngle = atan2(lateralVel, abs(forwardVel) + 1) measures how much the actual velocity vector deviates from the chassis heading direction (lateralVel and forwardVel are the (vx, vy) velocity decomposed into axes parallel and perpendicular to the heading); rearGrip = max(0.7, 1 - abs(slipAngle) * 0.5) attenuates rear grip as slip rises so the floor stays at 0.7 even at full lock; the blend-toward-heading step velocityX += (targetVx - velocityX) * rearGrip * 5 * dt becomes weaker as grip drops, so the car continues moving in its original direction (drifts wide / understeer) instead of immediately following the new heading — same saturation-produces-understeer principle the lesson's friction-circle inset SVG diagram visualizes at the (longitudinal, lateral) force-budget level, expressed here at the per-tire-grip-attenuation level where the racing-genre-specific physics constraint emerges naturally as a side-effect of saturation rather than as ad-hoc velocity-cap branches. (c) <strong>Checkpoint-index-as-ordered-progression-counter at RACE-PROGRESSION scope:</strong> each car carries this.checkpoint = 0 and this.lap = 0; on every frame, if the car's (x, y) is inside checkpoints[this.checkpoint] then this.checkpoint advances to (this.checkpoint + 1) % checkpoints.length and if it wraps back to 0 then this.lap increments; passing checkpoints in order increments checkpoint, passing the start/finish after all others increments lap, and skipping a checkpoint cannot complete the lap because the index counter only advances when the SPECIFIC next checkpoint is hit; same chained-contract pattern as chat-74 publishing_updates' MIGRATIONS chain (each step is a frozen contract that may produce a new state requiring another step) and chat-76 genres_puzzle_python's recursive-cascade fixed-point applied at RACE-PROGRESSION scope where each checkpoint is a frozen advance-state contract and laps require traversing them in order. WASD or arrow keys steer / throttle; keys 1/2/3 swap the active track; HUD shows current track / speed / lap / checkpoint / slip-angle in degrees — three orthogonal racing-genre disciplines visible per frame as concrete dict entries, slip-angle numbers, and checkpoint-index counters.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Set up an HTML5 canvas at 900×600 with a 2D rendering context; reserve the right 200px for HUD and the left 700×600 for the track surface.</li>
+                    <li>Define a TRACKS object mapping track name (circuit / sprint / rally) to a builder function that returns {checkpoints, walls}; each is an array of axis-aligned {x, y, w, h} rects so a single point-in-rect test handles both checkpoint-passing and wall-overlap.</li>
+                    <li>Build a Car class holding x / y / vx / vy / heading / checkpoint / lap; in update(dt, input) advance heading from input.steer, decompose velocity into forward and lateral components relative to heading, compute slipAngle, attenuate rearGrip via max(0.7, 1 - |slipAngle| * 0.5), and blend velocity toward the heading-aligned target proportional to grip.</li>
+                    <li>Apply throttle along the heading direction, then friction damping, then integrate position via x += vx * dt and y += vy * dt.</li>
+                    <li>Test the car's (x, y) against the SPECIFIC next checkpoint at index this.checkpoint; if inside, advance the index modulo checkpoints.length and bump lap when wrapping to 0.</li>
+                    <li>Test the car's bounding box against every wall rect; on overlap, push the car out along the shorter overlap axis and zero the corresponding velocity component.</li>
+                    <li>Render walls (gray), checkpoints (cyan with the active one highlighted yellow), the car (red rect rotated to heading), then HUD strings showing track name / speed magnitude / lap counter / checkpoint index / slip-angle in degrees.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The three axes are independent levers: the TRACKS dict is what the rendering and collision loops read (axis a); the slipAngle / rearGrip math is what controls how much the car drifts vs grips (axis b); the per-car checkpoint and lap integers are what determine race progression (axis c). When you press 1/2/3 to swap tracks, the rendering and collision paths pick up the new track automatically because they iterate the data; when you turn sharply at speed, slipAngle grows and rearGrip drops below 1.0 and the car drifts wide; when you cross the start/finish line in the wrong order, the lap counter does not advance because the checkpoint index is still pointing at the missing one. Each axis is observable independently in the HUD: the track name, the slip-angle degrees, and the checkpoint / lap counters.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>// Three-Track Racing Demo — Track-as-Data + Slip-Angle Saturation + Checkpoint Progression
+const canvas = document.getElementById('demoCanvas');
+const ctx = canvas.getContext('2d');
+const W = 900, H = 600;
+
+// (a) TRACK-GEOMETRY: each track is data the loops iterate
+function buildCircuit() {
+    return {
+        checkpoints: [
+            {x: 600, y: 270, w: 30, h: 60},
+            {x: 340, y: 90,  w: 60, h: 30},
+            {x: 80,  y: 270, w: 30, h: 60},
+            {x: 340, y: 470, w: 60, h: 30}  // start/finish
+        ],
+        walls: [
+            {x: 0, y: 0, w: 700, h: 15}, {x: 0, y: 585, w: 700, h: 15},
+            {x: 0, y: 0, w: 15, h: 600}, {x: 685, y: 0, w: 15, h: 600},
+            {x: 220, y: 200, w: 260, h: 200}
+        ]
+    };
+}
+function buildSprint() {
+    return {
+        checkpoints: [{x: 600, y: 285, w: 30, h: 30}, {x: 340, y: 285, w: 30, h: 30}, {x: 80, y: 285, w: 30, h: 30}],
+        walls: [{x: 0, y: 0, w: 700, h: 240}, {x: 0, y: 360, w: 700, h: 240}]
+    };
+}
+function buildRally() { return buildCircuit(); }  // placeholder variant
+const TRACKS = {circuit: buildCircuit, sprint: buildSprint, rally: buildRally};
+let trackName = 'circuit', track = TRACKS[trackName]();
+
+class Car {
+    constructor(x, y) { this.x=x; this.y=y; this.vx=0; this.vy=0; this.heading=0; this.checkpoint=0; this.lap=0; this.slip=0; }
+    update(dt, input) {
+        this.heading += input.steer * 2.5 * dt;
+        const fx = Math.cos(this.heading), fy = Math.sin(this.heading);
+        // throttle along heading
+        this.vx += fx * input.throttle * 220 * dt;
+        this.vy += fy * input.throttle * 220 * dt;
+        // (b) TIRE-FORCE-BUDGET: slip-angle drives grip attenuation
+        const fwdV = this.vx * fx + this.vy * fy;
+        const latV = -this.vx * fy + this.vy * fx;
+        this.slip = Math.atan2(latV, Math.abs(fwdV) + 1);
+        const rearGrip = Math.max(0.7, 1 - Math.abs(this.slip) * 0.5);
+        const tVx = fx * fwdV, tVy = fy * fwdV;
+        this.vx += (tVx - this.vx) * rearGrip * 5 * dt;
+        this.vy += (tVy - this.vy) * rearGrip * 5 * dt;
+        this.vx *= 1 - 0.4 * dt; this.vy *= 1 - 0.4 * dt;
+        this.x += this.vx * dt; this.y += this.vy * dt;
+        // (c) RACE-PROGRESSION: checkpoint index only advances on the SPECIFIC next one
+        const cp = track.checkpoints[this.checkpoint];
+        if (this.x &gt; cp.x &amp;&amp; this.x &lt; cp.x + cp.w &amp;&amp; this.y &gt; cp.y &amp;&amp; this.y &lt; cp.y + cp.h) {
+            this.checkpoint = (this.checkpoint + 1) % track.checkpoints.length;
+            if (this.checkpoint === 0) this.lap += 1;
+        }
+        // wall AABB push-out
+        for (const w of track.walls) {
+            if (this.x &gt; w.x &amp;&amp; this.x &lt; w.x + w.w &amp;&amp; this.y &gt; w.y &amp;&amp; this.y &lt; w.y + w.h) {
+                this.x -= this.vx * dt; this.y -= this.vy * dt; this.vx *= -0.3; this.vy *= -0.3;
+            }
+        }
+    }
+}
+const car = new Car(340, 485);
+const keys = {};
+addEventListener('keydown', e =&gt; { keys[e.key] = true; if (e.key === '1') { trackName='circuit'; track=TRACKS.circuit(); } if (e.key === '2') { trackName='sprint'; track=TRACKS.sprint(); } if (e.key === '3') { trackName='rally'; track=TRACKS.rally(); } });
+addEventListener('keyup', e =&gt; { keys[e.key] = false; });
+
+let last = performance.now();
+function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    const input = {steer: (keys['ArrowRight']||keys['d']?1:0) - (keys['ArrowLeft']||keys['a']?1:0),
+                   throttle: (keys['ArrowUp']||keys['w']?1:0) - (keys['ArrowDown']||keys['s']?0.5:0)};
+    car.update(dt, input);
+    ctx.fillStyle = '#222'; ctx.fillRect(0, 0, W, H);
+    for (const w of track.walls) { ctx.fillStyle = '#555'; ctx.fillRect(w.x, w.y, w.w, w.h); }
+    track.checkpoints.forEach((c, i) =&gt; { ctx.fillStyle = i === car.checkpoint ? '#ff0' : '#0cc'; ctx.fillRect(c.x, c.y, c.w, c.h); });
+    ctx.save(); ctx.translate(car.x, car.y); ctx.rotate(car.heading); ctx.fillStyle = '#f33'; ctx.fillRect(-12, -6, 24, 12); ctx.restore();
+    // HUD
+    ctx.fillStyle = '#000'; ctx.fillRect(700, 0, 200, H);
+    ctx.fillStyle = '#fff'; ctx.font = '14px monospace';
+    const speed = Math.hypot(car.vx, car.vy).toFixed(0);
+    const slipDeg = (car.slip * 180 / Math.PI).toFixed(1);
+    ctx.fillText('Track: ' + trackName, 710, 30);
+    ctx.fillText('Speed: ' + speed, 710, 60);
+    ctx.fillText('Lap: ' + car.lap, 710, 90);
+    ctx.fillText('CP idx: ' + car.checkpoint + '/' + track.checkpoints.length, 710, 120);
+    ctx.fillText('Slip: ' + slipDeg + '\u00b0', 710, 150);
+    ctx.fillText('1/2/3 swap track', 710, 200);
+    ctx.fillText('WASD or arrows', 710, 220);
+    requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);</code></pre>
                 </details>
             </div>
 
@@ -1320,31 +1418,31 @@ function updateLOD(object, distance) {
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> The demo's TRACKS object maps track name to a builder function returning {checkpoints, walls}, and the SAME bundle is read by the rendering loop (draw walls + checkpoints), the wall-collision loop (AABB overlap test), the AI/lap loop (target the next checkpoint by index), and the lap-completion loop (sequential checkpoint indexing). What architectural property does this give the demo?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Dict-vs-array lookup speed is nanoseconds per call and irrelevant to design choice; the architectural reason is that adding a new track variant is a single data edit rather than scattered control-flow changes across the rendering, collision, AI, and lap loops.'>A) TRACKS-as-dict beats TRACKS-as-array on lookup performance because hash-based dict access is O(1) while array lookup by name would require a linear scan, so the per-frame rendering / collision / AI / lap loops run faster when more tracks are loaded.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Adding a new track (e.g., buildOval) is one new builder function plus one new TRACKS entry. The rendering / collision / AI / lap-completion loops iterate the {checkpoints, walls} data and pick up the new track automatically with zero loop edits — same data-driven externalization pattern as architecture_save_load schema, pathfinding terrain-cost dict, behavior-trees child-list-order, and through chat-76 genres_puzzle_python 2D-array board, applied at TRACK-GEOMETRY scope = NINETEENTH lesson reinforcing the pattern across Phase 8, FIRST at TRACK-GEOMETRY scope. The track IS data the loops read, not control flow.'>B) Adding a new track variant becomes one new builder function plus one new TRACKS entry with zero edits to the rendering, collision, AI, or lap-completion loops because all four loops read the {checkpoints, walls} data rather than branching on track identity — same data-driven externalization pattern applied at TRACK-GEOMETRY scope.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Memory footprint of three small {checkpoints, walls} bundles is hundreds of bytes total and irrelevant to the design choice; the architectural driver is that the loops read the data rather than branching on track identity, so adding a new track is a single data edit rather than scattered control-flow changes.'>C) The dict-of-builders shape uses less RAM than three separate global track variables because JavaScript engines can intern shared shapes across object instances, so the demo runs in less memory when many tracks are loaded simultaneously.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> The Car.update step computes slipAngle = atan2(lateralVel, |forwardVel| + 1) and then rearGrip = max(0.7, 1 - |slipAngle| * 0.5), and uses rearGrip to scale the velocity-toward-heading blend (vx += (targetVx - vx) * rearGrip * 5 * dt). What is this construction modeling?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='atan2 is a standard math function that returns the angle of a 2D vector with full quadrant disambiguation and well-defined behavior at every input including the axes; the +1 in |forwardVel| + 1 is a small denominator floor that avoids dividing by tiny numbers at near-stationary forward speed and produces a smooth limit, not a guard against an undefined return value.'>A) The atan2 + max construction is a numerical-stability guard — atan2(0, 0) is undefined in some implementations so the +1 in the denominator and the 0.7 floor on rearGrip prevent NaN propagation when the car is stationary or pointed perpendicular to its velocity; without the guards, a single frame at zero forward speed would corrupt the velocity vector.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='slipAngle measures how much the actual velocity vector deviates from where the chassis is pointing; as it grows (sharp turn at speed), rearGrip drops, the velocity-toward-heading blend weakens, and the car continues moving in its original direction instead of immediately following the new heading. That is exactly the racing-genre physics of understeer / drift — the car wants to keep going where it was going, the more so the harder you turn at speed. The 0.7 floor sets a minimum grip so the car never goes completely free-sliding. Same saturation-produces-understeer principle the lesson&apos;s friction-circle inset SVG visualizes at the (longitudinal, lateral) force-budget level, expressed here at the per-tire-grip-attenuation level.'>B) The construction models tire-grip saturation: as the car turns sharply at speed, the velocity vector starts deviating from the chassis heading, slipAngle grows, rearGrip drops, and the velocity-toward-heading blend weakens — so the car continues moving in its original direction (drifts wide / understeer) rather than instantly following the new heading. That is the racing-genre-specific physics of drift / understeer expressed at the per-tire-grip-attenuation level.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Camera or rendering effects do not enter the velocity-update math at all; the construction directly mutates this.vx and this.vy, which determine where the car moves in world space, not how the world is displayed. Slip-angle physics is about how the car moves, not about what the player sees.'>C) The construction is a visual smoothing layer that softens the camera&apos;s reaction to sharp turns — slipAngle is the input to a low-pass filter on the displayed heading so the rendered car appears to lean into corners gradually rather than snapping to the new heading every frame, while the underlying physics state is unaffected.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> Each Car carries this.checkpoint = 0 and this.lap = 0, and the per-frame check tests the car&apos;s (x, y) only against checkpoints[this.checkpoint] (the SPECIFIC next one). When the car&apos;s position is inside that one rect, the index advances modulo checkpoints.length, and a wrap to 0 increments lap. Why this shape rather than &quot;test against ALL checkpoints every frame and count how many distinct ones have been hit&quot;?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Testing one rect vs four rects per frame is microseconds at most and irrelevant to per-frame budget at 60 FPS; the architectural driver is correctness — testing only the specific next checkpoint enforces the order-required-for-lap-completion contract, while testing all of them every frame would let the player skip checkpoints by hitting them in the wrong order or hitting the start/finish twice without passing the others.'>A) Testing only the specific next checkpoint per frame is faster than testing all four because the per-frame inner loop runs one point-in-rect check instead of four, saving CPU cycles and keeping the demo at 60 FPS even when many cars share the track.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='The shape enforces the ordered-progression contract: the lap counter only advances when the car passes checkpoints in the SPECIFIC order they appear in the array, with the start/finish at index 0. Testing against ALL checkpoints every frame and counting distinct hits would let the player drive directly to the start/finish, brush the side checkpoints in any order, and complete a lap without traversing the track as designed; the racing-genre rule that &quot;you must drive the actual track to count a lap&quot; lives entirely in the index-only-advances-on-the-specific-next-one shape. Same chained-contract pattern as chat-74 publishing_updates&apos; MIGRATIONS chain (each step is a frozen contract that may produce a new state requiring another step) and chat-76 genres_puzzle_python&apos;s recursive-cascade fixed-point applied at RACE-PROGRESSION scope where each checkpoint is a frozen advance-state contract.'>B) The shape enforces the ordered-progression contract that defines a valid lap: the index only advances when the car hits the SPECIFIC next checkpoint, so skipping a checkpoint or hitting them out of order leaves the index pointing at the missing one and the lap cannot complete — racing-genre lap rules live entirely in this single-index ordering. Same chained-contract pattern as chat-74 MIGRATIONS chain applied at RACE-PROGRESSION scope.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Memory cost of one boolean per checkpoint vs one integer index is bytes per car and irrelevant to design choice; the architectural driver is enforcing ordered progression so the lap counter advances only when checkpoints are passed in the specific declared order, not memory footprint.'>C) The shape uses less memory than &quot;test against ALL checkpoints and track which have been hit&quot; because the latter would require a boolean array per car (one bool per checkpoint visited this lap) while the index-only approach is a single integer regardless of checkpoint count, scaling to long tracks without per-car memory growth.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

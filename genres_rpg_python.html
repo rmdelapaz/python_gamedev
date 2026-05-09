@@ -531,19 +531,145 @@ if __name__ == "__main__":
             <h2 id="practice-exercise-build-genres-rpg-python">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Three Pillars of Python RPG Architecture — Enum-Roundtrip Identity + Dataclass-asdict Save Format + Declarative Skill-Prerequisite Records in One Pygame Window</h3>
+                <p><strong>Objective:</strong> Build a single ~80-line pygame program that simultaneously demonstrates the three orthogonal Python-specific architectural levers this lesson exercises. (a) Enum-roundtrip-through-save at CHARACTER-CLASS-AND-ITEM-TYPE IDENTITY scope where <code>class CharacterClass(Enum)</code> and <code>class ItemType(Enum)</code> enumerate valid identities at design-time so a typo <code>ItemType.CONSUM</code> raises AttributeError at the import statement of the typo-containing module, and the <code>CharacterClass(char_data['char_class'])</code> reconstructor at load time raises ValueError if the saved string does not match a declared member — making save-file format drift a LOAD-TIME exception rather than silent runtime corruption. (b) Dataclass-asdict serialization as schema-IS-the-class at SAVE-FORMAT scope where <code>asdict(self.character)</code> walks the @dataclass-decorated Character's fields recursively producing a JSON-serializable dict whose keys EXACTLY match the field names — adding a new field to Character automatically appears in saves with zero changes to save_game. (c) Skill-prerequisites-as-declarative-data-records at SKILL-TREE-VALIDATION scope where <code>Skill.requirements = [{'skill_id': 'power_strike'}]</code> is data the can_learn() method iterates through, so adding a new prerequisite is a single requirements.append({...}) call with zero changes to can_learn()'s control flow — Open/Closed Principle satisfaction. This is the SIXTH Phase-8 lesson reinforcing the design-time-validation-vs-runtime-discovery pattern (after chat-47 platformer_level_design + chat-70 publishing_executables + chat-72 publishing_performance + chat-73 publishing_platforms + chat-76 genres_puzzle_python) at axis (a), and the TWENTY-FIRST Phase-8 lesson reinforcing data-driven externalization (after chat-58 / 60 / 61 / 62 / 68 / 70 / 71 / 72 / 73 / 74 / 75 / 76 / 77 / 78) at axis (c) applied at SKILL-TREE-VALIDATION scope. Three labeled regions visible per frame on an 800×480 window.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Define <code>class CharacterClass(Enum)</code> with WARRIOR / MAGE / ROGUE members assigned string values, and <code>class ItemType(Enum)</code> with WEAPON / POTION members assigned string values.</li>
+                    <li>Define <code>@dataclass</code> Character (name, char_class: CharacterClass, level, strength, intelligence) and Item (name, item_type: ItemType, value), and <code>@dataclass</code> Skill (skill_id, name, requirements: List[Dict] = field(default_factory=list)).</li>
+                    <li>Build the SKILLS dict with five entries — power_strike (no reqs), iron_skin (req power_strike), berserker (reqs power_strike + iron_skin), fireball (no reqs), teleport (req fireball) — each Skill carrying its prerequisites as a List[Dict] of {skill_id} records.</li>
+                    <li>Implement <code>can_learn(skill, learned)</code> that returns True iff every requirement's skill_id is in the learned set, iterating over <code>skill.requirements</code> as data.</li>
+                    <li>Implement <code>save(char, items, learned, path)</code> that uses <code>asdict(char)</code> and overrides <code>char_class</code> to <code>char.char_class.value</code> for JSON-roundtrippability, doing the same with each Item's item_type; persist the learned set as a sorted list.</li>
+                    <li>Implement <code>load(path)</code> that reads the JSON, reconstructs <code>CharacterClass(cd['char_class'])</code> and <code>ItemType(i['item_type'])</code> (raising ValueError on drift), and rebuilds Character and Item dataclass instances via <code>Character(**cd)</code> / <code>Item(**i)</code>.</li>
+                    <li>Bind keys S=save, L=load, 1=learn power_strike, 2=learn fireball, 3=learn iron_skin (only if can_learn returns True); update a status string on each event capturing which architectural lever just fired as visible feedback.</li>
+                    <li>Render three regions per frame: LEFT panel (x=10, y=10) shows the SKILL TREE with each skill's reqs=[...] data record visualized in a color encoding learned / learnable / blocked status; TOP-RIGHT panel (x=380, y=10) shows the CHARACTER with both <code>char_class.name</code> (static) and <code>char_class.value</code> (the round-trip string); BOTTOM panel (x=10, y=320) shows the SAVE FORMAT json.dumps preview demonstrating the asdict-walked field set + Enum.value extraction.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The three axes are three independent state-shape choices: Enum-with-string-value-roundtrip moves identity-validation from runtime to design-time AND to load-time (catching both source typos at import and save-file drift at load); dataclass-asdict makes the field declaration the single source of truth for the save format (any field rename breaks saves loudly at exactly the renamed field rather than silently constructing a half-loaded character); requirements-as-data-records lets skill_tree growth happen at construction time with zero validator changes (adding berserker with two prerequisites is a single Skill('berserker', 'Berserker', [{'skill_id': 'power_strike'}, {'skill_id': 'iron_skin'}]) call). Per-frame renderer reads are O(1) field accesses (char.char_class.name / char.char_class.value / asdict(char)); maintenance cost lives in the write paths (Enum-from-string at load time, asdict overrides for non-default-serializable Enum fields, requirements.append for skill graph growth). The classic failure mode for axis (a) is silently constructing invalid characters on load when an Enum member was renamed or removed; for axis (b) is hand-rolled save dicts drifting out of sync with the dataclass field set; for axis (c) is scattered if-elif prerequisite chains in can_learn() forcing every new skill to add a new branch.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame, json
+from dataclasses import dataclass, asdict, field
+from enum import Enum
+from typing import List, Dict
+
+class CharacterClass(Enum):
+    WARRIOR = 'warrior'
+    MAGE = 'mage'
+    ROGUE = 'rogue'
+
+class ItemType(Enum):
+    WEAPON = 'weapon'
+    POTION = 'potion'
+
+@dataclass
+class Item:
+    name: str
+    item_type: ItemType
+    value: int
+
+@dataclass
+class Character:
+    name: str
+    char_class: CharacterClass
+    level: int = 1
+    strength: int = 10
+    intelligence: int = 10
+
+@dataclass
+class Skill:
+    skill_id: str
+    name: str
+    requirements: List[Dict] = field(default_factory=list)
+
+SKILLS = {
+    'power_strike': Skill('power_strike', 'Power Strike'),
+    'iron_skin': Skill('iron_skin', 'Iron Skin', [{'skill_id': 'power_strike'}]),
+    'berserker': Skill('berserker', 'Berserker', [{'skill_id': 'power_strike'}, {'skill_id': 'iron_skin'}]),
+    'fireball': Skill('fireball', 'Fireball'),
+    'teleport': Skill('teleport', 'Teleport', [{'skill_id': 'fireball'}]),
+}
+
+def can_learn(skill, learned):
+    return all(req['skill_id'] in learned for req in skill.requirements)
+
+def save(char, items, learned, path):
+    data = {
+        'character': {**asdict(char), 'char_class': char.char_class.value},
+        'items': [{**asdict(i), 'item_type': i.item_type.value} for i in items],
+        'learned': sorted(learned),
+    }
+    with open(path, 'w') as f:
+        json.dump(data, f)
+
+def load(path):
+    with open(path) as f:
+        data = json.load(f)
+    cd = data['character']
+    cd['char_class'] = CharacterClass(cd['char_class'])
+    char = Character(**cd)
+    items = [Item(**{**i, 'item_type': ItemType(i['item_type'])}) for i in data['items']]
+    return char, items, set(data['learned'])
+
+pygame.init()
+screen = pygame.display.set_mode((800, 480))
+font = pygame.font.Font(None, 18)
+clock = pygame.time.Clock()
+char = Character('Aria', CharacterClass.WARRIOR)
+items = [Item('Sword', ItemType.WEAPON, 50), Item('Potion', ItemType.POTION, 10)]
+learned = {'power_strike'}
+status = 'S=save  L=load  1=power_strike  2=fireball  3=iron_skin'
+running = True
+while running:
+    for e in pygame.event.get():
+        if e.type == pygame.QUIT: running = False
+        elif e.type == pygame.KEYDOWN:
+            if e.key == pygame.K_s:
+                save(char, items, learned, '/tmp/rpg.json')
+                status = 'Saved (asdict walks @dataclass fields, Enum.value extracted)'
+            elif e.key == pygame.K_l:
+                try:
+                    char, items, learned = load('/tmp/rpg.json')
+                    status = 'Loaded (Enum-roundtrip OK, dataclass fields populated)'
+                except (FileNotFoundError, ValueError) as ex:
+                    status = f'Load failed: {ex}'
+            elif e.key in (pygame.K_1, pygame.K_2, pygame.K_3):
+                sid = {pygame.K_1: 'power_strike', pygame.K_2: 'fireball', pygame.K_3: 'iron_skin'}[e.key]
+                if can_learn(SKILLS[sid], learned):
+                    learned.add(sid)
+                    status = f'Learned {sid} (prereqs satisfied per declarative requirements list)'
+                else:
+                    reqs = ', '.join(r['skill_id'] for r in SKILLS[sid].requirements)
+                    status = f'Cannot learn {sid}: needs [{reqs}]'
+    screen.fill((20, 20, 30))
+    screen.blit(font.render('SKILL TREE (declarative requirements as data records):', True, (255, 255, 0)), (10, 10))
+    y = 40
+    for sid, skill in SKILLS.items():
+        ok = can_learn(skill, learned)
+        color = (0, 255, 0) if sid in learned else ((255, 255, 255) if ok else (110, 110, 110))
+        reqs = ', '.join(r['skill_id'] for r in skill.requirements) or 'none'
+        screen.blit(font.render(f'{skill.name:14s}  reqs=[{reqs}]', True, color), (20, y))
+        y += 22
+    screen.blit(font.render('CHARACTER (Enum-typed identity, .name vs .value):', True, (255, 255, 0)), (380, 10))
+    screen.blit(font.render(f'name={char.name}  class.name={char.char_class.name}  class.value={char.char_class.value!r}', True, (255, 255, 255)), (380, 35))
+    screen.blit(font.render(f'level={char.level}  STR={char.strength}  INT={char.intelligence}', True, (255, 255, 255)), (380, 55))
+    screen.blit(font.render('ITEMS:', True, (255, 255, 0)), (380, 85))
+    iy = 105
+    for it in items:
+        screen.blit(font.render(f'  {it.name}  type.name={it.item_type.name}  value={it.value}', True, (255, 255, 255)), (380, iy))
+        iy += 20
+    screen.blit(font.render('SAVE FORMAT (asdict walks @dataclass fields; Enum -&gt; .value -&gt; JSON string -&gt; Enum on load):', True, (255, 255, 0)), (10, 320))
+    sample = {'character': {**asdict(char), 'char_class': char.char_class.value}}
+    payload = json.dumps(sample, separators=(',', ':'))
+    screen.blit(font.render(payload[:100], True, (200, 200, 200)), (10, 345))
+    screen.blit(font.render(payload[100:200], True, (200, 200, 200)), (10, 365))
+    screen.blit(font.render(f'STATUS: {status}', True, (0, 255, 255)), (10, 410))
+    screen.blit(font.render('(Enum-from-string raises ValueError on drift; asdict tracks dataclass fields; requirements iterated as data)', True, (180, 180, 180)), (10, 440))
+    pygame.display.flip()
+    clock.tick(60)
+pygame.quit()</code></pre>
                 </details>
             </div>
 
@@ -551,31 +677,31 @@ if __name__ == "__main__":
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> Why does the save/load roundtrip use <code>CharacterClass(char_data['char_class'])</code> to reconstruct the character class on load, rather than storing and restoring the raw string?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class='quiz-option' data-correct='false' data-hint='Performance is not the design driver here — Enum lookups and string equality checks are both O(1) and indistinguishable in any realistic frame-rate budget. The design lever is failure-mode shaping, not throughput.'>A) Because Enum lookups are faster than string equality checks at runtime, so the conversion is needed for combat-loop performance.</button>
+                        <button class='quiz-option' data-correct='true' data-explanation='The Enum-from-string-value reconstructor `CharacterClass(value_string)` raises ValueError if the saved string does not match a declared member — making save-file format drift a LOAD-TIME exception rather than a silent runtime corruption (e.g., if `CharacterClass.WIZARD` is renamed to `MAGE` between game versions, an old save with the string &apos;wizard&apos; blows up at load with a clear error pointing at the actual invalid value, instead of silently constructing a Character with a string-typed `char_class` that later breaks deep in combat code with an AttributeError on `.name` access). This is the SIXTH Phase-8 lesson reinforcing the design-time-validation-vs-runtime-discovery pattern, FIRST applied at IDENTITY scope with the round-trip-through-save extension.'>B) Because the Enum-from-string-value reconstructor raises ValueError if the saved string does not match a declared member, making save-file format drift a load-time exception rather than a silent runtime corruption.</button>
+                        <button class='quiz-option' data-correct='false' data-hint='String storage and Enum storage occupy effectively identical memory in CPython since Enum members are singletons sharing one underlying object — the design driver is failure-mode shaping (catch save-file drift loudly at load time), not RAM accounting.'>C) Because storing Enums uses less memory than storing strings, so the conversion saves space in long save files.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> What architectural property does using <code>asdict(self.character)</code> in save_game() provide that hand-rolled <code>{'name': self.character.name, 'level': self.character.level, ...}</code> would not?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class='quiz-option' data-correct='false' data-hint='asdict() is implemented in pure Python in the standard library and walks fields via reflection — it is generally SLOWER than a hand-rolled dict literal, not faster. Performance is not the design driver here.'>A) asdict() is faster than dict-literal construction because it uses C-implemented field walking under the hood.</button>
+                        <button class='quiz-option' data-correct='true' data-explanation='asdict() walks the @dataclass-decorated class&apos;s field declarations recursively and produces a dict whose keys EXACTLY match the field names — so the save format IS the dataclass field set with no parallel definition to keep in sync. Adding a new field to Character automatically appears in saves with zero changes to save_game(); removing a field automatically disappears; renaming a field breaks load-time dict access at exactly the renamed field. The hand-rolled dict literal silently drifts out of sync the moment someone adds a Character field and forgets to update save_game (a classic stat-loss bug). This is schema-IS-the-class at SAVE-FORMAT scope — the schema-as-frozen-contract pattern from chat-58 architecture_save_load applied to the dataclass field declaration as the single source of truth for the save format.'>B) asdict() walks the dataclass fields automatically so the save format is the dataclass field set with no parallel definition to keep in sync — adding a new field to Character automatically appears in saves with zero changes to save_game().</button>
+                        <button class='quiz-option' data-correct='false' data-hint='asdict() does NOT guarantee JSON-serializability for arbitrary nested objects — it specifically fails to handle Enum values (which is exactly why the lesson code does {**asdict(char), &apos;char_class&apos;: char.char_class.value} overriding the asdict output for the Enum field). asdict only handles dataclasses, lists, tuples, dicts, and primitives natively; everything else needs manual handling.'>C) asdict() guarantees JSON-serializability for arbitrary nested objects including Enum members and external library types.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> Why does <code>Skill.can_learn()</code> iterate over <code>self.requirements</code> (a List[Dict] of {skill_id, level} records) rather than checking prerequisites with hardcoded if-elif chains keyed on <code>self.id</code>?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class='quiz-option' data-correct='false' data-hint='if-elif chains compile to direct branch instructions and are generally FASTER than list iteration with per-element dict access — runtime speed is not the design driver. The lever is maintainability and Open/Closed Principle satisfaction.'>A) List iteration is faster than if-elif dispatch at runtime because Python optimizes loops more aggressively than branch chains.</button>
+                        <button class='quiz-option' data-correct='true' data-explanation='The data-records form lets new skills declare any number of prerequisites at construction time with ZERO changes to can_learn()&apos;s control flow — adding berserker with two prerequisites is a single `Skill(&apos;berserker&apos;, &apos;Berserker&apos;, [{&apos;skill_id&apos;: &apos;power_strike&apos;}, {&apos;skill_id&apos;: &apos;iron_skin&apos;}])` call. The hardcoded if-elif alternative would scatter prerequisite logic across the can_learn method (`if self.id == &apos;berserker&apos;: ...; elif self.id == &apos;teleport&apos;: ...`), force every new skill to add a new elif branch (Open/Closed violation), and make multi-prerequisite skills awkward to express. Same data-driven externalization pattern from chat-58 schema-as-frozen-contract through chat-78 dialogue-graph applied at SKILL-TREE-VALIDATION scope = 21st Phase-8 lesson reinforcing the pattern, FIRST applied at SKILL-TREE-VALIDATION scope.'>B) The data-records form lets new skills declare any number of prerequisites at construction time with zero changes to can_learn()&apos;s control flow, while if-elif chains scatter prerequisite logic across the class and force every new skill to add a new branch.</button>
+                        <button class='quiz-option' data-correct='false' data-hint='List[Dict] is the LEAST-typed Python container shape — Dict has no key/value type validation at runtime without external tools like mypy or pydantic. The if-elif form would have stricter compile-time validation if anything (typed self.id strings vs untyped Dict access). The design lever is structural extensibility, not type safety.'>C) List[Dict] provides stricter type validation than if-elif branches because typing.Dict enforces key and value types at runtime.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

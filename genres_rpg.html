@@ -1230,19 +1230,112 @@
             <h2 id="practice-exercise-build-genres-rpg">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Three Pillars of Progression — Index-Pointer Dialogue Graph + Cached Equipment-Bonus Materialization + Stateful Self-Multiplying XP Curve in One HTML5 Canvas</h3>
+                <p><strong>Objective:</strong> Build a runnable JS+HTML5-canvas program (~65 lines) that distills the lesson's RPGSystem character/inventory/equipment/quest/dialogue orchestration into one cohesive demonstration of three orthogonal RPG-progression disciplines visible per frame on an 800×400 canvas split into three labeled regions: LEFT panel renders the dialogue's current node and its numbered responses with each response showing its <code>next:</code> integer pointer; TOP-RIGHT panel renders the equipped weapon and its cached <code>character.bonusStrength</code> accumulator alongside the per-frame composed total <code>strength + bonusStrength</code>; BOTTOM panel renders the level/xp/xpToNext triple with a green progress bar showing fractional fill. Three orthogonal RPG-progression disciplines visible per frame: (a) <strong>Dialogue-tree-as-index-pointer-graph at NARRATIVE-FLOW scope</strong> — each dialogue node is an array element indexed by integer and each response carries <code>next: &lt;int&gt;</code> (or <code>-1</code> for end-of-conversation) routing the conversation as data the renderer indexes into rather than scattered control flow with hardcoded if/elif chains per branch; adding a new dialogue branch is a single new array element + one <code>next: &lt;new-index&gt;</code> pointer edit with zero changes to the renderer's traversal loop; same data-driven externalization pattern as architecture_save_load schema (chat-58), pathfinding terrain-cost dict (chat-60), behavior-trees child-list-order (chat-61), decision-making personality dict (chat-62), procedural generation seed (chat-68), publishing_executables .spec (chat-70), publishing_marketing pitch templates (chat-71), publishing_performance algorithmic-axis (chat-72), publishing_platforms TARGETS+ADAPTERS dicts (chat-73), publishing_updates CADENCES+MIGRATIONS dicts (chat-74), genres_puzzle 2D-array board (chat-75), genres_puzzle_python 2D-array board (chat-76), and genres_racing TRACKS dict (chat-77) — TWENTIETH lesson reinforcing data-driven externalization across Phase 8, FIRST applied at NARRATIVE-FLOW scope where the dialogue's branching graph IS data the renderer reads. (b) <strong>Equipment-bonus-as-bidirectionally-maintained-cached-state at STAT-COMPOSITION scope</strong> — <code>equip(w)</code> does <code>if (weapon) character.bonusStrength -= weapon.strength;</code> THEN <code>weapon = w; character.bonusStrength += w.strength;</code> in lock-step pairs maintained on <code>character.bonusStrength</code> as an INCREMENTALLY-CACHED accumulator; per-frame render reads <code>total = strength + bonusStrength</code> from the cache rather than iterating over currently-equipped items each call; the cached-write makes per-frame reads O(1) at the cost of pairing equip and unequip into required-coupled double-writes (forgetting the subtract half = bonus drifts forever and never matches reality, the classic stat-bug source); the on-demand alternative <code>getBonusStrength() { return Object.values(equipment).reduce((a, e) =&gt; a + (e?.stats?.strength || 0), 0); }</code> would make write/read order irrelevant but pay per-frame iteration cost across N equipment slots; same pay-once-amortize-thereafter pattern category as chat-72 publishing_performance's CIRCLE_CACHE blit-vs-rasterize at COMPUTATION-COST scope and chat-64 particle_effects's max_lifetime snapshot at OBJECT-LIFECYCLE scope, here applied at STAT-COMPOSITION scope where the 'thing computed once per equip-event' is the bonus delta and the 'reuse forever (until next equip-event)' is the cached <code>character.bonusStrength</code> field read every render. (c) <strong>XP-curve-as-stateful-self-multiplying-exponential at LEVEL-PROGRESSION scope</strong> — <code>character.xpToNext = Math.floor(character.xpToNext * 1.5)</code> updates the NEXT-LEVEL threshold each level-up via multiplicative scaling on the CURRENT threshold value, producing a 1.5^(level-1) exponential curve as a side effect of repeated stateful updates rather than as a pure function <code>xpForLevel(level) = 100 * Math.pow(1.5, level - 1)</code> (which supports random-access queries like 'what's xpToNext for level 17 from level 1?' without simulating 16 multiplications) or as a hardcoded lookup table <code>XP_TABLE = [0, 100, 250, 475, ...]</code> (which requires touching every entry on rebalance and silently caps progression at table length); multi-level XP grants use <code>while (character.xp &gt;= character.xpToNext) { levelUp(); }</code> precisely because each levelUp call mutates BOTH <code>xp -= xpToNext</code> AND <code>xpToNext *= 1.5</code> so skipping a single levelUp call breaks the curve permanently; three encoding choices (stateful self-multiply / pure function / lookup table) span a maintainability-vs-efficiency-vs-randomness-of-access tradeoff and the lesson chose stateful for locality and simplicity. HUD shows current dialogue node, equipped weapon, cached bonus value, level, xp, threshold, and the rule-of-progression as a literal text string — three orthogonal RPG-progression disciplines visible per frame as concrete strings, integers, and a fractional-fill bar. ADVANCES the genres module 3/9 → 4/9 partial at chat-78 M1; module-completeness stays 12/13 since genres doesn't close in one chat (5 genres lessons remain after chat 78: rpg_python / strategy / strategy_python / tower_defense / tower_defense_python).</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Set up an 800×400 HTML5 canvas with a dark background and acquire its 2D context; declare canvas-width/height locals for layout math.</li>
+                    <li>Encode axis (a) — define a <code>dialogue</code> array of three nodes <code>{text, responses: [{text, next}]}</code> where each response's <code>next</code> field is an integer index back into the dialogue array (or <code>-1</code> for end-of-conversation); declare <code>let dlgNode = 0</code> as the current-node index. The dialogue's branching graph IS data the renderer indexes into.</li>
+                    <li>Encode axis (b) — declare <code>character</code> with <code>{strength: 10, bonusStrength: 0, level: 1, xp: 0, xpToNext: 100}</code> and a <code>weapons</code> array with three entries having different <code>strength</code> bonus values; write <code>equip(w)</code> that subtracts the prior weapon's bonus from <code>character.bonusStrength</code> THEN sets <code>weapon = w</code> THEN adds the new bonus; write <code>unequip()</code> that subtracts the current bonus and clears the slot. Both functions maintain the cached accumulator bidirectionally.</li>
+                    <li>Encode axis (c) — write <code>gainXp(amount)</code> that adds to <code>character.xp</code> then runs <code>while (character.xp &gt;= character.xpToNext)</code> looping <code>character.xp -= character.xpToNext; character.level++; character.xpToNext = Math.floor(character.xpToNext * 1.5);</code> per iteration so multi-level grants work and the threshold is mutated in lock-step with each level-up.</li>
+                    <li>Wire keyboard handlers — <code>1</code>/<code>2</code> select dialogue response (advancing <code>dlgNode</code> through the <code>next</code> pointer chain); <code>E</code> equip a random weapon from the array; <code>U</code> unequip the current weapon; <code>X</code> grant 50 XP. Guard the dialogue handler with <code>dlgNode &gt;= 0</code> so it stops accepting input after end-of-conversation.</li>
+                    <li>Render three labeled regions per frame — LEFT (x: 10) renders the current dialogue node text and its numbered responses each annotated with their <code>next</code> integer pointer; TOP-RIGHT (x: 420) renders the equipped weapon plus <code>character.strength</code> + <code>character.bonusStrength</code> + their TOTAL composed value; BOTTOM (x: 10, y: 220) renders level/xp/xpToNext labels plus a 400×24 progress bar with a green inner fill at width <code>(character.xp / character.xpToNext) * 398</code> and the literal stateful-rule string <code>xpToNext = floor(xpToNext * 1.5)</code> as a HUD label.</li>
+                    <li>Drive rendering via <code>requestAnimationFrame(render)</code> recursion at the end of <code>render()</code>; bootstrap with one initial <code>render()</code> call.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The three axes are three independent levers acting on three independent state-shapes that each persist across frames: <code>dlgNode</code> is a single integer threaded through the <code>dialogue[].responses[].next</code> pointer graph; <code>character.bonusStrength</code> is a cached accumulator mutated by paired equip/unequip writes that the per-frame composed <code>total = strength + bonusStrength</code> reads as a precomputed value; <code>character.xpToNext</code> is a single mutable threshold that the gainXp loop multiplies by 1.5 each level-up so the curve emerges from repeated state updates rather than a pure function. The renderer never branches on dialogue-node identity (it indexes into <code>dialogue[dlgNode]</code> instead), never iterates over equipment to recompute bonuses (it reads the cached field), and never simulates the level curve (it reads the current threshold). All three reads are O(1) per frame; the maintenance cost lives in the write paths (the dialogue array's <code>next</code> pointers must form a valid graph; equip and unequip must be paired; level-ups must always go through the levelUp method). If <code>dlgNode</code> ever holds an out-of-bounds index the renderer falls through to the end-of-conversation branch — same idiom as <code>-1</code> = end. If <code>bonusStrength</code> drifts from the sum of currently-equipped weapons' strength bonuses you have a missed unequip subtract somewhere — the cache is broken until you rebuild it. If the level curve looks wrong after a multi-level XP grant the <code>while</code> loop is missing or the threshold update was extracted out of <code>levelUp</code> — the curve is gated on the call.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>const canvas = document.getElementById('rpg');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+// (a) Dialogue tree as index-pointer graph
+const dialogue = [
+  {text: 'Greetings, traveler! Trouble afoot.', responses: [
+    {text: 'Tell me more', next: 1},
+    {text: 'Farewell',     next: -1}]},
+  {text: 'Goblins raid the farms. Help us!', responses: [
+    {text: 'On my way',    next: -1},
+    {text: 'Reward?',      next: 2}]},
+  {text: 'Fifty gold and a steel sword.', responses: [
+    {text: 'Deal!',        next: -1}]}
+];
+let dlgNode = 0;
+
+// (b) Equipment bonus as bidirectionally-cached state
+const character = {strength: 10, bonusStrength: 0, level: 1, xp: 0, xpToNext: 100};
+let weapon = null;
+const weapons = [
+  {name: 'Iron Sword', strength: 2},
+  {name: 'Steel Axe',  strength: 5},
+  {name: 'War Hammer', strength: 8}];
+
+function equip(w) {
+  if (weapon) character.bonusStrength -= weapon.strength;  // subtract prior
+  weapon = w;
+  character.bonusStrength += w.strength;                   // add new
+}
+function unequip() {
+  if (!weapon) return;
+  character.bonusStrength -= weapon.strength;
+  weapon = null;
+}
+
+// (c) XP curve as stateful self-multiplying exponential
+function gainXp(amount) {
+  character.xp += amount;
+  while (character.xp &gt;= character.xpToNext) {
+    character.xp -= character.xpToNext;
+    character.level++;
+    character.xpToNext = Math.floor(character.xpToNext * 1.5);  // *1.5
+  }
+}
+
+addEventListener('keydown', e =&gt; {
+  const k = e.key.toLowerCase();
+  if ((k === '1' || k === '2') &amp;&amp; dlgNode &gt;= 0) {
+    const r = dialogue[dlgNode].responses[parseInt(k) - 1];
+    if (r) dlgNode = r.next;
+  }
+  if (k === 'e') equip(weapons[Math.floor(Math.random() * weapons.length)]);
+  if (k === 'u') unequip();
+  if (k === 'x') gainXp(50);
+});
+
+function render() {
+  ctx.fillStyle = '#1a1a1a'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#fff'; ctx.font = '14px monospace';
+  // (a) Dialogue panel
+  ctx.fillText('DIALOGUE GRAPH (1/2 select response):', 10, 24);
+  if (dlgNode &gt;= 0) {
+    ctx.fillText('node[' + dlgNode + ']: ' + dialogue[dlgNode].text, 10, 54);
+    dialogue[dlgNode].responses.forEach((r, i) =&gt; {
+      ctx.fillText((i + 1) + ') ' + r.text + '  -&gt; next=' + r.next, 20, 84 + i * 22);
+    });
+  } else { ctx.fillStyle = '#888'; ctx.fillText('-- conversation ended --', 10, 54); }
+  // (b) Equipment panel
+  ctx.fillStyle = '#fff';
+  ctx.fillText('EQUIPMENT (E equip random / U unequip):', 420, 24);
+  ctx.fillText('weapon: ' + (weapon ? weapon.name + ' (+' + weapon.strength + ' STR)' : 'none'), 430, 54);
+  ctx.fillText('character.strength      = ' + character.strength, 430, 84);
+  ctx.fillText('character.bonusStrength = ' + character.bonusStrength + '  (cached)', 430, 106);
+  ctx.fillStyle = '#0f0';
+  ctx.fillText('TOTAL                   = ' + (character.strength + character.bonusStrength), 430, 134);
+  // (c) XP curve panel
+  ctx.fillStyle = '#fff';
+  ctx.fillText('XP CURVE (X grant 50 XP):', 10, 220);
+  ctx.fillText('level:    ' + character.level, 20, 250);
+  ctx.fillText('xp:       ' + character.xp + ' / ' + character.xpToNext, 20, 272);
+  ctx.fillText('rule:     xpToNext = floor(xpToNext * 1.5)', 20, 300);
+  ctx.strokeStyle = '#888'; ctx.strokeRect(20, 318, 400, 24);
+  ctx.fillStyle = '#0f0';
+  ctx.fillRect(21, 319, (character.xp / character.xpToNext) * 398, 22);
+  requestAnimationFrame(render);
+}
+render();</code></pre>
                 </details>
             </div>
 
@@ -1250,31 +1343,31 @@
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> The lesson's NPCs use a <code>dialogue</code> array where each node is <code>{text, responses: [{text, next}]}</code> and each response's <code>next</code> field is an integer index back into the same array (or <code>-1</code> for end-of-conversation). Why does this index-pointer-graph encoding scale better than hardcoded if/elif branches per response?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Performance-as-driver anti-model: dispatching through dialogue[dlgNode] is a single dict lookup which is nanoseconds, an if/elif chain on dlgNode value is also nanoseconds, both are immeasurable next to actual rendering work; the architectural driver is maintainability and the Open/Closed Principle, not call-site speed.'>A) Dispatching through <code>dialogue[dlgNode]</code> is faster at runtime than equivalent if/elif comparison on an integer dlgNode value, so the rendered conversation runs at higher FPS.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Adding a new dialogue branch is a single new array element + one next: &lt;new-index&gt; pointer edit with zero changes to the renderer&apos;s traversal loop, while the if/elif alternative scatters per-branch facts (text, responses, transition rules) across the renderer code where adding a branch requires simultaneous edits to each function. Same data-driven externalization pattern as chat-58 schema-as-frozen-contract through chat-77 TRACKS dict applied at NARRATIVE-FLOW scope where the dialogue&apos;s branching graph IS data the renderer indexes into.'>B) Adding a new dialogue branch is a single new array element + one <code>next: &lt;new-index&gt;</code> pointer edit with zero changes to the renderer's traversal loop, while the if/elif alternative scatters per-branch facts across the renderer code where adding a branch requires simultaneous edits to each function — same data-driven externalization pattern as chat-58 schema-as-frozen-contract through chat-77 TRACKS dict applied at NARRATIVE-FLOW scope.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Memory-as-driver anti-model: the dialogue array holds three small objects totaling a few hundred bytes; replacing it with hardcoded if/elif branches in the renderer would actually use SLIGHTLY less memory but cost vastly more in maintenance; the driver is single-source-of-truth maintainability, not memory efficiency.'>C) The dialogue array uses less memory than the if/elif equivalent because integer indices are smaller than function references, so the demo runs in less RAM when many NPCs are loaded.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> The lesson's <code>equipItem()</code> method subtracts the prior weapon's stats from <code>character.bonusStrength</code> BEFORE adding the new weapon's stats — never just the latter. Why does this bidirectional pattern matter?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Fictitious-mechanism anti-model: there is no JavaScript Number precision issue at integer-stat scale; the equipment stat values are small integers (1, 2, 5, 8) and float arithmetic on integer inputs in this range is exact within Number precision; the precision-error framing is fabricated.'>A) The subtract-then-add ordering avoids JavaScript Number precision errors that would accumulate if both operations ran in a single <code>+=</code> expression.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='character.bonusStrength is a CACHED MATERIALIZED VIEW of &quot;sum over currently-equipped items of their strength bonus&quot;. Without the subtract-on-unequip half, the cache drifts permanently because the prior weapon&apos;s stats are never removed and bonusStrength no longer matches reality; the on-demand alternative getBonusStrength() iterating equipment makes write/read order irrelevant but pays per-frame iteration cost; the lesson chose cached-write because per-frame reads happen vastly more often than equip-events. Same pay-once-amortize-thereafter pattern as chat-72 publishing_performance&apos;s CIRCLE_CACHE applied at STAT-COMPOSITION scope.'>B) The bonus accumulator is a CACHED MATERIALIZED VIEW of 'sum over currently-equipped items of their strength bonus' — without the subtract-on-unequip half, the cache drifts permanently because the prior weapon's stats are never removed; the on-demand alternative iterating equipment each render makes write/read order irrelevant but pays per-frame iteration cost, while cached-write pairs equip and unequip into required-coupled double-writes — same pay-once-amortize-thereafter pattern as chat-72 publishing_performance's CIRCLE_CACHE applied at STAT-COMPOSITION scope.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Fictitious-requirement anti-model: the renderer doesn&apos;t care about intermediate states between subtract and add since the operations run in synchronous JS so no intermediate is ever visible to render(); the bidirectional pattern is about cache consistency across equip-events, not about any momentarily-visible state during the swap.'>C) Subtracting before adding ensures the bonusStrength value is briefly zero between the two operations so the renderer captures a clean intermediate state.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> The lesson's <code>levelUp()</code> updates the threshold via <code>experienceToNext = Math.floor(experienceToNext * 1.5)</code> — multiplying the CURRENT threshold by 1.5 each level-up rather than computing from a pure function <code>xpForLevel(level) = 100 * Math.pow(1.5, level - 1)</code> or reading from a hardcoded lookup table. What's the central architectural tradeoff this stateful self-multiply choice makes?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Performance-as-driver anti-model: stateful self-multiply happens once per level-up event which is rare (seconds to hours apart), the per-frame render reads the cached threshold value either way, the FPS difference between approaches is unmeasurable; the driver is locality + simplicity vs random-access ability, not call-site speed.'>A) The stateful approach is faster than <code>Math.pow(1.5, level - 1)</code> because it avoids the floating-point pow() call per level, and faster than table lookup because it avoids the array index bounds check, so the demo runs at higher FPS in long sessions.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Stateful self-multiply trades random-access ability for locality: it&apos;s locally efficient (one float multiply + floor per level-up event with all curve state in a single mutable field) but cannot answer &quot;what&apos;s xpToNext for level 17 from level 1?&quot; without simulating 16 multiplications, and is fragile to skipped level-ups since the threshold update is gated on the levelUp call. The while-loop multi-level handler exists precisely to prevent curve drift on multi-level grants. Pure-function xpForLevel(n) = base * pow(1.5, n - 1) supports random-access queries and rebalancing via two constant edits but pays one Math.pow per query; lookup tables need touching every entry on rebalance and silently cap progression at table length.'>B) Stateful self-multiply trades random-access ability for locality — locally efficient (one float multiply + floor per level-up, all curve state in a single mutable field) but cannot answer 'what's xpToNext for level 17 from level 1?' without simulating 16 multiplications, and is fragile to skipped level-ups since the threshold update is gated on the levelUp call (the while-loop multi-level handler exists precisely to prevent curve drift); pure-function xpForLevel supports random-access queries and rebalancing via two constant edits but pays one Math.pow per query; lookup tables need touching every entry on rebalance and silently cap progression at table length.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Fictitious-mechanism anti-model: Math.pow on small integer exponents and a base of 1.5 produces exact-integer-equivalent results within Number precision after the floor() call; the floor() in the lesson&apos;s stateful version is the actual source of any rounding behavior, not the pow-vs-multiply choice; the precision-drift framing is fabricated.'>C) The stateful approach prevents floating-point accumulation errors that would make <code>Math.pow(1.5, 17)</code> drift from the integer-target result of 16 successive multiplications.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

@@ -900,19 +900,195 @@
             <h2 id="practice-exercise-build-genres-puzzle">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Five Genres, One Interface — Polymorphic Puzzle-Genre Dispatch + 2D-Array Board State + Match-Cascade Fixed-Point Loop in One Pygame Window</h3>
+                <p><strong>Objective:</strong> Build a runnable pygame window in roughly 95 lines that shows three orthogonal puzzle-game disciplines visible per frame on a 1088×540 window with three labeled regions: LEFT panel renders a 5-row genre selector with the active genre highlighted; MIDDLE panel renders the active puzzle's board state via the same <code>render(surface, ox, oy)</code> method on every genre class; RIGHT panel shows the live combo counter and a rolling 8-line dispatch log of every event routed through the polymorphic interface. (a) <strong>Polymorphic puzzle-genre dispatch at PUZZLE-GENRE scope</strong> — a <code>PUZZLES = {'match3': Match3(), 'sliding': Sliding(), 'physics': Physics(), 'pattern': Pattern(), 'logic': Logic()}</code> dict plus a uniform <code>handle_click / step / render</code> interface across all five classes lets the controller call <code>PUZZLES[active].handle_click(mx, my)</code> and <code>PUZZLES[active].render(screen, ox, oy)</code> with zero <code>if active == 'match3': ... elif active == 'sliding': ...</code> branches; adding a sixth genre (e.g., word puzzles) is one new class plus one new dict entry with no controller edits. Same UIElement-protocol pattern from chat-67 graphics_ui_hud and PlatformAdapter pattern from chat-73 publishing_platforms applied at PUZZLE-GENRE scope = SECOND polymorphic-dispatch lesson reinforcing the shared-protocol pattern at a new domain scope. (b) <strong>Grid-state-as-2D-array at BOARD-REPRESENTATION scope</strong> — match-3 stores its 8×8 board as <code>grid[r][c] = color_int</code> with values 0–5 plus −1 for cleared cells, and sliding stores its 4×4 board as <code>grid[r][c] = number</code> with values 1–15 plus 0 for the empty cell; both genres share the same 2D-array shape so swap (match-3) and slide (sliding) are both two-line index-pair assignments, win-check is a flat scan, match-detect is two nested for-loops over (r, c), and serializing the board for save/undo is one <code>json.dumps</code> call. Same data-driven externalization pattern as architecture_save_load schema (chat-58), pathfinding terrain-cost dict (chat-60), behavior-trees child-list-order (chat-61), decision-making personality dict (chat-62), procedural generation seed (chat-68), publishing_executables .spec file (chat-70), publishing_marketing pitch templates (chat-71), publishing_performance algorithmic-axis toggles (chat-72), publishing_platforms TARGETS dict (chat-73), and publishing_updates CADENCES + MIGRATIONS dicts (chat-74) applied at BOARD-REPRESENTATION scope = SEVENTEENTH lesson reinforcing data-driven externalization across Phase 8, FIRST applied at BOARD-REPRESENTATION scope where the board IS the data the puzzle's algorithms (swap, slide, match-detect, cascade) read and mutate. (c) <strong>Match-cascade-as-fixed-point-loop at MATCH-CASCADE scope</strong> — match-3's <code>handle_click</code> ends with <code>combo = 0; while self.step(): combo += 1</code> where <code>step()</code> performs {detect runs of 3+ → mark cleared cells → drop survivors → spawn new from top → return True if any change happened, False if state stabilized}; the loop terminates when no further matches exist and the combo multiplier IS the iteration count without any extra accumulator. Same chained-contract pattern as chat-74 publishing_updates' MIGRATIONS dict (each iteration is a frozen contract that may produce a new state requiring another iteration) applied at MATCH-CASCADE scope. Keys 1/2/3/4/5 switch the active genre; mouse clicks dispatch through the active class via <code>PUZZLES[active].handle_click(...)</code>; HUD shows combo counter and dispatch log — three orthogonal puzzle-game disciplines visible per frame as concrete dict entries, board values, and iteration counts.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Open a 1088×540 pygame window with three labeled regions (LEFT genre selector at x=10–190, MIDDLE puzzle board at x=200–760, RIGHT combo+log at x=770–1078).</li>
+                    <li>Define five puzzle classes Match3 / Sliding / Physics / Pattern / Logic, each implementing the same <code>handle_click(local_x, local_y)</code> and <code>render(surf, ox, oy)</code> method names, plus <code>step()</code> on every class returning True if a cascade-style state change occurred (only Match3 returns True; the other four always return False).</li>
+                    <li>Store the match-3 board as a 2D list <code>grid[r][c]</code> with int values 0–5 (color index) and −1 for cleared cells; store the sliding board as a 2D list <code>grid[r][c]</code> with int values 0–15 (0 = empty) — same 2D-array shape, different value domain.</li>
+                    <li>In <code>Match3.step()</code>, scan the grid for horizontal and vertical runs of 3+ same color, mark them, set marked cells to −1, drop surviving cells with column-rebuilding, spawn random colors into the empty slots at the top of each column, return True if any cells were marked this pass and False otherwise.</li>
+                    <li>In <code>Match3.handle_click</code>, after a valid adjacent swap, run <code>combo = 0; while self.step(): combo += 1</code> and store the final <code>combo</code> as <code>self.last_combo</code> for the HUD to display — the combo multiplier IS the number of cascade iterations.</li>
+                    <li>Build a controller dict <code>PUZZLES = {'match3': Match3(), 'sliding': Sliding(), 'physics': Physics(), 'pattern': Pattern(), 'logic': Logic()}</code> and dispatch every controller event with <code>PUZZLES[active].method(...)</code> — never branch on the <code>active</code> string anywhere in the controller.</li>
+                    <li>On keys 1–5 switch <code>active</code> to the corresponding genre name and append a 'switch &lt;name&gt;' line to the rolling 8-line log; on mouse click in the middle panel, dispatch through <code>PUZZLES[active].handle_click(mx-200, my-60)</code> and append a 'click on &lt;name&gt;' line.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The three axes are independent levers: the dispatch dict (axis a) controls WHICH class handles an event with no controller branching; the 2D-array board shape (axis b) controls HOW each board's state is stored and gives match-3 and sliding the same algorithmic primitive (index-pair assignment) for swap and slide; the fixed-point cascade loop (axis c) lets match-3 run multi-step combos with the iteration count itself acting as the combo multiplier without any extra accumulator. Keep the controller code (event loop + render orchestrator) free of any <code>if active == '...'</code> branches — every controller-side operation goes through <code>PUZZLES[active].method(...)</code>. The <code>step()</code> method's return value is the loop's halting condition AND the source of the combo count: the loop runs until <code>step()</code> returns False, and every True return increments the combo by exactly one.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame, sys, random
+pygame.init()
+W, H = 1088, 540
+screen = pygame.display.set_mode((W, H))
+pygame.display.set_caption('Five Genres, One Interface')
+font = pygame.font.SysFont('consolas', 14)
+big = pygame.font.SysFont('consolas', 22, bold=True)
+clock = pygame.time.Clock()
+COLORS = [(220,80,80),(80,200,80),(80,140,220),(220,200,80),(200,80,200),(80,200,200)]
+
+class Match3:
+    def __init__(self):
+        self.grid = [[random.randint(0,5) for _ in range(8)] for _ in range(8)]
+        self.sel = None; self.last_combo = 0
+    def handle_click(self, lx, ly):
+        c, r = lx // 40, ly // 40
+        if not (0 &lt;= c &lt; 8 and 0 &lt;= r &lt; 8): return
+        if self.sel is None: self.sel = (r, c); return
+        r0, c0 = self.sel; self.sel = None
+        if abs(r0-r) + abs(c0-c) != 1: return
+        self.grid[r0][c0], self.grid[r][c] = self.grid[r][c], self.grid[r0][c0]
+        combo = 0
+        while self.step(): combo += 1
+        self.last_combo = combo
+    def step(self):
+        m = [[False]*8 for _ in range(8)]; hit = False
+        for r in range(8):
+            for c in range(6):
+                v = self.grid[r][c]
+                if v &gt;= 0 and v == self.grid[r][c+1] == self.grid[r][c+2]:
+                    m[r][c] = m[r][c+1] = m[r][c+2] = True; hit = True
+        for c in range(8):
+            for r in range(6):
+                v = self.grid[r][c]
+                if v &gt;= 0 and v == self.grid[r+1][c] == self.grid[r+2][c]:
+                    m[r][c] = m[r+1][c] = m[r+2][c] = True; hit = True
+        if not hit: return False
+        for r in range(8):
+            for c in range(8):
+                if m[r][c]: self.grid[r][c] = -1
+        for c in range(8):
+            col = [self.grid[r][c] for r in range(8) if self.grid[r][c] != -1]
+            col = [-1]*(8-len(col)) + col
+            for r in range(8): self.grid[r][c] = col[r]
+        for r in range(8):
+            for c in range(8):
+                if self.grid[r][c] == -1: self.grid[r][c] = random.randint(0,5)
+        return True
+    def render(self, surf, ox, oy):
+        for r in range(8):
+            for c in range(8):
+                v = self.grid[r][c]
+                col = COLORS[v%6] if v &gt;= 0 else (40,40,40)
+                pygame.draw.rect(surf, col, (ox+c*40+1, oy+r*40+1, 38, 38))
+        if self.sel:
+            r, c = self.sel
+            pygame.draw.rect(surf, (255,255,255), (ox+c*40, oy+r*40, 40, 40), 2)
+
+class Sliding:
+    def __init__(self):
+        self.grid = [[r*4+c for c in range(4)] for r in range(4)]
+        for _ in range(100): self._slide_random()
+        self.last_combo = 0
+    def _empty(self):
+        for r in range(4):
+            for c in range(4):
+                if self.grid[r][c] == 0: return r, c
+    def _slide_random(self):
+        er, ec = self._empty()
+        opts = [(r,c) for r,c in [(er-1,ec),(er+1,ec),(er,ec-1),(er,ec+1)] if 0&lt;=r&lt;4 and 0&lt;=c&lt;4]
+        nr, nc = random.choice(opts)
+        self.grid[er][ec], self.grid[nr][nc] = self.grid[nr][nc], self.grid[er][ec]
+    def handle_click(self, lx, ly):
+        c, r = lx // 80, ly // 80
+        if not (0&lt;=c&lt;4 and 0&lt;=r&lt;4): return
+        er, ec = self._empty()
+        if abs(er-r) + abs(ec-c) == 1:
+            self.grid[er][ec], self.grid[r][c] = self.grid[r][c], self.grid[er][ec]
+    def step(self): return False
+    def render(self, surf, ox, oy):
+        for r in range(4):
+            for c in range(4):
+                v = self.grid[r][c]
+                col = (40,40,40) if v == 0 else (100,160,220)
+                pygame.draw.rect(surf, col, (ox+c*80+1, oy+r*80+1, 78, 78))
+                if v != 0:
+                    surf.blit(big.render(str(v), True, (255,255,255)), (ox+c*80+28, oy+r*80+28))
+
+class Physics:
+    def __init__(self):
+        self.x, self.y, self.vx, self.vy, self.flying, self.last_combo = 50, 250, 0, 0, False, 0
+    def handle_click(self, lx, ly):
+        if not self.flying:
+            self.vx, self.vy, self.flying = (lx-50)*0.05, (ly-250)*0.05, True
+    def step(self): return False
+    def update(self):
+        if self.flying:
+            self.x += self.vx; self.y += self.vy; self.vy += 0.3
+            if self.y &gt; 480 or self.x &gt; 540 or self.x &lt; 0:
+                self.x, self.y, self.vx, self.vy, self.flying = 50, 250, 0, 0, False
+    def render(self, surf, ox, oy):
+        pygame.draw.circle(surf, (255,200,80), (ox+int(self.x), oy+int(self.y)), 12)
+        for tx, ty in [(300, 100),(450, 200),(380, 350)]:
+            pygame.draw.circle(surf, (220,80,80), (ox+tx, oy+ty), 16, 2)
+
+class Pattern:
+    def __init__(self):
+        self.seq = [random.randint(0,3)]; self.user = []; self.last_combo = 0
+    def handle_click(self, lx, ly):
+        c = lx // 135
+        if not (0 &lt;= c &lt; 4): return
+        self.user.append(c)
+        if len(self.user) == len(self.seq):
+            if self.user == self.seq:
+                self.seq.append(random.randint(0,3)); self.last_combo = len(self.seq)-1
+            else:
+                self.seq = [random.randint(0,3)]; self.last_combo = 0
+            self.user = []
+    def step(self): return False
+    def render(self, surf, ox, oy):
+        cols = [(220,80,80),(80,200,80),(80,140,220),(220,200,80)]
+        for i in range(4):
+            pygame.draw.rect(surf, cols[i], (ox+i*135+5, oy+200, 125, 80))
+        surf.blit(font.render(f'len(seq)={len(self.seq)} progress={len(self.user)}', True, (255,255,255)), (ox+5, oy+5))
+
+class Logic:
+    def __init__(self): self.inp = [False, False, False]; self.last_combo = 0
+    def handle_click(self, lx, ly):
+        for i in range(3):
+            if (lx-80)**2 + (ly-100-i*100)**2 &lt; 400: self.inp[i] = not self.inp[i]
+    def step(self): return False
+    def render(self, surf, ox, oy):
+        for i in range(3):
+            col = (80,200,80) if self.inp[i] else (60,60,60)
+            pygame.draw.circle(surf, col, (ox+80, oy+100+i*100), 20)
+            surf.blit(font.render(['A','B','C'][i], True, (255,255,255)), (ox+72, oy+92+i*100))
+        out = self.inp[0] and self.inp[1] and self.inp[2]
+        pygame.draw.rect(surf, (60,60,60), (ox+200, oy+170, 100, 60))
+        surf.blit(big.render('AND', True, (255,255,255)), (ox+220, oy+185))
+        pygame.draw.circle(surf, (80,200,80) if out else (60,60,60), (ox+360, oy+200), 25)
+
+PUZZLES = {'match3': Match3(), 'sliding': Sliding(), 'physics': Physics(), 'pattern': Pattern(), 'logic': Logic()}
+NAMES = ['match3', 'sliding', 'physics', 'pattern', 'logic']
+active = 'match3'; log = []
+running = True
+while running:
+    for e in pygame.event.get():
+        if e.type == pygame.QUIT: running = False
+        elif e.type == pygame.KEYDOWN and pygame.K_1 &lt;= e.key &lt;= pygame.K_5:
+            active = NAMES[e.key - pygame.K_1]; log.append(f'switch {active}')
+        elif e.type == pygame.MOUSEBUTTONDOWN:
+            mx, my = e.pos
+            if 200 &lt;= mx &lt;= 760 and 60 &lt;= my &lt;= 480:
+                PUZZLES[active].handle_click(mx-200, my-60); log.append(f'click on {active}')
+    if hasattr(PUZZLES[active], 'update'): PUZZLES[active].update()
+    log = log[-8:]
+    screen.fill((20,20,30))
+    for i, n in enumerate(NAMES):
+        col = (80,160,220) if n == active else (60,60,60)
+        pygame.draw.rect(screen, col, (10, 60+i*60, 180, 50))
+        screen.blit(big.render(f'{i+1}: {n}', True, (255,255,255)), (20, 75+i*60))
+    pygame.draw.rect(screen, (10,10,15), (200, 60, 560, 420))
+    PUZZLES[active].render(screen, 200, 60)
+    pygame.draw.rect(screen, (10,10,15), (770, 60, 308, 420))
+    screen.blit(big.render(f'combo: {PUZZLES[active].last_combo}', True, (255,255,255)), (780, 70))
+    for i, line in enumerate(log):
+        screen.blit(font.render(line, True, (200,200,200)), (780, 120+i*20))
+    screen.blit(big.render('Five Genres, One Interface — keys 1-5 switch genre', True, (255,255,255)), (10, 10))
+    pygame.display.flip()
+    clock.tick(60)
+pygame.quit(); sys.exit()</code></pre>
                 </details>
             </div>
 
@@ -920,31 +1096,31 @@
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> The controller dispatches every event with <code>PUZZLES[active].handle_click(...)</code> and <code>PUZZLES[active].render(...)</code> rather than branching <code>if active == 'match3': match3.handle_click(...) elif active == 'sliding': sliding.handle_click(...) ...</code>. Why is the dict-dispatch approach the architectural fit at PUZZLE-GENRE scope?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class='quiz-option' data-correct='false' data-hint='Performance is not the architectural driver — Python dict lookups are O(1) amortized and a five-key switch is negligible whether expressed as a dict or a five-arm if/elif chain. The reason matters more than the timing.'>A) Dict lookups are faster than if/elif chains so the controller&apos;s frame time stays under budget.</button>
+                        <button class='quiz-option' data-correct='true' data-explanation='Polymorphic dispatch via shared protocol means every genre class implements the same handle_click / render / step interface and the controller calls PUZZLES[active].method(...) once with no per-genre branching anywhere; adding a sixth genre (e.g., word puzzles) is one new class plus one new dict entry with zero edits to the controller&apos;s event loop or render orchestrator. Same UIElement-protocol pattern from chat-67 graphics_ui_hud and PlatformAdapter pattern from chat-73 publishing_platforms applied at PUZZLE-GENRE scope = SECOND polymorphic-dispatch lesson reinforcing the shared-protocol pattern at a new domain scope.'>B) The five genre classes share the same handle_click / render / step interface, so dict-indexed dispatch eliminates per-genre branches in the controller and makes adding a sixth genre a single class+entry edit with zero controller changes.</button>
+                        <button class='quiz-option' data-correct='false' data-hint='Memory usage is not the design driver here — five class instances cost negligible memory regardless of whether they live in a dict or in named module-level variables. The architectural reason is about controller-code modularity and the cost of adding new genres, not about heap footprint.'>C) Storing the five instances in a dict instead of five named variables saves memory because Python dicts share their key strings via interning.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> Both Match3 and Sliding store their boards as <code>grid[r][c] = int</code> 2D arrays — match-3 with values 0–5 plus −1 for cleared cells on an 8×8 board, sliding with values 0–15 (0 = empty) on a 4×4 board. Why is the 2D-array shape the architectural fit at BOARD-REPRESENTATION scope?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class='quiz-option' data-correct='false' data-hint='A parallel Cell-object graph is the anti-model here: every swap or slide becomes &quot;rebind two object references plus update each Cell&apos;s row/col fields plus traverse neighbor pointers&quot;, every save/load needs custom __init__ logic per Cell type, and every match-detect needs object-identity comparison rather than int equality. The 2D-array shape is dramatically simpler.'>A) A parallel Cell-object graph (each cell a Cell instance with row/col/color attributes plus pointers to its four neighbors) is conceptually cleaner and makes match-detect a graph traversal.</button>
+                        <button class='quiz-option' data-correct='true' data-explanation='The 2D-array shape externalizes the board AS data the puzzle&apos;s algorithms read and mutate: swap (match-3) and slide (sliding) are both two-line index-pair assignments, win-check is a flat scan, match-detect is two nested for-loops over (r, c), serialization is one json.dumps call, and undo is one list-comprehension deep-copy. Same data-driven externalization pattern as architecture_save_load schema (chat-58), pathfinding terrain-cost dict (chat-60), behavior-trees child-list-order (chat-61), decision-making personality dict (chat-62), procedural generation seed (chat-68), publishing_executables .spec file (chat-70), publishing_marketing pitch templates (chat-71), publishing_performance algorithmic-axis toggles (chat-72), publishing_platforms TARGETS dict (chat-73), and publishing_updates CADENCES + MIGRATIONS dicts (chat-74) applied at BOARD-REPRESENTATION scope = SEVENTEENTH lesson reinforcing data-driven externalization across Phase 8, FIRST applied at BOARD-REPRESENTATION scope where the board IS the data the puzzle&apos;s algorithms read and mutate.'>B) The board IS data the puzzle&apos;s algorithms read and mutate — swap, slide, match-detect, cascade, win-check, save, and undo all operate on grid[r][c] = int with no object graph to keep in sync; both genres share the same primitive operations because they share the same data shape.</button>
+                        <button class='quiz-option' data-correct='false' data-hint='Type safety is not what makes the 2D-array shape work — Python is duck-typed and a plain int has no compile-time type guarantees beyond what a Cell instance would. The architectural reason is about how cleanly the algorithms operate on the data, not about static type checks.'>C) Plain int values give the static type-checker more information than Cell instances, so mypy can validate the board state at edit time.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> After a valid match-3 swap, the code runs <code>combo = 0</code> then <code>while self.step(): combo += 1</code>, where <code>step()</code> performs {detect runs of 3+ → mark cleared → drop survivors → spawn new from top → return True if any change happened, False if state stabilized}. Why is the fixed-point loop with iteration-count-as-combo-multiplier the architectural fit at MATCH-CASCADE scope?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class='quiz-option' data-correct='false' data-hint='Hard-coding a maximum cascade depth (e.g., for _ in range(MAX_CASCADE_DEPTH): step()) caps the combo count artificially even when more matches exist after the limit, and runs unnecessary iterations on simple swaps where step() returned False after one pass. The fixed-point loop terminates exactly when no further matches exist regardless of depth.'>A) A bounded loop <code>for _ in range(MAX_CASCADE_DEPTH): self.step()</code> caps cascade depth at a designer-chosen maximum and avoids the risk of an unbounded while loop running forever.</button>
+                        <button class='quiz-option' data-correct='true' data-explanation='The while-step pattern terminates exactly when no further matches exist (step() returns False) because each step() is a frozen contract that takes the current grid and produces either a strictly different grid (returns True) or the same grid (returns False); the loop converges because the int-valued grid has finitely many states and clearing strictly reduces the count of marked cells, so the iteration must reach a stable state. The combo multiplier IS the iteration count without any extra accumulator — every True return increments combo by exactly one. Same chained-contract pattern as chat-74 publishing_updates&apos; MIGRATIONS dict (each iteration is a frozen contract that may produce a new state requiring another iteration) applied at MATCH-CASCADE scope.'>B) Each step() is a frozen contract that produces either a strictly different grid or the same grid; the loop terminates exactly when state stabilizes (step() returns False), and the iteration count IS the combo multiplier with no extra accumulator — same chained-contract pattern as chat-74 publishing_updates&apos; MIGRATIONS dict applied at MATCH-CASCADE scope.</button>
+                        <button class='quiz-option' data-correct='false' data-hint='A separate combo counter that increments inside step() (e.g., self.combo += 1 at the end of each step() body) is redundant — the iteration count of the outer while loop already IS the combo, and threading state into step() couples the cascade primitive to its caller&apos;s bookkeeping. The clean shape keeps step() focused on grid transitions and lets the outer loop count its own iterations.'>C) The combo counter must be threaded into step() itself (e.g., <code>def step(self, combo): self.combo = combo + 1</code>) so step() knows the current cascade depth when scoring multipliers.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

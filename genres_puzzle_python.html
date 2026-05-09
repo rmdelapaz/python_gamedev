@@ -909,19 +909,153 @@ if __name__ == "__main__":
             <h2 id="practice-exercise-build-genres-puzzle-python">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Three Pythonic Levers, One Demo — Enum Puzzle Identity + 2D-Array Board State + Recursive Cascade Fixed-Point in One Pygame Window</h3>
+                <p><strong>Objective:</strong> Build a runnable pygame program (~110 lines) that distills the lesson's <code>class PuzzleType(Enum)</code> + Match3Game / SlidingPuzzle / PhysicsPuzzle / PatternPuzzle / LogicPuzzle five-class architecture into one cohesive demo where three Python-specific puzzle disciplines are visible per frame on a 1088×540 window split into three labeled vertical panels: LEFT (10–190) renders the five PuzzleType Enum members as an identity selector with the active member highlighted in yellow and keys 1–5 binding to <code>active = PuzzleType.MATCH3</code> through <code>PuzzleType.LOGIC</code>; MIDDLE (200–740) renders the active puzzle's 2D-array board through direct nested-list reads <code>match3.grid[r][c]</code> and <code>sliding.grid[r][c]</code>; RIGHT (750–1078) renders the recursive-cascade trace built by <code>Match3.process(matches, depth)</code> calling itself when <code>find_matches()</code> returns a non-empty set, with combo and depth counters reflecting the current call-stack frame and a rolling 15-line log of every recursive entry. (a) <strong>Enum-based puzzle-type identity at PUZZLE-IDENTITY scope</strong>: the dispatch keys ARE <code>PuzzleType.MATCH3</code> through <code>PuzzleType.LOGIC</code> Enum members, not bare strings; a typo at the dispatch site like <code>PuzzleType.MATC3</code> raises AttributeError at the import statement of the typo-containing module, while a bare-string typo like <code>puzzles['matc3']</code> would silently return None at runtime when dispatch happens; mypy can also verify <code>active: PuzzleType</code> annotations at design time and reject any string literal that doesn't match a declared member. Same design-time-validation-vs-runtime-discovery pattern as chat-47 platformer_level_design's validate-vs-is_solid + chat-70 publishing_executables's hiddenimports static-AST-vs-runtime-discovery + chat-72 publishing_performance's profile-bars-vs-intuition + chat-73 publishing_platforms's try-import runtime-capability-detection applied at PUZZLE-IDENTITY scope = FIFTH lesson reinforcing the design-time-validation-vs-runtime-discovery pattern across Phase 8, FIRST applied at PUZZLE-IDENTITY scope. (b) <strong>2D-array board state at BOARD-REPRESENTATION scope</strong>: Match3's <code>self.grid</code> is <code>[[int]]</code> 8×8 with values 0–4 plus <code>-1</code> for cleared cells, and Sliding's <code>self.grid</code> is <code>[[int]]</code> 4×4 with values 0–15 (0 = empty slot); both grid-based puzzle classes share the nested-list-of-ints shape so swap is a two-line index-pair assignment, win-check is a flat scan, match-detect is two nested for-loops over (r, c), and gravity-drop is a single-column list comprehension <code>[self.grid[r][c] for r in range(GRID) if self.grid[r][c] &gt;= 0]</code>; same data-driven externalization pattern as architecture_save_load schema chat-58 + pathfinding terrain-cost dict chat-60 + behavior-trees child-list-order chat-61 + decision-making personality dict chat-62 + procedural generation seed chat-68 + publishing_executables .spec file chat-70 + publishing_marketing pitch templates chat-71 + publishing_performance algorithmic-axis toggles chat-72 + publishing_platforms TARGETS+ADAPTERS dicts chat-73 + publishing_updates CADENCES+MIGRATIONS dicts chat-74 + genres_puzzle 2D-array board chat-75 applied at BOARD-REPRESENTATION scope = EIGHTEENTH lesson reinforcing data-driven externalization across Phase 8, REAFFIRMING chat-75's first BOARD-REPRESENTATION application now in Python where the <code>from dataclasses import dataclass</code> import is unused and the board IS raw <code>[[int]]</code>. (c) <strong>Recursive cascade fixed-point at MATCH-CASCADE scope</strong>: <code>Match3.process(matches, depth=1)</code> recursively calls itself with <code>new = self.find_matches(); if new: self.combo += 1; self.process(new, depth + 1)</code>; the depth parameter threads the call-stack count through to the visualization so each recursive entry is visible as <code>'process_matches depth=N cleared=K'</code> in the rolling log; same chained-contract pattern as chat-74 publishing_updates' MIGRATIONS chain (each migration step is a frozen contract that may produce a new state requiring another step) applied at MATCH-CASCADE scope where each recursive call is a frozen contract that may produce new matches requiring another call, expressed as Python-natural recursion rather than chat-75's iterative <code>combo = 0; while self.step(): combo += 1</code> shape; the recursion terminates because clearing strictly reduces the count of non-cleared cells in the finite-state grid so a base case (<code>find_matches()</code> returns empty → no recursive call) must be reached. SPACE plants a deliberate horizontal triple in a random row and triggers a fresh cascade by calling <code>find_matches()</code> on the modified grid then entering recursion if matches exist.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Set up a 1088×540 pygame window with three vertical panels at x=10–190 (Identity), x=200–740 (Board), x=750–1078 (Recursion Log).</li>
+                    <li>Define <code>class PuzzleType(Enum)</code> with five members <code>MATCH3</code> / <code>SLIDING</code> / <code>PHYSICS</code> / <code>PATTERN</code> / <code>LOGIC</code> matching the lesson's enum.</li>
+                    <li>Define <code>Match3</code> class with <code>self.grid = [[random.randint(0, 4) for _ in range(8)] for _ in range(8)]</code>, <code>find_matches()</code> returning a set of (r, c) tuples by scanning rows then columns for triples, <code>process(matches, depth=1)</code> recursive method that clears matched cells, applies gravity via per-column list comprehension, and self-calls when new matches surface, and <code>trigger()</code> that plants a deliberate horizontal triple then enters the recursion if matches exist.</li>
+                    <li>Define <code>Sliding</code> class with <code>self.grid</code> 4×4 holding shuffled 0–15 (0 = empty slot).</li>
+                    <li>Build the <code>PUZZLES = {PuzzleType.MATCH3: Match3(), PuzzleType.SLIDING: Sliding(), ...}</code> dict keyed by Enum members; an <code>active</code> variable tracks current PuzzleType.</li>
+                    <li>In the event loop bind keys 1–5 to set <code>active = PuzzleType.MATCH3</code> etc. via a <code>KEYS</code> dict that maps <code>pygame.K_1</code> through <code>pygame.K_5</code> to Enum members, and bind SPACE to call <code>PUZZLES[PuzzleType.MATCH3].trigger()</code> when active is MATCH3.</li>
+                    <li>Per frame render the three panels: LEFT iterates <code>for i, t in enumerate(PuzzleType)</code> highlighting <code>t == active</code> in yellow; MIDDLE branches on <code>active</code> rendering <code>match3.grid</code> as colored 50×50 squares for cells with <code>v &gt;= 0</code> and <code>sliding.grid</code> as numbered 90×90 tiles for cells with <code>v != 0</code>; RIGHT shows <code>match3.combo</code>, <code>match3.depth</code>, and the rolling 15-line <code>match3.log</code> in 22px line spacing when active is MATCH3.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The three axes are independent levers visible in three different panels. The LEFT panel iterates <code>for i, t in enumerate(PuzzleType)</code> reading the Enum members directly — switching active is just rebinding <code>active = PuzzleType.SLIDING</code> at the keypress, and the dispatch in the MIDDLE and RIGHT panels reads <code>active</code> to decide what to render. The MIDDLE panel reads the 2D-array boards directly via <code>match3.grid[r][c]</code> and <code>sliding.grid[r][c]</code> — adding a sixth puzzle type with its own 2D-array board would not change how match3 and sliding render. The RIGHT panel's depth counter is set by the depth parameter that recursive <code>process()</code> threads through itself — when SPACE is pressed and <code>find_matches()</code> returns non-empty, <code>process(matches, 1)</code> runs its body once at depth 1 then if <code>find_matches()</code> returns non-empty again calls <code>process(next_matches, 2)</code>, and so on until a base case is reached (<code>find_matches()</code> returns empty) — the call stack IS the combo counter without any explicit accumulator outside the recursion.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>import pygame, random, sys
+from enum import Enum
+
+W, H = 1088, 540
+GRID, CELL = 8, 50
+
+class PuzzleType(Enum):
+    MATCH3 = &quot;match3&quot;
+    SLIDING = &quot;sliding&quot;
+    PHYSICS = &quot;physics&quot;
+    PATTERN = &quot;pattern&quot;
+    LOGIC = &quot;logic&quot;
+
+class Match3:
+    def __init__(self):
+        self.grid = [[random.randint(0, 4) for _ in range(GRID)] for _ in range(GRID)]
+        self.combo = 0
+        self.depth = 0
+        self.log = []
+    def find_matches(self):
+        m = set()
+        for r in range(GRID):
+            for c in range(GRID - 2):
+                v = self.grid[r][c]
+                if v &gt;= 0 and v == self.grid[r][c+1] == self.grid[r][c+2]:
+                    m.update([(r, c), (r, c+1), (r, c+2)])
+        for c in range(GRID):
+            for r in range(GRID - 2):
+                v = self.grid[r][c]
+                if v &gt;= 0 and v == self.grid[r+1][c] == self.grid[r+2][c]:
+                    m.update([(r, c), (r+1, c), (r+2, c)])
+        return m
+    def process(self, matches, depth=1):
+        self.depth = depth
+        self.log.append(f&quot;process_matches depth={depth} cleared={len(matches)}&quot;)
+        for r, c in matches:
+            self.grid[r][c] = -1
+        for c in range(GRID):
+            col = [self.grid[r][c] for r in range(GRID) if self.grid[r][c] &gt;= 0]
+            col = [random.randint(0, 4) for _ in range(GRID - len(col))] + col
+            for r in range(GRID):
+                self.grid[r][c] = col[r]
+        new = self.find_matches()
+        if new:
+            self.combo += 1
+            self.process(new, depth + 1)
+    def trigger(self):
+        r = random.randint(0, GRID - 1)
+        c = random.randint(0, GRID - 3)
+        v = random.randint(0, 4)
+        self.grid[r][c] = self.grid[r][c+1] = self.grid[r][c+2] = v
+        self.combo, self.log = 1, []
+        m = self.find_matches()
+        if m:
+            self.process(m, 1)
+
+class Sliding:
+    def __init__(self):
+        n = list(range(1, 16)) + [0]
+        random.shuffle(n)
+        self.grid = [n[i*4:(i+1)*4] for i in range(4)]
+
+class Physics: pass
+class Pattern: pass
+class Logic: pass
+
+PUZZLES = {
+    PuzzleType.MATCH3: Match3(),
+    PuzzleType.SLIDING: Sliding(),
+    PuzzleType.PHYSICS: Physics(),
+    PuzzleType.PATTERN: Pattern(),
+    PuzzleType.LOGIC: Logic(),
+}
+COLORS = [(255,80,80),(80,200,80),(80,160,255),(240,200,60),(200,80,255)]
+
+pygame.init()
+scr = pygame.display.set_mode((W, H))
+font = pygame.font.SysFont(None, 22)
+big = pygame.font.SysFont(None, 28)
+clk = pygame.time.Clock()
+active = PuzzleType.MATCH3
+KEYS = {pygame.K_1: PuzzleType.MATCH3, pygame.K_2: PuzzleType.SLIDING,
+        pygame.K_3: PuzzleType.PHYSICS, pygame.K_4: PuzzleType.PATTERN,
+        pygame.K_5: PuzzleType.LOGIC}
+run = True
+while run:
+    for e in pygame.event.get():
+        if e.type == pygame.QUIT:
+            run = False
+        elif e.type == pygame.KEYDOWN:
+            if e.key in KEYS:
+                active = KEYS[e.key]
+            elif e.key == pygame.K_SPACE and active == PuzzleType.MATCH3:
+                PUZZLES[PuzzleType.MATCH3].trigger()
+    scr.fill((20, 22, 30))
+    pygame.draw.rect(scr, (40, 44, 55), (10, 10, 180, 520))
+    scr.blit(big.render(&quot;Identity&quot;, True, (255,255,255)), (20, 18))
+    for i, t in enumerate(PuzzleType):
+        col = (255, 220, 80) if t == active else (180, 180, 180)
+        scr.blit(font.render(f&quot;{i+1}: {t.name}&quot;, True, col), (20, 60 + i*30))
+    pygame.draw.rect(scr, (40, 44, 55), (200, 10, 540, 520))
+    scr.blit(big.render(f&quot;Board ({active.name})&quot;, True, (255,255,255)), (210, 18))
+    if active == PuzzleType.MATCH3:
+        m3 = PUZZLES[PuzzleType.MATCH3]
+        for r in range(GRID):
+            for c in range(GRID):
+                v = m3.grid[r][c]
+                if v &gt;= 0:
+                    pygame.draw.rect(scr, COLORS[v], (220+c*CELL, 60+r*CELL, CELL-4, CELL-4))
+    elif active == PuzzleType.SLIDING:
+        sl = PUZZLES[PuzzleType.SLIDING]
+        for r in range(4):
+            for c in range(4):
+                v = sl.grid[r][c]
+                if v != 0:
+                    pygame.draw.rect(scr, (80, 160, 255), (260+c*100, 90+r*100, 90, 90))
+                    scr.blit(big.render(str(v), True, (255,255,255)), (260+c*100+30, 90+r*100+30))
+    pygame.draw.rect(scr, (40, 44, 55), (750, 10, 328, 520))
+    scr.blit(big.render(&quot;Recursion Log&quot;, True, (255,255,255)), (760, 18))
+    if active == PuzzleType.MATCH3:
+        m3 = PUZZLES[PuzzleType.MATCH3]
+        scr.blit(font.render(f&quot;combo: {m3.combo}&quot;, True, (255,220,80)), (760, 55))
+        scr.blit(font.render(f&quot;depth: {m3.depth}&quot;, True, (255,220,80)), (760, 80))
+        for i, line in enumerate(m3.log[-15:]):
+            scr.blit(font.render(line, True, (200,200,200)), (760, 110+i*22))
+    pygame.display.flip()
+    clk.tick(60)
+pygame.quit()
+sys.exit()</code></pre>
                 </details>
             </div>
 
@@ -929,31 +1063,31 @@ if __name__ == "__main__":
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> The lesson's <code>class PuzzleType(Enum)</code> declares <code>MATCH3</code>/<code>SLIDING</code>/<code>PHYSICS</code>/<code>PATTERN</code>/<code>LOGIC</code> and the manager's <code>puzzles</code> dict is keyed by these Enum members rather than by bare strings <code>'match3'</code>/<code>'sliding'</code>/etc. as in chat-75's JS implementation. What is the architectural reason for choosing Enum keys over string keys for puzzle identifiers?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Performance-as-driver anti-model: Enum lookup and string lookup both go through dict.__getitem__ which is O(1) and the per-call cost difference is nanoseconds either way; the architectural driver is design-time validation, not call-site speed.'>A) Enum lookup is O(1) like dict lookup but somewhat faster due to internal interning, so the dispatch path runs at higher frame rates when many puzzle switches happen per second.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Enum members are validated at design time so a typo at the dispatch site like PuzzleType.MATC3 raises AttributeError at the import statement of the typo-containing module, rather than puzzles[&quot;matc3&quot;] silently returning None at the moment the dispatch is executed; mypy can also verify active: PuzzleType annotations at design time and reject any string literal that doesn&apos;t match a declared Enum member; same design-time-validation-vs-runtime-discovery pattern as chat-47 platformer_level_design&apos;s validate-vs-is_solid + chat-70 publishing_executables&apos;s hiddenimports + chat-72 publishing_performance&apos;s profile-bars + chat-73 publishing_platforms&apos;s try-import applied at PUZZLE-IDENTITY scope = 5th case.'>B) Enum members are validated at design time so a typo at the dispatch site like <code>PuzzleType.MATC3</code> raises AttributeError at the import statement of the typo-containing module, rather than <code>puzzles['matc3']</code> silently returning None at the moment the dispatch is executed; mypy can also verify <code>active: PuzzleType</code> annotations at design time.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Memory-as-driver anti-model: each Enum member is one Python object holding a name and a value; bare strings are also single Python objects with interning; the memory difference is bytes, not megabytes, and is irrelevant to the dispatch design choice; the design driver is design-time validation, not memory efficiency.'>C) Enum members occupy less RAM than string literals at scale because Python interns each Enum value once, so a long-running game with many puzzle-type checks accumulates less heap pressure.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> <code>Match3.grid</code> is a nested list of ints (8×8 with values 0–4 plus <code>-1</code> for cleared cells) and <code>Sliding.grid</code> is a nested list of ints (4×4 with values 0–15 with 0 = empty). Both grid-based puzzle classes use the same <code>[[int]]</code> shape. What is the architectural reason for choosing raw nested lists rather than parallel <code>Cell</code> objects with row/col/color attributes?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Cell-object anti-model: claims a Cell class with row/col/color/neighbor-pointer attributes is conceptually cleaner than raw ints; actually every swap becomes &quot;rebind two object refs plus update each Cell&apos;s row/col fields plus traverse neighbor pointers&quot;, save/load needs custom __init__ logic per Cell type, match-detect needs object-identity comparison rather than int equality; the architectural reason is operation-site simplicity, not conceptual cleanliness of the data type.'>A) A parallel <code>Cell</code> object graph with explicit row/col/color attributes plus four neighbor pointers is conceptually cleaner than raw ints because each cell carries its identity, and operations like swap or match-detect read more naturally as object method calls on Cell instances.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='The raw [[int]] shape makes every operation site trivially short: swap is two-line index-pair assignment self.grid[r1][c1], self.grid[r2][c2] = self.grid[r2][c2], self.grid[r1][c1]; win-check is a flat scan; match-detect is two nested for-loops over (r, c) using == int equality; gravity-drop is a single-column list comprehension [self.grid[r][c] for r in range(GRID) if self.grid[r][c] &gt;= 0]; serialization is one json.dumps call; undo is one list-comprehension deep-copy. The chat-75 JS implementation uses the same shape; the Python lesson reaffirms the choice. Same data-driven externalization pattern as 17 prior Phase-8 lessons applied at BOARD-REPRESENTATION scope = 18th case.'>B) The raw <code>[[int]]</code> shape makes every operation site trivially short — swap is a two-line index-pair assignment, win-check is a flat scan, match-detect is two nested for-loops over (r, c) using <code>==</code> int equality, gravity-drop is a single-column list comprehension, serialization is one <code>json.dumps</code> call — because the board IS the data the algorithms read and mutate; an object graph would force every operation through method calls and neighbor-pointer traversals.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Type-safety anti-model: Python is duck-typed and both shapes can be annotated equivalently; mypy gets the same information whether the cells are ints or Cell instances. The architectural reason is operation-site simplicity, not static type checks; the type-checking framing inverts what actually drives the design.'>C) Plain int values give mypy more information than <code>Cell</code> instances would because builtin types have richer type-checker-recognized properties, so the type checker catches more bugs at design time.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> <code>Match3.process</code> calls itself recursively when <code>find_matches()</code> returns non-empty: <code>new = self.find_matches(); if new: self.combo += 1; self.process(new, depth + 1)</code>. The chat-75 JS implementation expressed the same fixed-point iteration as <code>combo = 0; while self.step(): combo += 1</code>. What is the architectural reason this pygame demo expresses the cascade as recursion rather than as iteration?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Recursion-is-faster anti-model: Python recursion is actually slightly slower than iteration due to per-call frame overhead, and Python imposes a default recursion limit of 1000 frames so deep cascades could RecursionError; the design driver is shape-fits-the-problem, not speed.'>A) Recursion is faster than iteration in Python because the function-call mechanism has been heavily optimized in CPython 3.11+, so recursive cascades complete more frames in the same wall-clock time than equivalent <code>while</code> loops.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Threading the depth parameter through self-call frees the outer caller from maintaining a separate accumulator: each recursive entry naturally carries depth+1 in its own stack frame, and the combo counter accumulates as side-effect via self.combo += 1 on the up-walk; the recursion terminates because clearing strictly reduces the count of non-cleared cells in the finite-state grid so a base case (find_matches returns empty) must be reached. Same chained-contract pattern as chat-74 publishing_updates&apos; MIGRATIONS chain where each step is a frozen contract that may produce a new state requiring another step, here applied at MATCH-CASCADE scope where each recursive call is a frozen contract that may produce new matches requiring another call. Recursion and iteration are both valid Python expressions of fixed-point computation; recursion is the architecturally expressive shape when the call stack itself naturally tracks the iteration count.'>B) The recursion's call-stack frame count IS the cascade depth — threading the depth parameter through self-call frees the outer caller from maintaining a separate accumulator, and the combo counter accumulates via <code>self.combo += 1</code> on the up-walk; same chained-contract pattern as chat-74 publishing_updates' MIGRATIONS chain applied at MATCH-CASCADE scope where each recursive call is a frozen contract that may produce new matches requiring another call.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Python-can&apos;t-do-while anti-model: Python absolutely supports while loops and the chat-75 JS pattern translates verbatim to Python as combo = 0; while self.step(): combo += 1; the design choice is shape-fits-the-problem, not language capability; both forms are valid Python.'>C) Python does not support <code>while</code> loops with side-effecting bodies the way JavaScript does because Python's evaluation model treats statement-expressions differently, so the JS <code>while self.step()</code> shape cannot be translated directly and recursion is the only available alternative.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

@@ -1500,19 +1500,107 @@ spawn_delay = base_delay / (1 + wave_number * 0.05);
             <h2 id="practice-exercise-build-genres-tower-defense">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Three Pillars of Tower Defense Architecture — Snapshot-vs-Live-vs-AOE Targeting + PATH-Waypoint-List + WAVES-Composition-Record-List in One Canvas Window</h3>
+                <p><strong>Objective:</strong> Build a runnable HTML5 canvas + JS program (~65–75 lines) that distills the lesson's tower-defense architecture into one cohesive demonstration of three orthogonal disciplines visible per frame on a single 900×420 canvas with three integrated regions sharing one scene. (a) <strong>Snapshot-vs-live-vs-AOE targeting at TARGETING-EFFECT-TIMING scope</strong> — three towers placed beside the path each demonstrating one of the lesson's distinct fire-and-effect timing models: a projectile tower (snapshot-with-leading-shot-prediction) that at fire moment commits to the predicted future target position via <code>targetX = target.x + (dx/dist) * targetSpeed * timeToImpact</code> then flies linearly to the snapshotted point hitting whatever is at that position when it arrives; a laser tower (instant/live) that bypasses projectile entirely and deals damage directly to the current live target via a brief <code>LaserBeam</code> particle drawn on the same frame; a cannon tower (AOE) that snapshots the target at fire moment but on impact damages all live enemies within <code>splash</code> radius via <code>enemies.forEach</code> with <code>(1 - distance/splash)</code> falloff. CONTEXT-DETERMINES-CORRECT-CHOICE pattern: predictive projectile encourages strategic placement (towers shoot ahead, well-placed towers compensate for enemy speed), instant laser encourages reactive placement (laser hits whatever's in range NOW, single-target high-DPS), AOE cannon encourages choke-point placement (clustered enemies all take splash). SECOND-AT-EFFECT-TIMING-FAMILY-SCOPE after chat-81's snapshot-at-research and chat-82's retroactive-at-research at RESEARCH-EFFECT-TIMING scope, applied here at TARGETING-EFFECT-TIMING scope with three-mode shape (per-shot rhythm) rather than two-mode binary (per-research-event rhythm). (b) <strong>PATH-waypoint-list data-driven externalization at PATH-WAYPOINT-LIST scope</strong> — the module-level <code>PATH</code> array (5 <code>{x, y}</code> waypoint records) IS the canonical route definition that ALL consumers iterate over: enemies walk it via <code>pathIndex</code> for movement, the projectile constructor consumes <code>target.pathIndex + 1</code> for leading-shot prediction, and the rendering loop draws path segments by walking <code>PATH[i]</code> to <code>PATH[i+1]</code>. R-key swaps to an alternate route from a 2-entry ROUTES dict so the data-driven re-routing is visible: enemies, projectiles, and rendering all pick up the new PATH automatically because they iterate or index into the same array rather than branching on hardcoded coordinates. Adding/changing the route is one array edit. Same data-driven-externalization shape as the long second-half-Phase-8 streak (chat-46 platformer_tilemap is_solid + chat-58 dataclass schema + chat-60 TERRAIN_COST + chat-79 skill-prerequisites + chat-81 UNIT_STATS + chat-82 Enum-keyed stats), applied here at PATH-WAYPOINT-LIST scope where the route IS data the rendering, movement, prediction, and placement systems all consume in lockstep. (c) <strong>WAVES-composition-record-list data-driven externalization with declarative per-group spacing at WAVE-COMPOSITION-DICT scope</strong> — the module-level <code>WAVES</code> array (3 short waves, each <code>{enemies: [{type, count, spacing}]}</code>) IS the canonical wave-pacing declaration; <code>class WaveSpawner</code> consumes by flattening the wave-record into a per-enemy <code>enemyQueues</code> list then time-walking via <code>now - lastSpawn &gt; delay</code>. W-key starts the next wave from the queue, HUD shows currently-spawning enemy types and remaining count per wave. Adding a new wave is ONE record edit (e.g. <code>{enemies: [{type: 'tank', count: 3, spacing: 1500}, {type: 'fast', count: 5, spacing: 400}]}</code>); the spawner picks it up automatically because it iterates the array by <code>WAVES[waveIndex]</code>. Same data-driven externalization pattern as Axis (b), composed into multi-wave timeline data at WAVES-COMPOSITION scope where each wave is a declarative record describing what spawns and how fast.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Set up a 900×420 canvas with a small <code>PATH</code> array of 5 <code>{x, y}</code> waypoints describing a simple zig-zag route, plus a <code>ROUTES</code> dict with 2 entries (route A and route B) so R-key can swap between them.</li>
+                    <li>Define a small <code>WAVES</code> array of 3 records, each <code>{enemies: [{type, count, spacing}]}</code> declaring the per-wave enemy mix and millisecond spacing.</li>
+                    <li>Implement an <code>Enemy</code> class that walks <code>PATH</code> via <code>pathIndex</code>/<code>pathProgress</code> with linear interpolation between waypoints; rendering reads the current PATH array directly so swaps are visible mid-flight.</li>
+                    <li>Implement a <code>Projectile</code> class whose constructor snapshots the predicted future target position at fire moment via the leading-shot formula <code>target.x + (dx/dist) * targetSpeed * timeToImpact</code> using the <code>target.pathIndex + 1</code> waypoint for direction.</li>
+                    <li>Implement three <code>Tower</code> instances representing the three timing models: projectile-tower fires <code>Projectile</code> on cooldown; laser-tower deals damage directly to the live target and pushes a 1-frame <code>LaserBeam</code> particle; cannon-tower fires a <code>Projectile</code> with a <code>splash</code> stat that on impact walks <code>enemies.forEach</code> applying <code>(1 - distance/splash)</code> falloff damage.</li>
+                    <li>Implement <code>WaveSpawner</code> that flattens the active wave's records into a queue and time-walks spawn calls; W-key advances to the next wave and rebuilds the queue.</li>
+                    <li>Wire keys: W to start next wave, R to swap PATH between route A and route B; HUD shows tower-mode legend (P/L/A — projectile snapshot, laser live, cannon AOE), current PATH route active, current wave + enemies remaining.</li>
+                    <li>Run the loop with <code>requestAnimationFrame</code> and a <code>dt = (now - lastTime)/1000</code> delta; verify all three axes are visible per frame: projectiles flying ahead toward snapshotted positions vs lasers hitting live positions vs cannon splash damaging clustered enemies; PATH swap re-routes everyone instantly; wave progression follows the declarative record-list cadence.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>Keep the three towers stationary at hand-picked positions beside the path so the three timing models are visible side-by-side as enemies walk past. Use <code>{...TOWER_TYPES[type]}</code> spread-copy in the Tower constructor to avoid sharing per-tower stats with the type definition. For the leading-shot prediction, compute <code>distance</code> from tower-to-target, derive <code>timeToImpact = distance / projectileSpeed</code>, then advance the target position by <code>targetSpeed * timeToImpact</code> along the direction toward <code>PATH[target.pathIndex + 1]</code>. The PATH-swap demonstration is most striking when the routes diverge after the spawn point so enemies in flight visibly turn at the moment R is pressed.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code>// Three Pillars of Tower Defense Architecture — Snapshot-vs-Live-vs-AOE Targeting + PATH-Waypoint-List + WAVES-Composition-Record-List
+const c = document.createElement('canvas'); c.width = 900; c.height = 420; document.body.appendChild(c);
+const ctx = c.getContext('2d');
+// (b) PATH-waypoint-list data-driven externalization — ROUTES dict + active PATH array
+const ROUTES = {
+  A: [{x:30,y:80}, {x:300,y:80}, {x:300,y:340}, {x:600,y:340}, {x:870,y:340}],
+  B: [{x:30,y:80}, {x:200,y:80}, {x:200,y:200}, {x:700,y:200}, {x:870,y:340}]
+};
+let route = 'A'; let PATH = ROUTES[route];
+// (c) WAVES-composition-record-list — declarative per-group spawn cadence
+const WAVES = [
+  { enemies: [{type:'basic', count:6, spacing:600}] },
+  { enemies: [{type:'fast', count:8, spacing:400}, {type:'basic', count:3, spacing:700}] },
+  { enemies: [{type:'tank', count:2, spacing:1200}, {type:'basic', count:6, spacing:500}] }
+];
+const ENEMY_TYPES = { basic:{hp:30,speed:60,size:8,color:'#ff6b6b'}, fast:{hp:18,speed:120,size:6,color:'#ffd93d'}, tank:{hp:90,speed:35,size:11,color:'#6bcb77'} };
+class Enemy {
+  constructor(type){ Object.assign(this, ENEMY_TYPES[type]); this.maxHp=this.hp; this.pathIndex=0; this.x=PATH[0].x; this.y=PATH[0].y; this.dead=false; }
+  update(dt){ if(this.pathIndex&gt;=PATH.length-1){ this.dead=true; return; } const t=PATH[this.pathIndex+1], dx=t.x-this.x, dy=t.y-this.y, d=Math.hypot(dx,dy); if(d&lt;4){ this.pathIndex++; } else { const m=this.speed*dt; this.x+=dx/d*m; this.y+=dy/d*m; } }
+  draw(){ ctx.fillStyle=this.color; ctx.beginPath(); ctx.arc(this.x,this.y,this.size,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#0f0'; ctx.fillRect(this.x-12,this.y-this.size-6,24*this.hp/this.maxHp,3); }
+}
+// (a) Snapshot-vs-live-vs-AOE — three tower modes demonstrating TARGETING-EFFECT-TIMING
+const TOWER_TYPES = {
+  proj:{range:140,fireRate:1.2,dmg:14,col:'#9bd1ff',pcol:'#ffd700'},
+  laser:{range:150,fireRate:3,dmg:6,col:'#ffafaf',pcol:'#00ffff',instant:true},
+  cannon:{range:130,fireRate:0.7,dmg:18,col:'#c0a878',pcol:'#ff4500',splash:42}
+};
+class Projectile {
+  constructor(t,target,dmg,sp,col,splash){
+    this.x=t.x; this.y=t.y; this.dmg=dmg; this.sp=sp; this.col=col; this.splash=splash; this.dead=false; this.target=target;
+    // Leading-shot prediction: snapshot future target position at fire moment
+    const dist=Math.hypot(target.x-t.x,target.y-t.y), tti=dist/sp;
+    const next=PATH[Math.min(target.pathIndex+1,PATH.length-1)];
+    const dx=next.x-target.x, dy=next.y-target.y, d=Math.hypot(dx,dy)||1;
+    this.tx=target.x+dx/d*target.speed*tti; this.ty=target.y+dy/d*target.speed*tti;
+  }
+  update(dt){
+    if(this.dead) return;
+    const dx=this.tx-this.x, dy=this.ty-this.y, d=Math.hypot(dx,dy);
+    if(d&lt;6){
+      this.dead=true;
+      if(this.splash){ enemies.forEach(e=&gt;{ if(e.dead) return; const ed=Math.hypot(e.x-this.tx,e.y-this.ty); if(ed&lt;=this.splash){ e.hp-=this.dmg*(1-ed/this.splash); if(e.hp&lt;=0) e.dead=true; } }); }
+      else if(this.target&amp;&amp;!this.target.dead){ this.target.hp-=this.dmg; if(this.target.hp&lt;=0) this.target.dead=true; }
+    } else { this.x+=dx/d*this.sp*dt; this.y+=dy/d*this.sp*dt; }
+  }
+  draw(){ ctx.fillStyle=this.col; ctx.beginPath(); ctx.arc(this.x,this.y,4,0,Math.PI*2); ctx.fill(); }
+}
+const beams=[];
+class Tower {
+  constructor(x,y,type){ this.x=x; this.y=y; this.type=type; Object.assign(this, {...TOWER_TYPES[type]}); this.cd=0; }
+  update(dt){
+    this.cd-=dt; if(this.cd&gt;0) return;
+    const t=enemies.find(e=&gt;!e.dead&amp;&amp;Math.hypot(e.x-this.x,e.y-this.y)&lt;=this.range); if(!t) return;
+    this.cd=1/this.fireRate;
+    if(this.instant){ t.hp-=this.dmg; if(t.hp&lt;=0) t.dead=true; beams.push({x1:this.x,y1:this.y,x2:t.x,y2:t.y,age:0,col:this.pcol}); }
+    else { projectiles.push(new Projectile(this, t, this.dmg, 280, this.pcol, this.splash)); }
+  }
+  draw(){ ctx.fillStyle=this.col; ctx.fillRect(this.x-12,this.y-12,24,24); ctx.strokeStyle='rgba(255,255,255,0.25)'; ctx.beginPath(); ctx.arc(this.x,this.y,this.range,0,Math.PI*2); ctx.stroke(); ctx.fillStyle='#000'; ctx.font='bold 12px monospace'; ctx.fillText(this.type[0].toUpperCase(),this.x-3,this.y+4); }
+}
+const towers=[ new Tower(160,180,'proj'), new Tower(450,250,'laser'), new Tower(720,180,'cannon') ];
+let enemies=[], projectiles=[], waveIdx=-1, queue=[], lastSpawn=0;
+function startWave(){ if(waveIdx&gt;=WAVES.length-1) return; waveIdx++; queue=[]; WAVES[waveIdx].enemies.forEach(g=&gt;{ for(let i=0;i&lt;g.count;i++) queue.push({type:g.type, delay:g.spacing}); }); lastSpawn=performance.now(); }
+addEventListener('keydown', e=&gt;{
+  if(e.key==='w'||e.key==='W') startWave();
+  if(e.key==='r'||e.key==='R'){ route=route==='A'?'B':'A'; PATH=ROUTES[route]; enemies.forEach(en=&gt;{ const i=Math.min(en.pathIndex,PATH.length-1); en.x=PATH[i].x; en.y=PATH[i].y; }); }
+});
+let last=performance.now();
+function loop(now){
+  const dt=Math.min((now-last)/1000,0.1); last=now;
+  if(queue.length&gt;0 &amp;&amp; now-lastSpawn&gt;queue[0].delay){ enemies.push(new Enemy(queue.shift().type)); lastSpawn=now; }
+  enemies.forEach(e=&gt;e.update(dt)); enemies=enemies.filter(e=&gt;!e.dead);
+  towers.forEach(t=&gt;t.update(dt)); projectiles.forEach(p=&gt;p.update(dt)); projectiles=projectiles.filter(p=&gt;!p.dead); beams.forEach(b=&gt;b.age+=dt);
+  ctx.fillStyle='#1a2e1a'; ctx.fillRect(0,0,c.width,c.height);
+  ctx.strokeStyle='#8b7355'; ctx.lineWidth=22; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(PATH[0].x,PATH[0].y); for(let i=1;i&lt;PATH.length;i++) ctx.lineTo(PATH[i].x,PATH[i].y); ctx.stroke();
+  beams.filter(b=&gt;b.age&lt;0.08).forEach(b=&gt;{ ctx.strokeStyle=b.col; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(b.x1,b.y1); ctx.lineTo(b.x2,b.y2); ctx.stroke(); });
+  towers.forEach(t=&gt;t.draw()); enemies.forEach(e=&gt;e.draw()); projectiles.forEach(p=&gt;p.draw());
+  ctx.fillStyle='#fff'; ctx.font='12px monospace';
+  ctx.fillText(`Wave ${waveIdx+1}/${WAVES.length}  Enemies left: ${enemies.length+queue.length}  Route: ${route}`, 10, 16);
+  ctx.fillText('Towers: P=projectile snapshot, L=laser live, A=cannon AOE   Keys: W next wave, R swap route', 10, 410);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);</code></pre>
                 </details>
             </div>
 
@@ -1520,31 +1608,31 @@ spawn_delay = base_delay / (1 + wave_number * 0.05);
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> The demo's projectile tower commits to a predicted future target position at fire moment (snapshot+lead), the laser tower deals damage directly to the current live target with no flight time, and the cannon tower snapshots the target at fire moment then on impact damages all enemies within a splash radius. Why does the lesson expose THREE distinct fire-and-effect timing models rather than collapsing them into one?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Performance is not the architectural driver here; all three timing models run at the same cost per tower per frame in the demo. The driver is gameplay rhythm, not engine performance.'>A) The three timing models are a performance optimization where each subsequent model amortizes more work into the build phase so the per-frame cost decreases at each step.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='The three timing models are a CONTEXT-DETERMINES-CORRECT-CHOICE pattern at TARGETING-EFFECT-TIMING scope: predictive projectile encourages strategic placement (towers shoot ahead, well-placed towers compensate for enemy speed); instant laser encourages reactive placement (laser hits whatever is in range NOW, single-target high-DPS); AOE cannon encourages choke-point placement (clustered enemies all take splash). Different timing models produce different gameplay rhythms — the right choice depends on the tower&apos;s intended role and the per-shot decision the player is asked to make. Same context-determines-correct-choice rhetoric as chat-49 polish_tweening, chat-60 pathfinding heuristic, chat-62 utility-AI vs BT, chat-79 enum-roundtrip-vs-live-comparison, chat-81 snapshot-at-research, chat-82 retroactive-at-research, applied here at TARGETING-EFFECT-TIMING scope with three-mode shape.'>B) The three timing models are a context-determines-correct-choice pattern at TARGETING-EFFECT-TIMING scope — each timing model produces a distinct gameplay rhythm (strategic-ahead-shooting vs reactive-instant-hits vs choke-point-splash), so the right choice depends on the tower's intended role and the placement decision the player is asked to make.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Code reuse via inheritance is a separate concern; the three timing models are not subclasses of one another but distinct fire-and-effect strategies. The driver is gameplay rhythm, not class hierarchy.'>C) The three timing models exist to demonstrate inheritance: the cannon class extends the projectile class which extends the laser class, and the lesson exposes all three so students see the inheritance chain.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> The demo's <code>PATH</code> array is consumed by enemies for movement (via <code>pathIndex</code>), by projectiles for leading-shot prediction (via <code>target.pathIndex + 1</code>), and by the rendering loop for path drawing. R-key swaps the PATH from route A to route B in a 2-entry ROUTES dict and all three consumers pick up the new route automatically. Why is the route stored as an array consumed by all three systems rather than hardcoded as separate movement code, separate prediction code, and separate rendering code?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Memory cost of one 5-element array is trivial in either shape. The architectural concern is single-source-of-truth and zero-edit-extension, not memory efficiency.'>A) Storing the route as a shared array uses less RAM than three parallel hardcoded route variables, so the demo runs in less memory when many routes are active.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='PATH is a DATA-DRIVEN EXTERNALIZATION at PATH-WAYPOINT-LIST scope: the array IS the canonical route definition that ALL consumers iterate or index into in lockstep, so adding/changing the route is one array edit and the enemy movement, projectile prediction, and rendering systems all pick up the change automatically because they read the same array rather than branching on hardcoded coordinates. R-key swap demonstrates this — replace the array, every consumer updates next frame. Same data-driven-externalization shape as chat-46 platformer_tilemap is_solid + chat-58 dataclass schema + chat-60 TERRAIN_COST + chat-79 skill-prerequisites + chat-81 UNIT_STATS + chat-82 Enum-keyed stats, applied here at PATH-WAYPOINT-LIST scope.'>B) The PATH array is a data-driven externalization at PATH-WAYPOINT-LIST scope — the array IS the canonical route definition that ALL consumers iterate over in lockstep, so adding/changing the route is one array edit and every consumer (movement, prediction, rendering) picks up the change automatically because they read the same array rather than branching on hardcoded coordinates.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='JavaScript arrays do not provide compile-time type checking; that is a separate concern from data-driven externalization. The driver is single-source-of-truth, not type safety.'>C) Storing the route as a typed array gives compile-time bounds checking that catches off-by-one errors at build time, which is why the array is shared across all three consumers.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> The demo's <code>WAVES</code> array stores 3 records, each <code>{enemies: [{type, count, spacing}]}</code>. <code>WaveSpawner</code> consumes this by flattening the active wave's record into a per-enemy queue then time-walking via <code>now - lastSpawn &gt; delay</code>. Adding a new wave like <code>{enemies: [{type: 'tank', count: 3, spacing: 1500}, {type: 'fast', count: 5, spacing: 400}]}</code> requires no changes to the spawner code. Why is wave composition stored as declarative records rather than hardcoded into the spawner's control flow?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Performance is not the driver here; iterating a 3-element array is the same per-frame cost as branching on a hardcoded wave number. The architectural concern is zero-edit-extension when adding new waves.'>A) Iterating the WAVES array is faster per frame than the equivalent if-else cascade on wave number, so the demo runs at higher FPS during peak waves.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='WAVES is a DATA-DRIVEN EXTERNALIZATION at WAVE-COMPOSITION-DICT scope where each wave is a declarative record describing what spawns and how fast. Adding a new wave is ONE record edit; the spawner picks it up automatically because it iterates the array by index rather than branching on wave number. Same data-driven-externalization shape as chat-58 schema-as-frozen-contract upgraded to wave-as-frozen-record with mixed-enemy-group composition; extends Axis (b)&apos;s per-route data-driven-externalization at PATH-WAYPOINT scope by composing into multi-wave timeline data. The records also support arbitrary mixed enemy groups per wave (e.g. tanks on slow cadence + fast enemies on quick cadence in the same wave) which a hardcoded if-else cascade cannot express without scattered edits across the spawner.'>B) WAVES is a data-driven externalization at WAVE-COMPOSITION-DICT scope where each wave is a declarative record describing what spawns and how fast — adding a new wave is one record edit, the spawner iterates the array by index, and the records compose mixed enemy groups per wave (tanks on slow cadence + fast enemies on quick cadence in the same wave) which a hardcoded if-else cascade cannot express cleanly.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='JSON loading at startup adds parse overhead for no maintainability win over a JavaScript array literal. Externalizing to a separate file is a different concern from data-driven externalization within the same module.'>C) Storing waves as records lets the spawner load them from a separate JSON file at startup so the wave list can be edited without recompiling the JavaScript bundle.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

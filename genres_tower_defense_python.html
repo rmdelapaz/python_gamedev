@@ -1227,19 +1227,167 @@ class ProjectilePool:
             <h2 id="practice-exercise-build-genres-tower-defense-python">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: TBD</h3>
-                <p><strong>Objective:</strong> TBD — to be filled in chat 40+.</p>
+                <h3>🏋️‍♂️ Exercise 1: Three Pillars of Tower Defense Architecture (Python Edition) — Snapshot-vs-Live-vs-AOE Targeting via Consumer-Check-Distributed Dispatch + Enum-Keyed @dataclass TYPE_STATS Double Design-Time Validation + PATH-Waypoint-List List-of-Tuple in One Pygame Window</h3>
+                <p><strong>Objective:</strong> Build a runnable pygame program (~95 lines) that distills three orthogonal tower-defense disciplines into one demo on a 1024×540 window split between play area (top 360 px) and HUD bar (bottom 180 px). (a) <strong>Snapshot-vs-Live-vs-AOE targeting</strong> at TARGETING-EFFECT-TIMING scope via Python-idiomatic consumer-check-distributed dispatch: PROJECTILE tower snapshots target position via leading-shot prediction at fire moment by sampling <code>PATH[tgt.path_idx + 1]</code> and extrapolating <code>tgt.stats.speed * time_to_impact</code>, then projectile flies straight-line toward predicted future point hitting whatever is at the impact location when it arrives; LASER tower bypasses the projectile machinery entirely and applies <code>tgt.health -= s.damage * dt</code> directly to the current live target each frame the target is in range — no flight, no prediction, hits live position; AOE cannon snapshots target at fire moment but on impact damages all live enemies within <code>splash_radius</code> via an <code>enemies</code> walk applying <code>(1 - distance/splash_radius)</code> falloff. The dispatch is consumer-check-distributed via <code>if ttype == TowerType.LASER:</code> / <code>elif ttype == TowerType.PROJECTILE:</code> / <code>elif ttype == TowerType.AOE:</code> branches in the main loop rather than a <code>stats.instant: true</code> flag check inside Tower.fire as in the chat-83 JS-canvas counterpart. SECOND-AT-TARGETING-EFFECT-TIMING-SCOPE after chat-83's first, expressed in Python-idiomatic style. (b) <strong>Enum-keyed @dataclass TYPE_STATS dicts</strong> at TYPE-CATALOG scope as DOUBLE design-time validation: <code>class TowerType(Enum)</code> with three members + <code>@dataclass class TowerStats</code> with type-hinted fields + <code>TOWER_STATS = {TowerType.PROJECTILE: TowerStats(...), TowerType.LASER: TowerStats(...), TowerType.AOE: TowerStats(...)}</code> Enum-keyed dict-of-dataclass-instances pairs TWO Python-specific design-time gates that the JS plain-string-keyed-object-literal counterpart does NOT have — Enum membership validated at attribute-access (<code>TowerType.LSAER</code> raises AttributeError at parse time vs JS <code>'lsaer'</code> silently returning undefined at runtime) AND @dataclass fields validated at construction (missing required arg raises TypeError at instance creation; type hints catch typoed field reads). EIGHTH design-time-validation-vs-runtime-discovery lesson across Phase 8 after chat-47 (validate vs is_solid) + chat-70 (hidden_imports static-AST-vs-runtime) + chat-72 (profile-bars vs intuition) + chat-73 (capability detection) + chat-76 (Enum-vs-isinstance dispatch) + chat-79 (Enum-roundtrip-vs-live-comparison) + chat-82 (Enum-keyed UNIT_STATS) = 7 prior cases; chat-84 is the EIGHTH and FIRST applied at TYPE-CATALOG scope where Enum + @dataclass STACK to provide TWO orthogonal validation gates rather than one. (c) <strong>PATH list-of-tuple data-driven externalization</strong> at PATH-WAYPOINT-LIST scope: <code>PATH: List[Tuple[int, int]] = [(0, 110), (300, 110), (300, 240), (700, 240), (700, 110), (1024, 110)]</code> IS the canonical route definition that ALL consumers iterate over by index — Enemy.update walks <code>PATH[self.path_idx + 1]</code> for next-waypoint movement, the PROJECTILE main-loop branch samples <code>PATH[tgt.path_idx + 1]</code> for leading-shot prediction, the rendering loop walks pairs via <code>pygame.draw.line(screen, (140, 100, 60), PATH[i], PATH[i + 1], 30)</code>. Adding/changing the route is one list edit and ALL three consumers pick it up automatically because they iterate or index into the same list rather than branching on hardcoded coordinates. REPRISE of chat-83 axis 2 at PATH-WAYPOINT-LIST scope with Python list-of-tuple idiom delta vs chat-83's JS list-of-object-literal-records. HUD bar shows three-axis legend, live counts (enemies / projectiles / PATH waypoints), rolling dispatch-mode log of recent unique events (P/L/A), and a per-tower-type stats summary printed by iterating <code>TowerType</code> and reading <code>TOWER_STATS[tt]</code> Enum-keyed entries — all three orthogonal disciplines visible per frame as concrete numbers and per-tower behavior. CLOSES the genres module 8/9 → 9/9 = 13TH COMPLETE PHASE-8 MODULE; MODULE-COMPLETENESS 12/13 → 13/13; PHASE 8 COMPLETE.</p>
                 <h4>Instructions:</h4>
                 <ol>
-                    <li>TBD</li>
+                    <li>Open a 1024×540 pygame window split between play area (top 360 px) and HUD bar (bottom 180 px). Declare a 6-waypoint <code>PATH: List[Tuple[int, int]] = [(0, 110), (300, 110), (300, 240), (700, 240), (700, 110), (1024, 110)]</code> at module level — drawn as 30-px-wide brown segments by walking pairs <code>PATH[i]</code> to <code>PATH[i + 1]</code> in the rendering loop.</li>
+                    <li>Declare <code>class TowerType(Enum)</code> with three members PROJECTILE / LASER / AOE and <code>class EnemyType(Enum)</code> with two members BASIC / FAST. Declare <code>@dataclass class TowerStats</code> with type-hinted fields <code>name: str</code>, <code>color: Tuple[int, int, int]</code>, <code>damage: int</code>, <code>rng: int</code>, <code>fire_rate: float</code>, <code>projectile_speed: float = 380.0</code>, <code>splash_radius: int = 0</code>; declare <code>@dataclass class EnemyStats</code> similarly. Declare <code>TOWER_STATS</code> and <code>ENEMY_STATS</code> Enum-keyed dicts mapping each Enum member to its dataclass instance — three Enum-keyed entries for towers (PROJECTILE/LASER/AOE), two for enemies (BASIC/FAST).</li>
+                    <li>Place 3 fixed Tower instances on the play area: PROJECTILE at (200, 200), LASER at (500, 50), AOE at (800, 200). Maintain a per-tower cooldown counter <code>cd = [0.0] * len(TOWERS)</code> for fire-rate gating. Auto-spawn an Enemy at PATH[0] every 1.4 seconds alternating BASIC/FAST. Each Enemy's update method reads <code>PATH[self.path_idx + 1]</code> for the next waypoint, computes <code>(dx, dy)</code> toward it, and steps at <code>self.stats.speed * dt</code>; on reaching distance &lt; 5 of the next waypoint, increment <code>self.path_idx</code>.</li>
+                    <li>In the main loop, dispatch tower behavior via consumer-check-distributed branches: <code>if ttype == TowerType.LASER:</code> applies <code>tgt.health -= s.damage * dt</code> directly each frame the target is in range (LIVE timing — no projectile, no prediction); <code>elif ttype == TowerType.PROJECTILE:</code> creates a projectile snapshotted to the predicted future point via <code>PATH[tgt.path_idx + 1]</code> sampling and <code>projectile_speed</code>-based time-to-impact extrapolation (SNAPSHOT-AT-FIRE timing); <code>elif ttype == TowerType.AOE:</code> creates a projectile snapshotted to the current target position then on impact walks the enemies list applying <code>(1 - distance/splash_radius)</code> falloff damage to all enemies within splash radius (SNAPSHOT-AT-FIRE + LIVE-SPATIAL-QUERY-AT-IMPACT timing). The cooldown gates only PROJECTILE and AOE; LASER's continuous live damage uses dt directly.</li>
+                    <li>Update projectiles each frame as straight-line flight to the snapshot point at <code>projectile_speed</code>. On impact (distance &lt; 6 px to snapshot point), apply damage and mark the projectile dead. AOE projectiles apply distance-weighted falloff damage to all enemies within <code>splash_radius</code>; PROJECTILE projectiles apply single-target damage to whoever is within 18 px of the impact location.</li>
+                    <li>Render the path, towers (with range circles and Enum.value labels), enemies (with health bars), and projectiles. Render a LIVE laser beam visualization separately by re-finding the LASER tower's current target each frame and drawing a cyan line from tower to current target position — the live laser visualization is what makes the LIVE-vs-SNAPSHOT timing distinction visible (PROJECTILE projectiles fly to a stored snapshot point; LASER beam tracks the current live position).</li>
+                    <li>Render an HUD bar at the bottom (rows 360–540) showing: a three-axis legend ('3 axes: (1) targeting timing P/L/A | (2) Enum-keyed @dataclass TYPE_STATS | (3) PATH list-of-tuple'), live counts (enemies / projectiles / PATH waypoints), a rolling dispatch-mode log showing the most recent unique events as a string like 'P -&gt; L -&gt; A -&gt; P' (each new dispatch type appends only if different from the last logged), and a per-tower-type stats summary printed by iterating <code>for tt in TowerType: s = TOWER_STATS[tt]; render(...)</code> — Enum-keyed reads make the type-catalog summary one loop with zero hardcoded names.</li>
                 </ol>
                 <details>
                     <summary>💡 Hint</summary>
-                    <p>TBD</p>
+                    <p>The three axes connect: the dispatch in the main loop reads from the Enum-keyed <code>TOWER_STATS</code> dict (Axis 2 feeds Axis 1), and the PROJECTILE branch reads from the shared PATH list (Axis 3 feeds Axis 1). Adding a fourth tower type is the test: it requires (a) one new <code>TowerType</code> Enum member, (b) one new <code>TOWER_STATS</code> dict entry with a <code>TowerStats(...)</code> dataclass instance, and (c) one new <code>elif ttype == TowerType.NEW:</code> branch in the dispatch loop — and the type checker catches typos in the Enum reference at parse time, the dataclass catches missing required fields at construction, and the rendering / HUD summary code picks up the new entry automatically because it iterates <code>TowerType</code> and reads from the Enum-keyed dict. Try also: changing one waypoint in PATH and notice that movement, prediction, and rendering all update simultaneously because all three systems index into the same list. The Python-idiomatic dispatch delta vs chat-83's JS counterpart is the consumer-check-distributed shape — JS centralized type-discrimination INSIDE Tower.fire via <code>stats.instant: true</code> flag, Python distributes the check across the main loop's per-tower branch — both produce equivalent gameplay but with different architectural shapes that fit each language's idioms.</p>
                 </details>
                 <details>
                     <summary>✅ Example Solution</summary>
-                    <pre><code># TBD</code></pre>
+                    <pre><code class="language-python">"""
+Three pillars of tower defense (Python edition):
+  (1) Snapshot/live/AOE targeting via consumer-check-distributed dispatch
+  (2) Enum-keyed @dataclass TYPE_STATS for double design-time validation
+  (3) PATH list-of-tuple consumed by movement, prediction, and render.
+"""
+import pygame, math
+from enum import Enum
+from dataclasses import dataclass
+from typing import List, Tuple
+
+class TowerType(Enum):
+    PROJECTILE = 'P'; LASER = 'L'; AOE = 'A'
+
+class EnemyType(Enum):
+    BASIC = 'B'; FAST = 'F'
+
+@dataclass
+class TowerStats:
+    name: str; color: Tuple[int, int, int]; damage: int; rng: int
+    fire_rate: float; projectile_speed: float = 380.0; splash_radius: int = 0
+
+@dataclass
+class EnemyStats:
+    name: str; color: Tuple[int, int, int]; speed: int; health: int
+
+# Axis 2: Enum-keyed @dataclass TYPE_STATS dicts (double design-time validation)
+TOWER_STATS = {
+    TowerType.PROJECTILE: TowerStats('Projectile', (255, 200, 0), 25, 140, 1.0),
+    TowerType.LASER:      TowerStats('Laser',      (0, 220, 220), 35, 160, 0.0),
+    TowerType.AOE:        TowerStats('AOE Cannon', (255, 90, 90), 18, 130, 0.7, splash_radius=55),
+}
+ENEMY_STATS = {
+    EnemyType.BASIC: EnemyStats('Basic', (40, 220, 40), 70, 80),
+    EnemyType.FAST:  EnemyStats('Fast',  (255, 230, 60), 130, 50),
+}
+
+# Axis 3: PATH list-of-tuple consumed by movement, prediction, rendering
+PATH: List[Tuple[int, int]] = [(0, 110), (300, 110), (300, 240), (700, 240), (700, 110), (1024, 110)]
+
+class Enemy:
+    def __init__(self, et):
+        self.stats = ENEMY_STATS[et]; self.path_idx = 0
+        self.x, self.y = float(PATH[0][0]), float(PATH[0][1])
+        self.health = self.stats.health
+    def update(self, dt):
+        if self.path_idx &gt;= len(PATH) - 1 or self.health &lt;= 0: return
+        tx, ty = PATH[self.path_idx + 1]
+        dx, dy = tx - self.x, ty - self.y; d = math.hypot(dx, dy)
+        if d &lt; 5: self.path_idx += 1
+        else:
+            mv = self.stats.speed * dt
+            self.x += dx / d * mv; self.y += dy / d * mv
+
+pygame.init()
+screen = pygame.display.set_mode((1024, 540))
+clock = pygame.time.Clock(); font = pygame.font.Font(None, 22)
+TOWERS = [(TowerType.PROJECTILE, 200, 200), (TowerType.LASER, 500, 50), (TowerType.AOE, 800, 200)]
+enemies, projectiles, log = [], [], []
+cd = [0.0] * len(TOWERS); spawn_t = 0.0; running = True
+while running:
+    dt = clock.tick(60) / 1000.0
+    for ev in pygame.event.get():
+        if ev.type == pygame.QUIT: running = False
+    spawn_t += dt
+    if spawn_t &gt; 1.4:
+        spawn_t = 0.0
+        enemies.append(Enemy(EnemyType.BASIC if len(enemies) % 2 == 0 else EnemyType.FAST))
+    for e in enemies: e.update(dt)
+    enemies[:] = [e for e in enemies if e.path_idx &lt; len(PATH) - 1 and e.health &gt; 0]
+    # Axis 1: consumer-check-distributed targeting dispatch via tower.type comparison
+    for i, (ttype, tx, ty) in enumerate(TOWERS):
+        s = TOWER_STATS[ttype]
+        tgt = next((e for e in enemies if math.hypot(e.x - tx, e.y - ty) &lt;= s.rng), None)
+        if not tgt: continue
+        if ttype == TowerType.LASER:                     # LIVE: damage current target each frame in range
+            tgt.health -= s.damage * dt
+            if not log or log[-1] != 'L': log.append('L')
+        elif ttype == TowerType.PROJECTILE:              # SNAPSHOT-AT-FIRE with leading-shot prediction
+            cd[i] -= dt
+            if cd[i] &lt;= 0:
+                cd[i] = 1.0 / s.fire_rate
+                if tgt.path_idx &lt; len(PATH) - 1:
+                    nx, ny = PATH[tgt.path_idx + 1]
+                    pdx, pdy = nx - tgt.x, ny - tgt.y; pd = math.hypot(pdx, pdy) or 1
+                    tti = math.hypot(tgt.x - tx, tgt.y - ty) / s.projectile_speed
+                    px = tgt.x + (pdx / pd) * tgt.stats.speed * tti
+                    py = tgt.y + (pdy / pd) * tgt.stats.speed * tti
+                else: px, py = tgt.x, tgt.y
+                projectiles.append([float(tx), float(ty), px, py, s.damage, s.color, 'P', s.projectile_speed, 0, 0])
+                if not log or log[-1] != 'P': log.append('P')
+        elif ttype == TowerType.AOE:                     # SNAPSHOT-AT-FIRE then live-spatial-query at impact
+            cd[i] -= dt
+            if cd[i] &lt;= 0:
+                cd[i] = 1.0 / s.fire_rate
+                projectiles.append([float(tx), float(ty), tgt.x, tgt.y, s.damage, s.color, 'A', s.projectile_speed, s.splash_radius, 0])
+                if not log or log[-1] != 'A': log.append('A')
+    for p in projectiles:
+        x, y, px, py, dmg, col, mode, spd, splash, dead = p
+        dx, dy = px - x, py - y; d = math.hypot(dx, dy)
+        if d &lt; 6:
+            p[9] = 1
+            if mode == 'A':
+                for e in enemies:
+                    sd = math.hypot(e.x - px, e.y - py)
+                    if sd &lt; splash: e.health -= dmg * (1 - sd / splash)
+            else:
+                for e in enemies:
+                    if math.hypot(e.x - px, e.y - py) &lt; 18: e.health -= dmg
+        else:
+            p[0] += dx / d * spd * dt; p[1] += dy / d * spd * dt
+    projectiles[:] = [p for p in projectiles if p[9] == 0]
+    screen.fill((22, 36, 22))
+    for i in range(len(PATH) - 1): pygame.draw.line(screen, (140, 100, 60), PATH[i], PATH[i + 1], 30)
+    for ttype, tx, ty in TOWERS:
+        st = TOWER_STATS[ttype]
+        pygame.draw.circle(screen, (180, 180, 180), (tx, ty), st.rng, 1)
+        pygame.draw.rect(screen, st.color, (tx - 14, ty - 14, 28, 28))
+        screen.blit(font.render(ttype.value, True, (0, 0, 0)), (tx - 5, ty - 9))
+    for e in enemies:
+        pygame.draw.circle(screen, e.stats.color, (int(e.x), int(e.y)), 10)
+        pygame.draw.rect(screen, (200, 0, 0), (e.x - 12, e.y - 18, 24, 3))
+        pygame.draw.rect(screen, (0, 220, 0), (e.x - 12, e.y - 18, max(0, 24 * e.health / e.stats.health), 3))
+    for p in projectiles: pygame.draw.circle(screen, p[5], (int(p[0]), int(p[1])), 4)
+    for ttype, tx, ty in TOWERS:                         # LIVE laser beam re-targets each frame
+        if ttype != TowerType.LASER: continue
+        ls = TOWER_STATS[ttype]
+        ltgt = next((e for e in enemies if math.hypot(e.x - tx, e.y - ty) &lt;= ls.rng), None)
+        if ltgt: pygame.draw.line(screen, ls.color, (tx, ty), (int(ltgt.x), int(ltgt.y)), 2)
+    pygame.draw.rect(screen, (0, 0, 0), (0, 360, 1024, 180))
+    pygame.draw.line(screen, (180, 180, 180), (0, 360), (1024, 360))
+    hud = [
+        '3 axes: (1) targeting timing P/L/A | (2) Enum-keyed @dataclass TYPE_STATS | (3) PATH list-of-tuple',
+        f'enemies={len(enemies)} projectiles={len(projectiles)} PATH waypoints={len(PATH)}',
+        f"dispatch log: {' -&gt; '.join(log[-14:])}",
+        'P=snapshot+lead flies to predicted future; L=live damages current target; A=snapshot+live-AOE splash',
+    ]
+    for i, line in enumerate(hud): screen.blit(font.render(line, True, (220, 220, 220)), (10, 370 + i * 22))
+    for i, tt in enumerate(TowerType):
+        s = TOWER_STATS[tt]
+        screen.blit(font.render(f'{tt.name}: dmg={s.damage} rng={s.rng} fr={s.fire_rate}', True, s.color), (10, 462 + i * 20))
+    pygame.display.flip()
+pygame.quit()</code></pre>
                 </details>
             </div>
 
@@ -1247,31 +1395,31 @@ class ProjectilePool:
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> TBD</p>
+                    <p><strong>Question 1:</strong> Demo runs with three fixed towers (PROJECTILE at one position, LASER at another, AOE cannon at a third) on the same path with the same enemies in range simultaneously. The PROJECTILE tower fires once per fire_rate-gated cooldown, with each shot snapshotting the target's predicted future position via <code>PATH[tgt.path_idx + 1]</code> sampling and <code>projectile_speed</code>-based time-to-impact extrapolation, then the projectile flies straight-line to that snapshot point and damages whatever enemy is at the impact location. The LASER tower has <code>fire_rate=0.0</code> and bypasses the projectile machinery entirely; the main loop's <code>elif ttype == TowerType.LASER:</code> branch applies <code>tgt.health -= s.damage * dt</code> directly to the current live target each frame the target is in range, with no flight time and no prediction. The AOE cannon snapshots the target position at fire moment but on impact damages all live enemies within splash_radius via an enemies walk applying <code>(1 - distance/splash_radius)</code> falloff. Why are these three different timing models present in one demo, rather than picking the single 'best' timing approach for all towers?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='The performance differences among these three approaches are negligible at the relevant scale; the driver is per-shot gameplay rhythm and tactical fit, not throughput. Production tower defense engines including BTD6, Plants vs Zombies, and Kingdom Rush all expose multiple timing models for exactly the rhythm-shaping reason the demo demonstrates.'>A) The three timing models exist for performance reasons — instant LASER damage is too cheap to justify projectile machinery, and snapshot-with-prediction is the only way to handle moving targets without expensive per-frame target tracking. AOE splash is just a special case of single-target damage applied to multiple enemies, not architecturally distinct.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Each timing model produces a different per-shot gameplay rhythm and matches a different tactical fit: PROJECTILE snapshot+lead encourages strategic placement (well-placed towers compensate for predictable enemy paths); LASER live-damage encourages reactive placement (single-target high-DPS where the tower hits whatever is in range RIGHT NOW); AOE cannon encourages choke-point placement (clustered enemies all take splash). The three are different by design, not by accident — context determines correct choice. CHAT-84 = SECOND-AT-TARGETING-EFFECT-TIMING-SCOPE after chat-83 with Python-idiomatic consumer-check-distributed dispatch via if tower.type == TowerType.X branches in the main loop rather than a stats.instant flag check inside Tower.fire as in chat-83 JS.'>B) Each timing model produces a different per-shot gameplay rhythm and matches a different tactical fit; the three are different by design, not by accident — context determines correct choice, with PROJECTILE encouraging strategic placement, LASER encouraging reactive placement, and AOE encouraging choke-point placement.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='The three models are NOT interchangeable — try replacing the LASER live-damage with a slow PROJECTILE snapshot+lead at the same DPS and the visible difference is dramatic: laser hits whatever crosses its range mid-flight while a snapshot-projectile may miss because the predicted future point no longer matches where the enemy is when the projectile arrives. Production tower defense games like BTD6 deliberately mix all three timing models because each suits a different tactical situation.'>C) The three timing models are equivalent to each other and any of them could replace the other two with no gameplay difference; the demo just shows three to illustrate that the choice is purely cosmetic. Real production tower defense games pick ONE timing model (usually projectile snapshot+lead) and use it for all towers consistently.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> TBD</p>
+                    <p><strong>Question 2:</strong> Demo declares <code>class TowerType(Enum): PROJECTILE = 'P'; LASER = 'L'; AOE = 'A'</code>, then <code>@dataclass class TowerStats</code> with type-hinted fields, then <code>TOWER_STATS = {TowerType.PROJECTILE: TowerStats(...), TowerType.LASER: TowerStats(...), TowerType.AOE: TowerStats(...)}</code> as an Enum-keyed dict-of-dataclass-instances. The chat-83 JS-canvas counterpart used plain string keys (<code>TOWER_TYPES = {basic: {...}, cannon: {...}, laser: {...}}</code>) and JS object literals for the inner stats. Why are Python's Enum + @dataclass shapes both used here rather than the equivalent JS-style plain-string-keyed-object-dict?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Python dict lookups are O(1) regardless of key type, and @dataclass construction has a small overhead for auto-__init__ and __eq__ generation but is not faster than a plain dict at runtime. The driver is correctness and maintainability via design-time validation, not throughput.'>A) Python dicts are slower than JS objects so Enum keys are needed as a performance optimization to use integer-equivalent hash lookup, and @dataclass is faster to construct than a plain dict-of-fields. The performance gap is what justifies the Python-specific shapes.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='The Python shapes provide TWO stacked design-time validation gates that the JS plain-string-keyed-object-dict equivalent does NOT have: (a) Enum membership at attribute-access — TowerType.LSAER raises AttributeError at parse time vs JS &quot;lsaer&quot; silently returning undefined at runtime; (b) @dataclass field declaration at construction — missing required arg raises TypeError at instance creation, type hints provide static-analyzer hints for typoed field reads. CHAT-84 = EIGHTH design-time-validation-vs-runtime-discovery lesson after chat-47 (validate vs is_solid) + chat-70 (hidden_imports static-AST-vs-runtime) + chat-72 (profile-bars vs intuition) + chat-73 (capability detection) + chat-76 (Enum-vs-isinstance dispatch) + chat-79 (Enum-roundtrip-vs-live-comparison) + chat-82 (Enum-keyed UNIT_STATS) and FIRST applied at TYPE-CATALOG scope where Enum + @dataclass STACK to provide TWO orthogonal validation gates rather than one.'>B) The Python shapes provide TWO stacked design-time validation gates that the JS plain-string-keyed-object-dict equivalent does NOT have — Enum membership validated at attribute-access (typoed Enum member raises AttributeError at parse time) AND @dataclass fields validated at construction (missing required arg raises TypeError at instance creation, type hints catch typoed field reads).</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Python perfectly accepts plain-string-keyed-dict-of-dict shapes — they just provide ZERO design-time validation, identical to the JS version. The Enum + @dataclass shapes are CHOICES that add validation, not language requirements.'>C) Python REQUIRES Enum keys and @dataclass values for any dict-of-stats pattern; using plain strings and dict literals would raise SyntaxError or fail to compile. The JS plain-string-keyed-object-dict shape simply does not exist as a valid Python alternative.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 3:</strong> TBD</p>
+                    <p><strong>Question 3:</strong> Demo declares <code>PATH: List[Tuple[int, int]] = [(0, 110), (300, 110), (300, 240), (700, 240), (700, 110), (1024, 110)]</code> once at module level. Three different systems consume the same PATH each frame: <code>Enemy.update</code> walks <code>PATH[self.path_idx + 1]</code> to find the next waypoint to move toward; the PROJECTILE tower's main-loop branch samples <code>PATH[tgt.path_idx + 1]</code> to compute the leading-shot prediction toward where the enemy will be by the time the projectile arrives; the rendering loop walks pairs via <code>pygame.draw.line(screen, (140, 100, 60), PATH[i], PATH[i + 1], 30)</code>. The chat-83 JS counterpart used <code>PATH = [{x: 0, y: 110}, {x: 300, y: 110}, ...]</code> (list-of-object-literal-records) with the same data-driven shape. Why does the demo externalize the route as one shared PATH structure consumed by all three systems rather than each system having its own copy of the path coordinates?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">A) TBD</button>
-                        <button class="quiz-option" data-correct="true" data-explanation="TBD">B) TBD</button>
-                        <button class="quiz-option" data-correct="false" data-hint="TBD">C) TBD</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Six (x, y) tuples is a few hundred bytes. Even with 1000 enemies, three copies of the path is still under a kilobyte. The driver is single-source-of-truth and zero-edit extension, not memory.'>A) Sharing one PATH structure saves memory because each waypoint is stored once rather than three times across movement, prediction, and rendering. The driver is RAM efficiency at scale (1000+ enemies all reading the same path).</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='PATH IS the canonical route definition that all three consuming systems iterate over by index. Adding or changing the route is one list edit and ALL consumers pick it up automatically because they iterate or index into the same list rather than branching on hardcoded coordinates. With three separate copies, adding a new waypoint requires three simultaneous edits (movement + prediction + rendering) and the inevitable bug is that one of them gets missed and the systems drift out of sync. CHAT-84 = data-driven-externalization-family REPRISE at PATH-WAYPOINT-LIST scope (after chat-83 first applied this scope in JS list-of-object-literal-records) with Python list-of-tuple idiom delta. Same data-driven-externalization shape as the long second-half-Phase-8 streak applied here at PATH-WAYPOINT-LIST scope, Python-idiomatic.'>B) PATH is the canonical route definition that all three consuming systems iterate over by index — adding or changing the route is one list edit and ALL consumers pick it up automatically because they iterate or index into the same list rather than branching on hardcoded coordinates. With three separate copies the systems would drift out of sync whenever one was edited and another was forgotten.</button>
+                        <button class="quiz-option" data-correct='false' data-hint='Python type checkers handle multiple identically-typed variables with no conflict; three separate annotations would type-check fine. The driver is single-source-of-truth, not type-system constraints.'>C) Python requires shared structures for type-hinting consistency — declaring <code>PATH: List[Tuple[int, int]]</code> once gives the type checker a single annotation to propagate; with three copies the type hints would conflict and mypy would refuse to type-check the file.</button>
                     </div>
                     <div class="quiz-feedback"></div>
                 </div>

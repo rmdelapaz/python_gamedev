@@ -174,192 +174,102 @@
     <h2 id="basic-save-load-implementation">Basic Save/Load Implementation</h2>
     
     <pre class="language-python"><code>import json
-import pickle
 import os
 import time
-import hashlib
-import base64
-from typing import Dict, Any, Optional
-from dataclasses import dataclass, asdict
-from datetime import datetime
+from typing import Optional
+from dataclasses import dataclass, asdict, field
 
 @dataclass
 class SaveData:
-    """Container for save game data"""
+    """Schema-as-contract: declare fields once; asdict / **data walk them automatically."""
     version: str = "1.0.0"
-    timestamp: float = None
-    play_time: float = 0
-    
-    # Player data
+    timestamp: float = 0.0
     player_name: str = "Player"
     player_level: int = 1
     player_health: int = 100
     player_position: tuple = (0, 0)
-    player_inventory: list = None
-    
-    # Game progress
-    current_level: int = 1
-    completed_levels: list = None
     score: int = 0
-    achievements: list = None
-    
-    # World state
-    world_seed: int = 0
-    enemies: list = None
-    items: list = None
-    
-    def __post_init__(self):
-        if self.timestamp is None:
-            self.timestamp = time.time()
-        if self.player_inventory is None:
-            self.player_inventory = []
-        if self.completed_levels is None:
-            self.completed_levels = []
-        if self.achievements is None:
-            self.achievements = []
-        if self.enemies is None:
-            self.enemies = []
-        if self.items is None:
-            self.items = []
+    current_level: int = 1
+    inventory: list = field(default_factory=list)
 
 class SaveManager:
-    """Manages game saves and loads"""
+    """Atomic, validated save/load for one save directory."""
     def __init__(self, save_directory: str = "saves"):
         self.save_directory = save_directory
-        self.current_save_data = SaveData()
-        self.auto_save_interval = 300  # 5 minutes
-        self.last_auto_save = time.time()
-        
-        # Create save directory if it doesn't exist
-        if not os.path.exists(save_directory):
-            os.makedirs(save_directory)
-    
-    def save_game(self, slot: int = 1, save_data: SaveData = None) -> bool:
-        """Save game to specified slot"""
-        if save_data is None:
-            save_data = self.current_save_data
-        
-        # Update timestamp
+        os.makedirs(save_directory, exist_ok=True)
+
+    def _filepath(self, slot: int) -> str:
+        return os.path.join(self.save_directory, f"savegame_{slot}.json")
+
+    def save_game(self, slot: int, save_data: SaveData) -> bool:
+        """Atomic save: write tmp file, then os.replace into final path."""
         save_data.timestamp = time.time()
-        
-        # Generate filename
-        filename = self.get_save_filename(slot)
-        filepath = os.path.join(self.save_directory, filename)
-        
+        final = self._filepath(slot)
+        tmp = final + ".tmp"
         try:
-            # Save as JSON
-            with open(filepath, 'w') as f:
+            with open(tmp, "w") as f:
                 json.dump(asdict(save_data), f, indent=2)
-            
+            os.replace(tmp, final)  # atomic on POSIX + Windows
             print(f"Game saved to slot {slot}")
             return True
-            
-        except Exception as e:
-            print(f"Failed to save game: {e}")
+        except OSError as e:
+            print(f"Save failed: {e}")
             return False
-    
-    def load_game(self, slot: int = 1) -> Optional[SaveData]:
-        """Load game from specified slot"""
-        filename = self.get_save_filename(slot)
-        filepath = os.path.join(self.save_directory, filename)
-        
-        if not os.path.exists(filepath):
+
+    def load_game(self, slot: int) -> Optional[SaveData]:
+        """Deserialize, then validate, then return — or None if either fails."""
+        final = self._filepath(slot)
+        if not os.path.exists(final):
             print(f"No save found in slot {slot}")
             return None
-        
         try:
-            # Load from JSON
-            with open(filepath, 'r') as f:
+            with open(final) as f:
                 data = json.load(f)
-            
-            # Create SaveData object
             save_data = SaveData(**data)
-            
-            # Validate save data
-            if self.validate_save(save_data):
-                self.current_save_data = save_data
-                print(f"Game loaded from slot {slot}")
-                return save_data
-            else:
-                print(f"Save file corrupted in slot {slot}")
-                return None
-                
-        except Exception as e:
-            print(f"Failed to load game: {e}")
+        except (OSError, json.JSONDecodeError, TypeError) as e:
+            print(f"Load failed: {e}")
             return None
-    
+        if not self.validate_save(save_data):
+            return None
+        print(f"Game loaded from slot {slot}")
+        return save_data
+
     def validate_save(self, save_data: SaveData) -> bool:
-        """Validate save data integrity"""
-        # Check version compatibility
+        """Reject corrupt / out-of-range / version-incompatible saves at the load boundary."""
         if save_data.version != "1.0.0":
-            print(f"Save version {save_data.version} not compatible")
+            print(f"BLOCKED: incompatible version {save_data.version}")
             return False
-        
-        # Check data integrity
-        if save_data.player_health < 0:
+        if save_data.player_health &lt; 0:
+            print(f"BLOCKED: player_health={save_data.player_health}")
             return False
-        if save_data.current_level < 1:
+        if save_data.current_level &lt; 1:
+            print(f"BLOCKED: current_level={save_data.current_level}")
             return False
-        
         return True
-    
-    def get_save_filename(self, slot: int) -> str:
-        """Generate save filename for slot"""
-        return f"savegame_{slot}.json"
-    
-    def quick_save(self) -> bool:
-        """Quick save to slot 0"""
-        return self.save_game(0)
-    
-    def quick_load(self) -> Optional[SaveData]:
-        """Quick load from slot 0"""
-        return self.load_game(0)
-    
-    def auto_save(self) -> bool:
-        """Auto save if interval has passed"""
-        current_time = time.time()
-        if current_time - self.last_auto_save >= self.auto_save_interval:
-            self.last_auto_save = current_time
-            return self.save_game(99)  # Auto save slot
-        return False
-    
+
     def list_saves(self) -> list:
-        """List all available saves"""
+        """List slot metadata across all saves in the directory."""
         saves = []
         for filename in os.listdir(self.save_directory):
-            if filename.startswith("savegame_") and filename.endswith(".json"):
-                filepath = os.path.join(self.save_directory, filename)
-                try:
-                    with open(filepath, 'r') as f:
-                        data = json.load(f)
-                    
-                    slot = int(filename.split('_')[1].split('.')[0])
-                    saves.append({
-                        'slot': slot,
-                        'timestamp': data.get('timestamp', 0),
-                        'play_time': data.get('play_time', 0),
-                        'level': data.get('current_level', 1),
-                        'score': data.get('score', 0)
-                    })
-                except:
-                    continue
-        
-        return sorted(saves, key=lambda x: x['slot'])
-    
-    def delete_save(self, slot: int) -> bool:
-        """Delete save from slot"""
-        filename = self.get_save_filename(slot)
-        filepath = os.path.join(self.save_directory, filename)
-        
-        if os.path.exists(filepath):
+            if not (filename.startswith("savegame_") and filename.endswith(".json")):
+                continue
             try:
-                os.remove(filepath)
-                print(f"Save deleted from slot {slot}")
-                return True
-            except Exception as e:
-                print(f"Failed to delete save: {e}")
-                return False
-        return False</code></pre>
+                with open(os.path.join(self.save_directory, filename)) as f:
+                    data = json.load(f)
+                slot = int(filename.split("_")[1].split(".")[0])
+                saves.append({"slot": slot, "level": data.get("current_level", 1),
+                              "score": data.get("score", 0), "timestamp": data.get("timestamp", 0)})
+            except (OSError, ValueError, json.JSONDecodeError):
+                continue
+        return sorted(saves, key=lambda s: s["slot"])
+
+# Save / load round-trip demo
+if __name__ == "__main__":
+    manager = SaveManager()
+    state = SaveData(player_name="Hero", score=1500, current_level=3)
+    manager.save_game(slot=1, save_data=state)
+    loaded = manager.load_game(slot=1)
+    print(f"Loaded: {loaded}")</code></pre>
 
     <h2 id="advanced-save-features">Advanced Save Features</h2>
     
@@ -597,6 +507,7 @@ class SaveMigration:
     <h2 id="save-system-integration">Save System Integration</h2>
     
     <pre class="language-python"><code>import pygame
+from dataclasses import dataclass, asdict, field
 
 class GameWithSaveSystem:
     """Game with integrated save/load system"""
@@ -773,35 +684,21 @@ class GameWithSaveSystem:
             dt = self.clock.tick(60) / 1000.0
 
 # Example classes for game objects
+@dataclass
 class Player:
-    def __init__(self):
-        self.name = "Player"
-        self.x = 400
-        self.y = 300
-        self.health = 100
-        self.level = 1
-        self.inventory = []
-    
-    def to_dict(self):
-        return {
-            'name': self.name,
-            'x': self.x,
-            'y': self.y,
-            'health': self.health,
-            'level': self.level,
-            'inventory': self.inventory
-        }
-    
+    name: str = "Player"
+    x: int = 400
+    y: int = 300
+    health: int = 100
+    level: int = 1
+    inventory: list = field(default_factory=list)
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
     @staticmethod
-    def from_dict(data):
-        player = Player()
-        player.name = data['name']
-        player.x = data['x']
-        player.y = data['y']
-        player.health = data['health']
-        player.level = data['level']
-        player.inventory = data['inventory']
-        return player</code></pre>
+    def from_dict(data: dict) -> "Player":
+        return Player(**data)</code></pre>
 
     <h2 id="best-practices">Best Practices</h2>
     

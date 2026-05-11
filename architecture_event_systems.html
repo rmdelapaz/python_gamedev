@@ -589,229 +589,91 @@ class SaveSystem:
     <h2 id="complete-event-driven-game-example">Complete Event-Driven Game Example</h2>
     
     <pre class="language-python"><code>import pygame
-from typing import Dict, Any
+from typing import List
 
 class EventDrivenGame:
-    """Complete game using event-driven architecture"""
-    def __init__(self):
+    """Pygame loop integrated with EventBus showing process_events() at the safe boundary.
+
+    The publisher (Game) holds ZERO references to subscriber systems after construction
+    — they wire themselves into the bus in their own __init__ and operate purely through
+    the bus, the load-bearing publish-subscribe decoupling property. Adding a fifth
+    subscriber requires zero edits to Game; only the bus holds the listener identities.
+    """
+    def __init__(self) -> None:
         pygame.init()
-        self.screen = pygame.display.set_mode((800, 600))
+        self.screen = pygame.display.set_mode((600, 400))
         pygame.display.set_caption("Event-Driven Game")
         self.clock = pygame.time.Clock()
-        self.running = True
-        
-        # Initialize event system
         self.event_bus = PriorityEventBus()
-        
-        # Initialize game systems
-        self.achievement_system = AchievementSystem(self.event_bus)
-        self.audio_system = AudioSystem(self.event_bus)
-        self.save_system = SaveSystem(self.event_bus)
-        self.ui_system = UISystem(self.event_bus, self.screen)
-        self.particle_system = ParticleSystem(self.event_bus)
-        
-        # Game state
-        self.player = None
-        self.enemies = []
-        self.items = []
+        # Subscribers wire themselves into the bus; Game does not retain references:
+        AchievementSystem(self.event_bus)
+        AudioSystem(self.event_bus)
+        SaveSystem(self.event_bus)
+        self.player = Player(300, 200, self.event_bus)
         self.score = 0
-        self.level = 1
-        
-        self.setup_game()
-    
-    def setup_game(self):
-        """Initialize game objects"""
-        # Create player
-        self.player = Player(400, 300, self.event_bus)
-        
-        # Subscribe to game events
-        self.event_bus.subscribe(EventType.PLAYER_DEATH, self.on_player_death)
-        self.event_bus.subscribe(EventType.ENEMY_KILLED, self.on_enemy_killed)
-        self.event_bus.subscribe(EventType.ITEM_COLLECTED, self.on_item_collected)
-    
-    def on_player_death(self, event: Event):
-        """Handle player death"""
-        print("Player died!")
-        self.event_bus.emit(Event(
-            event_type=EventType.GAME_OVER,
-            data={'final_score': self.score},
-            priority=1  # High priority
-        ))
-    
-    def on_enemy_killed(self, event: Event):
-        """Handle enemy death"""
-        self.score += event.data.get('points', 10)
-        enemy_id = event.data.get('enemy_id')
-        
-        # Remove enemy from list
-        self.enemies = [e for e in self.enemies if e.id != enemy_id]
-        
-        # Check if level complete
-        if not self.enemies:
-            self.event_bus.emit(Event(
-                event_type=EventType.LEVEL_COMPLETE,
-                data={
-                    'level_id': self.level,
-                    'completion_time': pygame.time.get_ticks() / 1000
-                }
-            ))
-    
-    def on_item_collected(self, event: Event):
-        """Handle item collection"""
-        item_id = event.data.get('item_id')
-        item_type = event.data.get('item_type')
-        
-        # Apply item effect
-        if item_type == 'health':
-            self.player.heal(20)
-        elif item_type == 'powerup':
-            self.player.power_up()
-        
-        # Remove item
-        self.items = [i for i in self.items if i.id != item_id]
-    
-    def handle_input(self):
-        """Handle input events"""
-        keys = pygame.key.get_pressed()
-        
-        if keys[pygame.K_SPACE]:
+        self.running = True
+        self.event_bus.emit(Event(event_type=EventType.GAME_START, priority=1))
+
+    def handle_input(self, key: int) -> None:
+        """Translate pygame KEYDOWN events into game events on the bus."""
+        if key == pygame.K_SPACE:
             self.event_bus.emit(Event(
                 event_type=EventType.PLAYER_JUMP,
-                data={'player_pos': (self.player.x, self.player.y)}
+                data={'pos': (self.player.x, self.player.y)}
             ))
-        
-        if keys[pygame.K_RETURN]:
+        elif key == pygame.K_x:
+            # Queued: dispatch lands at top of next frame, batched at the safe boundary.
             self.event_bus.emit(Event(
-                event_type=EventType.PLAYER_SHOOT,
-                data={'player_pos': (self.player.x, self.player.y)}
+                event_type=EventType.ENEMY_KILLED,
+                data={'enemy_type': 'goblin', 'points': 10}
             ))
-    
-    def update(self, dt):
-        """Update game logic"""
-        # Process queued events
-        self.event_bus.process_events()
-        
-        # Update game objects
-        self.player.update(dt)
-        for enemy in self.enemies:
-            enemy.update(dt)
-        
-        # Check collisions
-        self.check_collisions()
-    
-    def check_collisions(self):
-        """Check and emit collision events"""
-        # Player-Enemy collisions
-        for enemy in self.enemies:
-            if self.player.collides_with(enemy):
-                self.event_bus.emit(Event(
-                    event_type=EventType.DAMAGE_TAKEN,
-                    data={
-                        'damage': enemy.damage,
-                        'source': 'enemy',
-                        'enemy_id': enemy.id
-                    }
-                ))
-        
-        # Player-Item collisions
-        for item in self.items:
-            if self.player.collides_with(item):
-                self.event_bus.emit(Event(
-                    event_type=EventType.ITEM_COLLECTED,
-                    data={
-                        'item_id': item.id,
-                        'item_type': item.item_type
-                    }
-                ))
-    
-    def run(self):
-        """Main game loop"""
-        dt = 0
-        
-        # Emit game start event
-        self.event_bus.emit(Event(
-            event_type=EventType.GAME_START,
-            priority=1
-        ))
-        
+            self.score += 10
+        elif key == pygame.K_h:
+            # Take damage; PLAYER_DEATH at priority=2 fires inline if health hits 0.
+            self.player.take_damage(25)
+
+    def run(self) -> None:
+        """Main loop: drain queued events at the TOP of every frame.
+
+        Same accumulator-then-integrate shape as chat-44 fixed-timestep physics:
+        consume deferred work at the safe batch boundary, then advance the frame.
+        """
         while self.running:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
+            self.event_bus.process_events()  # batch boundary; queue depth resets to 0
+            for ev in pygame.event.get():
+                if ev.type == pygame.QUIT:
                     self.running = False
-                
-                # Convert pygame events to game events
-                if event.type == pygame.KEYDOWN:
-                    self.event_bus.emit(Event(
-                        event_type=EventType.KEY_PRESSED,
-                        data={'key': event.key}
-                    ))
-            
-            self.handle_input()
-            self.update(dt)
-            
-            # Clear screen
+                elif ev.type == pygame.KEYDOWN:
+                    self.handle_input(ev.key)
             self.screen.fill((20, 20, 30))
-            
-            # Draw everything
-            self.player.draw(self.screen)
-            for enemy in self.enemies:
-                enemy.draw(self.screen)
-            for item in self.items:
-                item.draw(self.screen)
-            
-            # Systems draw themselves through events
-            self.ui_system.draw()
-            self.particle_system.draw()
-            
             pygame.display.flip()
-            dt = self.clock.tick(60) / 1000.0
+            self.clock.tick(60)
 
 class Player:
-    """Player class that emits events"""
-    def __init__(self, x, y, event_bus):
+    """Player emitting PLAYER_DEATH at priority=2 so death lands ahead of routine events."""
+    def __init__(self, x: int, y: int, event_bus: EventBus) -> None:
         self.x = x
         self.y = y
         self.event_bus = event_bus
         self.health = 100
         self.max_health = 100
-        
-    def take_damage(self, amount):
-        """Take damage and emit events"""
+
+    def take_damage(self, amount: int) -> None:
         old_health = self.health
         self.health = max(0, self.health - amount)
-        
         self.event_bus.emit(Event(
             event_type=EventType.DAMAGE_TAKEN,
-            data={
-                'old_health': old_health,
-                'new_health': self.health,
-                'damage': amount
-            }
+            data={'old_health': old_health, 'new_health': self.health, 'damage': amount}
         ))
-        
-        if self.health <= 0:
+        if self.health &lt;= 0:
+            # priority=2 keeps death ahead of routine queued events at dispatch time.
             self.event_bus.emit(Event(
                 event_type=EventType.PLAYER_DEATH,
-                priority=2  # High priority
+                priority=2
             ))
-    
-    def heal(self, amount):
-        """Heal and emit event"""
-        old_health = self.health
-        self.health = min(self.max_health, self.health + amount)
-        
-        self.event_bus.emit(Event(
-            event_type=EventType.PLAYER_HEALED,
-            data={
-                'old_health': old_health,
-                'new_health': self.health,
-                'amount': amount
-            }
-        ))
 
 if __name__ == "__main__":
-    game = EventDrivenGame()
-    game.run()</code></pre>
+    EventDrivenGame().run()</code></pre>
 
     <h2 id="best-practices">Best Practices</h2>
     

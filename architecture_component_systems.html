@@ -188,10 +188,10 @@ class HealthComponent(Component):
     max_health: int = 100
     current_health: int = 100
     
-    def take_damage(self, amount: int):
+    def take_damage(self, amount: int) -> None:
         self.current_health = max(0, self.current_health - amount)
     
-    def heal(self, amount: int):
+    def heal(self, amount: int) -> None:
         self.current_health = min(self.max_health, self.current_health + amount)
     
     def is_alive(self) -> bool:
@@ -200,11 +200,11 @@ class HealthComponent(Component):
 # Entity class
 class Entity:
     """Entity is just a container for components"""
-    def __init__(self, entity_id: int, name: str = ""):
+    def __init__(self, entity_id: int, name: str = "") -> None:
         self.id = entity_id
         self.name = name
         self.components: Dict[Type[Component], Component] = {}
-        self.active = True
+        self.active: bool = True
         
     def add_component(self, component: Component) -> 'Entity':
         """Add a component to this entity"""
@@ -219,7 +219,7 @@ class Entity:
         """Check if entity has a component"""
         return component_type in self.components
     
-    def remove_component(self, component_type: Type[Component]):
+    def remove_component(self, component_type: Type[Component]) -> None:
         """Remove a component from this entity"""
         if component_type in self.components:
             del self.components[component_type]
@@ -227,9 +227,9 @@ class Entity:
 # System base class
 class System(ABC):
     """Base class for all systems"""
-    def __init__(self):
+    def __init__(self) -> None:
         self.required_components: List[Type[Component]] = []
-        self.priority = 0  # Lower values update first
+        self.priority: int = 0  # Lower values update first
     
     def get_entities(self, world: 'World') -> List[Entity]:
         """Get all entities that have required components"""
@@ -240,18 +240,18 @@ class System(ABC):
                 )]
     
     @abstractmethod
-    def update(self, world: 'World', dt: float):
+    def update(self, world: 'World', dt: float) -> None:
         """Update system logic"""
         pass
 
 # Movement System
 class MovementSystem(System):
     """System that handles entity movement"""
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.required_components = [TransformComponent, VelocityComponent]
         
-    def update(self, world: 'World', dt: float):
+    def update(self, world: 'World', dt: float) -> None:
         entities = self.get_entities(world)
         
         for entity in entities:
@@ -268,10 +268,10 @@ class MovementSystem(System):
     <pre class="language-python"><code># World/Manager class
 class World:
     """ECS World that manages entities and systems"""
-    def __init__(self):
+    def __init__(self) -> None:
         self.entities: Dict[int, Entity] = {}
         self.systems: List[System] = []
-        self.next_entity_id = 0
+        self.next_entity_id: int = 0
         self.component_pools: Dict[Type[Component], List[Component]] = {}
         
     def create_entity(self, name: str = "") -> Entity:
@@ -281,7 +281,7 @@ class World:
         self.next_entity_id += 1
         return entity
     
-    def destroy_entity(self, entity_id: int):
+    def destroy_entity(self, entity_id: int) -> None:
         """Destroy an entity"""
         if entity_id in self.entities:
             # Return components to pools for reuse
@@ -290,12 +290,12 @@ class World:
                 self.return_to_pool(component)
             del self.entities[entity_id]
     
-    def add_system(self, system: System):
+    def add_system(self, system: System) -> None:
         """Add a system to the world"""
         self.systems.append(system)
         self.systems.sort(key=lambda s: s.priority)
     
-    def update(self, dt: float):
+    def update(self, dt: float) -> None:
         """Update all systems"""
         for system in self.systems:
             system.update(self, dt)

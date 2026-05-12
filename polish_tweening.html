@@ -1107,9 +1107,9 @@ class Tween:
 class TweenManager:
     """Manages all active tweens"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.tweens: List[Tween] = []
-        self.time_scale = 1.0
+        self.time_scale: float = 1.0
     
     def create(self, target: Any, properties: Dict[str, float], 
               duration: float, easing: EasingType = EasingType.EASE_OUT_QUAD,
@@ -1130,7 +1130,7 @@ class TweenManager:
         self.tweens.append(tween)
         return tween
     
-    def update(self, dt: float):
+    def update(self, dt: float) -> None:
         """Update all active tweens"""
         dt *= self.time_scale
         
@@ -1189,30 +1189,30 @@ class TweenManager:
         
         return True
     
-    def remove(self, tween: Tween):
+    def remove(self, tween: Tween) -> None:
         """Remove a specific tween"""
         if tween in self.tweens:
             self.tweens.remove(tween)
     
-    def remove_all(self):
+    def remove_all(self) -> None:
         """Remove all tweens"""
         self.tweens.clear()
     
-    def pause_all(self):
+    def pause_all(self) -> None:
         """Pause all tweens"""
         self.time_scale = 0
     
-    def resume_all(self):
+    def resume_all(self) -> None:
         """Resume all tweens"""
         self.time_scale = 1
 
 class JuiceEffects:
     """Collection of juicy animation effects"""
     
-    def __init__(self, tween_manager: TweenManager):
-        self.tween_manager = tween_manager
+    def __init__(self, tween_manager: TweenManager) -> None:
+        self.tween_manager: TweenManager = tween_manager
     
-    def bounce_scale(self, target: Any, scale: float = 1.2, duration: float = 300):
+    def bounce_scale(self, target: Any, scale: float = 1.2, duration: float = 300) -> None:
         """Bouncy scale effect"""
         original_scale = getattr(target, 'scale', 1.0)
         
@@ -1229,7 +1229,7 @@ class JuiceEffects:
             EasingType.EASE_OUT_ELASTIC
         )
     
-    def shake(self, target: Any, intensity: float = 10, duration: float = 500):
+    def shake(self, target: Any, intensity: float = 10, duration: float = 500) -> None:
         """Shake effect"""
         original_x = target.x
         shake_count = 10
@@ -1254,7 +1254,7 @@ class JuiceEffects:
         
         create_shake(0)
     
-    def pulse(self, target: Any, scale: float = 1.1, duration: float = 1000):
+    def pulse(self, target: Any, scale: float = 1.1, duration: float = 1000) -> None:
         """Continuous pulse effect"""
         self.tween_manager.create(
             target,
@@ -1265,7 +1265,7 @@ class JuiceEffects:
             repeat=-1  # Infinite repeat
         )
     
-    def squash_and_stretch(self, target: Any, squash: float = 0.8, stretch: float = 1.2):
+    def squash_and_stretch(self, target: Any, squash: float = 0.8, stretch: float = 1.2) -> None:
         """Squash and stretch animation"""
         # Anticipation (squash)
         self.tween_manager.create(
@@ -1285,7 +1285,7 @@ class JuiceEffects:
             EasingType.EASE_OUT_ELASTIC
         )
     
-    def collect_animation(self, target: Any, destination: tuple, on_complete: Callable = None):
+    def collect_animation(self, target: Any, destination: tuple, on_complete: Optional[Callable] = None) -> None:
         """Item collection animation with spiral"""
         import random
         

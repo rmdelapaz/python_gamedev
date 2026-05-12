@@ -1118,26 +1118,26 @@ class TestMetrics:
 class PlaytestManager:
     """Comprehensive playtesting system"""
     
-    def __init__(self):
-        self.session_id = None
-        self.test_type = TestType.USABILITY
+    def __init__(self) -> None:
+        self.session_id: Optional[str] = None
+        self.test_type: TestType = TestType.USABILITY
         self.testers: List[TesterProfile] = []
         self.events: List[TestEvent] = []
-        self.start_time = None
-        self.metrics = TestMetrics(0, 0, 0, 0, 0, 0)
+        self.start_time: Optional[float] = None
+        self.metrics: TestMetrics = TestMetrics(0, 0, 0, 0, 0, 0)
         
         # Data collection
-        self.heatmap_data = {}
-        self.path_data = {}
-        self.input_sequences = []
-        self.feedback_responses = []
+        self.heatmap_data: Dict[str, int] = {}
+        self.path_data: Dict[str, List[Tuple[float, float, float]]] = {}
+        self.input_sequences: List[Dict[str, Any]] = []
+        self.feedback_responses: List[Dict[str, Any]] = []
         
         # Analytics
-        self.funnel_analysis = {}
-        self.retention_data = {}
-        self.engagement_metrics = {}
+        self.funnel_analysis: Dict = {}
+        self.retention_data: Dict = {}
+        self.engagement_metrics: Dict = {}
         
-    def start_session(self, test_type: TestType, testers: List[TesterProfile]):
+    def start_session(self, test_type: TestType, testers: List[TesterProfile]) -> None:
         """Start a new playtest session"""
         self.session_id = f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         self.test_type = test_type
@@ -1153,7 +1153,7 @@ class PlaytestManager:
             "tester_count": len(testers)
         })
     
-    def log_event(self, event_type: str, tester_id: str, data: Dict[str, Any]):
+    def log_event(self, event_type: str, tester_id: str, data: Dict[str, Any]) -> None:
         """Log a test event"""
         event = TestEvent(
             timestamp=time.time() - self.start_time if self.start_time else 0,
@@ -1163,7 +1163,7 @@ class PlaytestManager:
         )
         self.events.append(event)
     
-    def track_position(self, tester_id: str, x: float, y: float):
+    def track_position(self, tester_id: str, x: float, y: float) -> None:
         """Track tester position for heatmap"""
         grid_x = int(x / 20) * 20
         grid_y = int(y / 20) * 20
@@ -1178,7 +1178,7 @@ class PlaytestManager:
             self.path_data[tester_id] = []
         self.path_data[tester_id].append((x, y, time.time()))
     
-    def track_input(self, tester_id: str, input_type: str, data: Dict[str, Any]):
+    def track_input(self, tester_id: str, input_type: str, data: Dict[str, Any]) -> None:
         """Track user input"""
         self.input_sequences.append({
             'tester_id': tester_id,
@@ -1189,7 +1189,7 @@ class PlaytestManager:
         
         self.log_event(f"input_{input_type}", tester_id, data)
     
-    def collect_feedback(self, tester_id: str, feedback_type: str, response: Any):
+    def collect_feedback(self, tester_id: str, feedback_type: str, response: Any) -> None:
         """Collect tester feedback"""
         self.feedback_responses.append({
             'tester_id': tester_id,
@@ -1243,7 +1243,7 @@ class PlaytestManager:
         
         return self.metrics
     
-    def analyze_funnel(self, stages: List[str]):
+    def analyze_funnel(self, stages: List[str]) -> Dict:
         """Analyze conversion funnel"""
         funnel = {}
         
@@ -1361,10 +1361,10 @@ class PlaytestManager:
 class SurveyBuilder:
     """Build and manage playtest surveys"""
     
-    def __init__(self):
-        self.questions = []
+    def __init__(self) -> None:
+        self.questions: List[Dict[str, Any]] = []
     
-    def add_likert_scale(self, question: str, scale: int = 5):
+    def add_likert_scale(self, question: str, scale: int = 5) -> None:
         """Add Likert scale question"""
         self.questions.append({
             'type': 'likert',
@@ -1373,7 +1373,7 @@ class SurveyBuilder:
             'options': list(range(1, scale + 1))
         })
     
-    def add_multiple_choice(self, question: str, options: List[str]):
+    def add_multiple_choice(self, question: str, options: List[str]) -> None:
         """Add multiple choice question"""
         self.questions.append({
             'type': 'multiple_choice',
@@ -1381,14 +1381,14 @@ class SurveyBuilder:
             'options': options
         })
     
-    def add_open_ended(self, question: str):
+    def add_open_ended(self, question: str) -> None:
         """Add open-ended question"""
         self.questions.append({
             'type': 'open_ended',
             'question': question
         })
     
-    def add_sus_scale(self):
+    def add_sus_scale(self) -> None:
         """Add System Usability Scale questions"""
         sus_questions = [
             "I think that I would like to use this game frequently",
@@ -1423,10 +1423,10 @@ class SurveyBuilder:
 class ABTestAnalyzer:
     """Analyze A/B test results"""
     
-    def __init__(self):
-        self.variants = {}
+    def __init__(self) -> None:
+        self.variants: Dict[str, List[float]] = {}
         
-    def add_variant(self, name: str, data: List[float]):
+    def add_variant(self, name: str, data: List[float]) -> None:
         """Add variant data"""
         self.variants[name] = data
     

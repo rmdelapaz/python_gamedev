@@ -999,7 +999,7 @@ class Sound:
 class SoundManager:
     """Comprehensive sound management system"""
     
-    def __init__(self, channels: int = 32):
+    def __init__(self, channels: int = 32) -> None:
         pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=512)
         pygame.mixer.set_num_channels(channels)
         
@@ -1032,7 +1032,7 @@ class SoundManager:
         self.music_state = "explore"
         self.music_transition_time = 2.0
         
-    def load_sound(self, name: str, filepath: str, layer: SoundLayer = SoundLayer.SFX):
+    def load_sound(self, name: str, filepath: str, layer: SoundLayer = SoundLayer.SFX) -> bool:
         """Load a sound file"""
         try:
             sound = pygame.mixer.Sound(filepath)
@@ -1042,7 +1042,7 @@ class SoundManager:
             print(f"Failed to load sound: {filepath}")
             return False
     
-    def load_music(self, name: str, filepath: str):
+    def load_music(self, name: str, filepath: str) -> None:
         """Load a music track"""
         self.music_tracks[name] = filepath
     
@@ -1092,7 +1092,7 @@ class SoundManager:
         
         return volume, pan
     
-    def play_music(self, name: str, fade_in: float = 0):
+    def play_music(self, name: str, fade_in: float = 0) -> None:
         """Play background music"""
         if name in self.music_tracks:
             pygame.mixer.music.load(self.music_tracks[name])
@@ -1105,7 +1105,7 @@ class SoundManager:
             
             self.current_music = name
     
-    def stop_music(self, fade_out: float = 0):
+    def stop_music(self, fade_out: float = 0) -> None:
         """Stop background music"""
         if fade_out > 0:
             pygame.mixer.music.fadeout(int(fade_out * 1000))
@@ -1114,7 +1114,7 @@ class SoundManager:
         
         self.current_music = None
     
-    def set_music_state(self, state: str, transition_time: float = 2.0):
+    def set_music_state(self, state: str, transition_time: float = 2.0) -> None:
         """Transition to new music state"""
         self.music_state = state
         self.music_transition_time = transition_time
@@ -1125,7 +1125,7 @@ class SoundManager:
             pygame.time.wait(int(transition_time * 500))
             self.play_music(state, transition_time / 2)
     
-    def update(self, dt: float):
+    def update(self, dt: float) -> None:
         """Update sound system"""
         # Clean up finished sounds
         self.active_sounds = [s for s in self.active_sounds 
@@ -1140,11 +1140,11 @@ class SoundManager:
                     volume * sound.volume * self.volumes[sound.layer] * self.master_volume * (1 + abs(pan))
                 )
     
-    def set_listener_position(self, x: float, y: float):
+    def set_listener_position(self, x: float, y: float) -> None:
         """Update listener position for spatial audio"""
         self.listener_pos = (x, y)
     
-    def set_layer_volume(self, layer: SoundLayer, volume: float):
+    def set_layer_volume(self, layer: SoundLayer, volume: float) -> None:
         """Set volume for specific layer"""
         self.volumes[layer] = max(0, min(1, volume))
         
@@ -1152,7 +1152,7 @@ class SoundManager:
         if layer == SoundLayer.MUSIC and self.current_music:
             pygame.mixer.music.set_volume(self.volumes[SoundLayer.MUSIC] * self.master_volume)
     
-    def set_master_volume(self, volume: float):
+    def set_master_volume(self, volume: float) -> None:
         """Set master volume"""
         self.master_volume = max(0, min(1, volume))
         
@@ -1160,7 +1160,7 @@ class SoundManager:
         for sound in self.active_sounds:
             self.update_sound_volume(sound)
     
-    def update_sound_volume(self, sound: Sound):
+    def update_sound_volume(self, sound: Sound) -> None:
         """Update individual sound volume"""
         if sound.position:
             volume, pan = self.calculate_spatial_audio(sound.position)
@@ -1175,14 +1175,14 @@ class SoundManager:
 class DynamicMusicSystem:
     """Adaptive music system with layers"""
     
-    def __init__(self, sound_manager: SoundManager):
+    def __init__(self, sound_manager: SoundManager) -> None:
         self.sound_manager = sound_manager
         self.layers = {}
         self.current_layers = []
         self.intensity = 0.5
         
     def add_layer(self, name: str, filepath: str, 
-                 min_intensity: float = 0, max_intensity: float = 1):
+                 min_intensity: float = 0, max_intensity: float = 1) -> None:
         """Add a music layer"""
         self.layers[name] = {
             'filepath': filepath,
@@ -1192,7 +1192,7 @@ class DynamicMusicSystem:
             'volume': 0
         }
     
-    def update_intensity(self, intensity: float):
+    def update_intensity(self, intensity: float) -> None:
         """Update music intensity (0-1)"""
         self.intensity = max(0, min(1, intensity))
         

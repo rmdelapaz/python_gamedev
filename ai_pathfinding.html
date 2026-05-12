@@ -1156,25 +1156,25 @@ class Node:
     f: float = 0  # Total cost (g + h)
     parent: Optional['Node'] = None
     
-    def __lt__(self, other):
+    def __lt__(self, other: 'Node') -> bool:
         return self.f < other.f
     
-    def __eq__(self, other):
+    def __eq__(self, other: 'Node') -> bool:
         return self.x == other.x and self.y == other.y
     
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self.x, self.y))
 
 class AStar:
     """A* pathfinding algorithm"""
-    def __init__(self, grid: List[List[int]], diagonal: bool = True):
-        self.grid = grid
-        self.height = len(grid)
-        self.width = len(grid[0]) if grid else 0
-        self.diagonal = diagonal
+    def __init__(self, grid: List[List[int]], diagonal: bool = True) -> None:
+        self.grid: List[List[int]] = grid
+        self.height: int = len(grid)
+        self.width: int = len(grid[0]) if grid else 0
+        self.diagonal: bool = diagonal
         
         # Cost for different terrain types
-        self.terrain_cost = {
+        self.terrain_cost: Dict[int, float] = {
             0: 1,      # Empty
             1: float('inf'),  # Wall
             2: 3,      # Forest (higher cost)

@@ -73,7 +73,7 @@
     <pre class="language-python"><code>import numpy as np
 import random
 from noise import pnoise2, snoise2
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Optional
 from dataclasses import dataclass
 from enum import Enum
 
@@ -103,12 +103,12 @@ class TerrainConfig:
 class TerrainGenerator:
     """Generates procedural terrain using Perlin noise"""
     
-    def __init__(self, config: TerrainConfig):
-        self.config = config
-        self.height_map = None
-        self.moisture_map = None
-        self.temperature_map = None
-        self.biome_map = None
+    def __init__(self, config: TerrainConfig) -> None:
+        self.config: TerrainConfig = config
+        self.height_map: Optional[np.ndarray] = None
+        self.moisture_map: Optional[np.ndarray] = None
+        self.temperature_map: Optional[np.ndarray] = None
+        self.biome_map: Optional[np.ndarray] = None
         
         # Set random seed
         random.seed(config.seed)
@@ -219,13 +219,13 @@ class TerrainGenerator:
 class DungeonGenerator:
     """Generates procedural dungeons using BSP"""
     
-    def __init__(self, width: int, height: int, min_room_size: int = 6):
-        self.width = width
-        self.height = height
-        self.min_room_size = min_room_size
-        self.rooms = []
-        self.corridors = []
-        self.dungeon_map = None
+    def __init__(self, width: int, height: int, min_room_size: int = 6) -> None:
+        self.width: int = width
+        self.height: int = height
+        self.min_room_size: int = min_room_size
+        self.rooms: List = []
+        self.corridors: List = []
+        self.dungeon_map: Optional[np.ndarray] = None
     
     def generate(self) -> np.ndarray:
         """Generate dungeon layout"""
@@ -260,11 +260,11 @@ class DungeonGenerator:
     <pre class="language-python"><code>class CaveGenerator:
     """Generates caves using cellular automata"""
     
-    def __init__(self, width: int, height: int, fill_prob: float = 0.45):
-        self.width = width
-        self.height = height
-        self.fill_prob = fill_prob
-        self.cave_map = None
+    def __init__(self, width: int, height: int, fill_prob: float = 0.45) -> None:
+        self.width: int = width
+        self.height: int = height
+        self.fill_prob: float = fill_prob
+        self.cave_map: Optional[np.ndarray] = None
     
     def generate(self, iterations: int = 5) -> np.ndarray:
         """Generate cave system"""
@@ -281,7 +281,7 @@ class DungeonGenerator:
         
         return self.cave_map
     
-    def apply_rules(self):
+    def apply_rules(self) -> None:
         """Apply cellular automata rules"""
         new_map = np.zeros_like(self.cave_map)
         
@@ -323,9 +323,9 @@ class DungeonGenerator:
 class WaveFunctionCollapse:
     """Generate content based on pattern constraints"""
     
-    def __init__(self, tile_rules: Dict):
-        self.tile_rules = tile_rules
-        self.wave = None
+    def __init__(self, tile_rules: Dict) -> None:
+        self.tile_rules: Dict = tile_rules
+        self.wave: Optional[List] = None
         
     def generate(self, width: int, height: int) -> np.ndarray:
         """Generate tilemap using WFC"""
@@ -349,9 +349,9 @@ class WaveFunctionCollapse:
 class LSystem:
     """Generate plants using L-Systems"""
     
-    def __init__(self, axiom: str, rules: Dict[str, str]):
-        self.axiom = axiom
-        self.rules = rules
+    def __init__(self, axiom: str, rules: Dict[str, str]) -> None:
+        self.axiom: str = axiom
+        self.rules: Dict[str, str] = rules
     
     def generate(self, iterations: int) -> str:
         """Generate L-System string"""

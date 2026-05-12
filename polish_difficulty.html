@@ -1118,28 +1118,28 @@ class PlayerMetrics:
 class DifficultyManager:
     """Comprehensive difficulty management system"""
     
-    def __init__(self, base_difficulty: float = 5.0):
-        self.base_difficulty = base_difficulty
-        self.current_difficulty = base_difficulty
-        self.mode = DifficultyMode.STATIC
+    def __init__(self, base_difficulty: float = 5.0) -> None:
+        self.base_difficulty: float = base_difficulty
+        self.current_difficulty: float = base_difficulty
+        self.mode: DifficultyMode = DifficultyMode.STATIC
         
         # Player metrics
-        self.metrics = PlayerMetrics()
-        self.performance_history = []
-        self.max_history = 100
+        self.metrics: PlayerMetrics = PlayerMetrics()
+        self.performance_history: List[float] = []
+        self.max_history: int = 100
         
         # Flow state
-        self.flow_state = FlowState.FLOW
-        self.player_skill = 50  # 0-100
-        self.challenge_level = 50  # 0-100
+        self.flow_state: FlowState = FlowState.FLOW
+        self.player_skill: float = 50  # 0-100
+        self.challenge_level: float = 50  # 0-100
         
         # Dynamic difficulty adjustment
-        self.dda_enabled = False
-        self.dda_rate = 0.1
-        self.target_success_rate = 0.65
+        self.dda_enabled: bool = False
+        self.dda_rate: float = 0.1
+        self.target_success_rate: float = 0.65
         
         # Difficulty parameters
-        self.parameters = {
+        self.parameters: Dict[str, float] = {
             'enemy_speed': 1.0,
             'enemy_health': 1.0,
             'enemy_damage': 1.0,
@@ -1149,7 +1149,7 @@ class DifficultyManager:
             'puzzle_complexity': 1.0
         }
     
-    def update(self, dt: float):
+    def update(self, dt: float) -> None:
         """Update difficulty based on current mode"""
         self.metrics.time_played += dt
         
@@ -1208,7 +1208,7 @@ class DifficultyManager:
         
         return min(100, max(0, performance))
     
-    def update_dynamic_difficulty(self, performance: float):
+    def update_dynamic_difficulty(self, performance: float) -> None:
         """Dynamic Difficulty Adjustment (DDA)"""
         # Calculate performance error
         target_performance = self.target_success_rate * 100
@@ -1221,7 +1221,7 @@ class DifficultyManager:
         # Clamp difficulty
         self.current_difficulty = max(1, min(10, self.current_difficulty))
     
-    def update_adaptive_difficulty(self):
+    def update_adaptive_difficulty(self) -> None:
         """Machine learning-based adaptive difficulty"""
         if len(self.performance_history) < 10:
             return
@@ -1244,7 +1244,7 @@ class DifficultyManager:
         self.current_difficulty += adjustment
         self.current_difficulty = max(1, min(10, self.current_difficulty))
     
-    def update_flow_based_difficulty(self):
+    def update_flow_based_difficulty(self) -> None:
         """Maintain flow state"""
         # Update skill estimation
         performance = self.calculate_performance()
@@ -1275,7 +1275,7 @@ class DifficultyManager:
         
         self.current_difficulty = max(1, min(10, self.current_difficulty))
     
-    def update_rubber_band_difficulty(self):
+    def update_rubber_band_difficulty(self) -> None:
         """Keep difficulty close to baseline"""
         # Pull toward base difficulty
         difference = self.current_difficulty - self.base_difficulty
@@ -1284,7 +1284,7 @@ class DifficultyManager:
         if abs(difference) > 1:
             self.current_difficulty -= difference * pull_strength
     
-    def update_parameters(self):
+    def update_parameters(self) -> None:
         """Update game parameters based on difficulty"""
         multiplier = self.current_difficulty / 5  # 5 is "normal"
         
@@ -1312,7 +1312,7 @@ class DifficultyManager:
         else:
             return "Master"
     
-    def apply_assists(self, assists: Dict[str, bool]):
+    def apply_assists(self, assists: Dict[str, bool]) -> None:
         """Apply accessibility assists"""
         if assists.get('aim_assist'):
             self.parameters['aim_assist'] = 0.3

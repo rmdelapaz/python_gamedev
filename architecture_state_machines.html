@@ -615,44 +615,44 @@ class GameState(Enum):
 
 class State:
     """Base class for game states"""
-    def __init__(self, state_manager):
-        self.state_manager = state_manager
+    def __init__(self, state_manager: 'StateManager') -> None:
+        self.state_manager: 'StateManager' = state_manager
         self.game = state_manager.game
         
-    def enter(self):
+    def enter(self) -> None:
         """Called when entering this state"""
         pass
     
-    def exit(self):
+    def exit(self) -> None:
         """Called when leaving this state"""
         pass
     
-    def update(self, dt):
+    def update(self, dt: float) -> None:
         """Update state logic"""
         pass
     
-    def draw(self, screen):
+    def draw(self, screen: pygame.Surface) -> None:
         """Draw state visuals"""
         pass
     
-    def handle_event(self, event):
+    def handle_event(self, event: pygame.event.Event) -> None:
         """Handle input events"""
         pass
 
 class StateManager:
     """Manages game states and transitions"""
-    def __init__(self, game):
+    def __init__(self, game) -> None:
         self.game = game
-        self.states = {}
-        self.current_state = None
-        self.previous_state = None
-        self.state_stack = []
+        self.states: dict[GameState, 'State'] = {}
+        self.current_state: 'State | None' = None
+        self.previous_state: 'State | None' = None
+        self.state_stack: list['State'] = []
         
-    def register_state(self, state_enum, state_class):
+    def register_state(self, state_enum: GameState, state_class) -> None:
         """Register a state with the manager"""
         self.states[state_enum] = state_class(self)
     
-    def change_state(self, new_state_enum):
+    def change_state(self, new_state_enum: GameState) -> None:
         """Change to a new state"""
         if self.current_state:
             self.current_state.exit()

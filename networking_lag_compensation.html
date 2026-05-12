@@ -910,13 +910,13 @@ class HitEvent:
 
 class LagCompensationSystem:
     """Server-side lag compensation system"""
-    def __init__(self, max_rewind_time: float = 0.2):
-        self.max_rewind_time = max_rewind_time  # 200ms max
-        self.state_history = collections.deque(maxlen=60)  # 1 second at 60Hz
-        self.players = {}
-        self.current_tick = 0
+    def __init__(self, max_rewind_time: float = 0.2) -> None:
+        self.max_rewind_time: float = max_rewind_time  # 200ms max
+        self.state_history: collections.deque = collections.deque(maxlen=60)  # 1 second at 60Hz
+        self.players: Dict = {}
+        self.current_tick: int = 0
         
-    def record_state(self, game_state: Dict):
+    def record_state(self, game_state: Dict) -> None:
         """Record current game state for history"""
         snapshot = {
             'tick': self.current_tick,
@@ -1051,10 +1051,10 @@ class LagCompensationSystem:
 class HitRegistration:
     """Advanced hit registration system"""
     
-    def __init__(self):
-        self.favor_mode = 'shooter'  # 'shooter', 'victim', 'balanced'
-        self.hit_buffer = []
-        self.confirmation_window = 0.05  # 50ms to confirm hits
+    def __init__(self) -> None:
+        self.favor_mode: str = 'shooter'  # 'shooter', 'victim', 'balanced'
+        self.hit_buffer: List = []
+        self.confirmation_window: float = 0.05  # 50ms to confirm hits
         
     def register_hit(self, shooter_data: Dict, target_data: Dict, 
                      shot_info: Dict) -> Dict:
@@ -1160,9 +1160,9 @@ class HitRegistration:
 class ProjectileCompensation:
     """Handle lag compensation for projectile weapons"""
     
-    def __init__(self):
-        self.active_projectiles = {}
-        self.projectile_history = collections.deque(maxlen=120)
+    def __init__(self) -> None:
+        self.active_projectiles: Dict = {}
+        self.projectile_history: collections.deque = collections.deque(maxlen=120)
         
     def fire_projectile(self, shooter_id: str, origin: Tuple[float, float],
                         direction: Tuple[float, float], speed: float,
@@ -1204,7 +1204,7 @@ class ProjectileCompensation:
             origin[1] + direction[1] * distance
         )
     
-    def update_projectiles(self, dt: float):
+    def update_projectiles(self, dt: float) -> None:
         """Update all active projectiles"""
         for proj_id, proj in list(self.active_projectiles.items()):
             # Update position

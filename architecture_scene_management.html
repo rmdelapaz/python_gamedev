@@ -826,82 +826,82 @@ class SceneTransition(Enum):
 
 class Scene:
     """Base class for game scenes"""
-    def __init__(self, scene_manager, name: str):
-        self.scene_manager = scene_manager
-        self.name = name
-        self.loaded = False
+    def __init__(self, scene_manager: 'SceneManager', name: str) -> None:
+        self.scene_manager: 'SceneManager' = scene_manager
+        self.name: str = name
+        self.loaded: bool = False
         self.resources = {}
         self.game_objects = []
         self.camera = None
         
-    def load_resources(self):
+    def load_resources(self) -> None:
         """Load scene-specific resources"""
         pass
     
-    def unload_resources(self):
+    def unload_resources(self) -> None:
         """Unload resources to free memory"""
         for resource in self.resources.values():
             if hasattr(resource, 'unload'):
                 resource.unload()
         self.resources.clear()
     
-    def on_enter(self):
+    def on_enter(self) -> None:
         """Called when scene becomes active"""
         if not self.loaded:
             self.load_resources()
             self.loaded = True
     
-    def on_exit(self):
+    def on_exit(self) -> None:
         """Called when leaving the scene"""
         pass
     
-    def on_pause(self):
+    def on_pause(self) -> None:
         """Called when scene is paused"""
         pass
     
-    def on_resume(self):
+    def on_resume(self) -> None:
         """Called when scene is resumed"""
         pass
     
-    def update(self, dt: float):
+    def update(self, dt: float) -> None:
         """Update scene logic"""
         for obj in self.game_objects:
             obj.update(dt)
     
-    def draw(self, screen):
+    def draw(self, screen: pygame.Surface) -> None:
         """Draw the scene"""
         for obj in self.game_objects:
             obj.draw(screen)
     
-    def handle_event(self, event):
+    def handle_event(self, event: pygame.event.Event) -> None:
         """Handle input events"""
         pass
 
 class SceneManager:
     """Manages scenes and transitions between them"""
-    def __init__(self, screen):
-        self.screen = screen
+    def __init__(self, screen: pygame.Surface) -> None:
+        self.screen: pygame.Surface = screen
         self.scenes: Dict[str, Scene] = {}
         self.current_scene: Optional[Scene] = None
         self.next_scene: Optional[Scene] = None
         self.scene_stack: List[Scene] = []
         
         # Transition system
-        self.transition_active = False
-        self.transition_type = SceneTransition.FADE
-        self.transition_duration = 0.5
-        self.transition_progress = 0.0
-        self.transition_surface = None
+        self.transition_active: bool = False
+        self.transition_type: SceneTransition = SceneTransition.FADE
+        self.transition_duration: float = 0.5
+        self.transition_progress: float = 0.0
+        self.transition_surface: Optional[pygame.Surface] = None
         
         # Resource management
-        self.resource_cache = {}
+        self.resource_cache: dict = {}
         self.loading_thread = None
         
-    def register_scene(self, name: str, scene: Scene):
+    def register_scene(self, name: str, scene: Scene) -> None:
         """Register a new scene"""
         self.scenes[name] = scene
     
-    def change_scene(self, scene_name: str, transition: SceneTransition = SceneTransition.FADE):
+    def change_scene(self, scene_name: str, transition: SceneTransition = SceneTransition.FADE) -> None:
         """Change to a different scene"""
         if scene_name not in self.scenes:
             print(f"Scene '{scene_name}' not found!")
@@ -911,7 +911,7 @@ class SceneManager:
         self.transition_type = transition
         self.start_transition()
     
-    def push_scene(self, scene_name: str):
+    def push_scene(self, scene_name: str) -> None:
         """Push a scene onto the stack (for overlays)"""
         if self.current_scene:
             self.current_scene.on_pause()
@@ -921,7 +921,7 @@ class SceneManager:
             self.current_scene = self.scenes[scene_name]
             self.current_scene.on_enter()
     
-    def pop_scene(self):
+    def pop_scene(self) -> None:
         """Pop the top scene from the stack"""
         if self.scene_stack:
             if self.current_scene:
@@ -930,7 +930,7 @@ class SceneManager:
             self.current_scene = self.scene_stack.pop()
             self.current_scene.on_resume()
     
-    def start_transition(self):
+    def start_transition(self) -> None:
         """Start a scene transition"""
         self.transition_active = True
         self.transition_progress = 0.0
@@ -939,7 +939,7 @@ class SceneManager:
         self.transition_surface = pygame.Surface(self.screen.get_size())
         self.transition_surface.set_alpha(0)
     
-    def update_transition(self, dt: float):
+    def update_transition(self, dt: float) -> None:
         """Update the transition effect"""
         if not self.transition_active:
             return
@@ -959,7 +959,7 @@ class SceneManager:
             self.transition_active = False
             self.transition_progress = 1.0
     
-    def draw_transition(self):
+    def draw_transition(self) -> None:
         """Draw the transition effect"""
         if not self.transition_active:
             return
@@ -975,7 +975,7 @@ class SceneManager:
         elif self.transition_type == SceneTransition.ZOOM:
             self.draw_zoom_transition()
     
-    def draw_fade_transition(self):
+    def draw_fade_transition(self) -> None:
         """Draw fade transition"""
         # Calculate alpha based on progress
         if self.transition_progress < 0.5:
@@ -987,7 +987,7 @@ class SceneManager:
         self.transition_surface.set_alpha(alpha)
         self.screen.blit(self.transition_surface, (0, 0))
     
-    def draw_slide_transition(self, direction: int):
+    def draw_slide_transition(self, direction: int) -> None:
         """Draw slide transition"""
         width = self.screen.get_width()
         offset = int(width * self.transition_progress * direction)
@@ -998,21 +998,21 @@ class SceneManager:
             self.current_scene.draw(temp_surface)
             self.screen.blit(temp_surface, (offset, 0))
     
-    def update(self, dt: float):
+    def update(self, dt: float) -> None:
         """Update current scene and transitions"""
         self.update_transition(dt)
         
         if self.current_scene and not self.transition_active:
             self.current_scene.update(dt)
     
-    def draw(self):
+    def draw(self) -> None:
         """Draw current scene and transitions"""
         if self.current_scene:
             self.current_scene.draw(self.screen)
         
         self.draw_transition()
     
-    def handle_event(self, event):
+    def handle_event(self, event: pygame.event.Event) -> None:
         """Pass events to current scene"""
         if self.current_scene and not self.transition_active:
             self.current_scene.handle_event(event)</code></pre>
@@ -1022,14 +1022,14 @@ class SceneManager:
     <pre class="language-python"><code># Resource management for scenes
 class ResourceManager:
     """Manages loading and caching of game resources"""
-    def __init__(self):
-        self.textures = {}
-        self.sounds = {}
-        self.fonts = {}
-        self.data = {}
-        self.loading_queue = []
-        self.cache_size_limit = 100 * 1024 * 1024  # 100MB limit
-        self.current_cache_size = 0
+    def __init__(self) -> None:
+        self.textures: Dict[str, pygame.Surface] = {}
+        self.sounds: Dict[str, pygame.mixer.Sound] = {}
+        self.fonts: Dict[str, pygame.font.Font] = {}
+        self.data: Dict[str, dict] = {}
+        self.loading_queue: list = []
+        self.cache_size_limit: int = 100 * 1024 * 1024  # 100MB limit
+        self.current_cache_size: int = 0
         
     def load_texture(self, path: str, name: str = None) -> pygame.Surface:
         """Load and cache a texture"""
@@ -1097,14 +1097,14 @@ class ResourceManager:
             print(f"Failed to load JSON '{path}': {e}")
             return None
     
-    def unload_texture(self, name: str):
+    def unload_texture(self, name: str) -> None:
         """Unload a texture from cache"""
         if name in self.textures:
             texture = self.textures[name]
             self.current_cache_size -= self.get_surface_size(texture)
             del self.textures[name]
     
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """Clear all cached resources"""
         self.textures.clear()
         self.sounds.clear()
@@ -1118,7 +1118,7 @@ class ResourceManager:
         # Assuming 4 bytes per pixel (RGBA)
         return width * height * 4
     
-    def check_cache_limit(self):
+    def check_cache_limit(self) -> None:
         """Check if cache exceeds limit and clean if necessary"""
         if self.current_cache_size > self.cache_size_limit:
             # Simple LRU-style cleanup (would need usage tracking in production)
@@ -1127,13 +1127,13 @@ class ResourceManager:
 # Async scene loading
 class AsyncSceneLoader:
     """Handles asynchronous scene loading"""
-    def __init__(self, resource_manager: ResourceManager):
-        self.resource_manager = resource_manager
-        self.loading_progress = 0.0
-        self.loading_message = ""
-        self.is_loading = False
+    def __init__(self, resource_manager: ResourceManager) -> None:
+        self.resource_manager: ResourceManager = resource_manager
+        self.loading_progress: float = 0.0
+        self.loading_message: str = ""
+        self.is_loading: bool = False
         
-    async def load_scene_resources(self, resource_list: List[dict]):
+    async def load_scene_resources(self, resource_list: List[dict]) -> None:
         """Load scene resources asynchronously"""
         self.is_loading = True
         total_resources = len(resource_list)
@@ -1156,16 +1156,16 @@ class AsyncSceneLoader:
         self.loading_progress = 1.0
         self.is_loading = False
     
-    async def load_texture_async(self, path: str, name: str):
+    async def load_texture_async(self, path: str, name: str) -> None:
         """Load texture asynchronously"""
         # In practice, you'd use threading for file I/O
         self.resource_manager.load_texture(path, name)
     
-    async def load_sound_async(self, path: str, name: str):
+    async def load_sound_async(self, path: str, name: str) -> None:
         """Load sound asynchronously"""
         self.resource_manager.load_sound(path, name)
     
-    async def load_data_async(self, path: str, name: str):
+    async def load_data_async(self, path: str, name: str) -> None:
         """Load data asynchronously"""
         self.resource_manager.load_json(path, name)</code></pre>
 

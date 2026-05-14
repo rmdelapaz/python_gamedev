@@ -120,7 +120,7 @@ import time
 import random
 import string
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 class PlayerState(Enum):
     LOBBY = "lobby"
@@ -135,7 +135,7 @@ class RoomState(Enum):
     FINISHED = "finished"
 
 class Player:
-    def __init__(self, socket, address, player_id):
+    def __init__(self, socket: socket.socket, address: Tuple[str, int], player_id: int) -> None:
         self.socket = socket
         self.address = address
         self.id = player_id
@@ -151,7 +151,7 @@ class Player:
             'rating': 1000
         }
     
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         return {
             'id': self.id,
             'name': self.name,
@@ -162,7 +162,7 @@ class Player:
         }
 
 class GameRoom:
-    def __init__(self, room_id, host_id, settings=None):
+    def __init__(self, room_id: str, host_id: int, settings: Optional[Dict[str, Any]] = None) -> None:
         self.id = room_id
         self.host_id = host_id
         self.players = {}  # {player_id: Player}
@@ -171,7 +171,7 @@ class GameRoom:
         self.created_at = time.time()
         self.game_data = {}
         
-    def default_settings(self):
+    def default_settings(self) -> Dict[str, Any]:
         return {
             'name': f"Room {self.id}",
             'max_players': 4,
@@ -183,7 +183,7 @@ class GameRoom:
             'password': None
         }
     
-    def add_player(self, player):
+    def add_player(self, player: Player) -> bool:
         """Add player to room"""
         if len(self.players) >= self.settings['max_players']:
             return False
@@ -200,7 +200,7 @@ class GameRoom:
         
         return True
     
-    def remove_player(self, player_id):
+    def remove_player(self, player_id: int) -> bool:
         """Remove player from room"""
         if player_id in self.players:
             player = self.players[player_id]
@@ -221,14 +221,14 @@ class GameRoom:
             return True
         return False
     
-    def set_player_ready(self, player_id, ready):
+    def set_player_ready(self, player_id: int, ready: bool) -> bool:
         """Set player ready state"""
         if player_id in self.players:
             self.players[player_id].is_ready = ready
             return True
         return False
     
-    def can_start(self):
+    def can_start(self) -> bool:
         """Check if game can start"""
         if len(self.players) < self.settings['min_players']:
             return False
@@ -240,7 +240,7 @@ class GameRoom:
         
         return True
     
-    def start_game(self):
+    def start_game(self) -> None:
         """Start the game"""
         self.state = RoomState.STARTING
         for player in self.players.values():
@@ -256,10 +256,10 @@ class GameRoom:
         # After a delay, mark as in progress
         threading.Timer(3.0, self._set_in_progress).start()
     
-    def _set_in_progress(self):
+    def _set_in_progress(self) -> None:
         self.state = RoomState.IN_PROGRESS
     
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         return {
             'id': self.id,
             'host_id': self.host_id,
@@ -271,7 +271,7 @@ class GameRoom:
         }
 
 class LobbyServer:
-    def __init__(self, host='0.0.0.0', port=5555):
+    def __init__(self, host: str = '0.0.0.0', port: int = 5555) -> None:
         self.host = host
         self.port = port
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -285,7 +285,7 @@ class LobbyServer:
         # Matchmaking queue
         self.matchmaking_queue = []
         
-    def start(self):
+    def start(self) -> None:
         """Start the lobby server"""
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.bind((self.host, self.port))
@@ -328,7 +328,7 @@ class LobbyServer:
             except Exception as e:
                 print(f"Error accepting connection: {e}")
     
-    def handle_client(self, player):
+    def handle_client(self, player: Player) -> None:
         """Handle individual client messages"""
         while self.running:
             try:
@@ -352,7 +352,7 @@ class LobbyServer:
         # Clean up on disconnect
         self.remove_player(player)
     
-    def process_message(self, player, message):
+    def process_message(self, player: Player, message: Dict[str, Any]) -> None:
         """Process player message"""
         msg_type = message.get('type')
         
@@ -386,7 +386,7 @@ class LobbyServer:
         elif msg_type == 'update_room_settings':
             self.handle_update_room_settings(player, message)
     
-    def handle_set_name(self, player, message):
+    def handle_set_name(self, player: Player, message: Dict[str, Any]) -> None:
         """Handle name change"""
         name = message.get('name', '').strip()[:20]  # Max 20 chars
         if name:
@@ -400,7 +400,7 @@ class LobbyServer:
             if player.room_id:
                 self.broadcast_room_update(player.room_id)
     
-    def handle_get_rooms(self, player):
+    def handle_get_rooms(self, player: Player) -> None:
         """Send list of available rooms"""
         room_list = []
         for room in self.rooms.values():
@@ -419,7 +419,7 @@ class LobbyServer:
             'rooms': room_list
         })
     
-    def handle_create_room(self, player, message):
+    def handle_create_room(self, player: Player, message: Dict[str, Any]) -> None:
         """Handle room creation"""
         if player.room_id:
             self.send_error(player, "Already in a room")
@@ -444,7 +444,7 @@ class LobbyServer:
         
         print(f"Room {room_id} created by player {player.id}")
     
-    def handle_join_room(self, player, message):
+    def handle_join_room(self, player: Player, message: Dict[str, Any]) -> None:
         """Handle joining a room"""
         if player.room_id:
             self.send_error(player, "Already in a room")
@@ -485,7 +485,7 @@ class LobbyServer:
         else:
             self.send_error(player, "Room is full")
     
-    def handle_leave_room(self, player):
+    def handle_leave_room(self, player: Player) -> None:
         """Handle leaving a room"""
         if not player.room_id:
             self.send_error(player, "Not in a room")
@@ -517,7 +517,7 @@ class LobbyServer:
                 'type': 'room_left'
             })
     
-    def handle_set_ready(self, player, message):
+    def handle_set_ready(self, player: Player, message: Dict[str, Any]) -> None:
         """Handle ready state change"""
         if not player.room_id:
             self.send_error(player, "Not in a room")
@@ -531,7 +531,7 @@ class LobbyServer:
             # Notify all players
             self.broadcast_room_update(player.room_id)
     
-    def handle_start_game(self, player):
+    def handle_start_game(self, player: Player) -> None:
         """Handle game start request"""
         if not player.room_id or not player.is_host:
             self.send_error(player, "Not authorized to start game")
@@ -552,7 +552,7 @@ class LobbyServer:
         else:
             self.send_error(player, "Cannot start game (check player count and ready states)")
     
-    def handle_room_chat(self, player, message):
+    def handle_room_chat(self, player: Player, message: Dict[str, Any]) -> None:
         """Handle room chat message"""
         if not player.room_id:
             return
@@ -567,7 +567,7 @@ class LobbyServer:
                 'timestamp': time.time()
             })
     
-    def handle_quick_match(self, player):
+    def handle_quick_match(self, player: Player) -> None:
         """Add player to matchmaking queue"""
         if player.room_id:
             self.send_error(player, "Already in a room")
@@ -581,7 +581,7 @@ class LobbyServer:
             })
             print(f"Player {player.id} entered matchmaking")
     
-    def handle_update_room_settings(self, player, message):
+    def handle_update_room_settings(self, player: Player, message: Dict[str, Any]) -> None:
         """Update room settings (host only)"""
         if not player.room_id or not player.is_host:
             self.send_error(player, "Not authorized")
@@ -600,7 +600,7 @@ class LobbyServer:
             # Notify all players
             self.broadcast_room_update(player.room_id)
     
-    def matchmaking_loop(self):
+    def matchmaking_loop(self) -> None:
         """Background thread for matchmaking"""
         while self.running:
             time.sleep(2)  # Check every 2 seconds
@@ -640,7 +640,7 @@ class LobbyServer:
                 
                 print(f"Quick match created: Room {room_id} with {match_size} players")
     
-    def broadcast_room_update(self, room_id):
+    def broadcast_room_update(self, room_id: str) -> None:
         """Send room update to all players in room"""
         room = self.rooms.get(room_id)
         if room:
@@ -649,7 +649,7 @@ class LobbyServer:
                 'room': room.to_dict()
             })
     
-    def broadcast_to_room(self, room_id, message, exclude=None):
+    def broadcast_to_room(self, room_id: str, message: Dict[str, Any], exclude: Optional[Player] = None) -> None:
         """Broadcast message to all players in a room"""
         room = self.rooms.get(room_id)
         if room:
@@ -657,7 +657,7 @@ class LobbyServer:
                 if player != exclude:
                     self.send_to_player(player, message)
     
-    def send_to_player(self, player, message):
+    def send_to_player(self, player: Player, message: Dict[str, Any]) -> None:
         """Send message to specific player"""
         try:
             json_msg = json.dumps(message)
@@ -665,28 +665,28 @@ class LobbyServer:
         except Exception as e:
             print(f"Error sending to player {player.id}: {e}")
     
-    def send_error(self, player, error_message):
+    def send_error(self, player: Player, error_message: str) -> None:
         """Send error message to player"""
         self.send_to_player(player, {
             'type': 'error',
             'message': error_message
         })
     
-    def get_player_by_id(self, player_id):
+    def get_player_by_id(self, player_id: int) -> Optional[Player]:
         """Get player object by ID"""
         for player in self.players.values():
             if player.id == player_id:
                 return player
         return None
     
-    def generate_room_id(self):
+    def generate_room_id(self) -> str:
         """Generate unique room ID"""
         while True:
             room_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
             if room_id not in self.rooms:
                 return room_id
     
-    def remove_player(self, player):
+    def remove_player(self, player: Player) -> None:
         """Remove player from server"""
         # Leave room if in one
         if player.room_id:
@@ -708,7 +708,7 @@ class LobbyServer:
         
         print(f"Player {player.id} removed from server")
     
-    def stop(self):
+    def stop(self) -> None:
         """Stop the server"""
         self.running = False
         self.socket.close()
@@ -737,7 +737,7 @@ import json
 import time
 
 class LobbyClient:
-    def __init__(self):
+    def __init__(self) -> None:
         pygame.init()
         self.screen = pygame.display.set_mode((1024, 768))
         pygame.display.set_caption("Game Lobby")
@@ -765,7 +765,7 @@ class LobbyClient:
         
         self.setup_ui()
     
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Initialize UI elements"""
         # Main Menu buttons
         self.buttons['connect'] = pygame.Rect(400, 300, 200, 50)
@@ -794,7 +794,7 @@ class LobbyClient:
             'active': False
         }
     
-    def connect_to_server(self, host='localhost', port=5555):
+    def connect_to_server(self, host: str = 'localhost', port: int = 5555) -> bool:
         """Connect to lobby server"""
         try:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -819,7 +819,7 @@ class LobbyClient:
             print(f"Failed to connect: {e}")
             return False
     
-    def receive_loop(self):
+    def receive_loop(self) -> None:
         """Receive messages from server"""
         while self.connected:
             try:
@@ -836,7 +836,7 @@ class LobbyClient:
         
         self.disconnect()
     
-    def handle_server_message(self, message):
+    def handle_server_message(self, message: dict) -> None:
         """Process server messages"""
         msg_type = message.get('type')
         
@@ -887,7 +887,7 @@ class LobbyClient:
             print(f"Error: {message.get('message')}")
             self.chat_messages.append(f"Error: {message.get('message')}")
     
-    def send_message(self, message):
+    def send_message(self, message: dict) -> None:
         """Send message to server"""
         if self.connected and self.socket:
             try:
@@ -896,11 +896,11 @@ class LobbyClient:
             except Exception as e:
                 print(f"Send error: {e}")
     
-    def request_room_list(self):
+    def request_room_list(self) -> None:
         """Request list of rooms"""
         self.send_message({'type': 'get_rooms'})
     
-    def create_room(self):
+    def create_room(self) -> None:
         """Create a new room"""
         self.send_message({
             'type': 'create_room',
@@ -911,18 +911,18 @@ class LobbyClient:
             }
         })
     
-    def join_room(self, room_id):
+    def join_room(self, room_id: str) -> None:
         """Join a room"""
         self.send_message({
             'type': 'join_room',
             'room_id': room_id
         })
     
-    def leave_room(self):
+    def leave_room(self) -> None:
         """Leave current room"""
         self.send_message({'type': 'leave_room'})
     
-    def toggle_ready(self):
+    def toggle_ready(self) -> None:
         """Toggle ready state"""
         self.is_ready = not self.is_ready
         self.send_message({
@@ -930,16 +930,16 @@ class LobbyClient:
             'ready': self.is_ready
         })
     
-    def start_game(self):
+    def start_game(self) -> None:
         """Request game start (host only)"""
         self.send_message({'type': 'start_game'})
     
-    def quick_match(self):
+    def quick_match(self) -> None:
         """Enter quick match queue"""
         self.send_message({'type': 'quick_match'})
         self.chat_messages.append("Searching for match...")
     
-    def send_chat(self, message):
+    def send_chat(self, message: str) -> None:
         """Send chat message"""
         if message.strip():
             self.send_message({
@@ -947,14 +947,14 @@ class LobbyClient:
                 'message': message
             })
     
-    def disconnect(self):
+    def disconnect(self) -> None:
         """Disconnect from server"""
         self.connected = False
         if self.socket:
             self.socket.close()
         self.current_screen = "main_menu"
     
-    def draw_main_menu(self):
+    def draw_main_menu(self) -> None:
         """Draw main menu screen"""
         self.screen.fill((30, 30, 40))
         
@@ -970,7 +970,7 @@ class LobbyClient:
         self.draw_button('connect', "Connect to Server", (0, 150, 255))
         self.draw_button('quit', "Quit", (255, 50, 50))
     
-    def draw_lobby(self):
+    def draw_lobby(self) -> None:
         """Draw lobby screen"""
         self.screen.fill((40, 40, 50))
         
@@ -1002,7 +1002,7 @@ class LobbyClient:
             self.screen.blit(text, (50, y))
             y += 30
     
-    def draw_room(self):
+    def draw_room(self) -> None:
         """Draw room screen"""
         self.screen.fill((45, 45, 55))
         
@@ -1059,7 +1059,7 @@ class LobbyClient:
         
         self.draw_button('leave_room', "Leave Room", (200, 50, 50))
     
-    def draw_game(self):
+    def draw_game(self) -> None:
         """Draw game screen (placeholder)"""
         self.screen.fill((20, 50, 20))
         
@@ -1071,7 +1071,7 @@ class LobbyClient:
         # This is where the actual game would start
         # You would transition to your game scene here
     
-    def draw_button(self, button_id, text, color):
+    def draw_button(self, button_id: str, text: str, color: tuple) -> None:
         """Draw a button"""
         if button_id not in self.buttons:
             return
@@ -1090,7 +1090,7 @@ class LobbyClient:
         text_rect = text_surface.get_rect(center=rect.center)
         self.screen.blit(text_surface, text_rect)
     
-    def draw_input_field(self, field_id, label):
+    def draw_input_field(self, field_id: str, label: str) -> None:
         """Draw an input field"""
         if field_id not in self.input_fields:
             return
@@ -1118,7 +1118,7 @@ class LobbyClient:
                            (cursor_x, field['rect'].y + 5),
                            (cursor_x, field['rect'].y + 25), 2)
     
-    def handle_click(self, pos):
+    def handle_click(self, pos: tuple) -> bool:
         """Handle mouse click"""
         if self.current_screen == "main_menu":
             if self.buttons['connect'].collidepoint(pos):
@@ -1164,7 +1164,7 @@ class LobbyClient:
         
         return True
     
-    def handle_key(self, event):
+    def handle_key(self, event: pygame.event.Event) -> None:
         """Handle keyboard input"""
         for field_id, field in self.input_fields.items():
             if field['active']:
@@ -1178,7 +1178,7 @@ class LobbyClient:
                 else:
                     field['text'] += event.unicode
     
-    def run(self):
+    def run(self) -> None:
         """Main game loop"""
         running = True
         
@@ -1223,15 +1223,16 @@ if __name__ == "__main__":
         
         <pre><code class="language-python">
 # Additional features for room management
+from typing import Optional
 
 class RoomManager:
     """Extended room management features"""
     
-    def __init__(self):
-        self.rooms = {}
-        self.room_templates = self.load_templates()
+    def __init__(self) -> None:
+        self.rooms: dict = {}
+        self.room_templates: dict = self.load_templates()
     
-    def load_templates(self):
+    def load_templates(self) -> dict:
         """Load predefined room templates"""
         return {
             'competitive': {
@@ -1260,7 +1261,7 @@ class RoomManager:
             }
         }
     
-    def create_room_from_template(self, template_name, host_id):
+    def create_room_from_template(self, template_name: str, host_id: int) -> Optional[GameRoom]:
         """Create room using template"""
         if template_name not in self.room_templates:
             return None
@@ -1271,7 +1272,7 @@ class RoomManager:
         
         return room
     
-    def find_suitable_room(self, player, criteria):
+    def find_suitable_room(self, player: Player, criteria: dict) -> Optional[GameRoom]:
         """Find room matching criteria"""
         suitable_rooms = []
         
@@ -1296,7 +1297,7 @@ class RoomManager:
         
         return suitable_rooms[0] if suitable_rooms else None
     
-    def calculate_room_skill(self, room):
+    def calculate_room_skill(self, room: GameRoom) -> float:
         """Calculate average skill rating in room"""
         if not room.players:
             return 1000
@@ -1304,7 +1305,7 @@ class RoomManager:
         total_rating = sum(p.stats['rating'] for p in room.players.values())
         return total_rating / len(room.players)
     
-    def balance_teams(self, room):
+    def balance_teams(self, room: GameRoom) -> dict:
         """Balance teams based on skill rating"""
         players = list(room.players.values())
         players.sort(key=lambda p: p.stats['rating'], reverse=True)
@@ -1324,12 +1325,12 @@ class RoomManager:
 class SpectatorSystem:
     """Handle spectators in rooms"""
     
-    def __init__(self, room):
+    def __init__(self, room: GameRoom) -> None:
         self.room = room
-        self.spectators = {}
+        self.spectators: dict = {}
         self.max_spectators = 10
     
-    def add_spectator(self, player):
+    def add_spectator(self, player: Player) -> bool:
         """Add spectator to room"""
         if len(self.spectators) >= self.max_spectators:
             return False
@@ -1338,14 +1339,14 @@ class SpectatorSystem:
         player.state = PlayerState.SPECTATING
         return True
     
-    def remove_spectator(self, player_id):
+    def remove_spectator(self, player_id: int) -> bool:
         """Remove spectator"""
         if player_id in self.spectators:
             del self.spectators[player_id]
             return True
         return False
     
-    def broadcast_to_spectators(self, message):
+    def broadcast_to_spectators(self, message: dict) -> None:
         """Send message to all spectators"""
         for spectator in self.spectators.values():
             # Send message to spectator
@@ -1362,11 +1363,11 @@ class SpectatorSystem:
 class Matchmaker:
     """Advanced matchmaking system"""
     
-    def __init__(self):
-        self.queue = []
-        self.matches = []
+    def __init__(self) -> None:
+        self.queue: list = []
+        self.matches: list = []
         
-    def add_to_queue(self, player):
+    def add_to_queue(self, player: Player) -> None:
         """Add player to matchmaking queue"""
         self.queue.append({
             'player': player,
@@ -1374,7 +1375,7 @@ class Matchmaker:
             'search_range': 100  # Initial skill range
         })
     
-    def find_matches(self):
+    def find_matches(self) -> None:
         """Find suitable matches"""
         while len(self.queue) >= 2:
             # Sort by wait time (longest first)
@@ -1410,7 +1411,7 @@ class Matchmaker:
                 # No match found, wait
                 break
     
-    def are_compatible(self, player1, player2):
+    def are_compatible(self, player1: dict, player2: dict) -> bool:
         """Check if two players are compatible"""
         p1_rating = player1['player'].stats['rating']
         p2_rating = player2['player'].stats['rating']
@@ -1421,7 +1422,7 @@ class Matchmaker:
         
         return skill_diff <= max_diff
     
-    def create_match(self, players):
+    def create_match(self, players: list) -> dict:
         """Create a match from compatible players"""
         match = {
             'id': self.generate_match_id(),
@@ -1433,7 +1434,7 @@ class Matchmaker:
         self.matches.append(match)
         return match
     
-    def generate_match_id(self):
+    def generate_match_id(self) -> str:
         """Generate unique match ID"""
         return f"match_{int(time.time() * 1000)}"
         </code></pre>
@@ -1530,13 +1531,13 @@ class Room:
     MIN_PLAYERS = 2
     MAX_PLAYERS = 4
 
-    def __init__(self):
-        self.players = {}
+    def __init__(self) -> None:
+        self.players: dict = {}
         self.host_id = None
-        self.state = 'WAITING'
-        self.countdown = 0.0
+        self.state: str = 'WAITING'
+        self.countdown: float = 0.0
 
-    def add_player(self, p):
+    def add_player(self, p: Player) -> bool:
         if len(self.players) &gt;= self.MAX_PLAYERS:
             return False
         self.players[p.id] = p
@@ -1545,7 +1546,7 @@ class Room:
             self.host_id = p.id
         return True
 
-    def remove_player(self, pid):
+    def remove_player(self, pid: int) -> None:
         if pid not in self.players:
             return
         was_host = self.players[pid].is_host
@@ -1557,14 +1558,14 @@ class Room:
         elif not self.players:
             self.host_id = None
 
-    def toggle_ready(self, pid):
+    def toggle_ready(self, pid: int) -> None:
         p = self.players.get(pid)
         if p is None or p.is_host:
             return
         p.is_ready = not p.is_ready
         p.state = PlayerState.READY if p.is_ready else PlayerState.IN_ROOM
 
-    def can_start(self):
+    def can_start(self) -> bool:
         if len(self.players) &lt; self.MIN_PLAYERS:
             return False
         for p in self.players.values():
@@ -1572,14 +1573,14 @@ class Room:
                 return False
         return True
 
-    def start_game(self):
+    def start_game(self) -> bool:
         if not self.can_start():
             return False
         self.state = 'STARTING'
         self.countdown = 3.0
         return True
 
-    def update(self, dt):
+    def update(self, dt: float) -> None:
         if self.state == 'STARTING':
             self.countdown -= dt
             if self.countdown &lt;= 0:
@@ -1587,7 +1588,7 @@ class Room:
                 for p in self.players.values():
                     p.state = PlayerState.IN_GAME
 
-def reset(room):
+def reset(room: Room) -> None:
     room.players.clear()
     room.host_id = None
     room.state = 'WAITING'

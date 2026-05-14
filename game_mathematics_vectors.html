@@ -104,52 +104,53 @@
 
     <h2 id="basic-vector-class">Basic Vector Class</h2>
     
-    <pre class="language-python"><code>import math
+    <pre class="language-python"><code>from __future__ import annotations
+import math
 
 class Vector2:
-    def __init__(self, x=0, y=0):
+    def __init__(self, x: float = 0, y: float = 0) -> None:
         self.x = x
         self.y = y
     
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Vector2({self.x}, {self.y})"
     
-    def __add__(self, other):
+    def __add__(self, other: Vector2) -> Vector2:
         """Vector addition"""
         return Vector2(self.x + other.x, self.y + other.y)
     
-    def __sub__(self, other):
+    def __sub__(self, other: Vector2) -> Vector2:
         """Vector subtraction"""
         return Vector2(self.x - other.x, self.y - other.y)
     
-    def __mul__(self, scalar):
+    def __mul__(self, scalar: float) -> Vector2:
         """Scalar multiplication"""
         return Vector2(self.x * scalar, self.y * scalar)
     
-    def __truediv__(self, scalar):
+    def __truediv__(self, scalar: float) -> Vector2:
         """Scalar division"""
         return Vector2(self.x / scalar, self.y / scalar)
     
-    def magnitude(self):
+    def magnitude(self) -> float:
         """Get the length of the vector"""
         return math.sqrt(self.x * self.x + self.y * self.y)
     
-    def normalize(self):
+    def normalize(self) -> Vector2:
         """Return a unit vector (length 1) in the same direction"""
         mag = self.magnitude()
         if mag == 0:
             return Vector2(0, 0)
         return self / mag
     
-    def dot(self, other):
+    def dot(self, other: Vector2) -> float:
         """Dot product - useful for angles and projections"""
         return self.x * other.x + self.y * other.y
     
-    def angle(self):
+    def angle(self) -> float:
         """Get angle in radians"""
         return math.atan2(self.y, self.x)
     
-    def rotate(self, angle):
+    def rotate(self, angle: float) -> Vector2:
         """Rotate vector by angle (in radians)"""
         cos_a = math.cos(angle)
         sin_a = math.sin(angle)
@@ -157,11 +158,11 @@ class Vector2:
         new_y = self.x * sin_a + self.y * cos_a
         return Vector2(new_x, new_y)
     
-    def distance_to(self, other):
+    def distance_to(self, other: Vector2) -> float:
         """Distance to another vector/point"""
         return (other - self).magnitude()
     
-    def to_tuple(self):
+    def to_tuple(self) -> tuple[int, int]:
         """Convert to tuple for Pygame"""
         return (int(self.x), int(self.y))</code></pre>
 
@@ -480,7 +481,7 @@ total_force = gravity + wind + thrust</code></pre>
     </div>
 
     <pre class="language-python"><code># Normalize for consistent speed
-def move_towards_target(position, target, speed):
+def move_towards_target(position: "Vector2", target: "Vector2", speed: float) -> "Vector2":
     # Get direction vector
     direction = target - position
     
@@ -496,11 +497,11 @@ def move_towards_target(position, target, speed):
 
 # Example: Enemy chasing player
 class Enemy:
-    def __init__(self, x, y):
+    def __init__(self, x: float, y: float) -> None:
         self.position = Vector2(x, y)
         self.speed = 3
     
-    def update(self, player_position):
+    def update(self, player_position: "Vector2") -> None:
         # Calculate direction to player
         direction = (player_position - self.position).normalize()
         
@@ -521,7 +522,7 @@ class Enemy:
         E --> I["Wall Sliding"]
     </div>
 
-    <pre class="language-python"><code>def angle_between(v1, v2):
+    <pre class="language-python"><code>def angle_between(v1: "Vector2", v2: "Vector2") -> float:
     """Calculate angle between two vectors in radians"""
     # Normalize vectors
     v1_norm = v1.normalize()
@@ -535,21 +536,21 @@ class Enemy:
     
     return math.acos(dot)
 
-def is_in_front(observer_pos, observer_facing, target_pos):
+def is_in_front(observer_pos: "Vector2", observer_facing: "Vector2", target_pos: "Vector2") -> bool:
     """Check if target is in front of observer"""
     to_target = target_pos - observer_pos
     
     # Positive dot product means in front
     return observer_facing.dot(to_target) > 0
 
-def project_onto(vector, onto):
+def project_onto(vector: "Vector2", onto: "Vector2") -> "Vector2":
     """Project vector onto another vector"""
     onto_norm = onto.normalize()
     projection_length = vector.dot(onto_norm)
     return onto_norm * projection_length
 
 # Example: Sliding along walls
-def slide_along_wall(velocity, wall_normal):
+def slide_along_wall(velocity: "Vector2", wall_normal: "Vector2") -> "Vector2":
     """Calculate sliding velocity when hitting a wall"""
     # Remove the component going into the wall
     into_wall = project_onto(velocity, wall_normal)
@@ -560,14 +561,14 @@ def slide_along_wall(velocity, wall_normal):
     
     <h3 id="1-steering-behaviors">1. Steering Behaviors</h3>
     <pre class="language-python"><code>class SteeringEntity:
-    def __init__(self, x, y):
+    def __init__(self, x: float, y: float) -> None:
         self.position = Vector2(x, y)
         self.velocity = Vector2(0, 0)
         self.acceleration = Vector2(0, 0)
         self.max_speed = 5
         self.max_force = 0.2
     
-    def seek(self, target):
+    def seek(self, target: "Vector2") -> "Vector2":
         """Steer towards a target"""
         desired = (target - self.position).normalize() * self.max_speed
         steer = desired - self.velocity
@@ -578,11 +579,11 @@ def slide_along_wall(velocity, wall_normal):
         
         return steer
     
-    def flee(self, threat):
+    def flee(self, threat: "Vector2") -> "Vector2":
         """Steer away from a threat"""
         return -self.seek(threat)
     
-    def arrive(self, target, slow_radius=100):
+    def arrive(self, target: "Vector2", slow_radius: float = 100) -> "Vector2":
         """Slow down when approaching target"""
         to_target = target - self.position
         distance = to_target.magnitude()
@@ -606,7 +607,7 @@ def slide_along_wall(velocity, wall_normal):
         
         return Vector2(0, 0)
     
-    def update(self):
+    def update(self) -> None:
         # Update physics
         self.velocity += self.acceleration
         
@@ -619,7 +620,7 @@ def slide_along_wall(velocity, wall_normal):
 
     <h3 id="2-projectile-motion">2. Projectile Motion</h3>
     <pre class="language-python"><code>class Projectile:
-    def __init__(self, start_pos, target_pos, speed):
+    def __init__(self, start_pos: tuple[float, float], target_pos: tuple[float, float], speed: float) -> None:
         self.position = Vector2(start_pos[0], start_pos[1])
         
         # Calculate launch angle for projectile
@@ -644,7 +645,7 @@ def slide_along_wall(velocity, wall_normal):
         
         self.gravity = Vector2(0, gravity)
     
-    def update(self, dt):
+    def update(self, dt: float) -> bool:
         # Apply gravity
         self.velocity += self.gravity * dt
         
@@ -654,23 +655,23 @@ def slide_along_wall(velocity, wall_normal):
         return self.position.y > 0  # Still in air</code></pre>
 
     <h3 id="3-collision-response">3. Collision Response</h3>
-    <pre class="language-python"><code>def reflect_vector(incident, normal):
+    <pre class="language-python"><code>def reflect_vector(incident: "Vector2", normal: "Vector2") -> "Vector2":
     """Reflect a vector off a surface"""
     # Formula: R = I - 2 * (I · N) * N
     return incident - normal * (2 * incident.dot(normal))
 
-def bounce_off_wall(ball_velocity, wall_normal, restitution=0.8):
+def bounce_off_wall(ball_velocity: "Vector2", wall_normal: "Vector2", restitution: float = 0.8) -> "Vector2":
     """Calculate bounce velocity with energy loss"""
     reflected = reflect_vector(ball_velocity, wall_normal)
     return reflected * restitution  # Lose some energy
 
 class Ball:
-    def __init__(self, x, y):
+    def __init__(self, x: float, y: float) -> None:
         self.position = Vector2(x, y)
         self.velocity = Vector2(5, 3)
         self.radius = 10
     
-    def check_wall_collision(self, screen_width, screen_height):
+    def check_wall_collision(self, screen_width: int, screen_height: int) -> None:
         # Check boundaries and bounce
         if self.position.x - self.radius <= 0:
             self.velocity = bounce_off_wall(self.velocity, Vector2(1, 0))
@@ -1024,7 +1025,7 @@ if __name__ == "__main__":
     </div>
 
     <pre class="language-python"><code># Performance optimizations
-def distance_squared(v1, v2):
+def distance_squared(v1: "Vector2", v2: "Vector2") -> float:
     """Faster than actual distance for comparisons"""
     dx = v2.x - v1.x
     dy = v2.y - v1.y
@@ -1035,7 +1036,7 @@ if distance_squared(player, enemy) < 100 * 100:  # Instead of distance < 100
     # In range...
 
 # Fast approximate normalize (good enough for many cases)
-def fast_normalize(x, y):
+def fast_normalize(x: float, y: float) -> tuple[float, float]:
     mag_sq = x * x + y * y
     if mag_sq == 0:
         return (0, 0)
@@ -1120,11 +1121,11 @@ for _ in range(3):
     })
 catches = 0
 
-def normalize(v):
+def normalize(v: list[float]) -> list[float]:
     m = math.hypot(v[0], v[1])
     return [v[0] / m, v[1] / m] if m else [0.0, 0.0]
 
-def dot(a, b):
+def dot(a: list[float], b: list[float]) -> float:
     return a[0] * b[0] + a[1] * b[1]
 
 running = True

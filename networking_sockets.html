@@ -143,16 +143,17 @@
 import socket
 import threading
 import json
+from typing import Dict, List, Optional, Any, Tuple
 
 class GameServer:
-    def __init__(self, host='localhost', port=5555):
-        self.host = host
-        self.port = port
-        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.clients = {}  # {client_socket: player_data}
-        self.running = False
+    def __init__(self, host: str = 'localhost', port: int = 5555) -> None:
+        self.host: str = host
+        self.port: int = port
+        self.server: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.clients: Dict[socket.socket, Dict[str, Any]] = {}  # {client_socket: player_data}
+        self.running: bool = False
         
-    def start(self):
+    def start(self) -> None:
         """Start the server"""
         # Allow reuse of address
         self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -182,7 +183,7 @@ class GameServer:
             except Exception as e:
                 print(f"Error accepting connection: {e}")
     
-    def handle_client(self, client_socket, address):
+    def handle_client(self, client_socket: socket.socket, address: Tuple[str, int]) -> None:
         """Handle individual client connection"""
         # Initialize player data
         player_id = f"player_{len(self.clients)}"
@@ -233,7 +234,7 @@ class GameServer:
         # Clean up on disconnect
         self.remove_client(client_socket)
     
-    def process_message(self, client_socket, message):
+    def process_message(self, client_socket: socket.socket, message: Dict[str, Any]) -> None:
         """Process incoming message from client"""
         msg_type = message.get('type')
         player = self.clients[client_socket]
@@ -275,7 +276,7 @@ class GameServer:
                 'players': players_list
             })
     
-    def send_to_client(self, client_socket, message):
+    def send_to_client(self, client_socket: socket.socket, message: Dict[str, Any]) -> None:
         """Send message to specific client"""
         try:
             json_msg = json.dumps(message)
@@ -283,7 +284,7 @@ class GameServer:
         except Exception as e:
             print(f"Error sending to client: {e}")
     
-    def broadcast(self, message, exclude=None):
+    def broadcast(self, message: Dict[str, Any], exclude: Optional[socket.socket] = None) -> None:
         """Broadcast message to all clients"""
         json_msg = json.dumps(message)
         
@@ -295,7 +296,7 @@ class GameServer:
                     # Remove dead connections
                     self.remove_client(client_socket)
     
-    def remove_client(self, client_socket):
+    def remove_client(self, client_socket: socket.socket) -> None:
         """Remove client from server"""
         if client_socket in self.clients:
             player_id = self.clients[client_socket]['id']
@@ -310,7 +311,7 @@ class GameServer:
             client_socket.close()
             print(f"Client {player_id} disconnected")
     
-    def stop(self):
+    def stop(self) -> None:
         """Stop the server"""
         self.running = False
         for client in list(self.clients.keys()):
@@ -319,13 +320,13 @@ class GameServer:
 
 # TCP Client
 class GameClient:
-    def __init__(self):
-        self.socket = None
-        self.connected = False
-        self.player_id = None
-        self.receive_thread = None
+    def __init__(self) -> None:
+        self.socket: Optional[socket.socket] = None
+        self.connected: bool = False
+        self.player_id: Optional[str] = None
+        self.receive_thread: Optional[threading.Thread] = None
         
-    def connect(self, host='localhost', port=5555):
+    def connect(self, host: str = 'localhost', port: int = 5555) -> bool:
         """Connect to game server"""
         try:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -344,7 +345,7 @@ class GameClient:
             print(f"Failed to connect: {e}")
             return False
     
-    def receive_loop(self):
+    def receive_loop(self) -> None:
         """Continuously receive messages from server"""
         while self.connected:
             try:
@@ -361,7 +362,7 @@ class GameClient:
         
         self.disconnect()
     
-    def handle_message(self, message):
+    def handle_message(self, message: Dict[str, Any]) -> None:
         """Handle incoming message from server"""
         msg_type = message.get('type')
         
@@ -387,7 +388,7 @@ class GameClient:
             chat_msg = message.get('message')
             print(f"[{player_id}]: {chat_msg}")
     
-    def send_message(self, message):
+    def send_message(self, message: Dict[str, Any]) -> bool:
         """Send message to server"""
         if self.connected and self.socket:
             try:
@@ -399,7 +400,7 @@ class GameClient:
                 return False
         return False
     
-    def move(self, x, y):
+    def move(self, x: int, y: int) -> bool:
         """Send movement update"""
         return self.send_message({
             'type': 'move',
@@ -407,14 +408,14 @@ class GameClient:
             'y': y
         })
     
-    def chat(self, message):
+    def chat(self, message: str) -> bool:
         """Send chat message"""
         return self.send_message({
             'type': 'chat',
             'message': message
         })
     
-    def disconnect(self):
+    def disconnect(self) -> None:
         """Disconnect from server"""
         self.connected = False
         if self.socket:
@@ -472,17 +473,18 @@ import json
 import time
 import struct
 import threading
+from typing import Dict, Optional, Any, Tuple
 
 class UDPGameServer:
-    def __init__(self, host='localhost', port=5556):
-        self.host = host
-        self.port = port
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.clients = {}  # {address: {last_seen, player_data}}
-        self.running = False
-        self.sequence_number = 0
+    def __init__(self, host: str = 'localhost', port: int = 5556) -> None:
+        self.host: str = host
+        self.port: int = port
+        self.socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.clients: Dict[Tuple[str, int], Dict[str, Any]] = {}  # {address: {last_seen, player_data}}
+        self.running: bool = False
+        self.sequence_number: int = 0
         
-    def start(self):
+    def start(self) -> None:
         """Start UDP server"""
         self.socket.bind((self.host, self.port))
         self.running = True
@@ -509,7 +511,7 @@ class UDPGameServer:
             except Exception as e:
                 print(f"Error receiving packet: {e}")
     
-    def handle_packet(self, data, address):
+    def handle_packet(self, data: bytes, address: Tuple[str, int]) -> None:
         """Handle incoming UDP packet"""
         try:
             # Parse packet
@@ -547,7 +549,7 @@ class UDPGameServer:
         except Exception as e:
             print(f"Error handling packet: {e}")
     
-    def process_packet(self, address, message):
+    def process_packet(self, address: Tuple[str, int], message: Dict[str, Any]) -> None:
         """Process UDP message"""
         client = self.clients[address]
         msg_type = message.get('type')
@@ -575,7 +577,7 @@ class UDPGameServer:
                 'timestamp': message.get('timestamp', time.time())
             })
     
-    def broadcast_state(self):
+    def broadcast_state(self) -> None:
         """Broadcast game state to all clients"""
         # Prepare state snapshot
         state = {
@@ -600,7 +602,7 @@ class UDPGameServer:
         
         self.sequence_number += 1
     
-    def send_to_client(self, address, message):
+    def send_to_client(self, address: Tuple[str, int], message: Dict[str, Any]) -> None:
         """Send message to specific client"""
         try:
             data = json.dumps(message).encode('utf-8')
@@ -608,7 +610,7 @@ class UDPGameServer:
         except Exception as e:
             print(f"Error sending to {address}: {e}")
     
-    def cleanup_inactive_clients(self):
+    def cleanup_inactive_clients(self) -> None:
         """Remove inactive clients"""
         while self.running:
             time.sleep(5)  # Check every 5 seconds
@@ -624,22 +626,22 @@ class UDPGameServer:
                 print(f"Removing inactive client: {address}")
                 del self.clients[address]
     
-    def stop(self):
+    def stop(self) -> None:
         """Stop server"""
         self.running = False
         self.socket.close()
 
 class UDPGameClient:
-    def __init__(self):
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.server_address = None
-        self.player_id = None
-        self.sequence_number = 0
-        self.last_ping = 0
-        self.latency = 0
-        self.running = False
+    def __init__(self) -> None:
+        self.socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.server_address: Optional[Tuple[str, int]] = None
+        self.player_id: Optional[str] = None
+        self.sequence_number: int = 0
+        self.last_ping: float = 0
+        self.latency: float = 0
+        self.running: bool = False
         
-    def connect(self, host='localhost', port=5556):
+    def connect(self, host: str = 'localhost', port: int = 5556) -> bool:
         """Connect to UDP server"""
         self.server_address = (host, port)
         self.running = True
@@ -660,7 +662,7 @@ class UDPGameClient:
         print(f"Connecting to UDP server at {host}:{port}")
         return True
     
-    def receive_loop(self):
+    def receive_loop(self) -> None:
         """Receive packets from server"""
         while self.running:
             try:
@@ -671,7 +673,7 @@ class UDPGameClient:
             except Exception as e:
                 print(f"Receive error: {e}")
     
-    def handle_message(self, message):
+    def handle_message(self, message: Dict[str, Any]) -> None:
         """Handle server message"""
         msg_type = message.get('type')
         
@@ -692,7 +694,7 @@ class UDPGameClient:
             self.latency = (time.time() - message.get('timestamp', 0)) * 1000
             print(f"Latency: {self.latency:.1f}ms")
     
-    def send_message(self, message):
+    def send_message(self, message: Dict[str, Any]) -> bool:
         """Send message to server"""
         if self.server_address:
             try:
@@ -708,7 +710,7 @@ class UDPGameClient:
                 return False
         return False
     
-    def send_position(self, x, y, vx=0, vy=0):
+    def send_position(self, x: float, y: float, vx: float = 0, vy: float = 0) -> bool:
         """Send position update"""
         return self.send_message({
             'type': 'update',
@@ -718,7 +720,7 @@ class UDPGameClient:
             'vy': vy
         })
     
-    def ping_loop(self):
+    def ping_loop(self) -> None:
         """Send periodic pings to measure latency"""
         while self.running:
             time.sleep(1)  # Ping every second
@@ -727,7 +729,7 @@ class UDPGameClient:
                 'timestamp': time.time()
             })
     
-    def disconnect(self):
+    def disconnect(self) -> None:
         """Disconnect from server"""
         self.running = False
         self.socket.close()
@@ -743,27 +745,28 @@ class UDPGameClient:
         <pre><code class="language-python">
 import pygame
 import threading
+from typing import Dict, Optional, Any
 from game_client import GameClient  # Our TCP client from above
 
 class NetworkedGame:
-    def __init__(self):
+    def __init__(self) -> None:
         pygame.init()
-        self.screen = pygame.display.set_mode((800, 600))
+        self.screen: pygame.Surface = pygame.display.set_mode((800, 600))
         pygame.display.set_caption("Networked Game")
-        self.clock = pygame.time.Clock()
+        self.clock: pygame.time.Clock = pygame.time.Clock()
         
         # Network client
-        self.client = GameClient()
-        self.connected = False
+        self.client: GameClient = GameClient()
+        self.connected: bool = False
         
         # Game state
-        self.players = {}  # {player_id: {'x': x, 'y': y, 'color': color}}
-        self.my_player = None
+        self.players: Dict[str, Dict[str, Any]] = {}  # {player_id: {'x': x, 'y': y, 'color': color}}
+        self.my_player: Optional[str] = None
         
         # Connect to server
         self.connect_to_server()
     
-    def connect_to_server(self):
+    def connect_to_server(self) -> None:
         """Connect to game server"""
         if self.client.connect('localhost', 5555):
             self.connected = True
@@ -775,7 +778,7 @@ class NetworkedGame:
         else:
             print("Failed to connect to server")
     
-    def handle_network_message(self, message):
+    def handle_network_message(self, message: Dict[str, Any]) -> None:
         """Handle messages from server"""
         msg_type = message.get('type')
         
@@ -824,7 +827,7 @@ class NetworkedGame:
                         'color': color
                     }
     
-    def run(self):
+    def run(self) -> None:
         """Main game loop"""
         running = True
         
@@ -974,11 +977,11 @@ def receive_message_with_length(sock):
         <h4>3. Connection Pooling</h4>
         <pre><code class="language-python">
 class ConnectionPool:
-    def __init__(self, max_connections=10):
-        self.pool = []
-        self.max_connections = max_connections
+    def __init__(self, max_connections: int = 10) -> None:
+        self.pool: list = []
+        self.max_connections: int = max_connections
         
-    def get_connection(self, host, port):
+    def get_connection(self, host: str, port: int):
         # Reuse existing connection if available
         for conn in self.pool:
             if not conn.in_use:
@@ -1011,12 +1014,12 @@ class ConnectionPool:
         <pre><code class="language-python">
 # Example: Rate limiting
 class RateLimiter:
-    def __init__(self, max_requests=10, time_window=1.0):
-        self.max_requests = max_requests
-        self.time_window = time_window
-        self.clients = {}  # {address: [timestamps]}
+    def __init__(self, max_requests: int = 10, time_window: float = 1.0) -> None:
+        self.max_requests: int = max_requests
+        self.time_window: float = time_window
+        self.clients: dict = {}  # {address: [timestamps]}
     
-    def is_allowed(self, address):
+    def is_allowed(self, address) -> bool:
         current_time = time.time()
         
         if address not in self.clients:
@@ -1049,7 +1052,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG,
                    format='%(asctime)s - %(levelname)s - %(message)s')
 
-def log_packet(direction, address, data):
+def log_packet(direction: str, address, data: str) -> None:
     logging.debug(f"{direction} {address}: {data[:100]}")  # First 100 chars
         </code></pre>
         

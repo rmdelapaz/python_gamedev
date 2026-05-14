@@ -11,19 +11,37 @@
 
 - **Phases 1–7:** ✅ done. Phase 7 closed at chat 36 (15/15 lessons wired + render-checked clean). 25 Phase-6 SVGs + 16 Phase-7 SVGs shipped clean.
 - **Phase 8:** ✅ **CLOSED at chat-84.** 64/64 lessons `done` across 13 modules; 21 per-chat archives (`chat-64.md` through `chat-84.md`); 14 Phase-8 findings + Finding-14 codified at chat-54 (recovery mechanism, ultimately invoked 19+ times across Phases 8+9). Historical detail: `support/archive/chat-84.md` (Phase 8 final archive).
-- **Phase 9:** 🔄 **in-progress at chat-100 M2 close** (absorbed into chat-101 cleanup-chat M0 per Finding-14 cross-chat-startup pattern). **11/24+ high-priority lessons linted; cumulative 13 lessons linted = 11 high-priority + 2 medium-priority closeouts.**
+- **Phase 9:** 🔄 **in-progress at chat-104 M2 close** (chat-104 = Phase-9 lint cohort 15; SOFT-DEFAULT networking_sockets.html confirmed at M0 with Ray-confirmation invited; LARGEST Decision-2 sweep in Phase-9 history at 115 annotations + 3 from-scratch typing-import-lines across 34 atomic pairs; FIRST Phase-9 cohort to bump example_solution_size_lines via from-scratch typing-import-line additions; FOURTEENTH consecutive Decision-1-PASS canonical clean-no-mixed-finding-to-retain shape matching chat-99 profile). **13/24+ high-priority lessons linted; cumulative 15 lessons linted = 13 high-priority + 2 medium-priority closeouts.**
   - **2/12 Phase-9 modules complete:** architecture 5/5 (closed chat-92) + polish 5/5 (closed chat-100).
-  - **Module partials:** ai 1/5, networking 1/5, graphics 1/5.
+  - **Module partials:** ai 1/5, networking 3/5, graphics 1/5.
   - **Locked decisions** (chat-86 M3): (1) pragmatic dataclass split; (2) type-hint mid-tier; (3) size triage with comprehensive-API-surface SKIP vs game-framework-demo DISTILL.
-  - **Locked process** (chat-100 cutover): catalog notes ~1KB target, full-collapse at M2, archives ~3-5KB, briefs ~2KB, session.md ~600B, Finding-19 split-payload protocol mandatory for catalog manual updates.
-- **Phase-9 cohort sequence (chats 87+):** chat-87 save_load, chat-89 event_systems, chat-90 component_systems, chat-91 state_machines, chat-92 scene_management (architecture complete), chat-93 ai_pathfinding, chat-94 networking_lag_compensation, chat-95 graphics_procedural, chat-96 polish_difficulty, chat-97 polish_tweening, chat-98 polish_sound, chat-99 polish_screenshake, chat-100 polish_playtesting (polish complete).
-- **13 high-priority lessons remain** across genres (4) + networking (3) + physics (3) + sprites (2) + game_mathematics (1).
+  - **Locked process** (chat-100 cutover + chat-102 automation cutover): catalog notes ~1KB target, full-collapse at M2, archives ~3-5KB, briefs ~2KB, session.md ~600B, catalog M1 updates via `support/phase9_catalog_update.py` (replaces Finding-19 split-payload protocol).
+- **Phase-9 cohort sequence (chats 87+):** chat-87 save_load, chat-89 event_systems, chat-90 component_systems, chat-91 state_machines, chat-92 scene_management (architecture complete), chat-93 ai_pathfinding, chat-94 networking_lag_compensation, chat-95 graphics_procedural, chat-96 polish_difficulty, chat-97 polish_tweening, chat-98 polish_sound, chat-99 polish_screenshake, chat-100 polish_playtesting (polish complete), chat-103 networking_basics, chat-104 networking_sockets.
+- **11 high-priority lessons remain** across genres (4) + networking (1: networking_lobby) + physics (3) + sprites (2) + game_mathematics (1). NOTE: physics_gravity catalog-stale entry already at Phase-9-equivalent state on disk per chat-103 M0 finding; pending audit refresh OR manual catalog flip.
 
 ---
 
-## Chat 102 — 🔄 IN PROGRESS — Phase-9 lint cohort 14 (soft-default `physics_gravity.html`; Ray-confirmation invited at M0)
+## Chat 105 — 🔄 IN PROGRESS — Phase-9 lint cohort 16 (soft-default `networking_lobby.html`; Ray-confirmation invited at M0)
 
-First chat under post-chat-101-cleanup infrastructure. Target + plan in `support/next-chat-prompt.md`. Opens physics module 0/5 → 1/5 if soft-default lands.
+Continues networking module 3/5 → 4/5 if soft-default lands; closes networking high-priority cohort (only medium-priority networking_client_server remains). Target + plan in `support/next-chat-prompt.md`. LARGEST monolithic-bucket cohort to date at 610 lines (exceeds chat-103 networking_basics 464 by 146 lines; partial/none/2-findings shape with 5-block lesson structure featuring GameLobby + Matchmaking + ChatSystem API surface). Decision 1 mixed-finding-to-retain shape expected (partial dataclass = FIFTEENTH consecutive Decision-1-PASS).
+
+---
+
+## Chat 104 — ✅ closed at M2 (Phase-9 lint cohort 15; SOFT-DEFAULT networking_sockets.html confirmed clean at M0)
+
+`networking_sockets.html` linted (Decision 3 SKIP at 320-line SMALLEST monolithic-bucket cohort to date; NINTH consecutive monolithic-bucket-SKIP; Decision 1 PASS canonical clean-no-mixed-finding FOURTEENTH consecutive matching chat-99 shape; Decision 2 = 115 annotations across 34 atomic pairs plus 3 from-scratch typing-import-line additions = LARGEST Decision 2 sweep across Phase-9 history). NEW PRECEDENT: catalog `example_solution_size_lines` axis bumps under from-scratch typing-import-line additions (Block 1 320 to 321 on-disk; does NOT shift Decision 3 classification; catalog notes document this for future chat reference). PEP 585 lowercase `list`/`dict` pattern established for auxiliary-block annotations. Networking 3/5 partial. High-priority 12/24+ to 13/24+; cumulative 15 lessons. See `support/archive/chat-104.md`.
+
+---
+
+## Chat 103 — ✅ closed at M2 (Phase-9 lint cohort 14; pivoted from physics_gravity to networking_basics at M0 after catalog-stale finding)
+
+`networking_basics.html` linted (Decision 3 SKIP at 464-line comprehensive client-server-API-surface bundle = LARGEST monolithic-bucket SKIP to date; Decision 1 PASS canonical mixed-finding-retained THIRTEENTH consecutive; Decision 2 = 42 annotations across 25 atomic pairs). FIRST production invocation of chat-102 `phase9_catalog_update.py` script (clean; stats refreshed first time since chat-86). Networking 2/5 partial. NEW finding: physics_gravity catalog-stale (on-disk Block 4 already distilled outside Phase-9; sampling confirmed isolated). High-priority 11/24+ → 12/24+; cumulative 14 lessons. See `support/archive/chat-103.md`.
+
+---
+
+## Chat 102 — ✅ closed at M2 (automation-infrastructure meta-chat; no lint cohort)
+
+Wrote `support/phase9_catalog_update.py` replacing Finding-19 split-payload protocol for catalog M1 updates; extended `support/phase9_lint_audit.py` with `load_prior_chat_notes()` preserving ~96 KB of chat_NN_lint_pass_notes across audit re-runs; moved stale chat-64-startup one-shot `compact_todo.py` to `support/scripts-archive/`. See `support/archive/chat-102.md` for detail.
 
 ---
 

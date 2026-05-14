@@ -1097,7 +1097,7 @@ import threading
 import json
 import time
 import struct
-from typing import Dict, List, Optional, Any, Callable
+from typing import Dict, List, Optional, Any, Callable, Set
 from dataclasses import dataclass, asdict
 from enum import Enum
 import queue
@@ -1151,32 +1151,32 @@ class Packet:
 class NetworkManager:
     """Base network manager for client and server"""
     
-    def __init__(self, host: str = 'localhost', port: int = 5555):
-        self.host = host
-        self.port = port
-        self.socket = None
-        self.running = False
+    def __init__(self, host: str = 'localhost', port: int = 5555) -> None:
+        self.host: str = host
+        self.port: int = port
+        self.socket: Optional[socket.socket] = None
+        self.running: bool = False
         
-        self.sequence_number = 0
-        self.pending_acks = {}
-        self.received_sequences = set()
+        self.sequence_number: int = 0
+        self.pending_acks: Dict[int, Packet] = {}
+        self.received_sequences: Set[int] = set()
         
-        self.send_queue = queue.Queue()
-        self.receive_queue = queue.Queue()
+        self.send_queue: queue.Queue = queue.Queue()
+        self.receive_queue: queue.Queue = queue.Queue()
         
-        self.latency = 0
-        self.packet_loss = 0
+        self.latency: float = 0
+        self.packet_loss: float = 0
         
         self.callbacks: Dict[PacketType, List[Callable]] = {
             packet_type: [] for packet_type in PacketType
         }
     
-    def register_callback(self, packet_type: PacketType, callback: Callable):
+    def register_callback(self, packet_type: PacketType, callback: Callable) -> None:
         """Register callback for packet type"""
         self.callbacks[packet_type].append(callback)
     
     def send_packet(self, packet_type: PacketType, data: Dict[str, Any], 
-                   reliable: bool = False):
+                   reliable: bool = False) -> None:
         """Queue packet for sending"""
         packet = Packet(
             type=packet_type,
@@ -1193,7 +1193,7 @@ class NetworkManager:
         
         self.send_queue.put(packet)
     
-    def process_packet(self, packet: Packet):
+    def process_packet(self, packet: Packet) -> None:
         """Process received packet"""
         # Check for duplicates
         if packet.sequence in self.received_sequences:
@@ -1223,13 +1223,13 @@ class NetworkManager:
 class GameServer(NetworkManager):
     """Game server implementation"""
     
-    def __init__(self, host: str = '0.0.0.0', port: int = 5555):
+    def __init__(self, host: str = '0.0.0.0', port: int = 5555) -> None:
         super().__init__(host, port)
         self.clients: Dict[str, Dict[str, Any]] = {}
-        self.game_state = {}
-        self.tick_rate = 60
+        self.game_state: Dict[str, Dict[str, Any]] = {}
+        self.tick_rate: int = 60
         
-    def start(self):
+    def start(self) -> None:
         """Start server"""
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -1243,7 +1243,7 @@ class GameServer(NetworkManager):
         threading.Thread(target=self.accept_clients, daemon=True).start()
         threading.Thread(target=self.game_loop, daemon=True).start()
     
-    def accept_clients(self):
+    def accept_clients(self) -> None:
         """Accept new client connections"""
         while self.running:
             try:
@@ -1270,7 +1270,7 @@ class GameServer(NetworkManager):
             except Exception as e:
                 print(f"Accept error: {e}")
     
-    def handle_client(self, client_id: str):
+    def handle_client(self, client_id: str) -> None:
         """Handle client communication"""
         client = self.clients[client_id]
         buffer = b''
@@ -1307,7 +1307,7 @@ class GameServer(NetworkManager):
         # Client disconnected
         self.disconnect_client(client_id)
     
-    def process_client_packet(self, client_id: str, packet: Packet):
+    def process_client_packet(self, client_id: str, packet: Packet) -> None:
         """Process packet from client"""
         client = self.clients.get(client_id)
         if not client:
@@ -1328,7 +1328,7 @@ class GameServer(NetworkManager):
         self.process_packet(packet)
     
     def send_to_client(self, client_id: str, packet_type: PacketType, 
-                      data: Dict[str, Any], reliable: bool = False):
+                      data: Dict[str, Any], reliable: bool = False) -> None:
         """Send packet to specific client"""
         client = self.clients.get(client_id)
         if not client:
@@ -1350,13 +1350,13 @@ class GameServer(NetworkManager):
             self.disconnect_client(client_id)
     
     def broadcast(self, packet_type: PacketType, data: Dict[str, Any], 
-                 exclude: Optional[str] = None):
+                 exclude: Optional[str] = None) -> None:
         """Broadcast packet to all clients"""
         for client_id in list(self.clients.keys()):
             if client_id != exclude:
                 self.send_to_client(client_id, packet_type, data)
     
-    def disconnect_client(self, client_id: str):
+    def disconnect_client(self, client_id: str) -> None:
         """Disconnect and remove client"""
         if client_id in self.clients:
             try:
@@ -1373,7 +1373,7 @@ class GameServer(NetworkManager):
                 'player_id': client_id
             })
     
-    def game_loop(self):
+    def game_loop(self) -> None:
         """Main game loop"""
         tick_interval = 1.0 / self.tick_rate
         last_tick = time.time()
@@ -1389,7 +1389,7 @@ class GameServer(NetworkManager):
             
             time.sleep(0.001)
     
-    def update_game_state(self, delta_time: float):
+    def update_game_state(self, delta_time: float) -> None:
         """Update game state"""
         # Process client inputs
         for client_id, client in self.clients.items():
@@ -1399,7 +1399,7 @@ class GameServer(NetworkManager):
                 client['last_input'] = None
     
     def apply_input(self, client_id: str, input_data: Dict[str, Any], 
-                    delta_time: float):
+                    delta_time: float) -> None:
         """Apply client input to game state"""
         # Example: Move player based on input
         if client_id not in self.game_state:
@@ -1419,7 +1419,7 @@ class GameServer(NetworkManager):
         player['position']['x'] += player['velocity']['x'] * delta_time
         player['position']['y'] += player['velocity']['y'] * delta_time
     
-    def send_state_updates(self):
+    def send_state_updates(self) -> None:
         """Send game state to all clients"""
         state_data = {
             'timestamp': time.time(),
@@ -1431,14 +1431,14 @@ class GameServer(NetworkManager):
 class GameClient(NetworkManager):
     """Game client implementation"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
-        self.connected = False
-        self.local_state = {}
-        self.server_state = {}
-        self.input_buffer = []
+        self.connected: bool = False
+        self.local_state: Dict[str, Any] = {}
+        self.server_state: Dict[str, Any] = {}
+        self.input_buffer: List[Dict[str, Any]] = []
         
-    def connect(self, host: str, port: int):
+    def connect(self, host: str, port: int) -> bool:
         """Connect to server"""
         self.host = host
         self.port = port
@@ -1463,7 +1463,7 @@ class GameClient(NetworkManager):
             print(f"Connection failed: {e}")
             return False
     
-    def receive_loop(self):
+    def receive_loop(self) -> None:
         """Receive packets from server"""
         buffer = b''
         
@@ -1494,12 +1494,12 @@ class GameClient(NetworkManager):
         
         self.disconnect()
     
-    def send_input(self, input_data: Dict[str, Any]):
+    def send_input(self, input_data: Dict[str, Any]) -> None:
         """Send input to server"""
         self.input_buffer.append(input_data)
         self.send_packet(PacketType.INPUT, input_data)
     
-    def update(self, delta_time: float):
+    def update(self, delta_time: float) -> None:
         """Update client"""
         # Process received packets
         while not self.receive_queue.empty():
@@ -1518,7 +1518,7 @@ class GameClient(NetworkManager):
             except:
                 self.disconnect()
     
-    def reconcile_state(self):
+    def reconcile_state(self) -> None:
         """Reconcile local and server state"""
         # Client-side prediction reconciliation
         server_time = self.server_state.get('timestamp', 0)
@@ -1533,7 +1533,7 @@ class GameClient(NetworkManager):
         for input_data in self.input_buffer:
             self.apply_local_input(input_data)
     
-    def apply_local_input(self, input_data: Dict[str, Any]):
+    def apply_local_input(self, input_data: Dict[str, Any]) -> None:
         """Apply input locally for prediction"""
         # Update local state immediately
         if 'move' in input_data:
@@ -1543,7 +1543,7 @@ class GameClient(NetworkManager):
             self.local_state['position']['x'] += input_data['move'].get('x', 0)
             self.local_state['position']['y'] += input_data['move'].get('y', 0)
     
-    def disconnect(self):
+    def disconnect(self) -> None:
         """Disconnect from server"""
         if self.connected:
             self.send_packet(PacketType.DISCONNECT, {})

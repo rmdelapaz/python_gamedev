@@ -408,20 +408,20 @@
     <pre class="language-python"><code>import pygame
 
 class AnimatedSprite(pygame.sprite.Sprite):
-    def __init__(self, frames, x, y):
+    def __init__(self, frames: list[pygame.Surface], x: int, y: int) -> None:
         super().__init__()
-        self.frames = frames
-        self.current_frame = 0
-        self.image = self.frames[0]
-        self.rect = self.image.get_rect()
+        self.frames: list[pygame.Surface] = frames
+        self.current_frame: int = 0
+        self.image: pygame.Surface = self.frames[0]
+        self.rect: pygame.Rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
         
         # Animation timing
-        self.animation_speed = 0.15  # Frames per update
-        self.animation_counter = 0
+        self.animation_speed: float = 0.15  # Frames per update
+        self.animation_counter: float = 0.0
         
-    def update(self):
+    def update(self) -> None:
         # Update animation
         self.animation_counter += self.animation_speed
         
@@ -431,8 +431,8 @@ class AnimatedSprite(pygame.sprite.Sprite):
             self.image = self.frames[self.current_frame]
 
 # Load animation frames
-def load_animation_frames(base_path, frame_count):
-    frames = []
+def load_animation_frames(base_path: str, frame_count: int) -> list[pygame.Surface]:
+    frames: list[pygame.Surface] = []
     for i in range(frame_count):
         filename = f"{base_path}_{i}.png"
         frame = pygame.image.load(filename).convert_alpha()
@@ -447,15 +447,15 @@ player = AnimatedSprite(walk_frames, 100, 100)</code></pre>
     
     <pre class="language-python"><code>class TimedAnimation:
     """Animation with precise timing control"""
-    def __init__(self, frames, frame_duration=100):
-        self.frames = frames
-        self.frame_duration = frame_duration  # milliseconds per frame
-        self.current_frame = 0
-        self.time_since_last_frame = 0
-        self.playing = True
-        self.loop = True
+    def __init__(self, frames: list[pygame.Surface], frame_duration: int = 100) -> None:
+        self.frames: list[pygame.Surface] = frames
+        self.frame_duration: int = frame_duration  # milliseconds per frame
+        self.current_frame: int = 0
+        self.time_since_last_frame: int = 0
+        self.playing: bool = True
+        self.loop: bool = True
         
-    def update(self, dt):
+    def update(self, dt: int) -> None:
         """Update animation with delta time"""
         if not self.playing:
             return
@@ -475,36 +475,38 @@ player = AnimatedSprite(walk_frames, 100, 100)</code></pre>
                     self.current_frame = len(self.frames) - 1
                     self.playing = False
     
-    def get_current_frame(self):
+    def get_current_frame(self) -> pygame.Surface:
         """Get the current frame image"""
         return self.frames[self.current_frame]
     
-    def reset(self):
+    def reset(self) -> None:
         """Reset animation to beginning"""
         self.current_frame = 0
         self.time_since_last_frame = 0
         self.playing = True
     
-    def play(self):
+    def play(self) -> None:
         self.playing = True
     
-    def pause(self):
+    def pause(self) -> None:
         self.playing = False
     
-    def set_frame(self, frame_index):
+    def set_frame(self, frame_index: int) -> None:
         """Jump to specific frame"""
         self.current_frame = min(frame_index, len(self.frames) - 1)</code></pre>
 
     <h2 id="animation-state-machine">Animation State Machine</h2>
     
-    <pre class="language-python"><code>class AnimationStateMachine:
+    <pre class="language-python"><code>from typing import Any, Optional
+
+class AnimationStateMachine:
     """Manage multiple animation states"""
-    def __init__(self):
-        self.animations = {}
-        self.current_state = None
-        self.previous_state = None
+    def __init__(self) -> None:
+        self.animations: dict[str, dict[str, Any]] = {}
+        self.current_state: Optional[str] = None
+        self.previous_state: Optional[str] = None
         
-    def add_animation(self, state_name, frames, frame_duration=100, loop=True):
+    def add_animation(self, state_name: str, frames: list[pygame.Surface], frame_duration: int = 100, loop: bool = True) -> None:
         """Add an animation state"""
         self.animations[state_name] = {
             'frames': frames,
@@ -518,7 +520,7 @@ player = AnimatedSprite(walk_frames, 100, 100)</code></pre>
         if self.current_state is None:
             self.current_state = state_name
     
-    def change_state(self, new_state):
+    def change_state(self, new_state: str) -> None:
         """Switch to a different animation"""
         if new_state in self.animations and new_state != self.current_state:
             self.previous_state = self.current_state
@@ -527,7 +529,7 @@ player = AnimatedSprite(walk_frames, 100, 100)</code></pre>
             self.animations[new_state]['current_frame'] = 0
             self.animations[new_state]['timer'] = 0
     
-    def update(self, dt):
+    def update(self, dt: int) -> Optional[pygame.Surface]:
         """Update current animation"""
         if not self.current_state:
             return None
@@ -548,7 +550,7 @@ player = AnimatedSprite(walk_frames, 100, 100)</code></pre>
         
         return anim['frames'][anim['current_frame']]
     
-    def get_current_frame(self):
+    def get_current_frame(self) -> Optional[pygame.Surface]:
         """Get current frame of active animation"""
         if not self.current_state:
             return None
@@ -557,25 +559,25 @@ player = AnimatedSprite(walk_frames, 100, 100)</code></pre>
 
 # Example: Character with multiple animations
 class AnimatedCharacter(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+    def __init__(self, x: int, y: int) -> None:
         super().__init__()
-        self.animation = AnimationStateMachine()
+        self.animation: AnimationStateMachine = AnimationStateMachine()
         
         # Load animations
         self.load_animations()
         
         # Set initial image
-        self.image = self.animation.get_current_frame()
-        self.rect = self.image.get_rect()
+        self.image: pygame.Surface = self.animation.get_current_frame()
+        self.rect: pygame.Rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
         
         # Character state
-        self.velocity_x = 0
-        self.velocity_y = 0
-        self.on_ground = True
+        self.velocity_x: float = 0.0
+        self.velocity_y: float = 0.0
+        self.on_ground: bool = True
         
-    def load_animations(self):
+    def load_animations(self) -> None:
         """Load all character animations"""
         # Idle animation
         idle_frames = load_animation_frames("char_idle", 4)
@@ -597,7 +599,7 @@ class AnimatedCharacter(pygame.sprite.Sprite):
         attack_frames = load_animation_frames("char_attack", 6)
         self.animation.add_animation('attack', attack_frames, 60, False)
     
-    def update(self, dt):
+    def update(self, dt: int) -> None:
         """Update character and animation"""
         # Determine animation based on state
         if abs(self.velocity_x) > 5:
@@ -618,18 +620,20 @@ class AnimatedCharacter(pygame.sprite.Sprite):
 
     <h2 id="advanced-animation-techniques">Advanced Animation Techniques</h2>
     
-    <pre class="language-python"><code># Animation with variable frame durations
+    <pre class="language-python"><code>from typing import Any, Callable, Optional
+
+# Animation with variable frame durations
 class AdvancedAnimation:
-    def __init__(self, frame_data):
+    def __init__(self, frame_data: list[tuple[pygame.Surface, int]]) -> None:
         """
         frame_data: list of (image, duration) tuples
         """
-        self.frame_data = frame_data
-        self.current_frame = 0
-        self.timer = 0
-        self.total_duration = sum(duration for _, duration in frame_data)
+        self.frame_data: list[tuple[pygame.Surface, int]] = frame_data
+        self.current_frame: int = 0
+        self.timer: int = 0
+        self.total_duration: int = sum(duration for _, duration in frame_data)
         
-    def update(self, dt):
+    def update(self, dt: int) -> None:
         self.timer += dt
         
         current_image, current_duration = self.frame_data[self.current_frame]
@@ -638,19 +642,19 @@ class AdvancedAnimation:
             self.timer -= current_duration
             self.current_frame = (self.current_frame + 1) % len(self.frame_data)
     
-    def get_frame(self):
+    def get_frame(self) -> pygame.Surface:
         return self.frame_data[self.current_frame][0]
 
 # Animation blending/transitions
 class AnimationBlender:
-    def __init__(self):
-        self.from_animation = None
-        self.to_animation = None
-        self.blend_time = 0
-        self.blend_duration = 200  # milliseconds
-        self.blending = False
+    def __init__(self) -> None:
+        self.from_animation: Any = None
+        self.to_animation: Any = None
+        self.blend_time: int = 0
+        self.blend_duration: int = 200  # milliseconds
+        self.blending: bool = False
         
-    def start_blend(self, from_anim, to_anim, duration=200):
+    def start_blend(self, from_anim: Any, to_anim: Any, duration: int = 200) -> None:
         """Start blending between two animations"""
         self.from_animation = from_anim
         self.to_animation = to_anim
@@ -658,7 +662,7 @@ class AnimationBlender:
         self.blend_time = 0
         self.blending = True
         
-    def update(self, dt):
+    def update(self, dt: int) -> Optional[pygame.Surface]:
         if not self.blending:
             return None
             
@@ -685,13 +689,13 @@ class AnimationBlender:
 
 # Animation events
 class AnimationWithEvents:
-    def __init__(self, frames, events=None):
-        self.frames = frames
-        self.events = events or {}  # {frame_number: callback}
-        self.current_frame = 0
-        self.last_frame = -1
+    def __init__(self, frames: list[pygame.Surface], events: Optional[dict[int, Callable[[], None]]] = None) -> None:
+        self.frames: list[pygame.Surface] = frames
+        self.events: dict[int, Callable[[], None]] = events or {}  # {frame_number: callback}
+        self.current_frame: int = 0
+        self.last_frame: int = -1
         
-    def update(self):
+    def update(self) -> None:
         self.current_frame = (self.current_frame + 1) % len(self.frames)
         
         # Trigger events
@@ -700,7 +704,7 @@ class AnimationWithEvents:
                 self.events[self.current_frame]()
             self.last_frame = self.current_frame
     
-    def add_event(self, frame, callback):
+    def add_event(self, frame: int, callback: Callable[[], None]) -> None:
         """Add event at specific frame"""
         self.events[frame] = callback
 
@@ -711,12 +715,14 @@ attack_anim.add_event(5, lambda: check_hit_enemies())</code></pre>
 
     <h2 id="sprite-animation-optimization">Sprite Animation Optimization</h2>
     
-    <pre class="language-python"><code># Frame caching system
+    <pre class="language-python"><code>from typing import Any, Optional
+
+# Frame caching system
 class AnimationCache:
-    def __init__(self):
-        self.cache = {}
+    def __init__(self) -> None:
+        self.cache: dict[Any, list[pygame.Surface]] = {}
         
-    def get_rotated_frames(self, frames, angle):
+    def get_rotated_frames(self, frames: list[pygame.Surface], angle: float) -> list[pygame.Surface]:
         """Get cached rotated frames"""
         cache_key = (id(frames), angle)
         
@@ -728,7 +734,7 @@ class AnimationCache:
             
         return self.cache[cache_key]
     
-    def get_scaled_frames(self, frames, scale):
+    def get_scaled_frames(self, frames: list[pygame.Surface], scale: float) -> list[pygame.Surface]:
         """Get cached scaled frames"""
         cache_key = (id(frames), scale)
         
@@ -742,27 +748,27 @@ class AnimationCache:
             
         return self.cache[cache_key]
     
-    def clear(self):
+    def clear(self) -> None:
         """Clear cache to free memory"""
         self.cache.clear()
 
 # Efficient sprite sheet animation
 class SpriteSheetAnimation:
-    def __init__(self, sheet, frame_width, frame_height, frame_count):
-        self.sheet = sheet
-        self.frame_width = frame_width
-        self.frame_height = frame_height
-        self.frame_count = frame_count
-        self.current_frame = 0
+    def __init__(self, sheet: pygame.Surface, frame_width: int, frame_height: int, frame_count: int) -> None:
+        self.sheet: pygame.Surface = sheet
+        self.frame_width: int = frame_width
+        self.frame_height: int = frame_height
+        self.frame_count: int = frame_count
+        self.current_frame: int = 0
         
         # Pre-calculate frame rectangles
-        self.frame_rects = []
+        self.frame_rects: list[pygame.Rect] = []
         for i in range(frame_count):
             x = (i % (sheet.get_width() // frame_width)) * frame_width
             y = (i // (sheet.get_width() // frame_width)) * frame_height
             self.frame_rects.append(pygame.Rect(x, y, frame_width, frame_height))
     
-    def get_frame(self, frame_index=None):
+    def get_frame(self, frame_index: Optional[int] = None) -> pygame.Surface:
         """Get frame directly from sprite sheet (no copying)"""
         if frame_index is None:
             frame_index = self.current_frame
@@ -770,7 +776,7 @@ class SpriteSheetAnimation:
         # Return subsurface (shares memory with sprite sheet)
         return self.sheet.subsurface(self.frame_rects[frame_index])
     
-    def update(self):
+    def update(self) -> None:
         self.current_frame = (self.current_frame + 1) % self.frame_count</code></pre>
 
     <h2 id="complete-animation-system-example">Complete Animation System Example</h2>

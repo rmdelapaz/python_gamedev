@@ -1116,21 +1116,22 @@
 import numpy as np
 import pygame
 from pygame.locals import *
+from typing import Optional
 
 class PostProcessingPipeline:
     """Post-processing effects pipeline"""
-    def __init__(self, ctx: moderngl.Context, width: int, height: int):
-        self.ctx = ctx
-        self.width = width
-        self.height = height
+    def __init__(self, ctx: moderngl.Context, width: int, height: int) -> None:
+        self.ctx: moderngl.Context = ctx
+        self.width: int = width
+        self.height: int = height
         
-        self.effects = {}
-        self.framebuffers = {}
-        self.textures = {}
+        self.effects: dict[str, "PostProcessEffect"] = {}
+        self.framebuffers: dict[str, moderngl.Framebuffer] = {}
+        self.textures: dict[str, moderngl.Texture] = {}
         
         self.init_pipeline()
         
-    def init_pipeline(self):
+    def init_pipeline(self) -> None:
         """Initialize framebuffers and shaders"""
         # Create HDR framebuffer for scene rendering
         self.create_framebuffer('scene', hdr=True)
@@ -1146,7 +1147,7 @@ class PostProcessingPipeline:
         self.effects['ssao'] = SSAOEffect(self)
         self.effects['color_grading'] = ColorGradingEffect(self)
         
-    def create_framebuffer(self, name: str, hdr: bool = False):
+    def create_framebuffer(self, name: str, hdr: bool = False) -> None:
         """Create a framebuffer for rendering"""
         # Create color texture
         if hdr:
@@ -1172,7 +1173,7 @@ class PostProcessingPipeline:
             depth_attachment=depth
         )
     
-    def process(self, scene_texture):
+    def process(self, scene_texture: moderngl.Texture) -> moderngl.Texture:
         """Process the scene through effect pipeline"""
         current_texture = scene_texture
         
@@ -1185,29 +1186,29 @@ class PostProcessingPipeline:
 
 class PostProcessEffect:
     """Base class for post-processing effects"""
-    def __init__(self, pipeline):
-        self.pipeline = pipeline
-        self.ctx = pipeline.ctx
-        self.enabled = True
-        self.shader = self.create_shader()
+    def __init__(self, pipeline: PostProcessingPipeline) -> None:
+        self.pipeline: PostProcessingPipeline = pipeline
+        self.ctx: moderngl.Context = pipeline.ctx
+        self.enabled: bool = True
+        self.shader: Optional[moderngl.Program] = self.create_shader()
         
-    def create_shader(self):
+    def create_shader(self) -> Optional[moderngl.Program]:
         """Override to create effect shader"""
         pass
     
-    def apply(self, input_texture):
+    def apply(self, input_texture: moderngl.Texture) -> Optional[moderngl.Texture]:
         """Apply effect to input texture"""
         pass
 
 class BloomEffect(PostProcessEffect):
     """Bloom/glow effect"""
-    def __init__(self, pipeline):
+    def __init__(self, pipeline: PostProcessingPipeline) -> None:
         super().__init__(pipeline)
-        self.threshold = 0.7
-        self.intensity = 1.0
-        self.radius = 4
+        self.threshold: float = 0.7
+        self.intensity: float = 1.0
+        self.radius: int = 4
         
-    def create_shader(self):
+    def create_shader(self) -> moderngl.Program:
         vertex = '''
         #version 330
         in vec2 in_position;
@@ -1334,7 +1335,7 @@ thresh = 0.55
 swap = False  # O toggles pass order
 
 # Pre-compute vignette mask once (H, W, 1) using smoothstep on radial distance
-def make_vig(w, h):
+def make_vig(w: int, h: int) -> np.ndarray:
     cx, cy = w / 2.0, h / 2.0
     maxd = math.hypot(cx, cy)
     ys, xs = np.mgrid[0:h, 0:w].astype(np.float32)
@@ -1355,7 +1356,7 @@ circles = [
 ]
 
 # Box-blur approximation of Gaussian via np.roll, separable per axis
-def blur_axis(arr, radius, axis):
+def blur_axis(arr: np.ndarray, radius: int, axis: int) -> np.ndarray:
     n = 2 * radius + 1
     acc = np.zeros_like(arr)
     for r in range(-radius, radius + 1):
@@ -1363,7 +1364,7 @@ def blur_axis(arr, radius, axis):
     return acc / n
 
 # Pass functions: each takes float32 (H, W, 3) in [0, 1] and returns same shape
-def pass_bloom(arr, t):
+def pass_bloom(arr: np.ndarray, t: float) -> np.ndarray:
     luma = arr @ LUMA                              # BT.709 per-pixel luminance
     mask = (luma &gt; t).astype(np.float32)[..., None] # selective threshold gate
     bright = arr * mask                            # only bright pixels survive
@@ -1371,10 +1372,10 @@ def pass_bloom(arr, t):
     bright = blur_axis(bright, 4, axis=0)          # vertical   blur (2nd pass)
     return arr + bright * 1.6                      # additive composite
 
-def pass_vignette(arr):
+def pass_vignette(arr: np.ndarray) -> np.ndarray:
     return arr * VIG
 
-def pass_grade(arr):
+def pass_grade(arr: np.ndarray) -> np.ndarray:
     tm = arr / (arr + 0.5)                         # Reinhard tone-map
     gray = (tm @ LUMA)[..., None]
     return gray + (tm - gray) * 1.2                # mild saturation lift

@@ -457,15 +457,15 @@ players = pygame.sprite.GroupSingle()  # For single sprite
 
 # Create a sprite
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+    def __init__(self, x: int, y: int) -> None:
         super().__init__()
-        self.image = pygame.Surface((30, 30))
+        self.image: pygame.Surface = pygame.Surface((30, 30))
         self.image.fill((255, 0, 0))
-        self.rect = self.image.get_rect()
+        self.rect: pygame.Rect = self.image.get_rect()
         self.rect.center = (x, y)
-        self.speed = 2
+        self.speed: int = 2
     
-    def update(self):
+    def update(self) -> None:
         self.rect.x += self.speed
         if self.rect.right > 800 or self.rect.left < 0:
             self.speed *= -1
@@ -502,7 +502,9 @@ num_enemies = len(enemies)</code></pre>
 
     <h2 id="collision-detection-with-groups">Collision Detection with Groups</h2>
     
-    <pre class="language-python"><code># Different collision detection methods
+    <pre class="language-python"><code>from typing import Any, Optional
+
+# Different collision detection methods
 
 # 1. Sprite vs Group collision
 hit_enemies = pygame.sprite.spritecollide(player, enemies, dokill=False)
@@ -524,7 +526,7 @@ hit_enemies = pygame.sprite.spritecollide(
 )
 
 # 4. Custom collision detection
-def pixel_perfect_collision(sprite1, sprite2):
+def pixel_perfect_collision(sprite1: Any, sprite2: Any) -> Optional[tuple[int, int]]:
     """Pixel-perfect collision detection"""
     rect = sprite1.rect.clip(sprite2.rect)
     if rect.width > 0 and rect.height > 0:
@@ -543,7 +545,7 @@ hit_enemies = pygame.sprite.spritecollide(
 )
 
 # 5. Collision with callback
-def handle_player_enemy_collision(player, enemy):
+def handle_player_enemy_collision(player: Any, enemy: Any) -> bool:
     """Custom collision handler"""
     if player.is_invulnerable():
         return False  # No collision
@@ -560,11 +562,11 @@ pygame.sprite.spritecollide(
     <pre class="language-python"><code>import pygame
 
 class LayeredSprite(pygame.sprite.Sprite):
-    def __init__(self, image, pos, layer):
+    def __init__(self, image: pygame.Surface, pos: tuple[int, int], layer: int) -> None:
         super().__init__()
-        self.image = image
-        self.rect = self.image.get_rect(center=pos)
-        self._layer = layer
+        self.image: pygame.Surface = image
+        self.rect: pygame.Rect = self.image.get_rect(center=pos)
+        self._layer: int = layer
 
 # Using LayeredUpdates for automatic layer sorting
 all_sprites = pygame.sprite.LayeredUpdates()
@@ -591,9 +593,9 @@ all_sprites.move_to_back(background)
 
 # Custom layered group
 class GameLayeredGroup(pygame.sprite.LayeredUpdates):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
-        self.layer_names = {
+        self.layer_names: dict[str, int] = {
             'background': 0,
             'tiles': 1,
             'items': 2,
@@ -604,13 +606,13 @@ class GameLayeredGroup(pygame.sprite.LayeredUpdates):
             'ui': 7
         }
     
-    def add_to_layer(self, sprite, layer_name):
+    def add_to_layer(self, sprite: pygame.sprite.Sprite, layer_name: str) -> None:
         """Add sprite to named layer"""
         if layer_name in self.layer_names:
             sprite._layer = self.layer_names[layer_name]
             self.add(sprite)
     
-    def get_layer_sprites(self, layer_name):
+    def get_layer_sprites(self, layer_name: str) -> list[pygame.sprite.Sprite]:
         """Get all sprites from named layer"""
         if layer_name in self.layer_names:
             layer_num = self.layer_names[layer_name]
@@ -624,20 +626,22 @@ game_sprites.add_to_layer(bullet, 'bullets')</code></pre>
 
     <h2 id="custom-sprite-groups">Custom Sprite Groups</h2>
     
-    <pre class="language-python"><code># Custom group with spatial hashing for efficient collision
+    <pre class="language-python"><code>from typing import Optional
+
+# Custom group with spatial hashing for efficient collision
 class SpatialHashGroup(pygame.sprite.Group):
-    def __init__(self, cell_size=100):
+    def __init__(self, cell_size: int = 100) -> None:
         super().__init__()
-        self.cell_size = cell_size
-        self.hash_table = {}
+        self.cell_size: int = cell_size
+        self.hash_table: dict[tuple[int, int], set[pygame.sprite.Sprite]] = {}
     
-    def add(self, *sprites):
+    def add(self, *sprites: pygame.sprite.Sprite) -> None:
         """Add sprites and update hash table"""
         super().add(*sprites)
         for sprite in sprites:
             self._add_to_hash(sprite)
     
-    def _add_to_hash(self, sprite):
+    def _add_to_hash(self, sprite: pygame.sprite.Sprite) -> None:
         """Add sprite to spatial hash table"""
         cells = self._get_cells(sprite.rect)
         for cell in cells:
@@ -645,7 +649,7 @@ class SpatialHashGroup(pygame.sprite.Group):
                 self.hash_table[cell] = set()
             self.hash_table[cell].add(sprite)
     
-    def _get_cells(self, rect):
+    def _get_cells(self, rect: pygame.Rect) -> list[tuple[int, int]]:
         """Get all cells that rect occupies"""
         cells = []
         left = rect.left // self.cell_size
@@ -658,7 +662,7 @@ class SpatialHashGroup(pygame.sprite.Group):
                 cells.append((x, y))
         return cells
     
-    def get_nearby_sprites(self, sprite):
+    def get_nearby_sprites(self, sprite: pygame.sprite.Sprite) -> set[pygame.sprite.Sprite]:
         """Get sprites in same and adjacent cells"""
         nearby = set()
         cells = self._get_cells(sprite.rect)
@@ -674,7 +678,7 @@ class SpatialHashGroup(pygame.sprite.Group):
         nearby.discard(sprite)  # Remove self
         return nearby
     
-    def update_hash(self):
+    def update_hash(self) -> None:
         """Rebuild hash table after movement"""
         self.hash_table.clear()
         for sprite in self.sprites():
@@ -682,28 +686,28 @@ class SpatialHashGroup(pygame.sprite.Group):
 
 # Camera group for scrolling games
 class CameraGroup(pygame.sprite.Group):
-    def __init__(self, target):
+    def __init__(self, target: Optional[pygame.sprite.Sprite]) -> None:
         super().__init__()
-        self.display_surface = pygame.display.get_surface()
-        self.offset = pygame.math.Vector2()
-        self.target = target
-        self.camera_rect = pygame.Rect(0, 0, 800, 600)
-        self.camera_speed = 5
+        self.display_surface: pygame.Surface = pygame.display.get_surface()
+        self.offset: pygame.math.Vector2 = pygame.math.Vector2()
+        self.target: Optional[pygame.sprite.Sprite] = target
+        self.camera_rect: pygame.Rect = pygame.Rect(0, 0, 800, 600)
+        self.camera_speed: int = 5
     
-    def center_target(self):
+    def center_target(self) -> None:
         """Center camera on target sprite"""
         if self.target:
             self.offset.x = self.target.rect.centerx - self.display_surface.get_width() // 2
             self.offset.y = self.target.rect.centery - self.display_surface.get_height() // 2
     
-    def apply_limits(self, map_rect):
+    def apply_limits(self, map_rect: pygame.Rect) -> None:
         """Limit camera to map boundaries"""
         self.offset.x = max(0, min(self.offset.x, 
                                    map_rect.width - self.display_surface.get_width()))
         self.offset.y = max(0, min(self.offset.y,
                                    map_rect.height - self.display_surface.get_height()))
     
-    def custom_draw(self):
+    def custom_draw(self) -> None:
         """Draw sprites with camera offset"""
         self.center_target()
         
@@ -713,12 +717,14 @@ class CameraGroup(pygame.sprite.Group):
 
     <h2 id="group-management-patterns">Group Management Patterns</h2>
     
-    <pre class="language-python"><code># Sprite pool for performance
+    <pre class="language-python"><code>from typing import Any, Callable
+
+# Sprite pool for performance
 class SpritePool:
-    def __init__(self, sprite_class, initial_size=50):
-        self.sprite_class = sprite_class
-        self.available = []
-        self.active = pygame.sprite.Group()
+    def __init__(self, sprite_class: type[pygame.sprite.Sprite], initial_size: int = 50) -> None:
+        self.sprite_class: type[pygame.sprite.Sprite] = sprite_class
+        self.available: list[pygame.sprite.Sprite] = []
+        self.active: pygame.sprite.Group = pygame.sprite.Group()
         
         # Pre-create sprites
         for _ in range(initial_size):
@@ -726,7 +732,7 @@ class SpritePool:
             sprite.kill()  # Not in any group initially
             self.available.append(sprite)
     
-    def get(self):
+    def get(self) -> pygame.sprite.Sprite:
         """Get sprite from pool or create new one"""
         if self.available:
             sprite = self.available.pop()
@@ -736,13 +742,13 @@ class SpritePool:
         self.active.add(sprite)
         return sprite
     
-    def release(self, sprite):
+    def release(self, sprite: pygame.sprite.Sprite) -> None:
         """Return sprite to pool"""
         sprite.kill()  # Remove from all groups
         sprite.reset()  # Reset sprite state
         self.available.append(sprite)
     
-    def update(self, *args):
+    def update(self, *args: Any) -> None:
         """Update active sprites"""
         self.active.update(*args)
         
@@ -753,8 +759,8 @@ class SpritePool:
 
 # Group manager for complex games
 class GroupManager:
-    def __init__(self):
-        self.groups = {
+    def __init__(self) -> None:
+        self.groups: dict[str, pygame.sprite.AbstractGroup] = {
             'all': pygame.sprite.LayeredUpdates(),
             'enemies': pygame.sprite.Group(),
             'players': pygame.sprite.GroupSingle(),
@@ -764,28 +770,28 @@ class GroupManager:
             'ui': pygame.sprite.Group()
         }
         
-        self.collision_pairs = [
+        self.collision_pairs: list[tuple[str, str, Callable[..., None]]] = [
             ('players', 'enemies', self.handle_player_enemy),
             ('bullets', 'enemies', self.handle_bullet_enemy),
             ('players', 'items', self.handle_player_item)
         ]
     
-    def add(self, sprite, *group_names):
+    def add(self, sprite: pygame.sprite.Sprite, *group_names: str) -> None:
         """Add sprite to multiple groups"""
         self.groups['all'].add(sprite)
         for name in group_names:
             if name in self.groups:
                 self.groups[name].add(sprite)
     
-    def update(self, dt):
+    def update(self, dt: float) -> None:
         """Update all groups"""
         self.groups['all'].update(dt)
     
-    def draw(self, surface):
+    def draw(self, surface: pygame.Surface) -> None:
         """Draw all sprites in layer order"""
         self.groups['all'].draw(surface)
     
-    def check_collisions(self):
+    def check_collisions(self) -> None:
         """Check all collision pairs"""
         for group1_name, group2_name, handler in self.collision_pairs:
             group1 = self.groups[group1_name]
@@ -799,13 +805,13 @@ class GroupManager:
                 for sprite2 in sprite2_list:
                     handler(sprite1, sprite2)
     
-    def handle_player_enemy(self, player, enemy):
+    def handle_player_enemy(self, player: Any, enemy: Any) -> None:
         """Handle player-enemy collision"""
         if not player.invulnerable:
             player.take_damage(enemy.damage)
             self.add(DamageEffect(player.rect.center), 'effects')
     
-    def handle_bullet_enemy(self, bullet, enemy):
+    def handle_bullet_enemy(self, bullet: Any, enemy: Any) -> None:
         """Handle bullet-enemy collision"""
         bullet.kill()
         enemy.take_damage(bullet.damage)
@@ -813,7 +819,7 @@ class GroupManager:
             self.add(Explosion(enemy.rect.center), 'effects')
             enemy.kill()
     
-    def handle_player_item(self, player, item):
+    def handle_player_item(self, player: Any, item: Any) -> None:
         """Handle player-item collision"""
         item.apply(player)
         item.kill()</code></pre>

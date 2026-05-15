@@ -799,26 +799,27 @@ import pygame
 from pygame.locals import *
 import time
 import math
+from typing import Optional
 
 class ShaderRenderer:
     """GPU shader renderer using ModernGL"""
-    def __init__(self, width: int = 800, height: int = 600):
+    def __init__(self, width: int = 800, height: int = 600) -> None:
         pygame.init()
-        self.width = width
-        self.height = height
+        self.width: int = width
+        self.height: int = height
         
         # Create OpenGL context
         pygame.display.set_mode(
             (width, height),
             DOUBLEBUF | OPENGL
         )
-        self.ctx = moderngl.create_context()
+        self.ctx: moderngl.Context = moderngl.create_context()
         
         # Create screen quad
-        self.quad = self.create_quad()
-        self.start_time = time.time()
+        self.quad: moderngl.Buffer = self.create_quad()
+        self.start_time: float = time.time()
         
-    def create_quad(self):
+    def create_quad(self) -> moderngl.Buffer:
         """Create fullscreen quad"""
         vertices = np.array([
             # x,    y,   u,   v
@@ -831,7 +832,7 @@ class ShaderRenderer:
         vbo = self.ctx.buffer(vertices)
         return vbo
     
-    def compile_shader(self, vertex_shader: str, fragment_shader: str):
+    def compile_shader(self, vertex_shader: str, fragment_shader: str) -> Optional[moderngl.Program]:
         """Compile shader program"""
         try:
             program = self.ctx.program(
@@ -843,7 +844,7 @@ class ShaderRenderer:
             print(f"Shader compilation error: {e}")
             return None
     
-    def create_wave_shader(self):
+    def create_wave_shader(self) -> Optional[moderngl.Program]:
         """Create wave distortion shader"""
         vertex_shader = '''
         #version 330
@@ -899,26 +900,26 @@ class ShaderRenderer:
     
     <pre class="language-python"><code>class PostProcessing:
     """Post-processing effects pipeline"""
-    def __init__(self, ctx: moderngl.Context, width: int, height: int):
-        self.ctx = ctx
-        self.width = width
-        self.height = height
+    def __init__(self, ctx: moderngl.Context, width: int, height: int) -> None:
+        self.ctx: moderngl.Context = ctx
+        self.width: int = width
+        self.height: int = height
         
         # Create framebuffer for rendering
         self.create_framebuffer()
         
         # Load post-process shaders
-        self.effects = {
+        self.effects: dict[str, str] = {
             'bloom': self.create_bloom_shader(),
             'blur': self.create_blur_shader(),
             'chromatic': self.create_chromatic_shader(),
             'vignette': self.create_vignette_shader()
         }
     
-    def create_framebuffer(self):
+    def create_framebuffer(self) -> None:
         """Create render target"""
         # Color texture
-        self.color_texture = self.ctx.texture(
+        self.color_texture: moderngl.Texture = self.ctx.texture(
             (self.width, self.height), 4
         )
         self.color_texture.filter = (
@@ -926,17 +927,17 @@ class ShaderRenderer:
         )
         
         # Depth buffer
-        self.depth_buffer = self.ctx.depth_renderbuffer(
+        self.depth_buffer: moderngl.Renderbuffer = self.ctx.depth_renderbuffer(
             (self.width, self.height)
         )
         
         # Framebuffer
-        self.fbo = self.ctx.framebuffer(
+        self.fbo: moderngl.Framebuffer = self.ctx.framebuffer(
             color_attachments=[self.color_texture],
             depth_attachment=self.depth_buffer
         )
     
-    def create_bloom_shader(self):
+    def create_bloom_shader(self) -> str:
         """Create bloom effect shader"""
         fragment_shader = '''
         #version 330
@@ -1042,7 +1043,7 @@ W, H = 1088, 480
 W_S, H_S = 768, 480  # scene area
 FPS = 60
 
-def build_scene():
+def build_scene() -> pygame.Surface:
     surf = pygame.Surface((W_S, H_S))
     surf.fill((10, 10, 18))
     # bright shapes against dark background — high-contrast edges for fringe + wave
@@ -1056,19 +1057,19 @@ def build_scene():
     pygame.draw.rect(surf, ( 80, 200, 250), (300, 400, 380,  20))
     return surf
 
-def apply_pixelate(surf, n):
+def apply_pixelate(surf: pygame.Surface, n: int) -> pygame.Surface:
     n = max(2, n)
     down = pygame.transform.scale(surf, (max(1, W_S // n), max(1, H_S // n)))
     return pygame.transform.scale(down, (W_S, H_S))
 
-def apply_chromatic(arr, shift):
+def apply_chromatic(arr: np.ndarray, shift: int) -> np.ndarray:
     out = arr.copy()
     out[..., 0] = np.roll(arr[..., 0],  shift, axis=0)  # red shifts +x
     out[..., 2] = np.roll(arr[..., 2], -shift, axis=0)  # blue shifts -x
     # green untouched — anchors the geometry
     return out
 
-def apply_wave(arr, amplitude, period, phase):
+def apply_wave(arr: np.ndarray, amplitude: int, period: float, phase: float) -> np.ndarray:
     out = arr.copy()
     cols = np.arange(W_S)
     shifts = (amplitude * np.sin(2.0 * np.pi * cols / period + phase)).astype(np.int32)
@@ -1076,7 +1077,7 @@ def apply_wave(arr, amplitude, period, phase):
         out[x, :, :] = np.roll(arr[x, :, :], int(shifts[x]), axis=0)
     return out
 
-def main():
+def main() -> None:
     pygame.init()
     screen = pygame.display.set_mode((W, H))
     pygame.display.set_caption(&apos;Three Effects, Three Axes&apos;)

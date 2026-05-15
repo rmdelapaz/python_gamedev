@@ -77,19 +77,19 @@ from typing import Dict, List, Optional, Tuple
 
 class UIElement:
     """Base class for all UI elements"""
-    def __init__(self, x: int, y: int, width: int, height: int):
-        self.rect = pygame.Rect(x, y, width, height)
-        self.visible = True
-        self.interactive = True
-        self.animations = []
+    def __init__(self, x: int, y: int, width: int, height: int) -> None:
+        self.rect: pygame.Rect = pygame.Rect(x, y, width, height)
+        self.visible: bool = True
+        self.interactive: bool = True
+        self.animations: list = []
         
-    def update(self, dt: float):
+    def update(self, dt: float) -> None:
         """Update element state"""
         # Update animations
         self.animations = [anim for anim in self.animations 
                          if anim.update(dt)]
     
-    def render(self, surface: pygame.Surface):
+    def render(self, surface: pygame.Surface) -> None:
         """Render the element"""
         pass
     
@@ -99,30 +99,30 @@ class UIElement:
 
 class HealthBar(UIElement):
     """Health bar UI element"""
-    def __init__(self, x: int, y: int, width: int, height: int):
+    def __init__(self, x: int, y: int, width: int, height: int) -> None:
         super().__init__(x, y, width, height)
-        self.max_health = 100
-        self.current_health = 100
-        self.animated_health = 100
-        self.damage_preview = 0
+        self.max_health: int = 100
+        self.current_health: int = 100
+        self.animated_health: float = 100
+        self.damage_preview: float = 0
         
         # Visual settings
-        self.bg_color = (50, 50, 50)
-        self.health_color = (255, 0, 0)
-        self.damage_color = (255, 255, 0)
-        self.border_color = (100, 100, 100)
+        self.bg_color: Tuple[int, int, int] = (50, 50, 50)
+        self.health_color: Tuple[int, int, int] = (255, 0, 0)
+        self.damage_color: Tuple[int, int, int] = (255, 255, 0)
+        self.border_color: Tuple[int, int, int] = (100, 100, 100)
         
-    def set_health(self, value: int, max_value: int = None):
+    def set_health(self, value: int, max_value: Optional[int] = None) -> None:
         """Update health values"""
         self.current_health = max(0, min(value, self.max_health))
         if max_value:
             self.max_health = max_value
     
-    def preview_damage(self, amount: int):
+    def preview_damage(self, amount: int) -> None:
         """Show damage preview"""
         self.damage_preview = amount
     
-    def update(self, dt: float):
+    def update(self, dt: float) -> None:
         super().update(dt)
         
         # Smooth health bar animation
@@ -133,7 +133,7 @@ class HealthBar(UIElement):
         if self.damage_preview > 0:
             self.damage_preview = max(0, self.damage_preview - dt * 50)
     
-    def render(self, surface: pygame.Surface):
+    def render(self, surface: pygame.Surface) -> None:
         if not self.visible:
             return
         
@@ -165,13 +165,13 @@ class HealthBar(UIElement):
 
 class Minimap(UIElement):
     """Minimap UI element"""
-    def __init__(self, x: int, y: int, size: int):
+    def __init__(self, x: int, y: int, size: int) -> None:
         super().__init__(x, y, size, size)
-        self.world_size = (1000, 1000)
-        self.zoom = 0.1
-        self.player_pos = (500, 500)
-        self.entities = []
-        self.objectives = []
+        self.world_size: Tuple[int, int] = (1000, 1000)
+        self.zoom: float = 0.1
+        self.player_pos: Tuple[int, int] = (500, 500)
+        self.entities: list = []
+        self.objectives: list = []
         
     def world_to_map(self, world_pos: Tuple[float, float]) -> Tuple[int, int]:
         """Convert world coordinates to minimap coordinates"""
@@ -179,7 +179,7 @@ class Minimap(UIElement):
         y = int(self.rect.y + (world_pos[1] / self.world_size[1]) * self.rect.height)
         return (x, y)
     
-    def render(self, surface: pygame.Surface):
+    def render(self, surface: pygame.Surface) -> None:
         if not self.visible:
             return
         
@@ -228,18 +228,18 @@ class Minimap(UIElement):
 
 class DialogBox(UIElement):
     """Dialog/conversation UI"""
-    def __init__(self, x: int, y: int, width: int, height: int):
+    def __init__(self, x: int, y: int, width: int, height: int) -> None:
         super().__init__(x, y, width, height)
-        self.speaker = ""
-        self.text = ""
-        self.displayed_text = ""
-        self.text_speed = 30  # Characters per second
-        self.text_progress = 0
-        self.choices = []
-        self.selected_choice = 0
-        self.active = False
+        self.speaker: str = ""
+        self.text: str = ""
+        self.displayed_text: str = ""
+        self.text_speed: int = 30  # Characters per second
+        self.text_progress: float = 0
+        self.choices: List[str] = []
+        self.selected_choice: int = 0
+        self.active: bool = False
         
-    def show_dialog(self, speaker: str, text: str, choices: List[str] = None):
+    def show_dialog(self, speaker: str, text: str, choices: Optional[List[str]] = None) -> None:
         """Display a new dialog"""
         self.speaker = speaker
         self.text = text
@@ -250,7 +250,7 @@ class DialogBox(UIElement):
         self.active = True
         self.visible = True
     
-    def update(self, dt: float):
+    def update(self, dt: float) -> None:
         if not self.active:
             return
         
@@ -261,7 +261,7 @@ class DialogBox(UIElement):
             self.text_progress += self.text_speed * dt
             self.displayed_text = self.text[:int(self.text_progress)]
     
-    def render(self, surface: pygame.Surface):
+    def render(self, surface: pygame.Surface) -> None:
         if not self.visible:
             return
         
@@ -324,13 +324,13 @@ class DialogBox(UIElement):
 
 class UIManager:
     """Manages all UI elements"""
-    def __init__(self, screen_width: int, screen_height: int):
-        self.screen_width = screen_width
-        self.screen_height = screen_height
+    def __init__(self, screen_width: int, screen_height: int) -> None:
+        self.screen_width: int = screen_width
+        self.screen_height: int = screen_height
         self.elements: Dict[str, UIElement] = {}
         self.init_ui()
     
-    def init_ui(self):
+    def init_ui(self) -> None:
         """Initialize UI elements"""
         # Health bar
         self.elements['health'] = HealthBar(20, 20, 200, 25)
@@ -347,12 +347,12 @@ class UIManager:
             500, 150
         )
     
-    def update(self, dt: float):
+    def update(self, dt: float) -> None:
         """Update all UI elements"""
         for element in self.elements.values():
             element.update(dt)
     
-    def render(self, surface: pygame.Surface):
+    def render(self, surface: pygame.Surface) -> None:
         """Render all UI elements"""
         for element in self.elements.values():
             element.render(surface)
@@ -367,21 +367,23 @@ class UIManager:
     <h2 id="advanced-ui-features">Advanced UI Features</h2>
     
     <pre class="language-python"><code># Inventory System
+from typing import Any, Optional
+
 class Inventory(UIElement):
     """Grid-based inventory UI"""
-    def __init__(self, x: int, y: int, cols: int, rows: int):
-        self.cols = cols
-        self.rows = rows
-        self.slot_size = 50
-        width = cols * self.slot_size
-        height = rows * self.slot_size
+    def __init__(self, x: int, y: int, cols: int, rows: int) -> None:
+        self.cols: int = cols
+        self.rows: int = rows
+        self.slot_size: int = 50
+        width: int = cols * self.slot_size
+        height: int = rows * self.slot_size
         super().__init__(x, y, width, height)
         
-        self.items = [[None for _ in range(cols)] for _ in range(rows)]
-        self.selected_slot = None
-        self.dragging_item = None
+        self.items: list[list[Any]] = [[None for _ in range(cols)] for _ in range(rows)]
+        self.selected_slot: Optional[Any] = None
+        self.dragging_item: Optional[Any] = None
         
-    def add_item(self, item) -> bool:
+    def add_item(self, item: Any) -> bool:
         """Add item to first available slot"""
         for y in range(self.rows):
             for x in range(self.cols):
@@ -393,13 +395,13 @@ class Inventory(UIElement):
 # Notification System
 class NotificationSystem:
     """Manages temporary notifications"""
-    def __init__(self):
-        self.notifications = []
-        self.position = (10, 100)
-        self.max_notifications = 5
+    def __init__(self) -> None:
+        self.notifications: list = []
+        self.position: tuple[int, int] = (10, 100)
+        self.max_notifications: int = 5
         
     def add_notification(self, text: str, duration: float = 3.0,
-                         color=(255, 255, 255), icon=None):
+                         color: tuple[int, int, int] = (255, 255, 255), icon: Optional[Any] = None) -> None:
         """Add a new notification"""
         self.notifications.append({
             'text': text,
@@ -417,12 +419,12 @@ class NotificationSystem:
 # Tooltip System
 class TooltipSystem:
     """Manages hover tooltips"""
-    def __init__(self):
-        self.current_tooltip = None
-        self.hover_time = 0
-        self.show_delay = 0.5
+    def __init__(self) -> None:
+        self.current_tooltip: Optional[dict] = None
+        self.hover_time: float = 0
+        self.show_delay: float = 0.5
         
-    def set_tooltip(self, text: str, x: int, y: int):
+    def set_tooltip(self, text: str, x: int, y: int) -> None:
         """Set tooltip for current frame"""
         self.current_tooltip = {
             'text': text,
@@ -496,17 +498,17 @@ font_md = pygame.font.SysFont(&apos;consolas&apos;, 17)
 
 # UIElement: abstract base -- every concrete element supplies update + render
 class UIElement:
-    def update(self, dt): pass
-    def render(self, surf): pass
+    def update(self, dt: float) -> None: pass
+    def render(self, surf: pygame.Surface) -> None: pass
 
 class HealthBar(UIElement):
-    def __init__(self, x, y, w, h):
-        self.rect = pygame.Rect(x, y, w, h)
-        self.target = 100; self.shown = 100.0; self.maxv = 100
-    def update(self, dt):
+    def __init__(self, x: int, y: int, w: int, h: int) -> None:
+        self.rect: pygame.Rect = pygame.Rect(x, y, w, h)
+        self.target: int = 100; self.shown: float = 100.0; self.maxv: int = 100
+    def update(self, dt: float) -> None:
         # Exponential approach: ease-out, no overshoot, frame-rate independent
         self.shown += (self.target - self.shown) * min(dt * 5, 1.0)
-    def render(self, surf):
+    def render(self, surf: pygame.Surface) -> None:
         pygame.draw.rect(surf, (35, 35, 45), self.rect)
         fw = int((self.shown / self.maxv) * self.rect.w)
         pygame.draw.rect(surf, (220, 60, 60), (self.rect.x, self.rect.y, fw, self.rect.h))
@@ -515,16 +517,16 @@ class HealthBar(UIElement):
         surf.blit(txt, txt.get_rect(center=self.rect.center))
 
 class Minimap(UIElement):
-    def __init__(self, x, y, sz):
-        self.rect = pygame.Rect(x, y, sz, sz)
-        self.world = (1200, 1200)              # WORLD bigger than scene area
-        self.player = [600.0, 600.0]
-    def world_to_map(self, wx, wy):
+    def __init__(self, x: int, y: int, sz: int) -> None:
+        self.rect: pygame.Rect = pygame.Rect(x, y, sz, sz)
+        self.world: tuple[int, int] = (1200, 1200)              # WORLD bigger than scene area
+        self.player: list[float] = [600.0, 600.0]
+    def world_to_map(self, wx: float, wy: float) -> tuple[int, int]:
         # Proportional projection: whole world compressed into rect.w x rect.h
         mx = self.rect.x + int((wx / self.world[0]) * self.rect.w)
         my = self.rect.y + int((wy / self.world[1]) * self.rect.h)
         return mx, my
-    def render(self, surf):
+    def render(self, surf: pygame.Surface) -> None:
         pygame.draw.rect(surf, (15, 22, 35), self.rect)
         for i in range(1, 5):
             x = self.rect.x + i * self.rect.w // 5
@@ -536,18 +538,18 @@ class Minimap(UIElement):
         pygame.draw.rect(surf, (200, 200, 210), self.rect, 2)
 
 class DialogBox(UIElement):
-    def __init__(self, x, y, w, h):
-        self.rect = pygame.Rect(x, y, w, h)
-        self.text = &apos;&apos;; self.shown = &apos;&apos;; self.progress = 0.0
-        self.cps = 28.0; self.active = False
-    def show(self, text):
+    def __init__(self, x: int, y: int, w: int, h: int) -> None:
+        self.rect: pygame.Rect = pygame.Rect(x, y, w, h)
+        self.text: str = &apos;&apos;; self.shown: str = &apos;&apos;; self.progress: float = 0.0
+        self.cps: float = 28.0; self.active: bool = False
+    def show(self, text: str) -> None:
         self.text = text; self.shown = &apos;&apos;; self.progress = 0.0; self.active = True
-    def update(self, dt):
+    def update(self, dt: float) -> None:
         if not self.active: return
         if self.progress &lt; len(self.text):
             self.progress += self.cps * dt
             self.shown = self.text[:int(self.progress)]
-    def render(self, surf):
+    def render(self, surf: pygame.Surface) -> None:
         if not self.active: return
         pygame.draw.rect(surf, (20, 20, 30), self.rect)
         pygame.draw.rect(surf, (139, 115, 85), self.rect, 3)
@@ -565,36 +567,39 @@ class DialogBox(UIElement):
 
 class FloatNumber(UIElement):
     &quot;&quot;&quot;Transient UI element -- bool-return cull pattern from chat-64.&quot;&quot;&quot;
-    def __init__(self, x, y, value, color):
-        self.x, self.y, self.value, self.color = x, y, value, color
-        self.life = 0.0; self.max_life = 1.0
-    def update(self, dt):
+    def __init__(self, x: int, y: int, value: int, color: tuple[int, int, int]) -> None:
+        self.x: int = x
+        self.y: float = y
+        self.value: int = value
+        self.color: tuple[int, int, int] = color
+        self.life: float = 0.0; self.max_life: float = 1.0
+    def update(self, dt: float) -> bool:
         self.life += dt; self.y -= 40 * dt
         return self.life &lt; self.max_life      # alive flag drives one-line cull
-    def render(self, surf):
+    def render(self, surf: pygame.Surface) -> None:
         a = max(0, 255 - int(255 * self.life / self.max_life))
         s = (&apos;+%d&apos; if self.value &gt; 0 else &apos;%d&apos;) % self.value
         txt = font_md.render(s, True, self.color); txt.set_alpha(a)
         surf.blit(txt, (self.x, self.y))
 
 class UIManager:
-    def __init__(self):
-        self.elements = {
+    def __init__(self) -> None:
+        self.elements: dict[str, UIElement] = {
             &apos;health&apos;:  HealthBar(20, 20, 220, 26),
             &apos;minimap&apos;: Minimap(WORLD_W - 150, 20, 130),
             &apos;dialog&apos;:  DialogBox(WORLD_W // 2 - 260, WORLD_H - 110, 520, 90),
         }
-        self.floats = []
-    def update(self, dt):
+        self.floats: list[FloatNumber] = []
+    def update(self, dt: float) -> None:
         for e in self.elements.values(): e.update(dt)        # polymorphic dispatch
         self.floats = [f for f in self.floats if f.update(dt)]   # bool-return cull
-    def render(self, surf):
+    def render(self, surf: pygame.Surface) -> None:
         for e in self.elements.values(): e.render(surf)      # same dispatch shape
         for f in self.floats: f.render(surf)
-    def damage(self, n):
+    def damage(self, n: int) -> None:
         h = self.elements[&apos;health&apos;]; h.target = max(0, h.target - n)
         self.floats.append(FloatNumber(60, 32, -n, (255, 90, 90)))
-    def heal(self, n):
+    def heal(self, n: int) -> None:
         h = self.elements[&apos;health&apos;]; h.target = min(h.maxv, h.target + n)
         self.floats.append(FloatNumber(60, 32, n, (90, 230, 110)))
 

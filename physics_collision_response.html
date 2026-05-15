@@ -604,12 +604,13 @@
     
     <pre class="language-python"><code>import pygame
 import math
+from typing import Any
 
 class CollisionSystem:
     """Basic collision detection and response"""
     
     @staticmethod
-    def check_circle_collision(obj1, obj2):
+    def check_circle_collision(obj1: Any, obj2: Any) -> bool:
         """Check if two circles are colliding"""
         dx = obj2.position.x - obj1.position.x
         dy = obj2.position.y - obj1.position.y
@@ -618,7 +619,7 @@ class CollisionSystem:
         return distance < (obj1.radius + obj2.radius)
     
     @staticmethod
-    def resolve_collision(obj1, obj2, restitution=0.8):
+    def resolve_collision(obj1: Any, obj2: Any, restitution: float = 0.8) -> None:
         """Resolve collision between two circular objects"""
         # Calculate collision vector
         dx = obj2.position.x - obj1.position.x
@@ -673,7 +674,7 @@ class CollisionSystem:
 # Momentum conservation
 class MomentumSystem:
     @staticmethod
-    def elastic_collision_1d(m1, v1, m2, v2):
+    def elastic_collision_1d(m1: float, v1: float, m2: float, v2: float) -> tuple[float, float]:
         """Calculate velocities after 1D elastic collision"""
         # Conservation of momentum and energy
         v1_final = ((m1 - m2) * v1 + 2 * m2 * v2) / (m1 + m2)
@@ -682,14 +683,14 @@ class MomentumSystem:
         return v1_final, v2_final
     
     @staticmethod
-    def inelastic_collision_1d(m1, v1, m2, v2):
+    def inelastic_collision_1d(m1: float, v1: float, m2: float, v2: float) -> tuple[float, float]:
         """Calculate velocity after perfectly inelastic collision"""
         # Objects stick together
         v_final = (m1 * v1 + m2 * v2) / (m1 + m2)
         return v_final, v_final
     
     @staticmethod
-    def partial_inelastic_collision(m1, v1, m2, v2, restitution):
+    def partial_inelastic_collision(m1: float, v1: float, m2: float, v2: float, restitution: float) -> tuple[float, float]:
         """Calculate velocities with coefficient of restitution"""
         # e = (v2_final - v1_final) / (v1_initial - v2_initial)
         v1_final = (m1 * v1 + m2 * v2 - m2 * restitution * (v1 - v2)) / (m1 + m2)
@@ -700,11 +701,12 @@ class MomentumSystem:
     <h2 id="advanced-collision-response">Advanced Collision Response</h2>
     
     <pre class="language-python"><code># 2D collision response with rotation
+from typing import Any, Optional
 class AdvancedCollisionResponse:
-    def __init__(self):
-        self.contact_points = []
+    def __init__(self) -> None:
+        self.contact_points: list[Any] = []
         
-    def resolve_collision_with_rotation(self, body1, body2, contact_point):
+    def resolve_collision_with_rotation(self, body1: Any, body2: Any, contact_point: pygame.math.Vector2) -> None:
         """Resolve collision including rotational effects"""
         # Vector from center of mass to contact point
         r1 = contact_point - body1.position
@@ -749,7 +751,7 @@ class AdvancedCollisionResponse:
         # Apply friction
         self.apply_friction(body1, body2, normal, impulse_magnitude, contact_point)
     
-    def apply_friction(self, body1, body2, normal, normal_impulse, contact_point):
+    def apply_friction(self, body1: Any, body2: Any, normal: pygame.math.Vector2, normal_impulse: float, contact_point: pygame.math.Vector2) -> None:
         """Apply friction at contact point"""
         # Calculate tangent vector
         r1 = contact_point - body1.position
@@ -787,7 +789,7 @@ class AdvancedCollisionResponse:
 # Continuous collision detection
 class ContinuousCollisionDetection:
     @staticmethod
-    def swept_circle_collision(obj1, obj2, dt):
+    def swept_circle_collision(obj1: Any, obj2: Any, dt: float) -> Optional[float]:
         """Detect collision between moving circles"""
         # Future positions
         future_pos1 = obj1.position + obj1.velocity * dt
@@ -809,7 +811,7 @@ class ContinuousCollisionDetection:
         return None  # No collision
     
     @staticmethod
-    def resolve_at_time(obj1, obj2, collision_time, dt):
+    def resolve_at_time(obj1: Any, obj2: Any, collision_time: float, dt: float) -> None:
         """Resolve collision at specific time"""
         # Move objects to collision point
         obj1.position += obj1.velocity * collision_time
@@ -826,9 +828,10 @@ class ContinuousCollisionDetection:
     <h2 id="separating-axis-theorem-sat">Separating Axis Theorem (SAT)</h2>
     
     <pre class="language-python"><code># SAT for polygon collision
+from typing import Any, Optional
 class SATCollision:
     @staticmethod
-    def get_axes(vertices):
+    def get_axes(vertices: list[tuple[float, float]]) -> list[pygame.math.Vector2]:
         """Get separating axes for a polygon"""
         axes = []
         for i in range(len(vertices)):
@@ -847,7 +850,7 @@ class SATCollision:
         return axes
     
     @staticmethod
-    def project_polygon(vertices, axis):
+    def project_polygon(vertices: list[tuple[float, float]], axis: pygame.math.Vector2) -> tuple[float, float]:
         """Project polygon onto axis"""
         min_proj = float('inf')
         max_proj = float('-inf')
@@ -860,7 +863,7 @@ class SATCollision:
         return min_proj, max_proj
     
     @staticmethod
-    def check_collision(poly1, poly2):
+    def check_collision(poly1: list[tuple[float, float]], poly2: list[tuple[float, float]]) -> Optional[dict]:
         """Check collision between two polygons using SAT"""
         axes = SATCollision.get_axes(poly1) + SATCollision.get_axes(poly2)
         
@@ -888,7 +891,7 @@ class SATCollision:
         }
     
     @staticmethod
-    def resolve_sat_collision(obj1, obj2, collision_data):
+    def resolve_sat_collision(obj1: Any, obj2: Any, collision_data: Optional[dict]) -> None:
         """Resolve collision based on SAT data"""
         if not collision_data:
             return
@@ -1410,7 +1413,7 @@ pygame.display.set_caption("Cushion-Bounce Billiards")
 clock = pygame.time.Clock()
 font = pygame.font.SysFont(None, 20)
 
-def reflect(I, N):
+def reflect(I: Vector2, N: Vector2) -> Vector2:
     """Vector reflection formula from chat-43 vectors lesson:
        R = I - 2 * (I . N) * N    (N must be a unit vector)"""
     return I - 2 * I.dot(N) * N
@@ -1428,12 +1431,12 @@ BUMPER_N = Vector2(math.sin(math.pi/4), -math.cos(math.pi/4)).normalize()
 BUMPER_R = 22
 
 class Ball:
-    def __init__(self):
-        self.position = Vector2(80, 80)
-        self.velocity = Vector2(280, -180)
-        self.bounces = 0
+    def __init__(self) -> None:
+        self.position: Vector2 = Vector2(80, 80)
+        self.velocity: Vector2 = Vector2(280, -180)
+        self.bounces: int = 0
 
-    def update(self, dt):
+    def update(self, dt: float) -> None:
         self.position += self.velocity * dt
         # Four walls
         for name, N, hit in WALLS:

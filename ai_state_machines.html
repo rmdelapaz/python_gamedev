@@ -1269,7 +1269,7 @@
     <h2 id="state-machine-implementation">State Machine Implementation</h2>
     
     <pre class="language-python"><code>from enum import Enum
-from typing import Dict, Optional, Any
+from typing import Any, Dict, List, Optional
 import random
 import math
 
@@ -1288,20 +1288,20 @@ class NPCState(Enum):
 
 class State:
     """Base state class"""
-    def __init__(self, name: NPCState, npc: 'NPC'):
-        self.name = name
-        self.npc = npc
-        self.entry_time = 0
+    def __init__(self, name: NPCState, npc: 'NPC') -> None:
+        self.name: NPCState = name
+        self.npc: 'NPC' = npc
+        self.entry_time: float = 0
     
-    def enter(self):
+    def enter(self) -> None:
         """Called when entering the state"""
         self.entry_time = 0
     
-    def execute(self, dt: float):
+    def execute(self, dt: float) -> None:
         """Update state logic"""
         self.entry_time += dt
     
-    def exit(self):
+    def exit(self) -> None:
         """Called when exiting the state"""
         pass
     
@@ -1311,18 +1311,18 @@ class State:
 
 class IdleState(State):
     """NPC idle behavior"""
-    def __init__(self, npc: 'NPC'):
+    def __init__(self, npc: 'NPC') -> None:
         super().__init__(NPCState.IDLE, npc)
-        self.idle_timer = 0
-        self.look_direction = 0
+        self.idle_timer: float = 0
+        self.look_direction: float = 0
     
-    def enter(self):
+    def enter(self) -> None:
         super().enter()
         self.idle_timer = 0
         self.look_direction = random.uniform(0, math.pi * 2)
         self.npc.velocity = (0, 0)
     
-    def execute(self, dt: float):
+    def execute(self, dt: float) -> None:
         super().execute(dt)
         self.idle_timer += dt
         
@@ -1340,16 +1340,16 @@ class IdleState(State):
 
 class PatrolState(State):
     """NPC patrol behavior"""
-    def __init__(self, npc: 'NPC'):
+    def __init__(self, npc: 'NPC') -> None:
         super().__init__(NPCState.PATROL, npc)
-        self.waypoints = []
-        self.current_waypoint = 0
+        self.waypoints: List[Dict[str, int]] = []
+        self.current_waypoint: int = 0
     
-    def enter(self):
+    def enter(self) -> None:
         super().enter()
         self.generate_waypoints()
     
-    def generate_waypoints(self):
+    def generate_waypoints(self) -> None:
         """Generate patrol route"""
         self.waypoints = []
         for _ in range(4):
@@ -1358,7 +1358,7 @@ class PatrolState(State):
                 'y': random.randint(50, 350)
             })
     
-    def execute(self, dt: float):
+    def execute(self, dt: float) -> None:
         super().execute(dt)
         
         if not self.waypoints:
@@ -1383,11 +1383,11 @@ class PatrolState(State):
 
 class AlertState(State):
     """NPC alert/detection behavior"""
-    def __init__(self, npc: 'NPC'):
+    def __init__(self, npc: 'NPC') -> None:
         super().__init__(NPCState.ALERT, npc)
-        self.alert_duration = 1.0
+        self.alert_duration: float = 1.0
     
-    def enter(self):
+    def enter(self) -> None:
         super().enter()
         self.npc.velocity = (0, 0)
         self.npc.last_known_player_pos = self.npc.get_player_position()
@@ -1395,7 +1395,7 @@ class AlertState(State):
         # Alert nearby NPCs
         self.npc.alert_nearby_npcs()
     
-    def execute(self, dt: float):
+    def execute(self, dt: float) -> None:
         super().execute(dt)
         
         # Face player
@@ -1418,10 +1418,10 @@ class AlertState(State):
 
 class ChaseState(State):
     """NPC chase behavior"""
-    def __init__(self, npc: 'NPC'):
+    def __init__(self, npc: 'NPC') -> None:
         super().__init__(NPCState.CHASE, npc)
     
-    def execute(self, dt: float):
+    def execute(self, dt: float) -> None:
         super().execute(dt)
         
         player_pos = self.npc.get_player_position()
@@ -1443,22 +1443,22 @@ class ChaseState(State):
 
 class StateMachine:
     """Finite State Machine for NPC AI"""
-    def __init__(self, npc: 'NPC'):
-        self.npc = npc
+    def __init__(self, npc: 'NPC') -> None:
+        self.npc: 'NPC' = npc
         self.states: Dict[NPCState, State] = {}
         self.current_state: Optional[State] = None
         self.previous_state: Optional[State] = None
         self.global_state: Optional[State] = None
         
         # Statistics
-        self.state_history = []
-        self.transition_count = 0
+        self.state_history: List[Dict[str, Any]] = []
+        self.transition_count: int = 0
     
-    def add_state(self, state: State):
+    def add_state(self, state: State) -> None:
         """Add a state to the machine"""
         self.states[state.name] = state
     
-    def change_state(self, new_state: NPCState):
+    def change_state(self, new_state: NPCState) -> None:
         """Transition to a new state"""
         if new_state not in self.states:
             print(f"State {new_state} not found")
@@ -1481,7 +1481,7 @@ class StateMachine:
         self.current_state.enter()
         self.transition_count += 1
     
-    def update(self, dt: float):
+    def update(self, dt: float) -> None:
         """Update state machine"""
         # Execute global state
         if self.global_state:
@@ -1497,39 +1497,39 @@ class StateMachine:
             return self.current_state.handle_message(message)
         return False
     
-    def revert_to_previous_state(self):
+    def revert_to_previous_state(self) -> None:
         """Return to previous state"""
         if self.previous_state:
             self.change_state(self.previous_state.name)
 
 class NPC:
     """NPC with state machine AI"""
-    def __init__(self, x: float, y: float, personality: str = 'neutral'):
-        self.position = [x, y]
-        self.velocity = (0, 0)
-        self.facing = 0
-        self.health = 100
-        self.personality = personality
+    def __init__(self, x: float, y: float, personality: str = 'neutral') -> None:
+        self.position: list[float] = [x, y]
+        self.velocity: tuple[float, float] = (0, 0)
+        self.facing: float = 0
+        self.health: int = 100
+        self.personality: str = personality
         
         # Movement speeds
-        self.patrol_speed = 50
-        self.chase_speed = 100
-        self.flee_speed = 120
+        self.patrol_speed: int = 50
+        self.chase_speed: int = 100
+        self.flee_speed: int = 120
         
         # Perception
-        self.vision_range = 100
-        self.vision_angle = math.pi / 3
-        self.hearing_range = 150
+        self.vision_range: int = 100
+        self.vision_angle: float = math.pi / 3
+        self.hearing_range: int = 150
         
         # Memory
-        self.last_known_player_pos = None
-        self.home_position = (x, y)
+        self.last_known_player_pos: Optional[tuple[float, float]] = None
+        self.home_position: tuple[float, float] = (x, y)
         
         # State machine
-        self.state_machine = StateMachine(self)
+        self.state_machine: StateMachine = StateMachine(self)
         self.initialize_states()
     
-    def initialize_states(self):
+    def initialize_states(self) -> None:
         """Setup state machine"""
         self.state_machine.add_state(IdleState(self))
         self.state_machine.add_state(PatrolState(self))
@@ -1540,7 +1540,7 @@ class NPC:
         # Set initial state
         self.state_machine.change_state(NPCState.IDLE)
     
-    def update(self, dt: float):
+    def update(self, dt: float) -> None:
         """Update NPC"""
         # Update state machine
         self.state_machine.update(dt)
@@ -1549,7 +1549,7 @@ class NPC:
         self.position[0] += self.velocity[0] * dt
         self.position[1] += self.velocity[1] * dt
     
-    def change_state(self, new_state: NPCState):
+    def change_state(self, new_state: NPCState) -> None:
         """Change NPC state"""
         self.state_machine.change_state(new_state)
     
@@ -1558,12 +1558,12 @@ class NPC:
         # Implementation depends on game world
         return False
     
-    def get_player_position(self) -> tuple:
+    def get_player_position(self) -> tuple[float, float]:
         """Get player position from world"""
         # Implementation depends on game world
         return (0, 0)
     
-    def alert_nearby_npcs(self):
+    def alert_nearby_npcs(self) -> None:
         """Alert other NPCs in range"""
         # Implementation depends on game world
         pass</code></pre>
@@ -1623,6 +1623,7 @@ class NPC:
                     <summary>✅ Example Solution</summary>
                     <pre><code>import pygame, math, random
 from enum import Enum
+from typing import Optional
 
 WIDTH, HEIGHT = 800, 480
 pygame.init(); screen = pygame.display.set_mode((WIDTH, HEIGHT)); clock = pygame.time.Clock()
@@ -1635,25 +1636,25 @@ COLORS = {NPCState.IDLE:(140,140,140), NPCState.PATROL:(80,140,220),
           NPCState.ALERT:(240,210,60), NPCState.CHASE:(220,60,60), NPCState.FLEE:(220,80,200)}
 
 class State:
-    def __init__(self, name, npc): self.name=name; self.npc=npc; self.entry_time=0
-    def enter(self): self.entry_time=0
-    def execute(self, dt): self.entry_time += dt
-    def exit(self): pass
+    def __init__(self, name: NPCState, npc: 'NPC') -> None: self.name: NPCState = name; self.npc: 'NPC' = npc; self.entry_time: float = 0
+    def enter(self) -> None: self.entry_time = 0
+    def execute(self, dt: float) -> None: self.entry_time += dt
+    def exit(self) -> None: pass
 
 class IdleState(State):
-    def __init__(self, npc): super().__init__(NPCState.IDLE, npc)
-    def enter(self): super().enter(); self.npc.vel=(0,0)
-    def execute(self, dt):
+    def __init__(self, npc: 'NPC') -> None: super().__init__(NPCState.IDLE, npc)
+    def enter(self) -> None: super().enter(); self.npc.vel=(0,0)
+    def execute(self, dt: float) -> None:
         super().execute(dt)
         if self.npc.distance_to_player() &lt; 200: self.npc.fsm.change_state(NPCState.ALERT)
         elif self.entry_time &gt; 2.0: self.npc.fsm.change_state(NPCState.PATROL)
 
 class PatrolState(State):
-    def __init__(self, npc): super().__init__(NPCState.PATROL, npc); self.waypoints=[]; self.idx=0
-    def enter(self):
+    def __init__(self, npc: 'NPC') -> None: super().__init__(NPCState.PATROL, npc); self.waypoints: list[tuple[int, int]] = []; self.idx: int = 0
+    def enter(self) -> None:
         super().enter()
         self.waypoints=[(random.randint(60,740), random.randint(60,420)) for _ in range(3)]; self.idx=0
-    def execute(self, dt):
+    def execute(self, dt: float) -> None:
         super().execute(dt)
         if self.npc.distance_to_player() &lt; 200: self.npc.fsm.change_state(NPCState.ALERT); return
         tx,ty = self.waypoints[self.idx]
@@ -1662,34 +1663,34 @@ class PatrolState(State):
         else: self.npc.vel=(dx/d*70, dy/d*70)
 
 class AlertState(State):
-    def __init__(self, npc): super().__init__(NPCState.ALERT, npc)
-    def enter(self): super().enter(); self.npc.vel=(0,0)
-    def execute(self, dt):
+    def __init__(self, npc: 'NPC') -> None: super().__init__(NPCState.ALERT, npc)
+    def enter(self) -> None: super().enter(); self.npc.vel=(0,0)
+    def execute(self, dt: float) -> None:
         super().execute(dt)
         if self.entry_time &gt;= 1.0:
             if self.npc.personality == 'coward': self.npc.fsm.change_state(NPCState.FLEE)
             else: self.npc.fsm.change_state(NPCState.CHASE)
 
 class ChaseState(State):
-    def __init__(self, npc): super().__init__(NPCState.CHASE, npc)
-    def execute(self, dt):
+    def __init__(self, npc: 'NPC') -> None: super().__init__(NPCState.CHASE, npc)
+    def execute(self, dt: float) -> None:
         super().execute(dt); d = self.npc.distance_to_player()
         if d &gt; 300: self.npc.fsm.change_state(NPCState.IDLE); return
         dx,dy = self.npc.player[0]-self.npc.pos[0], self.npc.player[1]-self.npc.pos[1]
         self.npc.vel=(dx/d*150, dy/d*150)
 
 class FleeState(State):
-    def __init__(self, npc): super().__init__(NPCState.FLEE, npc)
-    def execute(self, dt):
+    def __init__(self, npc: 'NPC') -> None: super().__init__(NPCState.FLEE, npc)
+    def execute(self, dt: float) -> None:
         super().execute(dt); d = self.npc.distance_to_player()
         if d &gt; 300: self.npc.fsm.change_state(NPCState.IDLE); return
         dx,dy = self.npc.player[0]-self.npc.pos[0], self.npc.player[1]-self.npc.pos[1]
         self.npc.vel=(-dx/d*180, -dy/d*180)
 
 class StateMachine:
-    def __init__(self, npc): self.npc=npc; self.states={}; self.current=None; self.history=[]; self.count=0
-    def add_state(self, st): self.states[st.name]=st
-    def change_state(self, new_name):
+    def __init__(self, npc: 'NPC') -> None: self.npc: 'NPC' = npc; self.states: dict[NPCState, State] = {}; self.current: Optional[State] = None; self.history: list[tuple[str, str, float]] = []; self.count: int = 0
+    def add_state(self, st: State) -> None: self.states[st.name]=st
+    def change_state(self, new_name: NPCState) -> None:
         if new_name not in self.states: return
         old = self.current.name if self.current else None
         if self.current: self.current.exit()              # 1. exit OLD
@@ -1699,19 +1700,19 @@ class StateMachine:
         self.history.append((old.value if old else 'init', new_name.value,
                              round(pygame.time.get_ticks()/1000, 2)))
         if len(self.history) &gt; 8: self.history.pop(0)
-    def update(self, dt):
+    def update(self, dt: float) -> None:
         if self.current: self.current.execute(dt)
 
 class NPC:
-    def __init__(self, x, y, personality='neutral'):
-        self.pos=[x,y]; self.vel=(0,0); self.personality=personality; self.player=(0,0)
-        self.fsm=StateMachine(self)
+    def __init__(self, x: float, y: float, personality: str = 'neutral') -> None:
+        self.pos: list[float] = [x, y]; self.vel: tuple[float, float] = (0, 0); self.personality: str = personality; self.player: tuple[float, float] = (0, 0)
+        self.fsm: StateMachine = StateMachine(self)
         for cls in (IdleState, PatrolState, AlertState, ChaseState, FleeState):
             self.fsm.add_state(cls(self))
         self.fsm.change_state(NPCState.IDLE)
-    def distance_to_player(self):
+    def distance_to_player(self) -> float:
         return math.hypot(self.player[0]-self.pos[0], self.player[1]-self.pos[1])
-    def update(self, dt, player_pos):
+    def update(self, dt: float, player_pos: tuple[float, float]) -> None:
         self.player = player_pos; self.fsm.update(dt)
         self.pos[0] += self.vel[0]*dt; self.pos[1] += self.vel[1]*dt
 

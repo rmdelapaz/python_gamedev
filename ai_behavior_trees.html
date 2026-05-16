@@ -1363,7 +1363,7 @@
     <h2 id="behavior-tree-implementation">Behavior Tree Implementation</h2>
     
     <pre class="language-python"><code>from enum import Enum
-from typing import List, Optional, Callable
+from typing import Any, Callable, List, Optional
 import random
 
 class NodeState(Enum):
@@ -1374,8 +1374,8 @@ class NodeState(Enum):
 
 class BehaviorNode:
     """Base class for behavior tree nodes"""
-    def __init__(self, name: str = "Node"):
-        self.name = name
+    def __init__(self, name: str = "Node") -> None:
+        self.name: str = name
         self.parent: Optional['BehaviorNode'] = None
         self.children: List['BehaviorNode'] = []
     
@@ -1385,11 +1385,11 @@ class BehaviorNode:
         self.children.append(child)
         return self
     
-    def tick(self, agent, blackboard: dict) -> NodeState:
+    def tick(self, agent: Any, blackboard: dict) -> NodeState:
         """Execute node logic"""
         return NodeState.SUCCESS
     
-    def reset(self):
+    def reset(self) -> None:
         """Reset node state"""
         for child in self.children:
             child.reset()
@@ -1397,11 +1397,11 @@ class BehaviorNode:
 # Composite Nodes
 class Selector(BehaviorNode):
     """Try children until one succeeds (OR)"""
-    def __init__(self, name: str = "Selector"):
+    def __init__(self, name: str = "Selector") -> None:
         super().__init__(name)
-        self.current_child = 0
+        self.current_child: int = 0
     
-    def tick(self, agent, blackboard: dict) -> NodeState:
+    def tick(self, agent: Any, blackboard: dict) -> NodeState:
         for i in range(self.current_child, len(self.children)):
             child = self.children[i]
             result = child.tick(agent, blackboard)
@@ -1416,17 +1416,17 @@ class Selector(BehaviorNode):
         self.current_child = 0
         return NodeState.FAILURE
     
-    def reset(self):
+    def reset(self) -> None:
         super().reset()
         self.current_child = 0
 
 class Sequence(BehaviorNode):
     """Execute children in order (AND)"""
-    def __init__(self, name: str = "Sequence"):
+    def __init__(self, name: str = "Sequence") -> None:
         super().__init__(name)
-        self.current_child = 0
+        self.current_child: int = 0
     
-    def tick(self, agent, blackboard: dict) -> NodeState:
+    def tick(self, agent: Any, blackboard: dict) -> NodeState:
         for i in range(self.current_child, len(self.children)):
             child = self.children[i]
             result = child.tick(agent, blackboard)
@@ -1441,7 +1441,7 @@ class Sequence(BehaviorNode):
         self.current_child = 0
         return NodeState.SUCCESS
     
-    def reset(self):
+    def reset(self) -> None:
         super().reset()
         self.current_child = 0
 
@@ -1449,12 +1449,12 @@ class Parallel(BehaviorNode):
     """Execute children simultaneously"""
     def __init__(self, success_threshold: int = -1, 
                  failure_threshold: int = -1, 
-                 name: str = "Parallel"):
+                 name: str = "Parallel") -> None:
         super().__init__(name)
-        self.success_threshold = success_threshold
-        self.failure_threshold = failure_threshold
+        self.success_threshold: int = success_threshold
+        self.failure_threshold: int = failure_threshold
     
-    def tick(self, agent, blackboard: dict) -> NodeState:
+    def tick(self, agent: Any, blackboard: dict) -> NodeState:
         success_count = 0
         failure_count = 0
         running_count = 0
@@ -1482,10 +1482,10 @@ class Parallel(BehaviorNode):
 
 class RandomSelector(BehaviorNode):
     """Select random child to execute"""
-    def __init__(self, name: str = "RandomSelector"):
+    def __init__(self, name: str = "RandomSelector") -> None:
         super().__init__(name)
     
-    def tick(self, agent, blackboard: dict) -> NodeState:
+    def tick(self, agent: Any, blackboard: dict) -> NodeState:
         if not self.children:
             return NodeState.FAILURE
         
@@ -1496,17 +1496,17 @@ class RandomSelector(BehaviorNode):
 class Decorator(BehaviorNode):
     """Base decorator node"""
     def __init__(self, child: Optional[BehaviorNode] = None, 
-                 name: str = "Decorator"):
+                 name: str = "Decorator") -> None:
         super().__init__(name)
         if child:
             self.add_child(child)
 
 class Inverter(Decorator):
     """Invert child result"""
-    def __init__(self, child: Optional[BehaviorNode] = None):
+    def __init__(self, child: Optional[BehaviorNode] = None) -> None:
         super().__init__(child, "Inverter")
     
-    def tick(self, agent, blackboard: dict) -> NodeState:
+    def tick(self, agent: Any, blackboard: dict) -> NodeState:
         if not self.children:
             return NodeState.FAILURE
         
@@ -1522,12 +1522,12 @@ class Inverter(Decorator):
 class Repeater(Decorator):
     """Repeat child execution"""
     def __init__(self, child: Optional[BehaviorNode] = None, 
-                 times: int = -1):
+                 times: int = -1) -> None:
         super().__init__(child, f"Repeater({times})")
-        self.times = times
-        self.count = 0
+        self.times: int = times
+        self.count: int = 0
     
-    def tick(self, agent, blackboard: dict) -> NodeState:
+    def tick(self, agent: Any, blackboard: dict) -> NodeState:
         if not self.children:
             return NodeState.FAILURE
         
@@ -1550,12 +1550,12 @@ class Repeater(Decorator):
 class Cooldown(Decorator):
     """Add cooldown to child execution"""
     def __init__(self, child: Optional[BehaviorNode] = None, 
-                 cooldown_time: float = 1.0):
+                 cooldown_time: float = 1.0) -> None:
         super().__init__(child, f"Cooldown({cooldown_time}s)")
-        self.cooldown_time = cooldown_time
-        self.last_execution = 0
+        self.cooldown_time: float = cooldown_time
+        self.last_execution: float = 0
     
-    def tick(self, agent, blackboard: dict) -> NodeState:
+    def tick(self, agent: Any, blackboard: dict) -> NodeState:
         import time
         current_time = time.time()
         
@@ -1575,55 +1575,55 @@ class Cooldown(Decorator):
 # Leaf Nodes
 class Condition(BehaviorNode):
     """Check condition"""
-    def __init__(self, condition_func: Callable, name: str = "Condition"):
+    def __init__(self, condition_func: Callable, name: str = "Condition") -> None:
         super().__init__(name)
-        self.condition_func = condition_func
+        self.condition_func: Callable = condition_func
     
-    def tick(self, agent, blackboard: dict) -> NodeState:
+    def tick(self, agent: Any, blackboard: dict) -> NodeState:
         if self.condition_func(agent, blackboard):
             return NodeState.SUCCESS
         return NodeState.FAILURE
 
 class Action(BehaviorNode):
     """Execute action"""
-    def __init__(self, action_func: Callable, name: str = "Action"):
+    def __init__(self, action_func: Callable, name: str = "Action") -> None:
         super().__init__(name)
-        self.action_func = action_func
+        self.action_func: Callable = action_func
     
-    def tick(self, agent, blackboard: dict) -> NodeState:
+    def tick(self, agent: Any, blackboard: dict) -> NodeState:
         return self.action_func(agent, blackboard)
 
 # Blackboard for sharing data
 class Blackboard:
     """Shared memory for behavior tree"""
-    def __init__(self):
-        self.data = {}
+    def __init__(self) -> None:
+        self.data: dict[str, Any] = {}
     
-    def get(self, key: str, default=None):
+    def get(self, key: str, default: Any = None) -> Any:
         return self.data.get(key, default)
     
-    def set(self, key: str, value):
+    def set(self, key: str, value: Any) -> None:
         self.data[key] = value
     
     def has(self, key: str) -> bool:
         return key in self.data
     
-    def remove(self, key: str):
+    def remove(self, key: str) -> None:
         if key in self.data:
             del self.data[key]
 
 # Behavior Tree Manager
 class BehaviorTree:
     """Manage behavior tree execution"""
-    def __init__(self, root: BehaviorNode):
-        self.root = root
-        self.blackboard = Blackboard()
+    def __init__(self, root: BehaviorNode) -> None:
+        self.root: BehaviorNode = root
+        self.blackboard: Blackboard = Blackboard()
     
-    def tick(self, agent) -> NodeState:
+    def tick(self, agent: Any) -> NodeState:
         """Execute behavior tree"""
         return self.root.tick(agent, self.blackboard)
     
-    def reset(self):
+    def reset(self) -> None:
         """Reset tree state"""
         self.root.reset()</code></pre>
 
@@ -1686,6 +1686,7 @@ class BehaviorTree:
                     <summary>✅ Example Solution</summary>
                     <pre><code>import pygame, sys, time, math, random
 from enum import Enum
+from typing import Any, Callable, Optional
 pygame.init()
 W, H, CELL, SIDEBAR = 768, 480, 32, 320
 screen = pygame.display.set_mode((W + SIDEBAR, H))
@@ -1695,18 +1696,20 @@ clock = pygame.time.Clock()
 class S(Enum):
     SUCCESS, FAILURE, RUNNING = 'S', 'F', 'R'
 
-def dist(a, b): return math.hypot(a[0]-b[0], a[1]-b[1])
+def dist(a: Any, b: Any) -> float: return math.hypot(a[0]-b[0], a[1]-b[1])
 
 class Node:
-    def __init__(self, name): self.name, self.last = name, None
-    def tick(self, a): self.last = S.SUCCESS; return S.SUCCESS
+    def __init__(self, name: str) -> None:
+        self.name: str = name
+        self.last: Optional[S] = None
+    def tick(self, a: Any) -> S: self.last = S.SUCCESS; return S.SUCCESS
 
 class Composite(Node):
-    def __init__(self, name): super().__init__(name); self.children = []; self.cc = 0
-    def add(self, c): self.children.append(c); return self
+    def __init__(self, name: str) -> None: super().__init__(name); self.children: list[Node] = []; self.cc: int = 0
+    def add(self, c: Node) -> 'Composite': self.children.append(c); return self
 
 class Selector(Composite):
-    def tick(self, a):
+    def tick(self, a: Any) -> S:
         for i in range(self.cc, len(self.children)):
             r = self.children[i].tick(a)
             if r == S.SUCCESS: self.cc = 0; self.last = r; return r
@@ -1714,7 +1717,7 @@ class Selector(Composite):
         self.cc = 0; self.last = S.FAILURE; return S.FAILURE
 
 class Sequence(Composite):
-    def tick(self, a):
+    def tick(self, a: Any) -> S:
         for i in range(self.cc, len(self.children)):
             r = self.children[i].tick(a)
             if r == S.FAILURE: self.cc = 0; self.last = r; return r
@@ -1722,51 +1725,54 @@ class Sequence(Composite):
         self.cc = 0; self.last = S.SUCCESS; return S.SUCCESS
 
 class Cond(Node):
-    def __init__(self, name, fn): super().__init__(name); self.fn = fn
-    def tick(self, a): r = S.SUCCESS if self.fn(a) else S.FAILURE; self.last = r; return r
+    def __init__(self, name: str, fn: Callable) -> None: super().__init__(name); self.fn: Callable = fn
+    def tick(self, a: Any) -> S: r = S.SUCCESS if self.fn(a) else S.FAILURE; self.last = r; return r
 
 class Act(Node):
-    def __init__(self, name, fn): super().__init__(name); self.fn = fn
-    def tick(self, a): r = self.fn(a); self.last = r; return r
+    def __init__(self, name: str, fn: Callable) -> None: super().__init__(name); self.fn: Callable = fn
+    def tick(self, a: Any) -> S: r = self.fn(a); self.last = r; return r
 
 class Cooldown(Node):
-    def __init__(self, child, secs):
-        super().__init__(f'Cd({secs}s)'); self.child, self.secs, self.t0 = child, secs, 0
-    def tick(self, a):
+    def __init__(self, child: Node, secs: float) -> None:
+        super().__init__(f'Cd({secs}s)')
+        self.child: Node = child
+        self.secs: float = secs
+        self.t0: float = 0
+    def tick(self, a: Any) -> S:
         if time.time() - self.t0 &lt; self.secs: self.last = S.FAILURE; return S.FAILURE
         r = self.child.tick(a)
         if r == S.SUCCESS: self.t0 = time.time()
         self.last = r; return r
-    def remaining_ms(self): return max(0, int((self.secs - (time.time() - self.t0)) * 1000))
+    def remaining_ms(self) -> int: return max(0, int((self.secs - (time.time() - self.t0)) * 1000))
 
 class World: pass
 world = World(); world.enemies = []; world.resources = []
 agent = type('Ag', (), {})(); agent.pos = [4*CELL, 7*CELL]; agent.home = (4*CELL, 7*CELL)
 agent.carrying = False; agent.score = 0; agent.world = world
 
-def flee(a):
+def flee(a: Any) -> S:
     if not a.world.enemies: return S.FAILURE
     e = a.world.enemies[0]; dx, dy = a.pos[0]-e[0], a.pos[1]-e[1]; d = math.hypot(dx, dy) or 1
     a.pos[0] += dx/d * 4; a.pos[1] += dy/d * 4
     return S.SUCCESS if dist(a.pos, a.home) &gt; 60 else S.RUNNING
 
-def move_to(a, t):
+def move_to(a: Any, t: Any) -> S:
     dx, dy = t[0]-a.pos[0], t[1]-a.pos[1]; d = math.hypot(dx, dy)
     if d &lt; 8: return S.SUCCESS
     a.pos[0] += dx/d * 4; a.pos[1] += dy/d * 4; return S.RUNNING
 
-def move_to_res(a): return move_to(a, a.world.resources[0]) if a.world.resources else S.FAILURE
-def move_home(a): return move_to(a, a.home)
-def pickup(a):
+def move_to_res(a: Any) -> S: return move_to(a, a.world.resources[0]) if a.world.resources else S.FAILURE
+def move_home(a: Any) -> S: return move_to(a, a.home)
+def pickup(a: Any) -> S:
     if a.world.resources: a.world.resources.pop(0); a.carrying = True; return S.SUCCESS
     return S.FAILURE
-def deposit(a):
+def deposit(a: Any) -> S:
     if a.carrying and dist(a.pos, a.home) &lt; 24: a.carrying = False; a.score += 1; return S.SUCCESS
     return S.FAILURE
 
 flee_act = Act('Flee', flee); cd = Cooldown(flee_act, 2.0); cooldown_on = False
 
-def build_tree():
+def build_tree() -> tuple[Selector, Sequence]:
     root = Selector('Worker'); combat = Sequence('Combat')
     combat.add(Cond('EnemyNear?', lambda a: bool(a.world.enemies) and dist(a.pos, a.world.enemies[0]) &lt; 150))
     combat.add(cd if cooldown_on else flee_act)
@@ -1780,7 +1786,7 @@ def build_tree():
 root, gather = build_tree(); tick_n = 0; paused = False
 COLOR = {S.SUCCESS:(76,175,80), S.FAILURE:(244,67,54), S.RUNNING:(255,193,7), None:(158,158,158)}
 
-def draw_tree(node, x, y):
+def draw_tree(node: Node, x: int, y: int) -> None:
     pygame.draw.rect(screen, COLOR[node.last], (x, y, 140, 22))
     if node.last == S.RUNNING and not getattr(node, 'children', None):
         pygame.draw.rect(screen, (255,140,0), (x, y, 140, 22), 3)

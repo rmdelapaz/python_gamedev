@@ -73,16 +73,16 @@
     <pre class="language-python"><code>import math
 import random
 from enum import Enum
-from typing import Dict, List, Tuple, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 class UtilityAI:
     """Utility-based AI decision system"""
-    def __init__(self, agent):
-        self.agent = agent
-        self.actions = []
+    def __init__(self, agent: Any) -> None:
+        self.agent: Any = agent
+        self.actions: list[dict[str, Any]] = []
         self.setup_actions()
     
-    def setup_actions(self):
+    def setup_actions(self) -> None:
         """Define available actions with scoring functions"""
         self.actions = [
             {
@@ -288,17 +288,18 @@ class UtilityAI:
                 <details>
                     <summary>✅ Example Solution</summary>
                     <pre><code>import pygame, sys, math, random
+from typing import Any, Optional
 pygame.init()
 W, H, SIDEBAR = 768, 480, 320
 screen = pygame.display.set_mode((W + SIDEBAR, H))
 font = pygame.font.SysFont('Consolas', 13)
 clock = pygame.time.Clock()
 
-def linear(v): return max(0.0, min(1.0, v))
-def quadratic(v): return v * v
-def exponential(v, p=3): return math.pow(max(0.0, v), p)
-def sigmoid(v, k=10, c=0.5): return 1 / (1 + math.exp(-k * (v - c)))
-def gaussian(v, c=0.5, w=0.2): return math.exp(-((v - c) ** 2) / (2 * w * w))
+def linear(v: float) -> float: return max(0.0, min(1.0, v))
+def quadratic(v: float) -> float: return v * v
+def exponential(v: float, p: float = 3) -> float: return math.pow(max(0.0, v), p)
+def sigmoid(v: float, k: float = 10, c: float = 0.5) -> float: return 1 / (1 + math.exp(-k * (v - c)))
+def gaussian(v: float, c: float = 0.5, w: float = 0.2) -> float: return math.exp(-((v - c) ** 2) / (2 * w * w))
 CURVES = [('linear', linear), ('quadratic', quadratic), ('exponential', exponential),
           ('sigmoid', sigmoid), ('gaussian', gaussian)]
 hunger_curve_i = 3  # default sigmoid
@@ -309,38 +310,38 @@ agent.needs = {'hunger': 0.4, 'health': 1.0, 'safety': 1.0, 'stim': 0.5}
 agent.personality = {'aggression': 0.5, 'caution': 0.5, 'curiosity': 0.5}
 world = type('Wd', (), {})(); world.foods, world.enemies, world.threats = [], [], []
 
-def dist_to(a, p): return math.hypot(a.pos[0]-p[0], a.pos[1]-p[1])
-def nearest(a, things): return min(things, key=lambda t: dist_to(a, t)) if things else None
+def dist_to(a: Any, p: tuple[int, int]) -> float: return math.hypot(a.pos[0]-p[0], a.pos[1]-p[1])
+def nearest(a: Any, things: list[tuple[int, int]]) -> Optional[tuple[int, int]]: return min(things, key=lambda t: dist_to(a, t)) if things else None
 
-def can_eat(a): return bool(world.foods)
-def can_fight(a): return bool(world.enemies)
-def can_flee(a): return bool(world.threats)
-def can_explore(a): return True
+def can_eat(a: Any) -> bool: return bool(world.foods)
+def can_fight(a: Any) -> bool: return bool(world.enemies)
+def can_flee(a: Any) -> bool: return bool(world.threats)
+def can_explore(a: Any) -> bool: return True
 
-def score_eat(a):
+def score_eat(a: Any) -> float:
     f = nearest(a, world.foods)
     if not f: return 0.0
     d_score = 1 - min(1.0, dist_to(a, f) / 500)
     h_score = CURVES[hunger_curve_i][1](a.needs['hunger'])
     return h_score * d_score
 
-def score_fight(a):
+def score_fight(a: Any) -> float:
     if not world.enemies: return 0.0
     return sigmoid(a.needs['health'])
 
-def score_flee(a):
+def score_flee(a: Any) -> float:
     if not world.threats: return 0.0
     return exponential(1 - a.needs['safety']) * (1 - a.needs['health'] * 0.5)
 
-def score_explore(a):
+def score_explore(a: Any) -> float:
     return (1 - a.needs['stim']) * a.needs['safety'] * 0.5
 
 ACTIONS = [('eat', can_eat, score_eat), ('fight', can_fight, score_fight),
            ('flee', can_flee, score_flee), ('explore', can_explore, score_explore)]
 PMOD = {'eat': None, 'fight': 'aggression', 'flee': 'caution', 'explore': 'curiosity'}
-def personality_mod(name): return 1.0 if PMOD[name] is None else agent.personality[PMOD[name]]
+def personality_mod(name: str) -> float: return 1.0 if PMOD[name] is None else agent.personality[PMOD[name]]
 
-def decide(a):
+def decide(a: Any) -> tuple[str, dict[str, Optional[float]]]:
     best, best_s, scores = 'idle', float('-inf'), {}
     for name, req, sf in ACTIONS:
         if not req(a): scores[name] = None; continue
@@ -349,7 +350,7 @@ def decide(a):
         if s &gt; best_s: best_s, best = s, name
     return best, scores
 
-def take_action(a, name):
+def take_action(a: Any, name: str) -> None:
     if name == 'eat':
         f = nearest(a, world.foods)
         if f:
@@ -375,7 +376,7 @@ def take_action(a, name):
         a.pos[0] += random.choice([-2, 2]); a.pos[1] += random.choice([-2, 2])
         a.needs['stim'] = min(1.0, a.needs['stim'] + 0.005)
 
-def tick_needs(a):
+def tick_needs(a: Any) -> None:
     a.needs['hunger'] = min(1.0, a.needs['hunger'] + 0.0008)
     a.needs['stim'] = max(0.0, a.needs['stim'] - 0.0005)
     if world.threats: a.needs['safety'] = max(0.0, a.needs['safety'] - 0.002)

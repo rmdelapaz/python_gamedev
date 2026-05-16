@@ -1247,9 +1247,9 @@ from typing import List, Tuple
 
 class Vector2D:
     """2D Vector helper class"""
-    def __init__(self, x: float = 0, y: float = 0):
-        self.x = x
-        self.y = y
+    def __init__(self, x: float = 0, y: float = 0) -> None:
+        self.x: float = x
+        self.y: float = y
     
     def add(self, other: 'Vector2D') -> 'Vector2D':
         return Vector2D(self.x + other.x, self.y + other.y)
@@ -1287,29 +1287,29 @@ class Vector2D:
 
 class Boid:
     """Individual boid in the flock"""
-    def __init__(self, x: float, y: float, max_speed: float = 150):
-        self.position = Vector2D(x, y)
-        self.velocity = Vector2D(random.uniform(-1, 1), random.uniform(-1, 1))
-        self.acceleration = Vector2D(0, 0)
+    def __init__(self, x: float, y: float, max_speed: float = 150) -> None:
+        self.position: Vector2D = Vector2D(x, y)
+        self.velocity: Vector2D = Vector2D(random.uniform(-1, 1), random.uniform(-1, 1))
+        self.acceleration: Vector2D = Vector2D(0, 0)
         
         # Movement constraints
-        self.max_speed = max_speed
-        self.max_force = 0.2
+        self.max_speed: float = max_speed
+        self.max_force: float = 0.2
         
         # Perception
-        self.vision_range = 50
-        self.vision_angle = math.radians(270)
+        self.vision_range: int = 50
+        self.vision_angle: float = math.radians(270)
         
         # Behavior weights
-        self.separation_weight = 1.5
-        self.alignment_weight = 1.0
-        self.cohesion_weight = 1.0
+        self.separation_weight: float = 1.5
+        self.alignment_weight: float = 1.0
+        self.cohesion_weight: float = 1.0
         
         # Visual
-        self.size = 5
-        self.color = (76, 175, 80)
+        self.size: int = 5
+        self.color: tuple[int, int, int] = (76, 175, 80)
     
-    def flock(self, boids: List['Boid']):
+    def flock(self, boids: List['Boid']) -> None:
         """Apply flocking rules"""
         neighbors = self.get_neighbors(boids)
         
@@ -1441,7 +1441,7 @@ class Boid:
         
         return steer
     
-    def update(self, dt: float):
+    def update(self, dt: float) -> None:
         """Update boid position"""
         # Update velocity
         self.velocity = self.velocity.add(self.acceleration)
@@ -1454,7 +1454,7 @@ class Boid:
         # Reset acceleration
         self.acceleration = Vector2D(0, 0)
     
-    def edges(self, width: int, height: int):
+    def edges(self, width: int, height: int) -> None:
         """Wrap around screen edges"""
         if self.position.x < 0:
             self.position.x = width
@@ -1466,7 +1466,7 @@ class Boid:
         elif self.position.y > height:
             self.position.y = 0
     
-    def draw(self, screen: pygame.Surface):
+    def draw(self, screen: pygame.Surface) -> None:
         """Draw the boid"""
         # Calculate angle for rotation
         angle = math.degrees(self.velocity.angle())
@@ -1552,36 +1552,39 @@ N, VISION_RANGE, VISION_ANGLE = 30, 50, math.radians(270)
 MAX_SPEED, MAX_FORCE, DESIRED_SEP = 150, 0.2, 25
 
 class V:
-    def __init__(s, x=0, y=0): s.x, s.y = x, y
-    def add(s, o): return V(s.x + o.x, s.y + o.y)
-    def sub(s, o): return V(s.x - o.x, s.y - o.y)
-    def mul(s, k): return V(s.x * k, s.y * k)
-    def div(s, k): return V(s.x / k, s.y / k) if k else V()
-    def mag(s): return math.hypot(s.x, s.y)
-    def norm(s):
+    def __init__(s, x: float = 0, y: float = 0) -> None:
+        s.x: float = x
+        s.y: float = y
+    def add(s, o: 'V') -> 'V': return V(s.x + o.x, s.y + o.y)
+    def sub(s, o: 'V') -> 'V': return V(s.x - o.x, s.y - o.y)
+    def mul(s, k: float) -> 'V': return V(s.x * k, s.y * k)
+    def div(s, k: float) -> 'V': return V(s.x / k, s.y / k) if k else V()
+    def mag(s) -> float: return math.hypot(s.x, s.y)
+    def norm(s) -> 'V':
         m = s.mag()
         return s.div(m) if m else V()
-    def limit(s, m):
+    def limit(s, m: float) -> 'V':
         return s.norm().mul(m) if s.mag() &gt; m else s
 
-def reynolds(desired, vel):
+def reynolds(desired: 'V', vel: 'V') -> 'V':
     return desired.norm().mul(MAX_SPEED).sub(vel).limit(MAX_FORCE)
 
 class Boid:
-    def __init__(s, x, y):
-        s.p, s.a = V(x, y), V()
+    def __init__(s, x: float, y: float) -> None:
+        s.p: V = V(x, y)
+        s.a: V = V()
         ang = random.uniform(0, 2 * math.pi)
-        s.v = V(math.cos(ang) * 80, math.sin(ang) * 80)
-        s.last = (V(), V(), V())
+        s.v: V = V(math.cos(ang) * 80, math.sin(ang) * 80)
+        s.last: tuple[V, V, V] = (V(), V(), V())
 
-    def can_see(s, o):
+    def can_see(s, o: 'Boid') -> bool:
         d = o.p.sub(s.p); m = d.mag()
         if m == 0 or m &gt;= VISION_RANGE: return False
         if s.v.mag() == 0: return True
         cos_a = (d.x * s.v.x + d.y * s.v.y) / (m * s.v.mag())
         return cos_a &gt; math.cos(VISION_ANGLE / 2)
 
-    def step(s, boids, ws, dt):
+    def step(s, boids: list['Boid'], ws: list[float], dt: float) -> None:
         ns = [o for o in boids if o is not s and s.can_see(o)]
         sep = V(); n = 0
         for o in ns:

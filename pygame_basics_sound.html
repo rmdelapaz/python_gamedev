@@ -98,6 +98,14 @@
         E --> N["Atmosphere"]
     </div>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/audio-mixer-channels.svg"
+             alt="Four sound sources on the left, each with a volume bar: Music (loops on its own channel) plus three short effects — Jump, Coin, Hit — grouped as effects that each grab a free channel from a shared pool. Arrows lead from every source into a central Mixer box that sums them at their set volumes, and a single arrow leaves for a speaker with a master volume control emitting sound waves."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>Pygame&rsquo;s <code>mixer</code> is exactly what its name says. Background <strong>music</strong> streams from disk and loops on its own dedicated channel (<code>pygame.mixer.music</code>), while short <strong>sound effects</strong> are each loaded into memory and grab a free channel from a small pool when played (<code>Sound.play()</code>). The mixer blends everything at each source&rsquo;s set volume, scaled by a master volume, into the single stream your speakers play &mdash; which is why you can duck the music under a loud effect, or mute effects without touching the music.</figcaption>
+    </figure>
+
     <h2 id="setting-up-pygame-audio">Setting Up Pygame Audio</h2>
     
     <pre class="language-python"><code>import pygame

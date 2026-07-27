@@ -93,6 +93,14 @@
         E --> I["Complex Shapes"]
     </div>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/collision-detection-methods.svg"
+             alt="Two panels. Rectangle overlap (AABB): a blue box A and an amber box B overlap, with the overlapping region outlined in green; the condition reads 'x-ranges overlap AND y-ranges overlap'. Circle overlap (distance): two overlapping circles with a line d between their centres and radii r1 and r2, and the condition 'collision when d < r1 + r2'."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>Almost all 2D collision comes down to two cheap tests. <strong>AABB</strong> (axis-aligned bounding box) asks whether two rectangles overlap on <em>both</em> the x-axis and the y-axis &mdash; just a handful of comparisons, and Pygame gives it to you for free as <code>rect.colliderect()</code>. <strong>Circle</strong> collision is even simpler: two circles touch when the distance between their centres is less than the sum of their radii. Match the test to the sprite&rsquo;s shape &mdash; boxes for boxy things, circles for round ones.</figcaption>
+    </figure>
+
     <h2 id="rectangle-collision-aabb">Rectangle Collision (AABB)</h2>
     
     <p>AABB stands for "Axis-Aligned Bounding Box" - rectangles that don't rotate. This is the most common collision detection in 2D games!</p>

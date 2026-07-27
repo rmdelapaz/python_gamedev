@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 360" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="au-title au-desc">
+    <title id="au-title">The pygame audio mixer: sources, channels, one output</title>
+    <desc id="au-desc">On the left, four sound sources, each with a small volume bar: Music, marked as looping on its own dedicated channel, plus three short effects — Jump, Coin, and Hit — grouped as effects that each grab a free channel from a shared pool. Arrows lead from every source into a central Mixer box that sums them at their set volumes. A single arrow leaves the mixer for a speaker on the right, which has a master volume control and emits sound waves. The caption explains that music streams and loops on its own channel while short effects borrow free channels, and the mixer blends them all, scaled by the master volume, into one output.</desc>
+
+    <style>
+        :root {
+            --card: #f8fafc;
+            --card-stroke: #e2e8f0;
+            --music: #8b5cf6;
+            --sfx: #3b82f6;
+            --track: #cbd5e1;
+            --fill-music: #8b5cf6;
+            --fill-sfx: #3b82f6;
+            --group-stroke: #cbd5e1;
+            --mixer-bg: #eff6ff;
+            --mixer-stroke: #3b82f6;
+            --mixer-text: #2563eb;
+            --arrow: #64748b;
+            --speaker: #64748b;
+            --wave: #10b981;
+            --master: #f59e0b;
+            --text: rgb(30, 41, 59);
+            --sub-text: rgb(71, 85, 105);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --card: #1e293b;
+                --card-stroke: #334155;
+                --music: #a78bfa;
+                --sfx: #569cd6;
+                --track: #475569;
+                --fill-music: #a78bfa;
+                --fill-sfx: #569cd6;
+                --group-stroke: #475569;
+                --mixer-bg: #0f213b;
+                --mixer-stroke: #569cd6;
+                --mixer-text: #93c5fd;
+                --arrow: #94a3b8;
+                --speaker: #94a3b8;
+                --wave: #34d399;
+                --master: #fbbf24;
+                --text: #f1f5f9;
+                --sub-text: #cbd5e1;
+            }
+        }
+        .title { fill: var(--text); font: 700 16px ui-sans-serif, system-ui, sans-serif; }
+        .group { fill: none; stroke: var(--group-stroke); stroke-width: 1.5; stroke-dasharray: 5 4; }
+        .group-lbl { fill: var(--sub-text); font: 600 11px ui-sans-serif, system-ui, sans-serif; }
+        .badge-music { fill: var(--music); }
+        .badge-sfx { fill: var(--sfx); }
+        .badge-txt { fill: #ffffff; font: 800 12px ui-sans-serif, system-ui, sans-serif; }
+        .src-name { fill: var(--text); font: 700 13px ui-sans-serif, system-ui, sans-serif; }
+        .src-sub { fill: var(--sub-text); font: 500 10.5px ui-sans-serif, system-ui, sans-serif; }
+        .track { fill: var(--track); }
+        .fill-m { fill: var(--fill-music); }
+        .fill-s { fill: var(--fill-sfx); }
+        .arrow { stroke: var(--arrow); stroke-width: 2; fill: none; stroke-linecap: round; }
+        .arrow-head { fill: var(--arrow); }
+        .mixer { fill: var(--mixer-bg); stroke: var(--mixer-stroke); stroke-width: 2; }
+        .mixer-txt { fill: var(--mixer-text); font: 800 14px ui-sans-serif, system-ui, sans-serif; }
+        .mixer-sum { fill: var(--mixer-text); font: 800 30px ui-sans-serif, system-ui, sans-serif; }
+        .mixer-sub { fill: var(--sub-text); font: 600 10.5px ui-sans-serif, system-ui, sans-serif; }
+        .speaker { fill: var(--speaker); }
+        .wave { fill: none; stroke: var(--wave); stroke-width: 2.5; stroke-linecap: round; }
+        .master-lbl { fill: var(--master); font: 800 12px ui-sans-serif, system-ui, sans-serif; }
+        .cap { fill: var(--sub-text); font: 500 13px ui-sans-serif, system-ui, sans-serif; }
+    </style>
+
+    <text class="title" x="360" y="28" text-anchor="middle">The audio mixer &#8212; many sources, set volumes, one output</text>
+
+    <!-- ===== sources (left) ===== -->
+    <!-- Music -->
+    <circle class="badge-music" cx="62" cy="86" r="15"/>
+    <path class="wave" d="M56 90 A6 6 0 1 1 62 80 L67 80" stroke="#ffffff" stroke-width="2" fill="none"/>
+    <path d="M66 76 L70 80 L66 84 Z" fill="#ffffff"/>
+    <text class="src-name" x="86" y="82">Music</text>
+    <text class="src-sub" x="86" y="98">loops on its own channel</text>
+    <rect class="track" x="200" y="80" width="80" height="8" rx="4"/>
+    <rect class="fill-m" x="200" y="80" width="52" height="8" rx="4"/>
+
+    <!-- SFX group -->
+    <rect class="group" x="30" y="126" width="272" height="128" rx="10"/>
+    <text class="group-lbl" x="46" y="145">sound effects &#8212; each grabs a free channel from the pool</text>
+
+    <!-- Jump -->
+    <circle class="badge-sfx" cx="62" cy="172" r="13"/><text class="badge-txt" x="62" y="177" text-anchor="middle">J</text>
+    <text class="src-name" x="86" y="177">Jump</text>
+    <rect class="track" x="200" y="168" width="80" height="8" rx="4"/><rect class="fill-s" x="200" y="168" width="72" height="8" rx="4"/>
+    <!-- Coin -->
+    <circle class="badge-sfx" cx="62" cy="206" r="13"/><text class="badge-txt" x="62" y="211" text-anchor="middle">C</text>
+    <text class="src-name" x="86" y="211">Coin</text>
+    <rect class="track" x="200" y="202" width="80" height="8" rx="4"/><rect class="fill-s" x="200" y="202" width="64" height="8" rx="4"/>
+    <!-- Hit -->
+    <circle class="badge-sfx" cx="62" cy="240" r="13"/><text class="badge-txt" x="62" y="245" text-anchor="middle">H</text>
+    <text class="src-name" x="86" y="245">Hit</text>
+    <rect class="track" x="200" y="236" width="80" height="8" rx="4"/><rect class="fill-s" x="200" y="236" width="68" height="8" rx="4"/>
+
+    <!-- ===== arrows into mixer ===== -->
+    <path class="arrow" d="M288 84 C320 84 330 150 356 158"/><path class="arrow-head" d="M350 152 L362 160 L348 164 Z"/>
+    <path class="arrow" d="M288 172 C322 172 330 176 356 176"/><path class="arrow-head" d="M351 170 L364 177 L351 184 Z"/>
+    <path class="arrow" d="M288 206 C322 206 330 190 356 188"/><path class="arrow-head" d="M351 182 L364 189 L350 196 Z"/>
+    <path class="arrow" d="M288 240 C322 240 330 205 356 200"/><path class="arrow-head" d="M351 195 L364 201 L349 208 Z"/>
+
+    <!-- ===== mixer ===== -->
+    <rect class="mixer" x="362" y="120" width="120" height="112" rx="12"/>
+    <text class="mixer-txt" x="422" y="150" text-anchor="middle">MIXER</text>
+    <text class="mixer-sum" x="422" y="192" text-anchor="middle">&#931;</text>
+    <text class="mixer-sub" x="422" y="216" text-anchor="middle">sums at set volumes</text>
+
+    <!-- ===== arrow to speaker ===== -->
+    <path class="arrow" d="M486 176 L536 176"/><path class="arrow-head" d="M530 169 L546 176 L530 183 Z"/>
+
+    <!-- ===== speaker + master ===== -->
+    <rect class="speaker" x="556" y="162" width="14" height="28" rx="2"/>
+    <path class="speaker" d="M570 162 L596 144 L596 208 L570 190 Z"/>
+    <path class="wave" d="M606 156 Q616 176 606 196"/>
+    <path class="wave" d="M620 146 Q636 176 620 206"/>
+    <path class="wave" d="M634 138 Q656 176 634 214"/>
+    <text class="master-lbl" x="576" y="230" text-anchor="middle">Master volume</text>
+    <rect class="track" x="556" y="238" width="80" height="8" rx="4"/><rect x="556" y="238" width="80" height="8" rx="4" fill="var(--master)"/>
+
+    <!-- caption -->
+    <text class="cap" x="360" y="300" text-anchor="middle">Music streams and loops on its own dedicated channel; short effects each borrow a free channel from a small pool.</text>
+    <text class="cap" x="360" y="320" text-anchor="middle">The mixer blends them all at their set volumes, scaled by the master, into the single stream your speakers play.</text>
+</svg>

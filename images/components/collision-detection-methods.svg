@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 360" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="cd-title cd-desc">
+    <title id="cd-title">Two collision tests: rectangle AABB and circle distance</title>
+    <desc id="cd-desc">Two panels. The left panel, Rectangle AABB, shows a blue box A and an amber box B overlapping; the overlapping region is outlined in green and labelled overlap. Below it the condition reads: collision when the x-ranges overlap and the y-ranges overlap. The right panel, Circle, shows a blue circle and an amber circle overlapping; a line between their centres is labelled d, and each radius is labelled r1 and r2. Below it the condition reads: collision when d is less than r1 plus r2. The caption notes that both are just a handful of comparisons and you pick the test that matches the sprite's shape.</desc>
+
+    <style>
+        :root {
+            --card: #f8fafc;
+            --card-stroke: #e2e8f0;
+            --a-fill: rgba(59,130,246,0.30);
+            --a-stroke: #2563eb;
+            --b-fill: rgba(245,158,11,0.30);
+            --b-stroke: #b45309;
+            --overlap: #10b981;
+            --dim: #64748b;
+            --center: rgb(30,41,59);
+            --text: rgb(30, 41, 59);
+            --sub-text: rgb(71, 85, 105);
+            --cond: rgb(51, 65, 85);
+            --ok: #10b981;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --card: #1e293b;
+                --card-stroke: #334155;
+                --a-fill: rgba(86,156,214,0.34);
+                --a-stroke: #60a5fa;
+                --b-fill: rgba(251,191,36,0.30);
+                --b-stroke: #fbbf24;
+                --overlap: #34d399;
+                --dim: #94a3b8;
+                --center: #f1f5f9;
+                --text: #f1f5f9;
+                --sub-text: #cbd5e1;
+                --cond: #cbd5e1;
+                --ok: #34d399;
+            }
+        }
+        .title { fill: var(--text); font: 700 16px ui-sans-serif, system-ui, sans-serif; }
+        .card { fill: var(--card); stroke: var(--card-stroke); stroke-width: 1.5; }
+        .ptitle { fill: var(--text); font: 800 14px ui-sans-serif, system-ui, sans-serif; }
+        .boxA { fill: var(--a-fill); stroke: var(--a-stroke); stroke-width: 2; }
+        .boxB { fill: var(--b-fill); stroke: var(--b-stroke); stroke-width: 2; }
+        .box-lbl-a { fill: var(--a-stroke); font: 800 15px ui-sans-serif, system-ui, sans-serif; }
+        .box-lbl-b { fill: var(--b-stroke); font: 800 15px ui-sans-serif, system-ui, sans-serif; }
+        .overlap { fill: none; stroke: var(--overlap); stroke-width: 2.5; stroke-dasharray: 5 3; }
+        .overlap-lbl { fill: var(--overlap); font: 700 12px ui-sans-serif, system-ui, sans-serif; }
+        .circA { fill: var(--a-fill); stroke: var(--a-stroke); stroke-width: 2; }
+        .circB { fill: var(--b-fill); stroke: var(--b-stroke); stroke-width: 2; }
+        .dline { stroke: var(--dim); stroke-width: 2; }
+        .rline-a { stroke: var(--a-stroke); stroke-width: 2; stroke-dasharray: 4 3; }
+        .rline-b { stroke: var(--b-stroke); stroke-width: 2; stroke-dasharray: 4 3; }
+        .center-dot { fill: var(--center); }
+        .d-lbl { fill: var(--dim); font: 800 13px ui-monospace, Consolas, monospace; }
+        .r-lbl-a { fill: var(--a-stroke); font: 700 12px ui-monospace, Consolas, monospace; }
+        .r-lbl-b { fill: var(--b-stroke); font: 700 12px ui-monospace, Consolas, monospace; }
+        .cond { fill: var(--cond); font: 700 13px ui-monospace, Consolas, monospace; }
+        .ok { fill: var(--ok); font: 800 13px ui-sans-serif, system-ui, sans-serif; }
+        .cap { fill: var(--sub-text); font: 500 13px ui-sans-serif, system-ui, sans-serif; }
+    </style>
+
+    <text class="title" x="360" y="28" text-anchor="middle">Two cheap collision tests &#8212; match the test to the shape</text>
+
+    <!-- ============ Panel A: AABB ============ -->
+    <rect class="card" x="28" y="50" width="320" height="212" rx="10"/>
+    <text class="ptitle" x="188" y="76" text-anchor="middle">Rectangle overlap (AABB)</text>
+
+    <rect class="boxA" x="80"  y="98"  width="130" height="86" rx="4"/>
+    <text class="box-lbl-a" x="96" y="118">A</text>
+    <rect class="boxB" x="168" y="140" width="130" height="86" rx="4"/>
+    <text class="box-lbl-b" x="282" y="218" text-anchor="end">B</text>
+    <!-- overlap region -->
+    <rect class="overlap" x="168" y="140" width="42" height="44"/>
+    <text class="overlap-lbl" x="189" y="205" text-anchor="middle">overlap</text>
+
+    <!-- condition -->
+    <text class="cond" x="46" y="244">x-ranges overlap  AND  y-ranges overlap</text>
+
+    <!-- ============ Panel B: Circle ============ -->
+    <rect class="card" x="372" y="50" width="320" height="212" rx="10"/>
+    <text class="ptitle" x="532" y="76" text-anchor="middle">Circle overlap (distance)</text>
+
+    <circle class="circA" cx="482" cy="150" r="50"/>
+    <circle class="circB" cx="576" cy="172" r="44"/>
+    <!-- radius + distance -->
+    <line class="rline-a" x1="482" y1="150" x2="440" y2="123"/>
+    <text class="r-lbl-a" x="446" y="120">r1</text>
+    <line class="rline-b" x1="576" y1="172" x2="616" y2="150"/>
+    <text class="r-lbl-b" x="606" y="142">r2</text>
+    <line class="dline" x1="482" y1="150" x2="576" y2="172"/>
+    <circle class="center-dot" cx="482" cy="150" r="3.5"/>
+    <circle class="center-dot" cx="576" cy="172" r="3.5"/>
+    <text class="d-lbl" x="524" y="176" text-anchor="middle">d</text>
+
+    <!-- condition -->
+    <text class="cond" x="446" y="244">collision when</text>
+    <text class="cond" x="556" y="244" style="fill:var(--overlap)">d &#60; r1 + r2</text>
+
+    <!-- caption -->
+    <text class="cap" x="360" y="300" text-anchor="middle">AABB checks whether two boxes overlap on the x-axis and the y-axis &#8212; a handful of comparisons. Circles are even</text>
+    <text class="cap" x="360" y="320" text-anchor="middle">simpler: they touch when the distance between centres is less than the sum of the radii. Fit the test to the sprite.</text>
+</svg>

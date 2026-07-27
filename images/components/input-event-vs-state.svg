@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 360" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="in-title in-desc">
+    <title id="in-title">Event-based versus state-based input</title>
+    <desc id="in-desc">A shared timeline shows the SPACE key held down between a press and a release, marked by two dashed vertical guides. The upper track, labelled Event and pygame.event, is flat except for two impulses: a green KEYDOWN spike at the moment of press and a grey KEYUP spike at the release, with a note that nothing fires while the key is held; its use is firing once per press, for jump, shoot, or menu actions. The lower track, labelled State and key.get_pressed, is a digital step signal that reads False before the press, rises to True for the whole time the key is held, and drops back to False at release; its use is actions that continue every frame the key is held, such as walk, aim, or charge.</desc>
+
+    <style>
+        :root {
+            --guide: #94a3b8;
+            --strip: #3b82f6;
+            --strip-text: #ffffff;
+            --axis: #94a3b8;
+            --keydown: #10b981;
+            --keyup: #64748b;
+            --signal: #3b82f6;
+            --signal-fill: rgba(59,130,246,0.15);
+            --text: rgb(30, 41, 59);
+            --sub-text: rgb(71, 85, 105);
+            --dim: rgb(100, 116, 139);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --guide: #64748b;
+                --strip: #569cd6;
+                --strip-text: #0f172a;
+                --axis: #64748b;
+                --keydown: #34d399;
+                --keyup: #94a3b8;
+                --signal: #569cd6;
+                --signal-fill: rgba(86,156,214,0.20);
+                --text: #f1f5f9;
+                --sub-text: #cbd5e1;
+                --dim: #94a3b8;
+            }
+        }
+        .title { fill: var(--text); font: 700 16px ui-sans-serif, system-ui, sans-serif; }
+        .guide { stroke: var(--guide); stroke-width: 1.5; stroke-dasharray: 4 4; }
+        .guide-lbl { fill: var(--dim); font: 600 11px ui-sans-serif, system-ui, sans-serif; }
+        .strip { fill: var(--strip); }
+        .strip-txt { fill: var(--strip-text); font: 800 12px ui-sans-serif, system-ui, sans-serif; }
+        .row-lbl { fill: var(--text); font: 800 13px ui-monospace, Consolas, monospace; }
+        .axis { stroke: var(--axis); stroke-width: 2; }
+        .keydown { stroke: var(--keydown); stroke-width: 3.5; stroke-linecap: round; }
+        .keydown-head { fill: var(--keydown); }
+        .keyup { stroke: var(--keyup); stroke-width: 3.5; stroke-linecap: round; }
+        .keyup-head { fill: var(--keyup); }
+        .imp-lbl-d { fill: var(--keydown); font: 800 12px ui-monospace, Consolas, monospace; }
+        .imp-lbl-u { fill: var(--keyup); font: 800 12px ui-monospace, Consolas, monospace; }
+        .signal { fill: none; stroke: var(--signal); stroke-width: 3.5; stroke-linejoin: round; }
+        .signal-fill { fill: var(--signal-fill); }
+        .sig-lbl { fill: var(--signal); font: 800 12px ui-monospace, Consolas, monospace; }
+        .false-lbl { fill: var(--dim); font: 700 12px ui-monospace, Consolas, monospace; }
+        .note { fill: var(--dim); font: italic 12px ui-sans-serif, system-ui, sans-serif; }
+        .use { fill: var(--sub-text); font: 600 12px ui-sans-serif, system-ui, sans-serif; }
+        .cap { fill: var(--sub-text); font: 500 13px ui-sans-serif, system-ui, sans-serif; }
+    </style>
+
+    <text class="title" x="360" y="28" text-anchor="middle">Two ways to read input &#8212; once per press vs every frame</text>
+
+    <!-- guides -->
+    <line class="guide" x1="252" y1="52" x2="252" y2="300"/>
+    <line class="guide" x1="516" y1="52" x2="516" y2="300"/>
+    <text class="guide-lbl" x="252" y="48" text-anchor="middle">press</text>
+    <text class="guide-lbl" x="516" y="48" text-anchor="middle">release</text>
+
+    <!-- key held strip -->
+    <rect class="strip" x="252" y="56" width="264" height="20" rx="10"/>
+    <text class="strip-txt" x="384" y="70" text-anchor="middle">SPACE held down</text>
+
+    <!-- ===== Event track ===== -->
+    <text class="row-lbl" x="40" y="120">Event &#183; pygame.event</text>
+    <line class="axis" x1="120" y1="150" x2="660" y2="150"/>
+    <!-- KEYDOWN impulse -->
+    <line class="keydown" x1="252" y1="150" x2="252" y2="116"/><path class="keydown-head" d="M245 120 L252 106 L259 120 Z"/>
+    <text class="imp-lbl-d" x="252" y="100" text-anchor="middle">KEYDOWN</text>
+    <!-- KEYUP impulse -->
+    <line class="keyup" x1="516" y1="150" x2="516" y2="116"/><path class="keyup-head" d="M509 120 L516 106 L523 120 Z"/>
+    <text class="imp-lbl-u" x="516" y="100" text-anchor="middle">KEYUP</text>
+    <text class="note" x="384" y="142" text-anchor="middle">nothing fires while held</text>
+    <text class="use" x="120" y="178">&#8594; fires once per press: jump, shoot, menu select</text>
+
+    <!-- ===== State track ===== -->
+    <text class="row-lbl" x="40" y="222">State &#183; key.get_pressed()</text>
+    <!-- signal: False (low) before, True (high) while held, False after -->
+    <path class="signal-fill" d="M252 270 L252 244 L516 244 L516 270 Z"/>
+    <path class="signal" d="M120 270 L252 270 L252 244 L516 244 L516 270 L660 270"/>
+    <text class="sig-lbl" x="384" y="238" text-anchor="middle">True</text>
+    <text class="false-lbl" x="184" y="264" text-anchor="middle">False</text>
+    <text class="false-lbl" x="588" y="264" text-anchor="middle">False</text>
+    <text class="use" x="120" y="300">&#8594; True every frame it&#8217;s held: walk, aim, charge</text>
+
+    <!-- caption -->
+    <text class="cap" x="360" y="332" text-anchor="middle">Use events for actions that must happen once (a jump); use state for anything held down (running).</text>
+    <text class="cap" x="360" y="350" text-anchor="middle">Swap them and you get double-jumps &#8212; or a jump that fizzles after a single frame.</text>
+</svg>

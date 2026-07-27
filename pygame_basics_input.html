@@ -94,6 +94,14 @@
         H --> L["Aim, Draw, Hover Effects"]
     </div>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/input-event-vs-state.svg"
+             alt="A timeline of the SPACE key held between a press and a release. The upper Event track (pygame.event) is flat except for a green KEYDOWN spike at the press and a grey KEYUP spike at the release, with 'nothing fires while held' between — it fires once per press, for jump/shoot/menu. The lower State track (key.get_pressed) is a digital step signal reading False before the press, True for the whole time the key is held, and False after — used for walk/aim/charge."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>Pygame gives you two ways to read the keyboard, and picking the wrong one is the classic beginner bug. <strong>Events</strong> (<code>KEYDOWN</code>/<code>KEYUP</code>) fire <em>once</em> at the instant a key changes &mdash; perfect for one-shot actions like a jump or a menu select. <strong>State</strong> polling (<code>key.get_pressed()</code>) returns True <em>every frame</em> a key is held &mdash; perfect for continuous actions like walking or aiming. Use state for a jump and you leap once per frame; use an event for movement and you inch one step per press.</figcaption>
+    </figure>
+
     <h2 id="event-based-input-discrete-actions">Event-Based Input (Discrete Actions)</h2>
     
     <h3 id="keyboard-events">Keyboard Events</h3>

@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 290" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="pp-title pp-desc">
+    <title id="pp-title">Post-processing as a chain of full-screen passes</title>
+    <desc id="pp-desc">Four small screen thumbnails of the same scene — a sun, a mountain, and green ground — sit in a row joined by arrows. The first, labelled render target, shows the raw scene. The second, plus bloom, adds a soft glow around the sun. The third, plus colour grade, washes the whole image with a warm amber tint. The fourth, final frame, adds a vignette that darkens the corners. Each pass reads the previous finished image and rewrites it.</desc>
+
+    <style>
+        :root {
+            --card-stroke: #cbd5e1;
+            --arrow: #3b82f6;
+            --sky: #bfdbfe;
+            --sun: #fbbf24;
+            --mountain: #94a3b8;
+            --ground: #22c55e;
+            --ground-top: #4ade80;
+            --text: rgb(30, 41, 59);
+            --sub-text: rgb(71, 85, 105);
+            --stage: #2563eb;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --card-stroke: #475569;
+                --arrow: #569cd6;
+                --sky: #93c5fd;
+                --sun: #fbbf24;
+                --mountain: #64748b;
+                --ground: #16a34a;
+                --ground-top: #4ade80;
+                --text: #f1f5f9;
+                --sub-text: #cbd5e1;
+                --stage: #60a5fa;
+            }
+        }
+        .title { fill: var(--text); font: 700 15px ui-sans-serif, system-ui, sans-serif; }
+        .frame { fill: none; stroke: var(--card-stroke); stroke-width: 2; }
+        .arrow { stroke: var(--arrow); stroke-width: 4; fill: none; stroke-linecap: round; }
+        .arrow-head { fill: var(--arrow); }
+        .stage { fill: var(--stage); font: 700 13px ui-sans-serif, system-ui, sans-serif; }
+        .stage-sub { fill: var(--sub-text); font: 600 11px ui-sans-serif, system-ui, sans-serif; }
+        .cap { fill: var(--sub-text); font: 500 13px ui-sans-serif, system-ui, sans-serif; }
+    </style>
+
+    <defs>
+        <radialGradient id="bloom" cx="0.5" cy="0.5" r="0.5">
+            <stop offset="0"    stop-color="#fff7cc" stop-opacity="0.95"/>
+            <stop offset="0.55" stop-color="#fde68a" stop-opacity="0.55"/>
+            <stop offset="1"    stop-color="#fde68a" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="vignette" cx="0.5" cy="0.5" r="0.72">
+            <stop offset="0.55" stop-color="#000000" stop-opacity="0"/>
+            <stop offset="1"    stop-color="#000000" stop-opacity="0.55"/>
+        </radialGradient>
+        <clipPath id="t1"><rect x="40"  y="58" width="130" height="96" rx="6"/></clipPath>
+        <clipPath id="t2"><rect x="205" y="58" width="130" height="96" rx="6"/></clipPath>
+        <clipPath id="t3"><rect x="370" y="58" width="130" height="96" rx="6"/></clipPath>
+        <clipPath id="t4"><rect x="535" y="58" width="130" height="96" rx="6"/></clipPath>
+    </defs>
+
+    <text class="title" x="360" y="28" text-anchor="middle">Post-processing &#8212; a chain of full-screen passes on the rendered image</text>
+
+    <!-- ===== thumbnail 1: raw ===== -->
+    <g clip-path="url(#t1)">
+        <rect x="40" y="58" width="130" height="96" fill="var(--sky)"/>
+        <circle cx="70" cy="88" r="13" fill="var(--sun)"/>
+        <path d="M110 154 L140 118 L170 154 Z" fill="var(--mountain)"/>
+        <rect x="40" y="132" width="130" height="22" fill="var(--ground)"/>
+        <rect x="40" y="132" width="130" height="4" fill="var(--ground-top)"/>
+    </g>
+    <rect class="frame" x="40" y="58" width="130" height="96" rx="6"/>
+    <text class="stage" x="105" y="176" text-anchor="middle">render target</text>
+    <text class="stage-sub" x="105" y="192" text-anchor="middle">raw scene &#8594; texture</text>
+
+    <!-- ===== thumbnail 2: + bloom ===== -->
+    <g clip-path="url(#t2)">
+        <rect x="205" y="58" width="130" height="96" fill="var(--sky)"/>
+        <circle cx="235" cy="88" r="13" fill="var(--sun)"/>
+        <path d="M275 154 L305 118 L335 154 Z" fill="var(--mountain)"/>
+        <rect x="205" y="132" width="130" height="22" fill="var(--ground)"/>
+        <rect x="205" y="132" width="130" height="4" fill="var(--ground-top)"/>
+        <circle cx="235" cy="88" r="34" fill="url(#bloom)"/>
+    </g>
+    <rect class="frame" x="205" y="58" width="130" height="96" rx="6"/>
+    <text class="stage" x="270" y="176" text-anchor="middle">+ bloom</text>
+    <text class="stage-sub" x="270" y="192" text-anchor="middle">bright areas glow</text>
+
+    <!-- ===== thumbnail 3: + colour grade ===== -->
+    <g clip-path="url(#t3)">
+        <rect x="370" y="58" width="130" height="96" fill="var(--sky)"/>
+        <circle cx="400" cy="88" r="13" fill="var(--sun)"/>
+        <path d="M440 154 L470 118 L500 154 Z" fill="var(--mountain)"/>
+        <rect x="370" y="132" width="130" height="22" fill="var(--ground)"/>
+        <rect x="370" y="132" width="130" height="4" fill="var(--ground-top)"/>
+        <circle cx="400" cy="88" r="34" fill="url(#bloom)"/>
+        <rect x="370" y="58" width="130" height="96" fill="#f59e0b" opacity="0.30"/>
+    </g>
+    <rect class="frame" x="370" y="58" width="130" height="96" rx="6"/>
+    <text class="stage" x="435" y="176" text-anchor="middle">+ colour grade</text>
+    <text class="stage-sub" x="435" y="192" text-anchor="middle">warm mood tint</text>
+
+    <!-- ===== thumbnail 4: + vignette = final ===== -->
+    <g clip-path="url(#t4)">
+        <rect x="535" y="58" width="130" height="96" fill="var(--sky)"/>
+        <circle cx="565" cy="88" r="13" fill="var(--sun)"/>
+        <path d="M605 154 L635 118 L665 154 Z" fill="var(--mountain)"/>
+        <rect x="535" y="132" width="130" height="22" fill="var(--ground)"/>
+        <rect x="535" y="132" width="130" height="4" fill="var(--ground-top)"/>
+        <circle cx="565" cy="88" r="34" fill="url(#bloom)"/>
+        <rect x="535" y="58" width="130" height="96" fill="#f59e0b" opacity="0.30"/>
+        <rect x="535" y="58" width="130" height="96" fill="url(#vignette)"/>
+    </g>
+    <rect class="frame" x="535" y="58" width="130" height="96" rx="6"/>
+    <text class="stage" x="600" y="176" text-anchor="middle">final frame</text>
+    <text class="stage-sub" x="600" y="192" text-anchor="middle">+ vignette &#8594; screen</text>
+
+    <!-- arrows -->
+    <g>
+        <path class="arrow" d="M176 106 L199 106"/><path class="arrow-head" d="M199 99 L213 106 L199 113 Z"/>
+        <path class="arrow" d="M341 106 L364 106"/><path class="arrow-head" d="M364 99 L378 106 L364 113 Z"/>
+        <path class="arrow" d="M506 106 L529 106"/><path class="arrow-head" d="M529 99 L543 106 L529 113 Z"/>
+    </g>
+
+    <!-- caption -->
+    <text class="cap" x="360" y="228" text-anchor="middle">Each pass reads the finished frame as a texture and rewrites it, so one pass recolours the whole scene at once</text>
+    <text class="cap" x="360" y="248" text-anchor="middle">&#8212; the cost scales with screen size, not with how many objects you drew.</text>
+</svg>

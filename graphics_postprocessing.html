@@ -96,6 +96,14 @@
         G --> L["Tone Mapping"]
     </div>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/postprocess-chain.svg"
+             alt="Four small screen thumbnails of the same scene — a sun, a mountain, and green ground — in a row joined by arrows. The first, 'render target', is the raw scene. The second, '+ bloom', adds a soft glow around the sun. The third, '+ colour grade', washes the image with a warm amber tint. The fourth, 'final frame', adds a vignette that darkens the corners. Each pass reads the previous finished image and rewrites it."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>Post-processing runs <em>after</em> the scene is drawn: the finished frame is captured to an offscreen buffer, then pushed through a chain of full-screen passes &mdash; bloom, colour grade, vignette &mdash; each reading the previous result as a texture and rewriting it. Because every pass works on the flat image rather than the scene, one pass recolours everything at once and the cost scales with <strong>screen size, not scene complexity</strong>. That&rsquo;s how a whole game gets a consistent cinematic look cheaply.</figcaption>
+    </figure>
+
     <h2 id="interactive-post-processing-demo">Interactive Post-processing Demo</h2>
     
     <div class="canvas-wrapper" style="text-align: center;">

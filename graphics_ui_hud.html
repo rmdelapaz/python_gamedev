@@ -68,6 +68,14 @@
         </ul>
     </div>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/ui-anchoring.svg"
+             alt="Two game screens side by side over a faint world of sky, ground, and a player. The left screen is wide (1920×1080); the right is smaller (1280×720). Both carry the same HUD: a health bar pinned to the top-left, a score to the top-right, an ammo counter to the bottom-left, and a minimap to the bottom-right, each marked with an amber corner bracket. Because every element is anchored to a corner rather than a fixed pixel, the smaller screen still shows every element correctly placed."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>A HUD is drawn in <strong>screen space</strong> &mdash; on top of the world, and it never scrolls away with the camera. The trick to making it survive different window sizes is to <strong>anchor each element to an edge plus an offset</strong>, never to an absolute pixel: &ldquo;16&nbsp;px in from the top-right&rdquo; stays correct whether the screen is 1920 or 1280 wide, while a hard-coded x&nbsp;=&nbsp;1840 would fall off a smaller display. Anchor to edges, and one layout fits every resolution.</figcaption>
+    </figure>
+
     <h2 id="ui-hud-implementation-in-python">UI/HUD Implementation in Python</h2>
     
     <pre class="language-python"><code>import pygame

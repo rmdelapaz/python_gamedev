@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 340" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="pg-title pg-desc">
+    <title id="pg-title">A seed grows a whole world through noise</title>
+    <desc id="pg-desc">A pipeline reads left to right. A small box holds a seed value of 42. An arrow leads to a grey square filled with cloudy fractal noise, labelled noise field with values from 0 to 1. Another arrow, labelled height bands, leads to a square of the same shape now coloured into terrain: dark blue deep water, blue water, amber sand, green grass, dark-green forest, and grey rock, assigned by the noise height at each point. A legend on the right lists the height bands and their colours. The caption explains that the same seed always regenerates the identical world.</desc>
+
+    <style>
+        :root {
+            --card: #f8fafc;
+            --card-stroke: #cbd5e1;
+            --arrow: #3b82f6;
+            --seed-text: #2563eb;
+            --sq-stroke: #64748b;
+            --text: rgb(30, 41, 59);
+            --sub-text: rgb(71, 85, 105);
+            --lbl: rgb(71, 85, 105);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --card: #1e293b;
+                --card-stroke: #475569;
+                --arrow: #569cd6;
+                --seed-text: #60a5fa;
+                --sq-stroke: #94a3b8;
+                --text: #f1f5f9;
+                --sub-text: #cbd5e1;
+                --lbl: #cbd5e1;
+            }
+        }
+        .title { fill: var(--text); font: 700 16px ui-sans-serif, system-ui, sans-serif; }
+        .card { fill: var(--card); stroke: var(--card-stroke); stroke-width: 1.5; }
+        .seed-lbl { fill: var(--sub-text); font: 600 12px ui-sans-serif, system-ui, sans-serif; }
+        .seed-val { fill: var(--seed-text); font: 800 22px ui-monospace, Consolas, monospace; }
+        .arrow { stroke: var(--arrow); stroke-width: 4; fill: none; stroke-linecap: round; }
+        .arrow-head { fill: var(--arrow); }
+        .arrow-lbl { fill: var(--arrow); font: 700 12px ui-sans-serif, system-ui, sans-serif; }
+        .sq { stroke: var(--sq-stroke); stroke-width: 2; }
+        .sq-lbl { fill: var(--text); font: 700 13px ui-sans-serif, system-ui, sans-serif; }
+        .legend { fill: var(--lbl); font: 600 12px ui-sans-serif, system-ui, sans-serif; }
+        .cap { fill: var(--sub-text); font: 500 13px ui-sans-serif, system-ui, sans-serif; }
+    </style>
+
+    <defs>
+        <filter id="noiseGrey" x="0" y="0" width="100%" height="100%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.028" numOctaves="4" seed="42" stitchTiles="stitch" result="n"/>
+            <feColorMatrix in="n" type="saturate" values="0"/>
+            <feComponentTransfer>
+                <feFuncR type="linear" slope="1.4" intercept="-0.2"/>
+                <feFuncG type="linear" slope="1.4" intercept="-0.2"/>
+                <feFuncB type="linear" slope="1.4" intercept="-0.2"/>
+            </feComponentTransfer>
+        </filter>
+        <filter id="noiseBiome" x="0" y="0" width="100%" height="100%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.028" numOctaves="4" seed="42" stitchTiles="stitch" result="n"/>
+            <feColorMatrix in="n" type="saturate" values="0"/>
+            <feComponentTransfer>
+                <feFuncR type="discrete" tableValues="0.12 0.15 0.90 0.34 0.20 0.60"/>
+                <feFuncG type="discrete" tableValues="0.25 0.45 0.82 0.72 0.45 0.60"/>
+                <feFuncB type="discrete" tableValues="0.55 0.85 0.55 0.30 0.22 0.60"/>
+            </feComponentTransfer>
+        </filter>
+    </defs>
+
+    <text class="title" x="360" y="30" text-anchor="middle">Procedural generation &#8212; a seed grows a whole world</text>
+
+    <!-- seed box -->
+    <rect class="card" x="34" y="120" width="96" height="90" rx="10"/>
+    <text class="seed-lbl" x="82" y="150" text-anchor="middle">seed</text>
+    <text class="seed-val" x="82" y="182" text-anchor="middle">42</text>
+
+    <!-- arrow 1 -->
+    <path class="arrow" d="M138 165 L176 165"/><path class="arrow-head" d="M176 157 L192 165 L176 173 Z"/>
+
+    <!-- noise square -->
+    <rect x="200" y="95" width="140" height="140" rx="4" fill="#808080" filter="url(#noiseGrey)"/>
+    <rect class="sq" x="200" y="95" width="140" height="140" rx="4" fill="none"/>
+    <text class="sq-lbl" x="270" y="256" text-anchor="middle">noise field</text>
+    <text class="legend" x="270" y="274" text-anchor="middle">one value 0&#8211;1 per point</text>
+
+    <!-- arrow 2 -->
+    <path class="arrow" d="M348 155 L388 155"/><path class="arrow-head" d="M388 147 L404 155 L388 163 Z"/>
+    <text class="arrow-lbl" x="376" y="140" text-anchor="middle">height</text>
+    <text class="arrow-lbl" x="376" y="184" text-anchor="middle">bands</text>
+
+    <!-- biome square -->
+    <rect x="412" y="95" width="140" height="140" rx="4" fill="#808080" filter="url(#noiseBiome)"/>
+    <rect class="sq" x="412" y="95" width="140" height="140" rx="4" fill="none"/>
+    <text class="sq-lbl" x="482" y="256" text-anchor="middle">generated world</text>
+    <text class="legend" x="482" y="274" text-anchor="middle">colour by height</text>
+
+    <!-- legend -->
+    <g>
+        <rect x="596" y="96"  width="16" height="16" rx="3" fill="#1e3a5f"/><text class="legend" x="620" y="109">deep water</text>
+        <rect x="596" y="120" width="16" height="16" rx="3" fill="#2673d9"/><text class="legend" x="620" y="133">water</text>
+        <rect x="596" y="144" width="16" height="16" rx="3" fill="#e6d28c"/><text class="legend" x="620" y="157">sand</text>
+        <rect x="596" y="168" width="16" height="16" rx="3" fill="#57b84d"/><text class="legend" x="620" y="181">grass</text>
+        <rect x="596" y="192" width="16" height="16" rx="3" fill="#337336"/><text class="legend" x="620" y="205">forest</text>
+        <rect x="596" y="216" width="16" height="16" rx="3" fill="#999999"/><text class="legend" x="620" y="229">rock</text>
+    </g>
+
+    <!-- caption -->
+    <text class="cap" x="360" y="306" text-anchor="middle">The same seed always regenerates the identical world; change one number for a brand-new one.</text>
+    <text class="cap" x="360" y="326" text-anchor="middle">Endless, reproducible variety from a few bytes &#8212; no level drawn by hand.</text>
+</svg>

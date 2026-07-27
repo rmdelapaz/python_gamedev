@@ -94,6 +94,14 @@
         H["Attributes"] --> B
     </div>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/shader-parallelism.svg"
+             alt="On the left, a code box labelled fragment shader lists its inputs — uv (the pixel position) and t (time) — and its one line of work, color = f(uv, t), producing an output pixel. A thick arrow labelled 'one program, every pixel, in parallel' points right to a grid of 32 pixels filled with a smooth diagonal gradient from blue through green to amber, representing the finished screen, with a badge reading 'all 32 at once'."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>A shader isn&rsquo;t a special kind of drawing command &mdash; it&rsquo;s a tiny program the GPU runs <strong>once per pixel, on every pixel at the same time</strong>. A Python loop that colours pixels one by one crawls; the GPU evaluates the same little function across thousands of pixels simultaneously. That massive parallelism is exactly why full-screen effects &mdash; gradients, waves, colour shifts &mdash; are practically free on the GPU but brutally slow in plain Python.</figcaption>
+    </figure>
+
     <h2 id="interactive-shader-playground">Interactive Shader Playground</h2>
     
     <div class="canvas-wrapper" style="text-align: center;">

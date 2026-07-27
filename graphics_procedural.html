@@ -68,6 +68,14 @@
         </ul>
     </div>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/procedural-noise-to-world.svg"
+             alt="A pipeline reading left to right. A box holds seed = 42. An arrow leads to a grey square of cloudy fractal noise labelled 'noise field, one value 0–1 per point'. Another arrow labelled 'height bands' leads to a square of the same shape, now coloured into terrain — deep water, water, sand, grass, forest, and rock — assigned by the noise height at each point. A legend on the right lists the height bands and their colours."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>Procedural generation turns a single <strong>seed</strong> into a whole world. The seed drives a noise function that fills the map with one smooth value per point; you then slice that range into <strong>height bands</strong> &mdash; below this is water, above that is rock &mdash; to paint terrain. The magic is determinism: the <em>same seed always rebuilds the identical world</em>, so you get endless, reproducible variety from a few bytes with no level drawn by hand. (The two maps here are real fractal noise generated right in the SVG.)</figcaption>
+    </figure>
+
     <h2 id="procedural-generation-implementation-in-python">Procedural Generation Implementation in Python</h2>
     
     <pre class="language-python"><code>import numpy as np

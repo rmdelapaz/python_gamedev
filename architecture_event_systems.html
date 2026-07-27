@@ -100,6 +100,14 @@
         K --> O["UI Events"]
     </div>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/event-bus-pubsub.svg"
+             alt="On the left, three publishers emit events — Player emits 'died', Coin emits 'collected', Boss emits 'defeated' — with green 'emit' arrows into a central Event Bus that routes by type. On the right, blue 'notify' arrows carry events to four subscribers: HUD / UI, Audio (SFX), Achievements, and Analytics. Publishers and subscribers never reference each other directly."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>An event system is how you keep game code from turning into spaghetti. Instead of the player object calling the HUD, the audio system, <em>and</em> the achievement tracker directly, it just <strong>publishes</strong> an event &mdash; &ldquo;player died&rdquo; &mdash; to a central <strong>event bus</strong>, without knowing or caring who is listening. Any system that cares <strong>subscribes</strong> to the events it wants. Because publishers and subscribers never hold references to each other, you can add a new listener (say, Analytics) or remove one without touching the code that fires the event.</figcaption>
+    </figure>
+
     <h2 id="interactive-event-system-visualizer">Interactive Event System Visualizer</h2>
     
     <div class="canvas-wrapper" style="text-align: center;">

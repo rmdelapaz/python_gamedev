@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 380" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="pl-title pl-desc">
+    <title id="pl-title">The life of a particle: spawn, age, fade, recycle</title>
+    <desc id="pl-desc">An emitter on the left spawns a particle that follows a dashed arc across the diagram. Five stages along the arc show the particle's life: spawn (large and bright with an upward velocity arrow), rise, gravity pulls it down at the peak, fade (smaller and paler), and die when its alpha reaches zero. A box on the upper right lists the per-frame per-particle update: position plus equals velocity, velocity plus equals gravity, alpha minus equals fade, and when alpha is at or below zero the particle is recycled. A large curved arrow loops the dead particle back to the emitter, labelled returned to a pool and reused with no new allocation. The caption explains that a particle is just a handful of numbers, so pooling lets one system push thousands of them cheaply.</desc>
+
+    <style>
+        :root {
+            --emitter: #64748b;
+            --arc: #94a3b8;
+            --p-core: #f59e0b;
+            --p-stroke: #b45309;
+            --vel: #10b981;
+            --grav: #ef4444;
+            --card: #f8fafc;
+            --card-stroke: #cbd5e1;
+            --code: rgb(30,41,59);
+            --code-key: #2563eb;
+            --recycle: #8b5cf6;
+            --stage-lbl: rgb(71,85,105);
+            --text: rgb(30, 41, 59);
+            --sub-text: rgb(71, 85, 105);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --emitter: #94a3b8;
+                --arc: #64748b;
+                --p-core: #fbbf24;
+                --p-stroke: #f59e0b;
+                --vel: #34d399;
+                --grav: #f87171;
+                --card: #1e293b;
+                --card-stroke: #475569;
+                --code: #e2e8f0;
+                --code-key: #60a5fa;
+                --recycle: #a78bfa;
+                --stage-lbl: #cbd5e1;
+                --text: #f1f5f9;
+                --sub-text: #cbd5e1;
+            }
+        }
+        .title { fill: var(--text); font: 700 16px ui-sans-serif, system-ui, sans-serif; }
+        .emitter { fill: var(--emitter); }
+        .emitter-lbl { fill: var(--sub-text); font: 700 12px ui-sans-serif, system-ui, sans-serif; }
+        .arc { fill: none; stroke: var(--arc); stroke-width: 2; stroke-dasharray: 4 5; }
+        .p-stroke { stroke: var(--p-stroke); stroke-width: 1.5; }
+        .vel { stroke: var(--vel); stroke-width: 3; stroke-linecap: round; }
+        .vel-head { fill: var(--vel); }
+        .grav { stroke: var(--grav); stroke-width: 3; stroke-linecap: round; }
+        .grav-head { fill: var(--grav); }
+        .stage-lbl { fill: var(--stage-lbl); font: 700 11px ui-sans-serif, system-ui, sans-serif; }
+        .vel-lbl { fill: var(--vel); font: 700 11px ui-sans-serif, system-ui, sans-serif; }
+        .grav-lbl { fill: var(--grav); font: 700 11px ui-sans-serif, system-ui, sans-serif; }
+        .card { fill: var(--card); stroke: var(--card-stroke); stroke-width: 1.5; }
+        .card-hdr { fill: var(--sub-text); font: 700 12px ui-sans-serif, system-ui, sans-serif; }
+        .code { fill: var(--code); font: 700 13px ui-monospace, Consolas, monospace; }
+        .key { fill: var(--code-key); }
+        .recycle { fill: none; stroke: var(--recycle); stroke-width: 3; stroke-linecap: round; }
+        .recycle-head { fill: var(--recycle); }
+        .recycle-lbl { fill: var(--recycle); font: 800 12px ui-sans-serif, system-ui, sans-serif; }
+        .cap { fill: var(--sub-text); font: 500 13px ui-sans-serif, system-ui, sans-serif; }
+    </style>
+
+    <text class="title" x="360" y="28" text-anchor="middle">The life of a particle &#8212; spawn, age, fade, recycle</text>
+
+    <!-- update rules card (upper right) -->
+    <rect class="card" x="470" y="44" width="232" height="108" rx="10"/>
+    <text class="card-hdr" x="486" y="64">each frame, per particle:</text>
+    <text class="code" x="488" y="86"><tspan class="key">pos</tspan>   += vel</text>
+    <text class="code" x="488" y="106"><tspan class="key">vel</tspan>   += gravity</text>
+    <text class="code" x="488" y="126"><tspan class="key">alpha</tspan> &#8722;= fade</text>
+    <text class="code" x="488" y="146">alpha &#8804; 0 &#8594; <tspan fill="var(--recycle)">recycle</tspan></text>
+
+    <!-- trajectory arc -->
+    <path class="arc" d="M96 214 Q360 90 590 250"/>
+
+    <!-- emitter -->
+    <path class="emitter" d="M58 200 L96 214 L58 228 Z"/>
+    <circle class="emitter" cx="60" cy="214" r="10"/>
+    <text class="emitter-lbl" x="60" y="252" text-anchor="middle">Emitter</text>
+
+    <!-- particles along the arc, aging (bright/big -> faint/small) -->
+    <!-- 1 spawn -->
+    <circle class="p-stroke" cx="150" cy="176" r="13" fill="var(--p-core)"/>
+    <line class="vel" x1="158" y1="168" x2="178" y2="146"/><path class="vel-head" d="M172 145 L184 141 L179 153 Z"/>
+    <text class="vel-lbl" x="188" y="150">vel</text>
+    <text class="stage-lbl" x="150" y="205" text-anchor="middle">spawn</text>
+    <!-- 2 rise -->
+    <circle class="p-stroke" cx="258" cy="140" r="11" fill="var(--p-core)" opacity="0.85"/>
+    <text class="stage-lbl" x="258" y="168" text-anchor="middle">rise</text>
+    <!-- 3 peak / gravity -->
+    <circle class="p-stroke" cx="366" cy="126" r="9" fill="var(--p-core)" opacity="0.68"/>
+    <line class="grav" x1="366" y1="140" x2="366" y2="162"/><path class="grav-head" d="M360 158 L366 170 L372 158 Z"/>
+    <text class="grav-lbl" x="392" y="150" text-anchor="start">gravity</text>
+    <!-- 4 fade -->
+    <circle class="p-stroke" cx="474" cy="176" r="6" fill="var(--p-core)" opacity="0.42"/>
+    <text class="stage-lbl" x="474" y="200" text-anchor="middle">fade</text>
+    <!-- 5 die -->
+    <circle cx="574" cy="238" r="4" fill="var(--p-core)" opacity="0.22"/>
+    <circle cx="574" cy="238" r="9" fill="none" stroke="var(--recycle)" stroke-width="1.5" stroke-dasharray="3 3"/>
+    <text class="stage-lbl" x="574" y="264" text-anchor="middle">die (alpha 0)</text>
+
+    <!-- recycle loop -->
+    <path class="recycle" d="M574 254 Q470 330 300 330 Q140 330 74 250"/>
+    <path class="recycle-head" d="M68 262 L70 244 L84 254 Z"/>
+    <text class="recycle-lbl" x="324" y="326" text-anchor="middle">returned to a pool &#8594; reused (no new allocation)</text>
+
+    <!-- caption -->
+    <text class="cap" x="360" y="354" text-anchor="middle">A particle is just a handful of numbers &#8212; position, velocity, colour, alpha, size.</text>
+    <text class="cap" x="360" y="372" text-anchor="middle">Nudge them each frame, fade the alpha, and recycle dead ones from a pool &#8212; so one system pushes thousands cheaply.</text>
+</svg>

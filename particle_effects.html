@@ -98,6 +98,14 @@
         E --> M["Optimization"]
     </div>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/particle-lifecycle.svg"
+             alt="An emitter on the left spawns a particle that follows a dashed arc through five stages: spawn (large and bright with an upward velocity arrow), rise, gravity pulling it down at the peak, fade (smaller and paler), and die when alpha reaches zero. A box lists the per-frame update — pos += vel, vel += gravity, alpha -= fade, and recycle when alpha ≤ 0. A curved arrow loops the dead particle back to the emitter, labelled 'returned to a pool, reused with no new allocation'."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>Every fancy explosion, trail, and spark is the same simple idea repeated thousands of times. A single <strong>particle</strong> is just a handful of numbers &mdash; position, velocity, colour, alpha, size. Each frame you nudge them all: move by velocity, pull velocity down with gravity, and fade the alpha a little. When the alpha hits zero the particle <strong>dies</strong> and goes back into a <strong>pool</strong> to be respawned. Because nothing is allocated at runtime, one emitter can keep thousands of particles alive without breaking your frame budget.</figcaption>
+    </figure>
+
     <h2 id="interactive-particle-effects-playground">Interactive Particle Effects Playground</h2>
     
     <div class="canvas-wrapper">

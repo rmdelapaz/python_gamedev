@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 360" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="eb-title eb-desc">
+    <title id="eb-title">An event bus decouples publishers from subscribers</title>
+    <desc id="eb-desc">On the left, three publisher boxes emit events: Player emits died, Coin emits collected, and Boss emits defeated. Green arrows labelled emit carry these into a tall central bar labelled Event Bus, which dispatches by event type. On the right, four subscriber boxes receive notifications through blue arrows labelled notify: HUD and UI, Audio, Achievements, and Analytics. The caption explains that publishers just announce that something happened without knowing who is listening, while subscribers register for the events they care about, so systems communicate without referencing each other and you can add or remove listeners freely.</desc>
+
+    <style>
+        :root {
+            --pub-bg: #f8fafc;
+            --pub-stroke: #cbd5e1;
+            --event: #10b981;
+            --bus-bg: #eff6ff;
+            --bus-stroke: #3b82f6;
+            --bus-title: #2563eb;
+            --sub-bg: #f8fafc;
+            --sub-stroke: #cbd5e1;
+            --emit: #10b981;
+            --notify: #3b82f6;
+            --text: rgb(30, 41, 59);
+            --sub-text: rgb(71, 85, 105);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --pub-bg: #1e293b;
+                --pub-stroke: #475569;
+                --event: #34d399;
+                --bus-bg: #0f213b;
+                --bus-stroke: #569cd6;
+                --bus-title: #93c5fd;
+                --sub-bg: #1e293b;
+                --sub-stroke: #475569;
+                --emit: #34d399;
+                --notify: #569cd6;
+                --text: #f1f5f9;
+                --sub-text: #cbd5e1;
+            }
+        }
+        .title { fill: var(--text); font: 700 16px ui-sans-serif, system-ui, sans-serif; }
+        .col-lbl { fill: var(--sub-text); font: 700 12px ui-sans-serif, system-ui, sans-serif; }
+        .pub { fill: var(--pub-bg); stroke: var(--pub-stroke); stroke-width: 1.5; }
+        .pub-name { fill: var(--text); font: 700 13px ui-sans-serif, system-ui, sans-serif; }
+        .event { fill: var(--event); font: 700 11px ui-monospace, Consolas, monospace; }
+        .bus { fill: var(--bus-bg); stroke: var(--bus-stroke); stroke-width: 2.5; }
+        .bus-title { fill: var(--bus-title); font: 800 15px ui-sans-serif, system-ui, sans-serif; }
+        .bus-sub { fill: var(--sub-text); font: 600 11px ui-sans-serif, system-ui, sans-serif; }
+        .sub { fill: var(--sub-bg); stroke: var(--sub-stroke); stroke-width: 1.5; }
+        .sub-name { fill: var(--text); font: 700 12px ui-sans-serif, system-ui, sans-serif; }
+        .emit { stroke: var(--emit); stroke-width: 2.5; fill: none; stroke-linecap: round; }
+        .emit-head { fill: var(--emit); }
+        .notify { stroke: var(--notify); stroke-width: 2.5; fill: none; stroke-linecap: round; }
+        .notify-head { fill: var(--notify); }
+        .flow-lbl { font: 800 11px ui-sans-serif, system-ui, sans-serif; }
+        .cap { fill: var(--sub-text); font: 500 13px ui-sans-serif, system-ui, sans-serif; }
+    </style>
+
+    <text class="title" x="360" y="26" text-anchor="middle">Event systems &#8212; publishers and subscribers never touch</text>
+
+    <text class="col-lbl" x="100" y="58" text-anchor="middle">publishers</text>
+    <text class="col-lbl" x="360" y="58" text-anchor="middle">event bus</text>
+    <text class="col-lbl" x="612" y="58" text-anchor="middle">subscribers</text>
+
+    <!-- ===== publishers ===== -->
+    <g>
+        <rect class="pub" x="30" y="76"  width="140" height="46" rx="9"/><text class="pub-name" x="44" y="98">Player</text><text class="event" x="44" y="114">emits &#8220;died&#8221;</text>
+        <rect class="pub" x="30" y="148" width="140" height="46" rx="9"/><text class="pub-name" x="44" y="170">Coin</text><text class="event" x="44" y="186">emits &#8220;collected&#8221;</text>
+        <rect class="pub" x="30" y="220" width="140" height="46" rx="9"/><text class="pub-name" x="44" y="242">Boss</text><text class="event" x="44" y="258">emits &#8220;defeated&#8221;</text>
+    </g>
+    <!-- emit arrows -->
+    <path class="emit" d="M170 99 L300 150"/><path class="emit-head" d="M294 144 L308 153 L292 156 Z"/>
+    <path class="emit" d="M170 171 L300 171"/><path class="emit-head" d="M294 164 L308 171 L294 178 Z"/>
+    <path class="emit" d="M170 243 L300 192"/><path class="emit-head" d="M292 186 L308 189 L294 198 Z"/>
+    <text class="flow-lbl" x="228" y="128" text-anchor="middle" fill="var(--emit)">emit</text>
+
+    <!-- ===== event bus ===== -->
+    <rect class="bus" x="305" y="80" width="110" height="184" rx="14"/>
+    <text class="bus-title" x="360" y="164" text-anchor="middle">EVENT</text>
+    <text class="bus-title" x="360" y="184" text-anchor="middle">BUS</text>
+    <text class="bus-sub" x="360" y="206" text-anchor="middle">routes by type</text>
+
+    <!-- notify arrows -->
+    <path class="notify" d="M415 110 L530 96"/><path class="notify-head" d="M524 89 L538 95 L525 103 Z"/>
+    <path class="notify" d="M415 150 L530 152"/><path class="notify-head" d="M524 145 L538 152 L524 159 Z"/>
+    <path class="notify" d="M415 190 L530 208"/><path class="notify-head" d="M525 201 L538 209 L523 215 Z"/>
+    <path class="notify" d="M415 230 L530 264"/><path class="notify-head" d="M525 257 L538 265 L522 271 Z"/>
+    <text class="flow-lbl" x="474" y="130" text-anchor="middle" fill="var(--notify)">notify</text>
+
+    <!-- ===== subscribers ===== -->
+    <g>
+        <rect class="sub" x="534" y="78"  width="156" height="40" rx="9"/><text class="sub-name" x="548" y="103">HUD / UI</text>
+        <rect class="sub" x="534" y="132" width="156" height="40" rx="9"/><text class="sub-name" x="548" y="157">Audio (SFX)</text>
+        <rect class="sub" x="534" y="188" width="156" height="40" rx="9"/><text class="sub-name" x="548" y="213">Achievements</text>
+        <rect class="sub" x="534" y="244" width="156" height="40" rx="9"/><text class="sub-name" x="548" y="269">Analytics</text>
+    </g>
+
+    <!-- caption -->
+    <text class="cap" x="360" y="316" text-anchor="middle">A publisher just announces &#8220;this happened&#8221; without knowing who cares; subscribers register for the events they want.</text>
+    <text class="cap" x="360" y="336" text-anchor="middle">Systems communicate without referencing each other &#8212; add or remove listeners freely, no tangled dependencies.</text>
+</svg>

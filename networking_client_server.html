@@ -32,6 +32,14 @@
         <h1>Multiplayer Implementation (continued)</h1>
     </header>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/client-server-model.svg"
+             alt="A server box at the top labelled 'the one authoritative simulation', with three client boxes (Client A, B, C) along the bottom, each with a monitor icon. Between each client and the server run two arrows: a green arrow up labelled 'inputs' (client to server) and a blue arrow down labelled 'world state' (server to clients)."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>Nearly all multiplayer games use an <strong>authoritative client-server</strong> model. Clients don&rsquo;t run the game themselves &mdash; they send only their <strong>inputs</strong> (&ldquo;I pressed right&rdquo;, &ldquo;I fired&rdquo;) to the server. The server runs the single real simulation, resolves everything, and broadcasts the resulting <strong>world state</strong> back to every client to render. Because there&rsquo;s one source of truth, no client can lie about the game and everyone stays in sync &mdash; the foundation the rest of this multiplayer implementation builds on.</figcaption>
+    </figure>
+
     <h2 id="additional-implementation-details">Additional Implementation Details</h2>
 
     <pre class="language-python"><code>    def interpolate_entities(self, dt: float):

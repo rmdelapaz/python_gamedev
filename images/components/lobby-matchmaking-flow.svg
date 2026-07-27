@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 360" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="lo-title lo-desc">
+    <title id="lo-title">Lobby and matchmaking flow</title>
+    <desc id="lo-desc">A left-to-right flow. On the left, players connect to a Lobby Server, drawn as a box listing open rooms — one room two of four full with a Join button, one room four of four marked full, and a Create room option — plus a note about joining by code or quick-match. An arrow leads to a Room box showing four player slots, three marked ready and one still waiting. A final arrow leads to a Launch box where the game starts once everyone is ready. The caption explains that the lobby server is a waiting room that lists rooms, lets you create or join one by code or quick-match, tracks who is ready, and only hands off to the actual game when the room is full and everyone is ready.</desc>
+
+    <style>
+        :root {
+            --player: #3b82f6;
+            --lobby-bg: #eff6ff;
+            --lobby-stroke: #3b82f6;
+            --lobby-title: #2563eb;
+            --room-row: #f8fafc;
+            --room-row-stroke: #cbd5e1;
+            --join: #10b981;
+            --full: #94a3b8;
+            --card-bg: #f8fafc;
+            --card-stroke: #cbd5e1;
+            --ready: #10b981;
+            --waiting: #f59e0b;
+            --launch-bg: #ecfdf5;
+            --launch-stroke: #10b981;
+            --launch-text: #059669;
+            --arrow: #64748b;
+            --text: rgb(30, 41, 59);
+            --sub-text: rgb(71, 85, 105);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --player: #569cd6;
+                --lobby-bg: #0f213b;
+                --lobby-stroke: #569cd6;
+                --lobby-title: #93c5fd;
+                --room-row: #334155;
+                --room-row-stroke: #475569;
+                --join: #34d399;
+                --full: #64748b;
+                --card-bg: #1e293b;
+                --card-stroke: #475569;
+                --ready: #34d399;
+                --waiting: #fbbf24;
+                --launch-bg: #0f2a22;
+                --launch-stroke: #34d399;
+                --launch-text: #34d399;
+                --arrow: #94a3b8;
+                --text: #f1f5f9;
+                --sub-text: #cbd5e1;
+            }
+        }
+        .title { fill: var(--text); font: 700 16px ui-sans-serif, system-ui, sans-serif; }
+        .step-lbl { fill: var(--sub-text); font: 700 12px ui-sans-serif, system-ui, sans-serif; }
+        .player { fill: var(--player); }
+        .lobby { fill: var(--lobby-bg); stroke: var(--lobby-stroke); stroke-width: 2; }
+        .lobby-title { fill: var(--lobby-title); font: 800 13px ui-sans-serif, system-ui, sans-serif; }
+        .room-row { fill: var(--room-row); stroke: var(--room-row-stroke); stroke-width: 1; }
+        .room-txt { fill: var(--text); font: 700 11px ui-monospace, Consolas, monospace; }
+        .join { fill: var(--join); font: 800 10px ui-sans-serif, system-ui, sans-serif; }
+        .full { fill: var(--full); font: 700 10px ui-sans-serif, system-ui, sans-serif; }
+        .note { fill: var(--sub-text); font: 600 10px ui-sans-serif, system-ui, sans-serif; }
+        .card { fill: var(--card-bg); stroke: var(--card-stroke); stroke-width: 1.5; }
+        .card-title { fill: var(--text); font: 800 12px ui-sans-serif, system-ui, sans-serif; }
+        .slot-ready { fill: var(--ready); }
+        .slot-wait { fill: var(--waiting); }
+        .slot-lbl { fill: #ffffff; font: 800 10px ui-sans-serif, system-ui, sans-serif; }
+        .ready-lbl { fill: var(--ready); font: 700 10px ui-sans-serif, system-ui, sans-serif; }
+        .wait-lbl { fill: var(--waiting); font: 700 10px ui-sans-serif, system-ui, sans-serif; }
+        .launch { fill: var(--launch-bg); stroke: var(--launch-stroke); stroke-width: 2; }
+        .launch-txt { fill: var(--launch-text); font: 800 14px ui-sans-serif, system-ui, sans-serif; }
+        .arrow { stroke: var(--arrow); stroke-width: 2.5; fill: none; stroke-linecap: round; }
+        .arrow-head { fill: var(--arrow); }
+        .cap { fill: var(--sub-text); font: 500 13px ui-sans-serif, system-ui, sans-serif; }
+    </style>
+
+    <text class="title" x="360" y="26" text-anchor="middle">Lobby &amp; matchmaking &#8212; from connect to launch</text>
+
+    <!-- ===== players ===== -->
+    <text class="step-lbl" x="46" y="70" text-anchor="middle">players</text>
+    <g class="player">
+        <circle cx="34" cy="120" r="9"/><rect x="24" y="132" width="20" height="20" rx="5"/>
+        <circle cx="58" cy="120" r="9"/><rect x="48" y="132" width="20" height="20" rx="5"/>
+        <circle cx="46" cy="164" r="9"/><rect x="36" y="176" width="20" height="20" rx="5"/>
+    </g>
+    <path class="arrow" d="M74 150 L104 150"/><path class="arrow-head" d="M98 143 L112 150 L98 157 Z"/>
+
+    <!-- ===== lobby server ===== -->
+    <rect class="lobby" x="118" y="64" width="212" height="196" rx="12"/>
+    <text class="lobby-title" x="224" y="88" text-anchor="middle">Lobby Server</text>
+    <!-- room rows -->
+    <rect class="room-row" x="132" y="100" width="184" height="30" rx="6"/>
+    <text class="room-txt" x="142" y="119">Room A1B2</text><text class="room-txt" x="238" y="119">2/4</text><rect class="slot-ready" x="272" y="107" width="34" height="16" rx="8"/><text class="join" x="289" y="119" text-anchor="middle">Join</text>
+    <rect class="room-row" x="132" y="136" width="184" height="30" rx="6"/>
+    <text class="room-txt" x="142" y="155">Room C3D4</text><text class="room-txt" x="238" y="155">4/4</text><text class="full" x="289" y="155" text-anchor="middle">full</text>
+    <rect class="room-row" x="132" y="172" width="184" height="30" rx="6"/>
+    <text class="room-txt" x="142" y="191" style="fill:var(--join)">+ Create room</text>
+    <text class="note" x="224" y="228" text-anchor="middle">join by 4-letter code</text>
+    <text class="note" x="224" y="244" text-anchor="middle">or Quick-match</text>
+
+    <path class="arrow" d="M336 150 L372 150"/><path class="arrow-head" d="M366 143 L380 150 L366 157 Z"/>
+
+    <!-- ===== room / ready ===== -->
+    <rect class="card" x="388" y="90" width="176" height="140" rx="12"/>
+    <text class="card-title" x="476" y="114" text-anchor="middle">Your Room &#183; 4 players</text>
+    <!-- 4 slots -->
+    <circle class="slot-ready" cx="418" cy="150" r="14"/><text class="slot-lbl" x="418" y="154" text-anchor="middle">P1</text><text class="ready-lbl" x="418" y="180" text-anchor="middle">ready</text>
+    <circle class="slot-ready" cx="458" cy="150" r="14"/><text class="slot-lbl" x="458" y="154" text-anchor="middle">P2</text><text class="ready-lbl" x="458" y="180" text-anchor="middle">ready</text>
+    <circle class="slot-ready" cx="498" cy="150" r="14"/><text class="slot-lbl" x="498" y="154" text-anchor="middle">P3</text><text class="ready-lbl" x="498" y="180" text-anchor="middle">ready</text>
+    <circle class="slot-wait" cx="538" cy="150" r="14"/><text class="slot-lbl" x="538" y="154" text-anchor="middle">P4</text><text class="wait-lbl" x="538" y="180" text-anchor="middle">waiting</text>
+    <text class="note" x="476" y="212" text-anchor="middle">start unlocks when all are ready</text>
+
+    <path class="arrow" d="M570 150 L606 150"/><path class="arrow-head" d="M600 143 L614 150 L600 157 Z"/>
+
+    <!-- ===== launch ===== -->
+    <rect class="launch" x="620" y="120" width="78" height="60" rx="12"/>
+    <text class="launch-txt" x="659" y="147" text-anchor="middle">Launch</text>
+    <text class="launch-txt" x="659" y="165" text-anchor="middle">&#9654;</text>
+
+    <!-- caption -->
+    <text class="cap" x="360" y="300" text-anchor="middle">A lobby server is a waiting room: it lists open rooms, lets you create or join one, and tracks who&#8217;s ready.</text>
+    <text class="cap" x="360" y="320" text-anchor="middle">Only when the room is full and everyone has readied up does it hand off to the actual game.</text>
+</svg>

@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 360" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="tu-title tu-desc">
+    <title id="tu-title">TCP versus UDP for game networking</title>
+    <desc id="tu-desc">Two lanes compare the protocols. The top lane, TCP, marked reliable and ordered, shows a sender, a wire on which a lost packet is being re-sent, and a receiver inbox holding packets 1, 2, 3, 4 all present and in order. The bottom lane, UDP, marked fast and lossy, shows a sender, a wire where one packet is dropped, and a receiver inbox holding packets out of order and with one missing. The caption explains that TCP guarantees ordered delivery at the cost of waiting and resending, while UDP just fires packets and moves on, so you use TCP for lobby, chat, and trades and UDP for fast-changing data like player positions.</desc>
+
+    <style>
+        :root {
+            --tcp: #10b981;
+            --udp: #f59e0b;
+            --pill-text: #ffffff;
+            --box: #f8fafc;
+            --box-stroke: #cbd5e1;
+            --wire: #94a3b8;
+            --pkt-ok-stroke: #10b981;
+            --pkt-bad-stroke: #ef4444;
+            --pkt-bg: #f8fafc;
+            --pkt-num: rgb(30,41,59);
+            --drop: #ef4444;
+            --text: rgb(30, 41, 59);
+            --sub-text: rgb(71, 85, 105);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --tcp: #34d399;
+                --udp: #fbbf24;
+                --pill-text: #0f172a;
+                --box: #1e293b;
+                --box-stroke: #475569;
+                --wire: #64748b;
+                --pkt-ok-stroke: #34d399;
+                --pkt-bad-stroke: #f87171;
+                --pkt-bg: #1e293b;
+                --pkt-num: #f1f5f9;
+                --drop: #f87171;
+                --text: #f1f5f9;
+                --sub-text: #cbd5e1;
+            }
+        }
+        .title { fill: var(--text); font: 700 16px ui-sans-serif, system-ui, sans-serif; }
+        .pill-tcp { fill: var(--tcp); }
+        .pill-udp { fill: var(--udp); }
+        .pill-txt { fill: var(--pill-text); font: 800 13px ui-sans-serif, system-ui, sans-serif; }
+        .sub { fill: var(--sub-text); font: 600 11px ui-sans-serif, system-ui, sans-serif; }
+        .box { fill: var(--box); stroke: var(--box-stroke); stroke-width: 1.5; }
+        .box-txt { fill: var(--sub-text); font: 700 11px ui-sans-serif, system-ui, sans-serif; }
+        .wire { stroke: var(--wire); stroke-width: 2; stroke-dasharray: 2 4; }
+        .pkt { fill: var(--pkt-bg); stroke-width: 2; }
+        .pkt-ok { stroke: var(--pkt-ok-stroke); }
+        .pkt-bad { stroke: var(--pkt-bad-stroke); stroke-dasharray: 4 3; }
+        .pkt-num { fill: var(--pkt-num); font: 800 14px ui-monospace, Consolas, monospace; }
+        .resend { stroke: var(--tcp); stroke-width: 2; fill: none; stroke-linecap: round; }
+        .resend-head { fill: var(--tcp); }
+        .resend-lbl { fill: var(--tcp); font: 700 11px ui-sans-serif, system-ui, sans-serif; }
+        .drop { stroke: var(--drop); stroke-width: 2.5; stroke-linecap: round; }
+        .drop-lbl { fill: var(--drop); font: 700 11px ui-sans-serif, system-ui, sans-serif; }
+        .verdict-ok { fill: var(--tcp); font: 800 12px ui-sans-serif, system-ui, sans-serif; }
+        .verdict-bad { fill: var(--drop); font: 800 12px ui-sans-serif, system-ui, sans-serif; }
+        .cap { fill: var(--sub-text); font: 500 13px ui-sans-serif, system-ui, sans-serif; }
+    </style>
+
+    <text class="title" x="360" y="26" text-anchor="middle">TCP vs UDP &#8212; reliability or speed, pick per message</text>
+
+    <!-- ============ TCP lane ============ -->
+    <rect class="pill-tcp" x="28" y="76" width="52" height="26" rx="13"/><text class="pill-txt" x="54" y="94" text-anchor="middle">TCP</text>
+    <text class="sub" x="28" y="120">reliable &#183; ordered</text>
+    <!-- sender -->
+    <rect class="box" x="118" y="78" width="50" height="32" rx="6"/><text class="box-txt" x="143" y="98" text-anchor="middle">send</text>
+    <!-- wire -->
+    <line class="wire" x1="170" y1="94" x2="452" y2="94"/>
+    <!-- retransmit detail -->
+    <rect class="pkt pkt-ok" x="276" y="80" width="28" height="28" rx="4"/><text class="pkt-num" x="290" y="99" text-anchor="middle">2</text>
+    <path class="resend" d="M278 78 Q290 60 302 78"/><path class="resend-head" d="M298 72 L304 82 L292 82 Z"/>
+    <text class="resend-lbl" x="290" y="56" text-anchor="middle">re-sent</text>
+    <!-- receiver inbox: 1 2 3 4 in order -->
+    <rect class="pkt pkt-ok" x="460" y="80" width="30" height="28" rx="4"/><text class="pkt-num" x="475" y="99" text-anchor="middle">1</text>
+    <rect class="pkt pkt-ok" x="494" y="80" width="30" height="28" rx="4"/><text class="pkt-num" x="509" y="99" text-anchor="middle">2</text>
+    <rect class="pkt pkt-ok" x="528" y="80" width="30" height="28" rx="4"/><text class="pkt-num" x="543" y="99" text-anchor="middle">3</text>
+    <rect class="pkt pkt-ok" x="562" y="80" width="30" height="28" rx="4"/><text class="pkt-num" x="577" y="99" text-anchor="middle">4</text>
+    <text class="verdict-ok" x="526" y="128" text-anchor="middle">&#10003; complete &amp; in order (but slower)</text>
+
+    <!-- ============ UDP lane ============ -->
+    <rect class="pill-udp" x="28" y="212" width="52" height="26" rx="13"/><text class="pill-txt" x="54" y="230" text-anchor="middle">UDP</text>
+    <text class="sub" x="28" y="256">fast &#183; lossy</text>
+    <!-- sender -->
+    <rect class="box" x="118" y="214" width="50" height="32" rx="6"/><text class="box-txt" x="143" y="234" text-anchor="middle">send</text>
+    <!-- wire -->
+    <line class="wire" x1="170" y1="230" x2="452" y2="230"/>
+    <!-- dropped packet -->
+    <rect class="pkt pkt-bad" x="276" y="216" width="28" height="28" rx="4"/><text class="pkt-num" x="290" y="235" text-anchor="middle">3</text>
+    <line class="drop" x1="280" y1="220" x2="300" y2="240"/><line class="drop" x1="300" y1="220" x2="280" y2="240"/>
+    <text class="drop-lbl" x="290" y="262" text-anchor="middle">dropped</text>
+    <!-- receiver inbox: out of order, one missing (1, 4, 2, gap) -->
+    <rect class="pkt pkt-ok" x="460" y="216" width="30" height="28" rx="4"/><text class="pkt-num" x="475" y="235" text-anchor="middle">1</text>
+    <rect class="pkt pkt-ok" x="494" y="216" width="30" height="28" rx="4"/><text class="pkt-num" x="509" y="235" text-anchor="middle">4</text>
+    <rect class="pkt pkt-ok" x="528" y="216" width="30" height="28" rx="4"/><text class="pkt-num" x="543" y="235" text-anchor="middle">2</text>
+    <rect class="pkt pkt-bad" x="562" y="216" width="30" height="28" rx="4"/><text class="drop-lbl" x="577" y="235" text-anchor="middle">?</text>
+    <text class="verdict-bad" x="526" y="264" text-anchor="middle">&#10007; may reorder or drop (but fast)</text>
+
+    <!-- caption -->
+    <text class="cap" x="360" y="316" text-anchor="middle">TCP guarantees every packet arrives in order &#8212; at the cost of waiting and resending. UDP just fires packets and moves on.</text>
+    <text class="cap" x="360" y="336" text-anchor="middle">Use TCP for lobby, chat, and trades; use UDP for positions and hits, where a fresh packet beats a late one.</text>
+</svg>

@@ -105,6 +105,14 @@
         N --> R["Predictive Models"]
     </div>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/client-prediction-reconciliation.svg"
+             alt="A sequence diagram with a CLIENT lane on top and a SERVER lane below. At time zero the client 'press → predict' (moves immediately, don't wait). A diagonal arrow carries the input down to the server (half the round-trip) where it is applied as authoritative. A diagonal arrow carries the state back up to the client (the other half), where the client reconciles (correct + replay inputs). A bracket over the client lane reads 'you already moved — latency hidden'."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>Waiting for the server to answer every keypress would make the game feel sluggish, so the client <strong>predicts</strong>: it applies your input immediately and moves right away. Meanwhile the input travels to the authoritative server and the true result travels back &mdash; a full round-trip later. When that answer arrives, the client <strong>reconciles</strong>: it snaps to the server&rsquo;s position and replays any inputs you&rsquo;ve made since, so it ends up both smooth <em>and</em> correct. Prediction hides the latency; reconciliation keeps the client honest.</figcaption>
+    </figure>
+
     <h2 id="interactive-lag-compensation-demo">Interactive Lag Compensation Demo</h2>
     
     <div class="canvas-wrapper" style="text-align: center;">

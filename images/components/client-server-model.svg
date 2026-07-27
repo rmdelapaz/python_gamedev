@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 360" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="cs-title cs-desc">
+    <title id="cs-title">The authoritative client-server model</title>
+    <desc id="cs-desc">A server box sits at the top, labelled the one authoritative simulation. Three client boxes sit along the bottom, each with a small monitor icon, labelled Client A, Client B, and Client C. Between each client and the server run two arrows: a green arrow pointing up from client to server, labelled inputs, and a blue arrow pointing down from server to client, labelled world state. The caption explains that clients send only their inputs, the server runs the single real simulation and broadcasts the resulting state to everyone, which stops cheating and keeps all players in sync.</desc>
+
+    <style>
+        :root {
+            --server-bg: #eff6ff;
+            --server-stroke: #3b82f6;
+            --server-title: #2563eb;
+            --client-bg: #f8fafc;
+            --client-stroke: #cbd5e1;
+            --monitor: #64748b;
+            --up: #10b981;
+            --down: #3b82f6;
+            --text: rgb(30, 41, 59);
+            --sub-text: rgb(71, 85, 105);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --server-bg: #0f213b;
+                --server-stroke: #569cd6;
+                --server-title: #93c5fd;
+                --client-bg: #1e293b;
+                --client-stroke: #475569;
+                --monitor: #94a3b8;
+                --up: #34d399;
+                --down: #569cd6;
+                --text: #f1f5f9;
+                --sub-text: #cbd5e1;
+            }
+        }
+        .title { fill: var(--text); font: 700 16px ui-sans-serif, system-ui, sans-serif; }
+        .server { fill: var(--server-bg); stroke: var(--server-stroke); stroke-width: 2.5; }
+        .server-title { fill: var(--server-title); font: 800 16px ui-sans-serif, system-ui, sans-serif; }
+        .server-sub { fill: var(--sub-text); font: 600 12px ui-sans-serif, system-ui, sans-serif; }
+        .client { fill: var(--client-bg); stroke: var(--client-stroke); stroke-width: 1.5; }
+        .client-lbl { fill: var(--text); font: 700 13px ui-sans-serif, system-ui, sans-serif; }
+        .monitor { fill: none; stroke: var(--monitor); stroke-width: 2; }
+        .up { stroke: var(--up); stroke-width: 3; fill: none; stroke-linecap: round; }
+        .up-head { fill: var(--up); }
+        .down { stroke: var(--down); stroke-width: 3; fill: none; stroke-linecap: round; }
+        .down-head { fill: var(--down); }
+        .up-lbl { fill: var(--up); font: 800 12px ui-sans-serif, system-ui, sans-serif; }
+        .down-lbl { fill: var(--down); font: 800 12px ui-sans-serif, system-ui, sans-serif; }
+        .cap { fill: var(--sub-text); font: 500 13px ui-sans-serif, system-ui, sans-serif; }
+    </style>
+
+    <text class="title" x="360" y="28" text-anchor="middle">Authoritative client-server &#8212; the server is the single source of truth</text>
+
+    <!-- server -->
+    <rect class="server" x="248" y="58" width="224" height="62" rx="12"/>
+    <text class="server-title" x="360" y="86" text-anchor="middle">SERVER</text>
+    <text class="server-sub" x="360" y="106" text-anchor="middle">the one authoritative simulation</text>
+
+    <!-- clients -->
+    <g>
+        <rect class="client" x="50"  y="250" width="140" height="62" rx="10"/>
+        <rect class="monitor" x="66" y="266" width="30" height="20" rx="3"/><line class="monitor" x1="81" y1="286" x2="81" y2="292"/><line class="monitor" x1="73" y1="292" x2="89" y2="292"/>
+        <text class="client-lbl" x="108" y="286">Client A</text>
+
+        <rect class="client" x="290" y="250" width="140" height="62" rx="10"/>
+        <rect class="monitor" x="306" y="266" width="30" height="20" rx="3"/><line class="monitor" x1="321" y1="286" x2="321" y2="292"/><line class="monitor" x1="313" y1="292" x2="329" y2="292"/>
+        <text class="client-lbl" x="348" y="286">Client B</text>
+
+        <rect class="client" x="530" y="250" width="140" height="62" rx="10"/>
+        <rect class="monitor" x="546" y="266" width="30" height="20" rx="3"/><line class="monitor" x1="561" y1="286" x2="561" y2="292"/><line class="monitor" x1="553" y1="292" x2="569" y2="292"/>
+        <text class="client-lbl" x="588" y="286">Client C</text>
+    </g>
+
+    <!-- arrows: Client A (cx=120) <-> server target 300 -->
+    <path class="up" d="M112 250 L292 126"/><path class="up-head" d="M290 134 L300 120 L299 136 Z"/>
+    <path class="down" d="M312 126 L128 250"/><path class="down-head" d="M138 244 L124 252 L127 238 Z"/>
+
+    <!-- Client B (cx=360) straight up -->
+    <path class="up" d="M352 250 L352 126"/><path class="up-head" d="M345 132 L352 118 L359 132 Z"/>
+    <path class="down" d="M368 126 L368 250"/><path class="down-head" d="M361 244 L368 258 L375 244 Z"/>
+    <text class="up-lbl" x="330" y="192" text-anchor="end">inputs</text>
+    <text class="down-lbl" x="390" y="192" text-anchor="start">world state</text>
+
+    <!-- Client C (cx=600) <-> server target 420 -->
+    <path class="up" d="M608 250 L428 126"/><path class="up-head" d="M430 134 L420 120 L421 136 Z"/>
+    <path class="down" d="M408 126 L592 250"/><path class="down-head" d="M582 244 L596 252 L593 238 Z"/>
+
+    <!-- caption -->
+    <text class="cap" x="360" y="336" text-anchor="middle">Clients send only their <tspan fill="var(--up)" font-weight="700">inputs</tspan>; the server runs the one real simulation and broadcasts the <tspan fill="var(--down)" font-weight="700">world state</tspan> to all &#8212;</text>
+    <text class="cap" x="360" y="354" text-anchor="middle">so no client can lie about the game world, and all players stay perfectly in sync.</text>
+</svg>

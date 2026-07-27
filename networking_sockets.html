@@ -94,6 +94,14 @@
         style D fill:#ffccbc
     </div>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/tcp-vs-udp.svg"
+             alt="Two lanes. TCP (reliable, ordered): a sender, a wire on which a lost packet is being re-sent, and a receiver inbox holding packets 1, 2, 3, 4 all present and in order — 'complete and in order, but slower'. UDP (fast, lossy): a sender, a wire where a packet is dropped, and a receiver inbox holding packets out of order with one missing — 'may reorder or drop, but fast'."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>The choice of transport shapes everything above it. <strong>TCP</strong> guarantees that every byte arrives, in the order you sent it &mdash; it quietly re-sends anything lost, which costs time. <strong>UDP</strong> just fires each packet and forgets it: packets can arrive out of order, or vanish entirely, but there&rsquo;s no waiting. The rule of thumb: use <strong>TCP</strong> where correctness matters (lobby, chat, trades, final scores) and <strong>UDP</strong> for fast-changing data like player positions, where a brand-new packet is more useful than a correctly-ordered stale one.</figcaption>
+    </figure>
+
     <h2 id="tcp-vs-udp">TCP vs UDP</h2>
     
     <div style="background-color: #f9f9f9; padding: 20px; border-radius: 10px; margin: 20px 0;">

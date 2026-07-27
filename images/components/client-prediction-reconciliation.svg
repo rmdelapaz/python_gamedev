@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 360" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="pr-title pr-desc">
+    <title id="pr-title">Client prediction and server reconciliation</title>
+    <desc id="pr-desc">A sequence diagram with two horizontal lanes: CLIENT on top and SERVER below. At time zero on the client lane, the player presses a key and the client predicts, moving immediately without waiting. A diagonal arrow carries the input down to the server across half the round-trip time. On the server lane, the server applies the input as the authoritative simulation. A diagonal arrow carries the authoritative state back up to the client across the other half of the round-trip. Back on the client lane, the client reconciles: it corrects to the server's position and replays any inputs made since. A bracket over the client lane between the press and the reply is labelled you already moved — latency hidden. The caption explains that prediction makes controls feel instant while reconciliation keeps the client honest with the server.</desc>
+
+    <style>
+        :root {
+            --lane: #94a3b8;
+            --client: #3b82f6;
+            --server: #8b5cf6;
+            --predict: #10b981;
+            --msg: #64748b;
+            --reconcile: #f59e0b;
+            --hidden: #10b981;
+            --node-bg: #f8fafc;
+            --text: rgb(30, 41, 59);
+            --sub-text: rgb(71, 85, 105);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --lane: #64748b;
+                --client: #569cd6;
+                --server: #a78bfa;
+                --predict: #34d399;
+                --msg: #94a3b8;
+                --reconcile: #fbbf24;
+                --hidden: #34d399;
+                --node-bg: #1e293b;
+                --text: #f1f5f9;
+                --sub-text: #cbd5e1;
+            }
+        }
+        .title { fill: var(--text); font: 700 16px ui-sans-serif, system-ui, sans-serif; }
+        .lane { stroke: var(--lane); stroke-width: 2; }
+        .lane-lbl-c { fill: var(--client); font: 800 13px ui-sans-serif, system-ui, sans-serif; }
+        .lane-lbl-s { fill: var(--server); font: 800 13px ui-sans-serif, system-ui, sans-serif; }
+        .dot-c { fill: var(--client); }
+        .dot-p { fill: var(--predict); }
+        .dot-s { fill: var(--server); }
+        .dot-r { fill: var(--reconcile); }
+        .msg { stroke: var(--msg); stroke-width: 2.5; fill: none; stroke-linecap: round; }
+        .msg-head { fill: var(--msg); }
+        .msg-lbl { fill: var(--sub-text); font: 600 11px ui-sans-serif, system-ui, sans-serif; }
+        .node-strong { font: 800 12px ui-sans-serif, system-ui, sans-serif; }
+        .node-sub { fill: var(--sub-text); font: 600 11px ui-sans-serif, system-ui, sans-serif; }
+        .hidden-brace { stroke: var(--hidden); stroke-width: 2; fill: none; }
+        .hidden-lbl { fill: var(--hidden); font: 800 12px ui-sans-serif, system-ui, sans-serif; }
+        .cap { fill: var(--sub-text); font: 500 13px ui-sans-serif, system-ui, sans-serif; }
+    </style>
+
+    <text class="title" x="360" y="26" text-anchor="middle">Client prediction &amp; reconciliation &#8212; hiding the round-trip</text>
+
+    <!-- hidden-latency brace over client lane (press -> reply) -->
+    <path class="hidden-brace" d="M150 74 Q150 66 158 66 L536 66 Q544 66 544 74"/>
+    <text class="hidden-lbl" x="347" y="58" text-anchor="middle">you already moved &#8212; latency hidden</text>
+
+    <!-- CLIENT lane -->
+    <text class="lane-lbl-c" x="40" y="112" text-anchor="start">CLIENT</text>
+    <line class="lane" x1="120" y1="118" x2="690" y2="118"/>
+
+    <!-- SERVER lane -->
+    <text class="lane-lbl-s" x="40" y="258" text-anchor="start">SERVER</text>
+    <line class="lane" x1="120" y1="252" x2="690" y2="252"/>
+
+    <!-- t0: press + predict (client) -->
+    <circle class="dot-p" cx="150" cy="118" r="7"/>
+    <text class="node-strong" x="150" y="98" text-anchor="middle" fill="var(--predict)">press &#8594; predict</text>
+    <text class="node-sub" x="150" y="140" text-anchor="middle">move now, don&#8217;t wait</text>
+
+    <!-- input travels to server -->
+    <path class="msg" d="M162 124 L338 246"/><path class="msg-head" d="M328 242 L344 250 L330 254 Z"/>
+    <text class="msg-lbl" x="220" y="180" text-anchor="middle" transform="rotate(35 220 180)">input (&#189; RTT)</text>
+
+    <!-- server applies -->
+    <circle class="dot-s" cx="350" cy="252" r="7"/>
+    <text class="node-strong" x="350" y="284" text-anchor="middle" fill="var(--server)">apply (authoritative)</text>
+
+    <!-- state travels back to client -->
+    <path class="msg" d="M362 246 L536 124"/><path class="msg-head" d="M526 120 L542 116 L540 132 Z"/>
+    <text class="msg-lbl" x="470" y="180" text-anchor="middle" transform="rotate(-35 470 180)">state (&#189; RTT)</text>
+
+    <!-- reconcile (client) -->
+    <circle class="dot-r" cx="544" cy="118" r="7"/>
+    <text class="node-strong" x="576" y="100" text-anchor="middle" fill="var(--reconcile)">reconcile</text>
+    <text class="node-sub" x="576" y="140" text-anchor="middle">correct + replay inputs</text>
+
+    <!-- caption -->
+    <text class="cap" x="360" y="316" text-anchor="middle">The client predicts its own move instantly, so controls feel lag-free while the server replies over the round-trip.</text>
+    <text class="cap" x="360" y="336" text-anchor="middle">When the reply arrives, the client reconciles: it snaps to the true position and replays inputs made since.</text>
+</svg>

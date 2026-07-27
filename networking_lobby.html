@@ -107,6 +107,14 @@
         style I fill:#c8e6c9
     </div>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/lobby-matchmaking-flow.svg"
+             alt="A left-to-right flow: players connect to a Lobby Server drawn as a box listing open rooms — Room A1B2 at 2/4 with a Join button, Room C3D4 at 4/4 marked full, and a '+ Create room' option, plus 'join by 4-letter code or Quick-match'. An arrow leads to a Room box with four player slots (three ready, one waiting), then a final arrow to a Launch box."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>Before players ever reach the game, they pass through the <strong>lobby</strong> &mdash; a waiting room whose whole job is to gather the right people into a room. The lobby server lists open rooms and lets a player <strong>create</strong> a new one or <strong>join</strong> an existing one (by short code or automatic quick-match). It tracks how many seats are filled and who has hit <strong>ready</strong>, and only when the room is full and everyone has readied up does it hand the group off to the actual game session. Keep this flow in mind and the lobby-server code below maps straight onto it.</figcaption>
+    </figure>
+
     <h2 id="complete-lobby-server-implementation">Complete Lobby Server Implementation</h2>
     
     <div style="background-color: #f9f9f9; padding: 20px; border-radius: 10px; margin: 20px 0;">

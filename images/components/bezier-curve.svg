@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 400" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="bez-title bez-desc">
+    <title id="bez-title">A quadratic Bezier curve as a lerp of lerps</title>
+    <desc id="bez-desc">Three control points P0 at lower-left, P1 at top-centre, and P2 at lower-right are joined by a dashed control polygon. A green curve sweeps from P0 to P2, bowing toward P1. For a value t, a point q0 is placed along the segment P0 to P1 and a point q1 along the segment P1 to P2; an amber chord joins q0 and q1, and the curve point for that t sits on this chord, highlighted in amber. This shows that a Bezier curve is built by repeatedly applying linear interpolation.</desc>
+
+    <style>
+        :root {
+            --ctrl: rgb(59, 130, 246);
+            --poly: #94a3b8;
+            --curve: rgb(16, 185, 129);
+            --chord: rgb(245, 158, 11);
+            --text: rgb(30, 41, 59);
+            --sub-text: rgb(71, 85, 105);
+            --title: rgb(51, 65, 85);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --ctrl: #569cd6;
+                --poly: #94a3b8;
+                --curve: #34d399;
+                --chord: #fbbf24;
+                --text: #f1f5f9;
+                --sub-text: #cbd5e1;
+                --title: #e2e8f0;
+            }
+        }
+        .title { fill: var(--title); font: 700 16px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .poly { stroke: var(--poly); stroke-width: 2; stroke-dasharray: 6 5; fill: none; }
+        .curve { stroke: var(--curve); stroke-width: 4; fill: none; }
+        .chord { stroke: var(--chord); stroke-width: 3; fill: none; stroke-linecap: round; }
+        .ctrl-dot { fill: var(--ctrl); }
+        .q-dot { fill: var(--chord); }
+        .b-dot { fill: var(--chord); stroke: #fff; stroke-width: 2; }
+        .ctrl-label { fill: var(--ctrl); font: 700 16px "Times New Roman", Georgia, serif; }
+        .q-label { fill: var(--sub-text); font: italic 600 15px "Times New Roman", Georgia, serif; }
+        .b-label { fill: var(--chord); font: 800 15px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    </style>
+
+    <text class="title" x="280" y="30" text-anchor="middle">Quadratic B&#233;zier: a lerp of lerps</text>
+
+    <!-- control polygon -->
+    <line class="poly" x1="80" y1="340" x2="280" y2="80"/>
+    <line class="poly" x1="280" y1="80" x2="480" y2="300"/>
+
+    <!-- the curve -->
+    <path class="curve" d="M 80 340 Q 280 80 480 300"/>
+
+    <!-- moving chord q0-q1 at t = 0.4 -->
+    <line class="chord" x1="160" y1="236" x2="360" y2="168"/>
+
+    <!-- intermediate points -->
+    <circle class="q-dot" cx="160" cy="236" r="5"/>
+    <circle class="q-dot" cx="360" cy="168" r="5"/>
+    <text class="q-label" x="146" y="232" text-anchor="end">q&#8320;</text>
+    <text class="q-label" x="372" y="162" text-anchor="start">q&#8321;</text>
+
+    <!-- curve point B(t) on the chord -->
+    <circle class="b-dot" cx="240" cy="209" r="7"/>
+    <text class="b-label" x="250" y="228" text-anchor="start">curve(t), t = 0.4</text>
+
+    <!-- control points -->
+    <circle class="ctrl-dot" cx="80"  cy="340" r="7"/>
+    <circle class="ctrl-dot" cx="280" cy="80"  r="7"/>
+    <circle class="ctrl-dot" cx="480" cy="300" r="7"/>
+    <text class="ctrl-label" x="66"  y="356" text-anchor="end">P&#8320;</text>
+    <text class="ctrl-label" x="280" y="66"  text-anchor="middle">P&#8321;</text>
+    <text class="ctrl-label" x="496" y="312" text-anchor="start">P&#8322;</text>
+</svg>

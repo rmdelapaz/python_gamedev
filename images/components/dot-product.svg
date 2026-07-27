@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 420" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="dp-title dp-desc">
+    <title id="dp-title">The dot product as a projection</title>
+    <desc id="dp-desc">Two vectors a and b start from a common origin, with the angle theta between them marked by an amber arc. Vector b lies along the horizontal. A dashed perpendicular drops from the tip of a down to the line of b, and the segment of b from the origin to that foot is highlighted as the projection of a onto b, with length equal to the magnitude of a times cosine theta. The formula a dot b equals magnitude a times magnitude b times cosine theta is shown, along with a legend: the dot product is positive when the angle is under ninety degrees, zero at ninety degrees, and negative when the angle is over ninety degrees.</desc>
+
+    <style>
+        :root {
+            --a: rgb(59, 130, 246);
+            --b: rgb(16, 185, 129);
+            --proj: rgb(245, 158, 11);
+            --perp: #64748b;
+            --text: rgb(30, 41, 59);
+            --sub-text: rgb(71, 85, 105);
+            --angle: rgb(245, 158, 11);
+            --formula: rgb(51, 65, 85);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --a: #569cd6;
+                --b: #34d399;
+                --proj: #fbbf24;
+                --perp: #94a3b8;
+                --text: #f1f5f9;
+                --sub-text: #cbd5e1;
+                --angle: #fbbf24;
+                --formula: #e2e8f0;
+            }
+        }
+        .va { stroke: var(--a); stroke-width: 4; fill: none; stroke-linecap: round; }
+        .vb { stroke: var(--b); stroke-width: 4; fill: none; stroke-linecap: round; }
+        .proj { stroke: var(--proj); stroke-width: 6; fill: none; stroke-linecap: round; opacity: 0.85; }
+        .perp { stroke: var(--perp); stroke-width: 2; stroke-dasharray: 6 5; fill: none; }
+        .lab { font: italic 700 22px "Times New Roman", Georgia, serif; }
+        .lab-a { fill: var(--a); }
+        .lab-b { fill: var(--b); }
+        .angle-arc { stroke: var(--angle); stroke-width: 2.5; fill: none; }
+        .angle-label { fill: var(--angle); font: italic 700 22px "Times New Roman", Georgia, serif; }
+        .proj-label { fill: var(--proj); font: 600 15px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .formula { fill: var(--formula); font: italic 600 19px "Times New Roman", Georgia, serif; }
+        .legend { fill: var(--sub-text); font: 600 14px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .swatch { font: 700 14px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    </style>
+
+    <defs>
+        <marker id="dp-a" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L12,6 L0,12 Z" fill="var(--a)"/></marker>
+        <marker id="dp-b" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L12,6 L0,12 Z" fill="var(--b)"/></marker>
+    </defs>
+
+    <!-- projection segment along b (drawn first, sits under the vectors) -->
+    <line class="proj" x1="80" y1="250" x2="330" y2="250"/>
+    <text class="proj-label" x="205" y="278" text-anchor="middle">projection = |a| cos &#952;</text>
+
+    <!-- vector b along the horizontal -->
+    <line class="vb" x1="80" y1="250" x2="470" y2="250" marker-end="url(#dp-b)"/>
+    <text class="lab lab-b" x="486" y="257" text-anchor="start">b</text>
+
+    <!-- vector a up and to the right -->
+    <line class="va" x1="80" y1="250" x2="330" y2="110" marker-end="url(#dp-a)"/>
+    <text class="lab lab-a" x="342" y="104" text-anchor="start">a</text>
+
+    <!-- perpendicular from tip of a down to b -->
+    <line class="perp" x1="330" y1="110" x2="330" y2="250"/>
+
+    <!-- angle arc between b and a -->
+    <path class="angle-arc" d="M 138 250 A 58 58 0 0 0 112.5 217.5"/>
+    <text class="angle-label" x="150" y="233" text-anchor="start">&#952;</text>
+
+    <!-- formula -->
+    <text class="formula" x="80" y="340" text-anchor="start">a &#183; b = |a| |b| cos &#952;</text>
+
+    <!-- sign legend -->
+    <text class="legend" x="80"  y="388" text-anchor="start">&#952; &lt; 90&#176;: a&#183;b &gt; 0 (same way)</text>
+    <text class="legend" x="320" y="388" text-anchor="start">&#952; = 90&#176;: a&#183;b = 0 (perpendicular)</text>
+    <text class="legend" x="80"  y="410" text-anchor="start">&#952; &gt; 90&#176;: a&#183;b &lt; 0 (opposite ways)</text>
+</svg>

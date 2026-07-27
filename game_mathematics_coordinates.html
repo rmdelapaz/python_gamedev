@@ -116,6 +116,14 @@ bottom_right = (799, 599)
 # Drawing with screen coordinates
 pygame.draw.circle(screen, (255, 0, 0), center, 50)</code></pre>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/coordinate-systems.svg"
+             alt="Two side-by-side panels comparing coordinate conventions. The left panel, labelled Cartesian (math class), has its origin at the centre with the Y axis pointing up; a point sits up and to the right at x equals plus 3, y equals plus 2. The right panel, labelled Screen (Pygame), has its origin at the top-left corner with the Y axis pointing down; a point is measured 130 pixels rightward and 90 pixels downward. A double-headed arrow between the panels notes that the Y axis flips, with the conversion screen_y equals height minus cartesian_y."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>The one difference that trips up every beginner: in math class the Y axis points <strong>up</strong> from a centred origin, but on screen Y points <strong>down</strong> from the top-left corner. Each panel names a point in its own convention; to move a value from one to the other you flip Y with <code>screen_y = height &minus; cartesian_y</code>. Get this backwards and your sprites jump to the wrong half of the window.</figcaption>
+    </figure>
+
     <h2 id="interactive-coordinate-explorer">Interactive Coordinate Explorer</h2>
     
     <div class="canvas-wrapper">

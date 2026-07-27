@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 630 400" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="at2-title at2-desc">
+    <title id="at2-title">Aiming with atan2: turning a delta into an angle</title>
+    <desc id="at2-desc">A turret at the upper-left aims at a target down and to the right. A dashed horizontal leg labelled d x runs from the turret to beneath the target, and a dashed vertical leg labelled d y drops from that point to the target, where d x is the target x minus the turret x and d y is the target y minus the turret y. A solid arrow runs directly from the turret to the target; the angle between the horizontal and this arrow is marked theta and equals atan2 of d y and d x. The facing direction is the unit vector cosine theta, sine theta.</desc>
+
+    <style>
+        :root {
+            --axis: #94a3b8;
+            --axis-text: rgb(71, 85, 105);
+            --aim: rgb(59, 130, 246);
+            --aim-text: rgb(30, 41, 59);
+            --comp: #64748b;
+            --comp-text: rgb(71, 85, 105);
+            --angle: rgb(245, 158, 11);
+            --turret: rgb(51, 65, 85);
+            --target: rgb(220, 38, 38);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --axis: #94a3b8;
+                --axis-text: #cbd5e1;
+                --aim: #569cd6;
+                --aim-text: #f1f5f9;
+                --comp: #94a3b8;
+                --comp-text: #cbd5e1;
+                --angle: #fbbf24;
+                --turret: #cbd5e1;
+                --target: #f87171;
+            }
+        }
+        .ref-line { stroke: var(--axis); stroke-width: 1.5; fill: none; }
+        .comp-line { stroke: var(--comp); stroke-width: 2.5; stroke-dasharray: 6 5; fill: none; }
+        .comp-label { fill: var(--comp-text); font: 600 16px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .aim-line { stroke: var(--aim); stroke-width: 4; fill: none; stroke-linecap: round; }
+        .aim-label { fill: var(--aim); font: 700 16px ui-monospace, "SFMono-Regular", Consolas, monospace; }
+        .angle-arc { stroke: var(--angle); stroke-width: 2.5; fill: none; }
+        .angle-label { fill: var(--angle); font: italic 700 22px "Times New Roman", Georgia, serif; }
+        .turret { fill: var(--turret); }
+        .turret-barrel { stroke: var(--turret); stroke-width: 9; stroke-linecap: round; }
+        .target { stroke: var(--target); stroke-width: 3; fill: none; }
+        .obj-label { fill: var(--axis-text); font: 600 15px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    </style>
+
+    <defs>
+        <marker id="at2-aim" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse">
+            <path d="M0,0 L12,6 L0,12 Z" fill="var(--aim)"/>
+        </marker>
+    </defs>
+
+    <!-- component legs (the dx leg also serves as the horizontal reference) -->
+    <line class="comp-line" x1="110" y1="140" x2="410" y2="140"/>
+    <line class="comp-line" x1="410" y1="140" x2="410" y2="330"/>
+    <text class="comp-label" x="255" y="130" text-anchor="middle">dx = target.x &#8722; self.x</text>
+    <text class="comp-label" x="422" y="240" text-anchor="start">dy = target.y &#8722; self.y</text>
+
+    <!-- turret barrel along the aim direction -->
+    <line class="turret-barrel" x1="110" y1="140" x2="150" y2="165"/>
+    <!-- aim line to the target -->
+    <line class="aim-line" x1="110" y1="140" x2="410" y2="330" marker-end="url(#at2-aim)"/>
+    <g transform="rotate(32.3 260 235)">
+        <text class="aim-label" x="262" y="230" text-anchor="middle">atan2(dy, dx)</text>
+    </g>
+
+    <!-- angle arc from the horizontal to the aim line -->
+    <path class="angle-arc" d="M 165 140 A 55 55 0 0 1 156.5 169.4"/>
+    <text class="angle-label" x="176" y="172" text-anchor="start">&#952;</text>
+
+    <!-- turret -->
+    <circle class="turret" cx="110" cy="140" r="11"/>
+    <text class="obj-label" x="110" y="122" text-anchor="middle">turret</text>
+
+    <!-- target crosshair -->
+    <circle class="target" cx="410" cy="330" r="13"/>
+    <line class="target" x1="410" y1="309" x2="410" y2="351"/>
+    <line class="target" x1="389" y1="330" x2="431" y2="330"/>
+    <text class="obj-label" x="410" y="372" text-anchor="middle">target</text>
+
+    <!-- facing vector note -->
+    <text class="aim-label" x="150" y="112" text-anchor="start" style="font-size:14px">facing = (cos &#952;, sin &#952;)</text>
+</svg>

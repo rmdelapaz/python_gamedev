@@ -471,7 +471,15 @@ loot_table = [
 rarity = weighted_choice(loot_table)</code></pre>
 
     <h2 id="random-distributions">Random Distributions</h2>
-    
+
+    <figure class="svg-wrapper">
+        <img src="/images/components/random-distributions.svg"
+             alt="Three probability-shape charts. Uniform is a flat rectangle: every value equally likely, for fair dice. Gaussian is a bell curve peaking in the centre: values cluster near the average, for natural variation. Exponential starts high on the left and decays to the right: small values common, large values rare, for spawn timers."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>"Random" is not one shape &mdash; it is a family, and the <em>shape</em> is the design decision. A <strong>uniform</strong> roll treats every outcome equally (a fair d20). A <strong>gaussian</strong> bell clusters most results near an average with rare extremes (damage that's usually typical, occasionally a crit or a dud). An <strong>exponential</strong> curve makes short gaps common and long gaps rare (organic-feeling spawn timers). Picking the right curve is what separates "random" from "feels right".</figcaption>
+    </figure>
+
     <pre class="language-python"><code>import random
 import math
 
@@ -598,7 +606,15 @@ class PitySystem:
             return False</code></pre>
 
     <h2 id="noise-functions">Noise Functions</h2>
-    
+
+    <figure class="svg-wrapper">
+        <img src="/images/components/noise-comparison.svg"
+             alt="Two stacked line charts. The top, random or white noise, is a violently jagged line jumping between neighbouring points with no relationship, used for TV static or sparkle. The bottom, value or Perlin noise, is a smoothly undulating wave where each point stays close to its neighbours, used for terrain, clouds, and organic motion."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>Calling <code>random()</code> at every point gives <strong>white noise</strong> &mdash; pure chaos, because no point knows about the one beside it. That's wrong for a landscape: real hills don't teleport. <strong>Noise functions</strong> like Perlin fix this by making nearby inputs give nearby outputs, so the result <em>wanders</em> smoothly instead of jumping. That single property &mdash; continuity &mdash; is what makes noise the workhorse behind terrain, caves, clouds, and organic movement.</figcaption>
+    </figure>
+
     <pre class="language-python"><code>import math
 import random
 

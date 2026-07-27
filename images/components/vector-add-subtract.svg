@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 340" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="vas-title vas-desc">
+    <title id="vas-title">Vector addition and subtraction</title>
+    <desc id="vas-desc">Two panels. The left panel, Addition, shows vector a drawn from the origin, then vector b drawn starting from the tip of a, and an amber resultant arrow a plus b drawn straight from the origin to the tip of b, illustrating the tip-to-tail rule. The right panel, Subtraction, shows two points, player and enemy, with a blue arrow drawn from player to enemy labelled enemy minus player, illustrating that subtracting positions gives the vector pointing from one to the other.</desc>
+
+    <style>
+        :root {
+            --a: rgb(59, 130, 246);
+            --b: rgb(16, 185, 129);
+            --sum: rgb(245, 158, 11);
+            --text: rgb(30, 41, 59);
+            --sub-text: rgb(71, 85, 105);
+            --divider: #cbd5e1;
+            --dot: rgb(51, 65, 85);
+            --title: rgb(51, 65, 85);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --a: #569cd6;
+                --b: #34d399;
+                --sum: #fbbf24;
+                --text: #f1f5f9;
+                --sub-text: #cbd5e1;
+                --divider: #475569;
+                --dot: #cbd5e1;
+                --title: #e2e8f0;
+            }
+        }
+        .title { fill: var(--title); font: 700 16px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .divider { stroke: var(--divider); stroke-width: 1.5; stroke-dasharray: 4 5; }
+        .va { stroke: var(--a); stroke-width: 4; fill: none; stroke-linecap: round; }
+        .vb { stroke: var(--b); stroke-width: 4; fill: none; stroke-linecap: round; }
+        .vsum { stroke: var(--sum); stroke-width: 4.5; fill: none; stroke-linecap: round; }
+        .lab { font: italic 700 20px "Times New Roman", Georgia, serif; }
+        .lab-a { fill: var(--a); }
+        .lab-b { fill: var(--b); }
+        .lab-sum { fill: var(--sum); font-size: 18px; }
+        .dot { fill: var(--dot); }
+        .obj-label { fill: var(--sub-text); font: 600 15px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .code-label { fill: var(--a); font: 700 15px ui-monospace, "SFMono-Regular", Consolas, monospace; }
+    </style>
+
+    <defs>
+        <marker id="vas-a" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L12,6 L0,12 Z" fill="var(--a)"/></marker>
+        <marker id="vas-b" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L12,6 L0,12 Z" fill="var(--b)"/></marker>
+        <marker id="vas-sum" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L12,6 L0,12 Z" fill="var(--sum)"/></marker>
+    </defs>
+
+    <!-- ============ ADDITION ============ -->
+    <text class="title" x="185" y="34" text-anchor="middle">Addition: tip to tail</text>
+
+    <!-- a from origin (shallow) -->
+    <line class="va" x1="60" y1="290" x2="210" y2="250" marker-end="url(#vas-a)"/>
+    <text class="lab lab-a" x="135" y="286" text-anchor="middle">a</text>
+    <!-- b from tip of a (steep up) -->
+    <line class="vb" x1="210" y1="250" x2="300" y2="118" marker-end="url(#vas-b)"/>
+    <text class="lab lab-b" x="312" y="140" text-anchor="start">b</text>
+    <!-- resultant a + b (diagonal to b's tip) -->
+    <line class="vsum" x1="60" y1="290" x2="300" y2="118" marker-end="url(#vas-sum)"/>
+    <text class="lab lab-sum" x="118" y="238" text-anchor="middle">a + b</text>
+
+    <!-- ============ divider ============ -->
+    <line class="divider" x1="360" y1="55" x2="360" y2="300"/>
+
+    <!-- ============ SUBTRACTION ============ -->
+    <text class="title" x="540" y="34" text-anchor="middle">Subtraction: difference &amp; direction</text>
+
+    <!-- player and enemy points -->
+    <circle class="dot" cx="450" cy="280" r="6"/>
+    <text class="obj-label" x="450" y="302" text-anchor="middle">player</text>
+    <circle class="dot" cx="655" cy="145" r="6"/>
+    <text class="obj-label" x="655" y="135" text-anchor="middle">enemy</text>
+
+    <!-- vector enemy - player, from player to enemy -->
+    <line class="va" x1="450" y1="280" x2="655" y2="145" marker-end="url(#vas-a)"/>
+    <g transform="rotate(-33.4 552 212)">
+        <text class="code-label" x="552" y="205" text-anchor="middle">enemy &#8722; player</text>
+    </g>
+</svg>

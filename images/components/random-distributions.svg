@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 300" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="rd-title rd-desc">
+    <title id="rd-title">Three random distributions compared by shape</title>
+    <desc id="rd-desc">Three small charts side by side, each showing the probability shape of a random distribution over a range. The left chart, Uniform, is a flat rectangle: every value is equally likely, good for fair dice. The middle chart, Gaussian, is a bell curve peaking in the centre: values cluster near the average, good for natural variation. The right chart, Exponential, starts high on the left and decays toward the right: small values are common and large values rare, good for spawn timers.</desc>
+
+    <style>
+        :root {
+            --axis: #94a3b8;
+            --fill: rgba(59, 130, 246, 0.18);
+            --stroke: rgb(59, 130, 246);
+            --title: rgb(30, 41, 59);
+            --sub: rgb(71, 85, 105);
+            --use: rgb(245, 158, 11);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --axis: #94a3b8;
+                --fill: rgba(86, 156, 214, 0.28);
+                --stroke: #569cd6;
+                --title: #f1f5f9;
+                --sub: #cbd5e1;
+                --use: #fbbf24;
+            }
+        }
+        .axis { stroke: var(--axis); stroke-width: 1.5; }
+        .dist { fill: var(--fill); stroke: var(--stroke); stroke-width: 3; stroke-linejoin: round; }
+        .title { fill: var(--title); font: 700 17px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .sub { fill: var(--sub); font: 500 13px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .use { fill: var(--use); font: 700 13px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    </style>
+
+    <!-- ===== Uniform ===== -->
+    <text class="title" x="130" y="42" text-anchor="middle">Uniform</text>
+    <path class="dist" d="M45 210 L45 130 L215 130 L215 210 Z"/>
+    <line class="axis" x1="40" y1="210" x2="220" y2="210"/>
+    <text class="sub" x="130" y="238" text-anchor="middle">every value equally likely</text>
+    <text class="use" x="130" y="262" text-anchor="middle">fair dice &#183; even spread</text>
+
+    <!-- ===== Gaussian ===== -->
+    <text class="title" x="360" y="42" text-anchor="middle">Gaussian (bell)</text>
+    <path class="dist" d="M280 210 L280 208 C 330 205 340 95 360 95 C 380 95 390 205 440 208 L440 210 Z"/>
+    <line class="axis" x1="275" y1="210" x2="445" y2="210"/>
+    <text class="sub" x="360" y="238" text-anchor="middle">clusters near the average</text>
+    <text class="use" x="360" y="262" text-anchor="middle">natural variation</text>
+
+    <!-- ===== Exponential ===== -->
+    <text class="title" x="595" y="42" text-anchor="middle">Exponential</text>
+    <path class="dist" d="M510 210 L510 100 C 545 175 575 200 620 206 L680 208 L680 210 Z"/>
+    <line class="axis" x1="505" y1="210" x2="685" y2="210"/>
+    <text class="sub" x="595" y="238" text-anchor="middle">small often, large rarely</text>
+    <text class="use" x="595" y="262" text-anchor="middle">spawn timers &#183; decay</text>
+</svg>

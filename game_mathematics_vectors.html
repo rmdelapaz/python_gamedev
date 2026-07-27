@@ -451,7 +451,15 @@ class Vector2:
     </script>
 
     <h2 id="vector-addition-and-subtraction">Vector Addition and Subtraction</h2>
-    
+
+    <figure class="svg-wrapper">
+        <img src="/images/components/vector-add-subtract.svg"
+             alt="Two panels. The Addition panel shows vector a drawn from the origin, vector b drawn from the tip of a, and an amber resultant a plus b running straight from the origin to the tip of b, forming a tip-to-tail triangle. The Subtraction panel shows a player point and an enemy point with a blue arrow from player to enemy labelled enemy minus player."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption><strong>Addition</strong> is tip-to-tail: to combine a velocity and a push, lay one arrow's tail on the other's tip &mdash; the resultant runs from the very start to the very end. Order does not matter, so stacking gravity, wind, and thrust just chains the arrows. <strong>Subtraction</strong> answers "where is it, relative to me?": <code>enemy &minus; player</code> is the arrow pointing <em>from</em> the player <em>to</em> the enemy. Normalize that arrow and you have a ready-made chase direction.</figcaption>
+    </figure>
+
     <pre class="language-python"><code># Vector addition - combine movements/forces
 position = Vector2(100, 100)
 velocity = Vector2(5, -3)
@@ -509,7 +517,15 @@ class Enemy:
         self.position += direction * self.speed</code></pre>
 
     <h2 id="dot-product-and-projections">Dot Product and Projections</h2>
-    
+
+    <figure class="svg-wrapper">
+        <img src="/images/components/dot-product.svg"
+             alt="Two vectors a and b share an origin with angle theta between them; b lies horizontal. A dashed perpendicular drops from the tip of a to the line of b, and the segment from the origin to that foot is highlighted as the projection of a onto b, equal to the magnitude of a times cosine theta. The formula a dot b equals magnitude a times magnitude b times cosine theta is shown, with a legend noting the dot product is positive under ninety degrees, zero at ninety degrees, and negative over ninety degrees."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>The dot product measures <em>how much two vectors agree in direction</em>. Geometrically it is the shadow (projection) one casts on the other: <code>|a| cos&theta;</code>. You rarely need the angle itself &mdash; the <strong>sign</strong> is the fast answer games lean on. Positive means "roughly the same way" (target ahead of me), zero means perpendicular, negative means "opposite ways" (behind me). That single comparison powers field-of-view checks, wall sliding, and AI vision.</figcaption>
+    </figure>
+
     <div class="mermaid">
     graph LR
         A["Dot Product Uses"] --> B["Angle Between Vectors"]

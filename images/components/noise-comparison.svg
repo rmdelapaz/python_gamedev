@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 386" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="nc-title nc-desc">
+    <title id="nc-title">Random white noise versus smooth value noise</title>
+    <desc id="nc-desc">Two stacked line charts over the same horizontal range. The top chart, labelled random or white noise, is a violently jagged line that jumps up and down between neighbouring points with no relationship, useful for TV static or sparkle. The bottom chart, labelled value or Perlin noise, is a smoothly undulating wave where each point is close to its neighbours, useful for terrain, clouds, and organic motion.</desc>
+
+    <style>
+        :root {
+            --guide: #e2e8f0;
+            --white: rgb(59, 130, 246);
+            --smooth: rgb(16, 185, 129);
+            --title: rgb(30, 41, 59);
+            --sub: rgb(71, 85, 105);
+            --use: rgb(245, 158, 11);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --guide: #334155;
+                --white: #569cd6;
+                --smooth: #34d399;
+                --title: #f1f5f9;
+                --sub: #cbd5e1;
+                --use: #fbbf24;
+            }
+        }
+        .guide { stroke: var(--guide); stroke-width: 1.5; }
+        .white-line { stroke: var(--white); stroke-width: 2.5; fill: none; stroke-linejoin: round; stroke-linecap: round; }
+        .smooth-line { stroke: var(--smooth); stroke-width: 3.5; fill: none; stroke-linecap: round; }
+        .title { fill: var(--title); font: 700 17px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .sub { fill: var(--sub); font: 500 14px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .use { fill: var(--use); font: 700 14px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    </style>
+
+    <!-- ===== Top: white noise ===== -->
+    <text class="title" x="60" y="36" text-anchor="start">Random (white noise)</text>
+    <line class="guide" x1="60" y1="115" x2="660" y2="115"/>
+    <polyline class="white-line" points="60,120 85,70 110,150 135,95 160,140 185,60 210,132 235,100 260,158 285,72 310,138 335,88 360,152 385,64 410,128 435,104 460,148 485,68 510,150 535,92 560,138 585,78 610,142 635,98 660,118"/>
+    <text class="sub" x="60"  y="185" text-anchor="start">Each point is independent &#8212; a neighbour tells you nothing.</text>
+    <text class="use" x="60"  y="207" text-anchor="start">&#9654; TV static, sparkle, jitter</text>
+
+    <!-- ===== Bottom: value noise ===== -->
+    <text class="title" x="60" y="256" text-anchor="start">Value noise (Perlin)</text>
+    <line class="guide" x1="60" y1="300" x2="660" y2="300"/>
+    <path class="smooth-line" d="M60 296 C 120 236 175 250 235 292 C 295 334 350 340 410 292 C 470 244 525 240 585 286 C 620 312 645 300 660 294"/>
+    <text class="sub" x="60"  y="344" text-anchor="start">Neighbouring points stay close &#8212; the curve varies smoothly.</text>
+    <text class="use" x="60"  y="368" text-anchor="start">&#9654; terrain, clouds, organic motion</text>
+</svg>

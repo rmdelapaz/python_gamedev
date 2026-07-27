@@ -287,7 +287,15 @@
     </script>
 
     <h2 id="linear-interpolation-lerp">Linear Interpolation (Lerp)</h2>
-    
+
+    <figure class="svg-wrapper">
+        <img src="/images/components/lerp-number-line.svg"
+             alt="A track from a point labelled start to a point labelled end, with tick marks at t equals 0, 0.25, 0.5, 0.75, and 1 along the top and the matching values 0, 25, 50, 75, and 100 along the bottom for a start of 0 and end of 100. The midpoint t equals 0.5 is highlighted landing on 50. The formula lerp of start, end, t equals start plus end minus start times t is shown."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>Lerp is a dimmer switch between two values. <code>t</code> is a dial from 0 (all <em>start</em>) to 1 (all <em>end</em>); at <code>t = 0.5</code> you get the exact midpoint. The same one-line formula blends anything you can subtract and add &mdash; positions, angles, colours, volumes &mdash; which is why <code>lerp</code> is the single most reused function in this whole lesson.</figcaption>
+    </figure>
+
     <pre class="language-python"><code>def lerp(start, end, t):
     """Linear interpolation between start and end by factor t (0 to 1)"""
     return start + (end - start) * t
@@ -332,7 +340,15 @@ class SmoothMover:
             self.current_pos = lerp_point(self.start_pos, self.target_pos, t)</code></pre>
 
     <h2 id="common-easing-functions">Common Easing Functions</h2>
-    
+
+    <figure class="svg-wrapper">
+        <img src="/images/components/easing-curves.svg"
+             alt="Six small charts in a three by two grid, each plotting an easing function with time t from 0 to 1 on the horizontal axis and value from 0 to 1 on the vertical axis. Top row: linear (a straight diagonal), easeOutQuad (fast then slow), and easeInOutCubic (a smooth S-curve). Bottom row: easeOutBounce (decaying bumps), easeOutElastic (overshoots above 1 then oscillates), and easeOutBack (a small overshoot then settles). Faint lines mark value 0 and value 1 so overshoot is visible."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>An easing function reshapes <code>t</code> before you lerp with it &mdash; same start and end, different <em>feel</em>. "Out" curves front-load the motion for a snappy, responsive feel; "In" curves build anticipation; "InOut" does both. Notice how elastic and back push <em>above</em> 1 before settling: that overshoot is what makes a UI element feel alive rather than mechanical.</figcaption>
+    </figure>
+
     <pre class="language-python"><code>import math
 
 class Easing:
@@ -583,7 +599,15 @@ class AnimationSequence:
         return self.current_index >= len(self.animations)</code></pre>
 
     <h2 id="bezier-curves">Bezier Curves</h2>
-    
+
+    <figure class="svg-wrapper">
+        <img src="/images/components/bezier-curve.svg"
+             alt="Three control points, P0 at lower-left, P1 at top-centre, and P2 at lower-right, joined by a dashed control polygon. A green curve sweeps from P0 to P2 bowing toward P1. For t equals 0.4, a point q0 sits along segment P0 to P1 and q1 along segment P1 to P2; an amber chord joins them and the curve point for that t sits on the chord."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>A Bézier curve is just <code>lerp</code> stacked on itself. Slide <code>q&#8320;</code> along P&#8320;&rarr;P&#8321; and <code>q&#8321;</code> along P&#8321;&rarr;P&#8322; by the same <code>t</code>, then lerp <em>between those two</em> &mdash; that final point traces the curve. This is the de&nbsp;Casteljau construction the code does line for line; a cubic curve simply adds one more layer of the same idea. The control points pull the path toward them without ever lying on it.</figcaption>
+    </figure>
+
     <pre class="language-python"><code>def bezier_quadratic(p0, p1, p2, t):
     """Quadratic Bezier curve with 3 control points"""
     # Linear interpolations

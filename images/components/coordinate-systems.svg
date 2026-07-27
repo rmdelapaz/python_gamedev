@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 486" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="coord-title coord-desc">
+    <title id="coord-title">Cartesian coordinates versus screen coordinates</title>
+    <desc id="coord-desc">Two side-by-side panels compare coordinate conventions. On the left, the Cartesian system used in math class puts the origin at the centre with the Y axis pointing up, so a point sits at positive x and positive y. On the right, the screen system used by Pygame puts the origin at the top-left corner with the Y axis pointing down, so the same spot on the monitor is measured in pixels rightward and downward. A curved arrow between the panels notes that the Y axis is flipped, and that screen y equals the surface height minus the Cartesian y.</desc>
+
+    <style>
+        :root {
+            --grid: #e2e8f0;
+            --axis: #94a3b8;
+            --axis-text: rgb(71, 85, 105);
+            --frame: #cbd5e1;
+            --accent: rgb(59, 130, 246);
+            --accent-text: rgb(30, 41, 59);
+            --comp: #94a3b8;
+            --comp-text: rgb(71, 85, 105);
+            --flip: rgb(245, 158, 11);
+            --panel-title: rgb(51, 65, 85);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --grid: #334155;
+                --axis: #94a3b8;
+                --axis-text: #cbd5e1;
+                --frame: #475569;
+                --accent: #569cd6;
+                --accent-text: #f1f5f9;
+                --comp: #94a3b8;
+                --comp-text: #cbd5e1;
+                --flip: #fbbf24;
+                --panel-title: #e2e8f0;
+            }
+        }
+        .grid line { stroke: var(--grid); stroke-width: 1; }
+        .frame { fill: none; stroke: var(--frame); stroke-width: 1.5; }
+        .axis { stroke: var(--axis); stroke-width: 1.5; fill: none; }
+        .axis-label { fill: var(--axis-text); font: italic 500 18px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .panel-title { fill: var(--panel-title); font: 700 17px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .sub-label { fill: var(--axis-text); font: 500 14px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .comp-line { stroke: var(--comp); stroke-width: 2; stroke-dasharray: 6 5; fill: none; }
+        .comp-label { fill: var(--comp-text); font: 500 15px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .pt { fill: var(--accent); }
+        .pt-label { fill: var(--accent-text); font: 700 16px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .flip-arc { stroke: var(--flip); stroke-width: 2.5; fill: none; }
+        .flip-label { fill: var(--flip); font: 700 15px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .flip-formula { fill: var(--flip); font: italic 600 15px "Times New Roman", Georgia, serif; }
+    </style>
+
+    <defs>
+        <marker id="ax-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 Z" fill="var(--axis)"/>
+        </marker>
+        <marker id="flip-arrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+            <path d="M0,0 L12,6 L0,12 Z" fill="var(--flip)"/>
+        </marker>
+    </defs>
+
+    <!-- ===================== LEFT PANEL: CARTESIAN ===================== -->
+    <text class="panel-title" x="190" y="34" text-anchor="middle">Cartesian (math class)</text>
+    <text class="sub-label" x="190" y="54" text-anchor="middle">origin at centre &#183; +Y points up</text>
+    <rect class="frame" x="35" y="70" width="310" height="360" rx="8"/>
+
+    <!-- grid -->
+    <g class="grid">
+        <line x1="35" y1="160" x2="345" y2="160"/>
+        <line x1="35" y1="340" x2="345" y2="340"/>
+        <line x1="115" y1="70" x2="115" y2="430"/>
+        <line x1="265" y1="70" x2="265" y2="430"/>
+    </g>
+
+    <!-- axes: X right, Y UP -->
+    <line class="axis" x1="60"  y1="250" x2="330" y2="250" marker-end="url(#ax-arrow)"/>
+    <line class="axis" x1="190" y1="415" x2="190" y2="90"  marker-end="url(#ax-arrow)"/>
+    <text class="axis-label" x="335" y="268" text-anchor="start">x</text>
+    <text class="axis-label" x="178" y="92"  text-anchor="end">y</text>
+    <text class="sub-label"  x="200" y="108" text-anchor="start">+Y</text>
+
+    <!-- point at (+3, +2): up and to the right of centre -->
+    <line class="comp-line" x1="190" y1="180" x2="262" y2="180"/>
+    <line class="comp-line" x1="262" y1="180" x2="262" y2="250"/>
+    <text class="comp-label" x="226" y="270" text-anchor="middle">x = +3</text>
+    <text class="comp-label" x="184" y="184" text-anchor="end">y = +2</text>
+    <circle class="pt" cx="262" cy="180" r="6"/>
+    <text class="pt-label" x="272" y="172" text-anchor="start">(3, 2)</text>
+
+    <!-- ===================== RIGHT PANEL: SCREEN ===================== -->
+    <text class="panel-title" x="530" y="34" text-anchor="middle">Screen (Pygame)</text>
+    <text class="sub-label" x="530" y="54" text-anchor="middle">origin at top-left &#183; +Y points down</text>
+    <rect class="frame" x="375" y="70" width="310" height="360" rx="8"/>
+
+    <!-- grid -->
+    <g class="grid">
+        <line x1="375" y1="160" x2="685" y2="160"/>
+        <line x1="375" y1="250" x2="685" y2="250"/>
+        <line x1="375" y1="340" x2="685" y2="340"/>
+        <line x1="465" y1="70" x2="465" y2="430"/>
+        <line x1="555" y1="70" x2="555" y2="430"/>
+        <line x1="605" y1="70" x2="605" y2="430"/>
+    </g>
+
+    <!-- axes: origin top-left, X right, Y DOWN -->
+    <line class="axis" x1="410" y1="110" x2="670" y2="110" marker-end="url(#ax-arrow)"/>
+    <line class="axis" x1="410" y1="110" x2="410" y2="415" marker-end="url(#ax-arrow)"/>
+    <text class="axis-label" x="675" y="128" text-anchor="start">x</text>
+    <text class="axis-label" x="396" y="415" text-anchor="end">y</text>
+    <text class="sub-label"  x="416" y="102" text-anchor="start">(0, 0)</text>
+    <text class="sub-label"  x="416" y="405" text-anchor="start">+Y</text>
+
+    <!-- a point measured rightward and DOWN from the top-left origin -->
+    <line class="comp-line" x1="560" y1="110" x2="560" y2="230"/>
+    <line class="comp-line" x1="410" y1="230" x2="560" y2="230"/>
+    <text class="comp-label" x="566" y="175" text-anchor="start">y = 90 px</text>
+    <text class="comp-label" x="485" y="252" text-anchor="middle">x = 130 px</text>
+    <circle class="pt" cx="560" cy="230" r="6"/>
+    <text class="pt-label" x="548" y="222" text-anchor="end">(130, 90)</text>
+
+    <!-- ===================== FLIP CONNECTOR ===================== -->
+    <path class="flip-arc" d="M 285 450 L 435 450" marker-start="url(#flip-arrow)" marker-end="url(#flip-arrow)"/>
+    <text class="flip-label" x="360" y="443" text-anchor="middle">Y axis flips</text>
+    <text class="flip-formula" x="360" y="472" text-anchor="middle">screen_y = height &#8722; cartesian_y</text>
+</svg>

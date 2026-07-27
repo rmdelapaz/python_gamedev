@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 470 470" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="uc-title uc-desc">
+    <title id="uc-title">The unit circle: cosine and sine as coordinates</title>
+    <desc id="uc-desc">A circle of radius one is centred on the origin of an x-y axis. A radius line drawn at an angle theta above the positive x-axis ends at a point on the circle. A dashed horizontal leg from the centre to below the point is labelled cosine theta, and a dashed vertical leg from the axis up to the point is labelled sine theta, so the point has coordinates cosine theta, sine theta. The angle theta is marked with an arc at the centre. Radian markers label the four cardinal directions: zero and two pi at the right, pi over two at the top, pi at the left, and three pi over two at the bottom.</desc>
+
+    <style>
+        :root {
+            --grid: #e2e8f0;
+            --axis: #94a3b8;
+            --axis-text: rgb(71, 85, 105);
+            --circle: #94a3b8;
+            --radius: rgb(59, 130, 246);
+            --pt-text: rgb(30, 41, 59);
+            --comp: #64748b;
+            --comp-text: rgb(71, 85, 105);
+            --angle: rgb(245, 158, 11);
+            --rad-text: rgb(51, 65, 85);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --grid: #334155;
+                --axis: #94a3b8;
+                --axis-text: #cbd5e1;
+                --circle: #64748b;
+                --radius: #569cd6;
+                --pt-text: #f1f5f9;
+                --comp: #94a3b8;
+                --comp-text: #cbd5e1;
+                --angle: #fbbf24;
+                --rad-text: #e2e8f0;
+            }
+        }
+        .axis { stroke: var(--axis); stroke-width: 1.5; fill: none; }
+        .axis-label { fill: var(--axis-text); font: italic 500 17px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .circle { stroke: var(--circle); stroke-width: 2; fill: none; }
+        .radius-line { stroke: var(--radius); stroke-width: 4; fill: none; stroke-linecap: round; }
+        .comp-line { stroke: var(--comp); stroke-width: 2.5; stroke-dasharray: 6 5; fill: none; }
+        .comp-label { fill: var(--comp-text); font: 600 17px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .pt { fill: var(--radius); }
+        .pt-label { fill: var(--pt-text); font: 700 16px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .r-label { fill: var(--radius); font: 600 14px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .angle-arc { stroke: var(--angle); stroke-width: 2.5; fill: none; }
+        .angle-label { fill: var(--angle); font: italic 700 22px "Times New Roman", Georgia, serif; }
+        .rad-label { fill: var(--rad-text); font: 600 15px "Times New Roman", Georgia, serif; }
+    </style>
+
+    <defs>
+        <marker id="uc-ax" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 Z" fill="var(--axis)"/>
+        </marker>
+        <marker id="uc-rad" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+            <path d="M0,0 L12,6 L0,12 Z" fill="var(--radius)"/>
+        </marker>
+    </defs>
+
+    <!-- axes -->
+    <line class="axis" x1="55"  y1="240" x2="415" y2="240" marker-end="url(#uc-ax)"/>
+    <line class="axis" x1="230" y1="415" x2="230" y2="65"  marker-end="url(#uc-ax)"/>
+    <text class="axis-label" x="420" y="258" text-anchor="start">x</text>
+    <text class="axis-label" x="218" y="70"  text-anchor="end">y</text>
+
+    <!-- unit circle -->
+    <circle class="circle" cx="230" cy="240" r="150"/>
+
+    <!-- radian markers at cardinal points -->
+    <text class="rad-label" x="392" y="232" text-anchor="start">0 = 2&#960;</text>
+    <text class="rad-label" x="230" y="52"  text-anchor="middle">&#960;/2</text>
+    <text class="rad-label" x="66"  y="246" text-anchor="end">&#960;</text>
+    <text class="rad-label" x="230" y="428" text-anchor="middle">3&#960;/2</text>
+
+    <!-- components: cos (horizontal) and sin (vertical) for theta = 50 degrees -->
+    <line class="comp-line" x1="230" y1="240" x2="326" y2="240"/>
+    <line class="comp-line" x1="326" y1="240" x2="326" y2="125"/>
+    <text class="comp-label" x="278" y="262" text-anchor="middle">cos &#952;</text>
+    <text class="comp-label" x="336" y="188" text-anchor="start">sin &#952;</text>
+
+    <!-- radius to point on circle -->
+    <line class="radius-line" x1="230" y1="240" x2="326" y2="125" marker-end="url(#uc-rad)"/>
+    <text class="r-label" x="248" y="178" text-anchor="end">r = 1</text>
+
+    <!-- angle arc -->
+    <path class="angle-arc" d="M 278 240 A 48 48 0 0 0 260.8 204"/>
+    <text class="angle-label" x="288" y="222" text-anchor="start">&#952;</text>
+
+    <!-- point on the circle -->
+    <circle class="pt" cx="326" cy="125" r="6"/>
+    <text class="pt-label" x="334" y="116" text-anchor="start">(cos &#952;, sin &#952;)</text>
+</svg>

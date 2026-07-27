@@ -98,6 +98,14 @@
         E --> M["Line of sight"]
     </div>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/unit-circle.svg"
+             alt="A circle of radius one centred on an x-y origin. A blue radius arrow drawn at an angle theta above the positive x-axis ends at a point on the circle. A dashed horizontal leg from the centre is labelled cosine theta and a dashed vertical leg up to the point is labelled sine theta, so the point is at coordinates cosine theta, sine theta. The angle theta is marked with an amber arc. Radian markers label the cardinal directions: zero and two pi at the right, pi over two at the top, pi at the left, and three pi over two at the bottom."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>The whole of trig for games fits in this one picture. Point at an angle <em>&theta;</em> on a circle of radius 1: your horizontal position is <code>cos(&theta;)</code>, your vertical position is <code>sin(&theta;)</code>. That is the Ferris-wheel analogy made literal &mdash; cosine is how far across, sine is how high. Angles run counter-clockwise in <strong>radians</strong>, where a full turn is 2&pi; (not 360). Scale by any radius <code>r</code> and you get <code>(r&middot;cos&theta;, r&middot;sin&theta;)</code>, the formula behind every orbit, spin, and wave below.</figcaption>
+    </figure>
+
     <h2 id="angles-and-radians">Angles and Radians</h2>
     
     <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
@@ -302,7 +310,15 @@ class FloatingObject:
         )</code></pre>
 
     <h2 id="aiming-and-line-of-sight">Aiming and Line of Sight</h2>
-    
+
+    <figure class="svg-wrapper">
+        <img src="/images/components/atan2-aiming.svg"
+             alt="A turret at the upper-left aims at a target down and to the right. A dashed horizontal leg labelled dx equals target.x minus self.x runs from the turret, and a dashed vertical leg labelled dy equals target.y minus self.y drops to the target. A solid blue arrow points from the turret straight at the target; the angle between the horizontal and this arrow is theta and equals atan2 of dy and dx. The facing direction is the unit vector cosine theta, sine theta."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>Aiming is just the unit circle run backwards: instead of turning an angle into a direction, <code>atan2(dy, dx)</code> turns a direction into an angle. Take the gap to your target &mdash; <code>dx</code> across, <code>dy</code> down &mdash; and <code>atan2</code> hands you the exact facing angle, correct in all four quadrants (that is why it beats plain <code>atan</code>). Feed that angle back through <code>(cos&theta;, sin&theta;)</code> and you have a unit vector to move or shoot along.</figcaption>
+    </figure>
+
     <pre class="language-python"><code>class Turret:
     def __init__(self, x, y):
         self.x = x

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 250" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="lerp-title lerp-desc">
+    <title id="lerp-title">Linear interpolation on a number line</title>
+    <desc id="lerp-desc">A horizontal track runs from a point labelled start on the left to a point labelled end on the right. Tick marks divide it at t equals 0, 0.25, 0.5, 0.75, and 1 along the top, and at the matching values 0, 25, 50, 75, and 100 along the bottom, for the example where start is 0 and end is 100. The midpoint at t equals 0.5 is highlighted in amber, landing on the value 50. The formula lerp of start, end, t equals start plus quantity end minus start times t is shown below.</desc>
+
+    <style>
+        :root {
+            --track: #94a3b8;
+            --tick: #64748b;
+            --text: rgb(30, 41, 59);
+            --sub-text: rgb(71, 85, 105);
+            --end-dot: rgb(51, 65, 85);
+            --hi: rgb(245, 158, 11);
+            --formula: rgb(51, 65, 85);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --track: #64748b;
+                --tick: #94a3b8;
+                --text: #f1f5f9;
+                --sub-text: #cbd5e1;
+                --end-dot: #cbd5e1;
+                --hi: #fbbf24;
+                --formula: #e2e8f0;
+            }
+        }
+        .track { stroke: var(--track); stroke-width: 5; stroke-linecap: round; fill: none; }
+        .tick { stroke: var(--tick); stroke-width: 2; }
+        .end-dot { fill: var(--end-dot); }
+        .hi-dot { fill: var(--hi); }
+        .end-label { fill: var(--sub-text); font: 700 16px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .t-label { fill: var(--sub-text); font: 600 15px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .v-label { fill: var(--text); font: 700 15px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .hi-label { fill: var(--hi); font: 800 16px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .formula { fill: var(--formula); font: 600 18px ui-monospace, "SFMono-Regular", Consolas, monospace; }
+        .caption { fill: var(--sub-text); font: 500 13px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    </style>
+
+    <!-- endpoint captions -->
+    <text class="end-label" x="90"  y="58" text-anchor="middle">start</text>
+    <text class="end-label" x="630" y="58" text-anchor="middle">end</text>
+
+    <!-- t labels along the top -->
+    <text class="t-label"  x="90"  y="88" text-anchor="middle">t = 0</text>
+    <text class="t-label"  x="225" y="88" text-anchor="middle">0.25</text>
+    <text class="hi-label" x="360" y="88" text-anchor="middle">t = 0.5</text>
+    <text class="t-label"  x="495" y="88" text-anchor="middle">0.75</text>
+    <text class="t-label"  x="630" y="88" text-anchor="middle">t = 1</text>
+
+    <!-- the track -->
+    <line class="track" x1="90" y1="118" x2="630" y2="118"/>
+
+    <!-- ticks -->
+    <line class="tick" x1="90"  y1="108" x2="90"  y2="128"/>
+    <line class="tick" x1="225" y1="110" x2="225" y2="126"/>
+    <line class="tick" x1="360" y1="106" x2="360" y2="130"/>
+    <line class="tick" x1="495" y1="110" x2="495" y2="126"/>
+    <line class="tick" x1="630" y1="108" x2="630" y2="128"/>
+
+    <!-- endpoint + highlight dots -->
+    <circle class="end-dot" cx="90"  cy="118" r="7"/>
+    <circle class="end-dot" cx="630" cy="118" r="7"/>
+    <circle class="hi-dot"  cx="360" cy="118" r="8"/>
+
+    <!-- value labels along the bottom (example: start=0, end=100) -->
+    <text class="v-label"  x="90"  y="158" text-anchor="middle">0</text>
+    <text class="v-label"  x="225" y="158" text-anchor="middle">25</text>
+    <text class="hi-label" x="360" y="158" text-anchor="middle">50</text>
+    <text class="v-label"  x="495" y="158" text-anchor="middle">75</text>
+    <text class="v-label"  x="630" y="158" text-anchor="middle">100</text>
+
+    <!-- formula -->
+    <text class="formula" x="360" y="204" text-anchor="middle">lerp(start, end, t) = start + (end &#8722; start) &#215; t</text>
+    <text class="caption" x="360" y="232" text-anchor="middle">example: start = 0, end = 100, so t = 0.5 lands halfway at 50</text>
+</svg>

@@ -100,6 +100,14 @@
         D --> M["Predator/Prey"]
     </div>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/flocking-rules.svg"
+             alt="Three panels, each showing a focal boid (amber triangle) among blue neighbour triangles inside a dashed perception circle, with a green steering arrow. Separation: neighbours crowd close and the arrow steers the focal boid away from them. Alignment: neighbours all point the same way and the arrow turns the focal boid to match their average heading. Cohesion: neighbours are spread out with a marked centre of mass, and the arrow steers the focal boid toward that centre."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>Flocking looks like coordinated intelligence, but there is no coordinator. Each boid senses only its <strong>nearby neighbours</strong> and blends three simple steering rules &mdash; <strong>separation</strong> (don&rsquo;t crowd), <strong>alignment</strong> (match their heading), and <strong>cohesion</strong> (drift toward their centre). Weight and add those three little pushes every frame and the swirling, splitting, rejoining murmuration <em>emerges</em> on its own. This is the classic example of <strong>emergent behaviour</strong>: complex group motion from thousands of agents each running the same tiny bit of local math.</figcaption>
+    </figure>
+
     <h2 id="interactive-flocking-demo">Interactive Flocking Demo</h2>
     
     <div class="canvas-wrapper" style="text-align: center;">

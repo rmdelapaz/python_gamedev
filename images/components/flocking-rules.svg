@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 360" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="fl-title fl-desc">
+    <title id="fl-title">The three steering rules of flocking</title>
+    <desc id="fl-desc">Three panels, each showing a focal boid drawn as an amber triangle among blue neighbour triangles inside a dashed perception circle, with a green steering arrow. Panel one, Separation: the neighbours crowd close and the green arrow steers the focal boid away from them. Panel two, Alignment: the neighbours all point the same way and the green arrow turns the focal boid to match their average heading. Panel three, Cohesion: the neighbours are spread out with a marked centre of mass, and the green arrow steers the focal boid toward that centre. The caption explains that each boid only senses nearby neighbours and follows these three simple rules, and that the whole flock's motion emerges from that with no leader.</desc>
+
+    <style>
+        :root {
+            --card: #f8fafc;
+            --card-stroke: #e2e8f0;
+            --perc: #94a3b8;
+            --focal: #f59e0b;
+            --focal-stroke: #b45309;
+            --neighbor: #3b82f6;
+            --neighbor-stroke: #2563eb;
+            --steer: #10b981;
+            --com: #f59e0b;
+            --text: rgb(30, 41, 59);
+            --sub-text: rgb(71, 85, 105);
+            --rule: rgb(51, 65, 85);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --card: #1e293b;
+                --card-stroke: #334155;
+                --perc: #64748b;
+                --focal: #fbbf24;
+                --focal-stroke: #f59e0b;
+                --neighbor: #569cd6;
+                --neighbor-stroke: #93c5fd;
+                --steer: #34d399;
+                --com: #fbbf24;
+                --text: #f1f5f9;
+                --sub-text: #cbd5e1;
+                --rule: #cbd5e1;
+            }
+        }
+        .title { fill: var(--text); font: 700 16px ui-sans-serif, system-ui, sans-serif; }
+        .card { fill: var(--card); stroke: var(--card-stroke); stroke-width: 1.5; }
+        .perc { fill: none; stroke: var(--perc); stroke-width: 1.5; stroke-dasharray: 5 4; opacity: 0.85; }
+        .boid-n { fill: var(--neighbor); stroke: var(--neighbor-stroke); stroke-width: 1; }
+        .boid-f { fill: var(--focal); stroke: var(--focal-stroke); stroke-width: 1.5; }
+        .steer { stroke: var(--steer); stroke-width: 3.5; fill: none; stroke-linecap: round; }
+        .steer-head { fill: var(--steer); }
+        .com { fill: none; stroke: var(--com); stroke-width: 2; stroke-dasharray: 3 3; }
+        .com-dot { fill: var(--com); }
+        .ptitle { fill: var(--text); font: 800 14px ui-sans-serif, system-ui, sans-serif; }
+        .prule { fill: var(--rule); font: 600 12px ui-sans-serif, system-ui, sans-serif; }
+        .cap { fill: var(--sub-text); font: 500 13px ui-sans-serif, system-ui, sans-serif; }
+    </style>
+
+    <text class="title" x="360" y="28" text-anchor="middle">Flocking &#8212; three simple rules each boid follows on its own</text>
+
+    <!-- ============ Panel 1: Separation ============ -->
+    <rect class="card" x="28" y="52" width="214" height="196" rx="10"/>
+    <text class="ptitle" x="135" y="78" text-anchor="middle">Separation</text>
+    <circle class="perc" cx="135" cy="158" r="50"/>
+    <!-- crowding neighbours (lower-right of focal) -->
+    <path class="boid-n" transform="translate(158,174) rotate(-90)" d="M9,0 L-7,-6 L-7,6 Z"/>
+    <path class="boid-n" transform="translate(150,150) rotate(-90)" d="M9,0 L-7,-6 L-7,6 Z"/>
+    <!-- focal -->
+    <path class="boid-f" transform="translate(133,152) rotate(-90)" d="M11,0 L-8,-7 L-8,7 Z"/>
+    <!-- steer away (up-left) -->
+    <path class="steer" d="M126,146 L104,124"/><path class="steer-head" d="M110,122 L98,118 L102,130 Z"/>
+    <text class="prule" x="135" y="234" text-anchor="middle">steer away from crowding</text>
+
+    <!-- ============ Panel 2: Alignment ============ -->
+    <rect class="card" x="253" y="52" width="214" height="196" rx="10"/>
+    <text class="ptitle" x="360" y="78" text-anchor="middle">Alignment</text>
+    <circle class="perc" cx="360" cy="158" r="50"/>
+    <!-- neighbours all heading up-right -->
+    <path class="boid-n" transform="translate(340,132) rotate(-35)" d="M9,0 L-7,-6 L-7,6 Z"/>
+    <path class="boid-n" transform="translate(392,146) rotate(-35)" d="M9,0 L-7,-6 L-7,6 Z"/>
+    <path class="boid-n" transform="translate(366,188) rotate(-35)" d="M9,0 L-7,-6 L-7,6 Z"/>
+    <!-- focal slightly misaligned -->
+    <path class="boid-f" transform="translate(352,162) rotate(-5)" d="M11,0 L-8,-7 L-8,7 Z"/>
+    <!-- steer toward average heading (up-right) -->
+    <path class="steer" d="M360,156 L386,132"/><path class="steer-head" d="M380,131 L392,126 L386,138 Z"/>
+    <text class="prule" x="360" y="234" text-anchor="middle">match neighbours&#8217; heading</text>
+
+    <!-- ============ Panel 3: Cohesion ============ -->
+    <rect class="card" x="478" y="52" width="214" height="196" rx="10"/>
+    <text class="ptitle" x="585" y="78" text-anchor="middle">Cohesion</text>
+    <circle class="perc" cx="588" cy="158" r="52"/>
+    <!-- neighbours spread -->
+    <path class="boid-n" transform="translate(602,122) rotate(-90)" d="M9,0 L-7,-6 L-7,6 Z"/>
+    <path class="boid-n" transform="translate(624,158) rotate(-90)" d="M9,0 L-7,-6 L-7,6 Z"/>
+    <path class="boid-n" transform="translate(596,192) rotate(-90)" d="M9,0 L-7,-6 L-7,6 Z"/>
+    <!-- centre of mass -->
+    <circle class="com" cx="607" cy="157" r="9"/><circle class="com-dot" cx="607" cy="157" r="2.5"/>
+    <!-- focal (left), steer toward centre -->
+    <path class="boid-f" transform="translate(552,168) rotate(-40)" d="M11,0 L-8,-7 L-8,7 Z"/>
+    <path class="steer" d="M560,162 L596,158"/><path class="steer-head" d="M591,153 L603,158 L591,163 Z"/>
+    <text class="prule" x="585" y="234" text-anchor="middle">steer toward the group&#8217;s centre</text>
+
+    <!-- caption -->
+    <text class="cap" x="360" y="292" text-anchor="middle">Every boid senses only its nearby neighbours (the dashed circle) and obeys just these three steering rules.</text>
+    <text class="cap" x="360" y="312" text-anchor="middle">No bird leads &#8212; the murmuration&#8217;s swirls, splits, and rejoining all <tspan font-weight="700">emerge</tspan> from thousands running the same simple math.</text>
+</svg>

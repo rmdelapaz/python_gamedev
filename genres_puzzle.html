@@ -191,7 +191,7 @@
         <!-- Game Actions -->
         <div style="margin: 10px auto;">
             <button onclick="puzzleGame.reset()">🔄 Reset</button>
-            <button onclick="puzzleGame.hint()">💡 Hint</button>
+            <button id="hintBtn" onclick="puzzleGame.hint()">💡 Hint</button>
             <button onclick="puzzleGame.shuffle()">🔀 Shuffle</button>
         </div>
         
@@ -245,9 +245,18 @@
                 document.getElementById('btn-physics').addEventListener('click', () => this.switchPuzzle('physics'));
                 document.getElementById('btn-pattern').addEventListener('click', () => this.switchPuzzle('pattern'));
                 document.getElementById('btn-logic').addEventListener('click', () => this.switchPuzzle('logic'));
-                
+
+                // Only Match-3 has a hint implemented; hide the button for other modes
+                this.updateHintButton();
+
                 // Start game loop
                 this.gameLoop();
+            }
+
+            updateHintButton() {
+                // Only Match-3 implements hint(); hide the Hint button for the others
+                document.getElementById('hintBtn').style.display =
+                    this.currentPuzzle === 'match3' ? '' : 'none';
             }
             
             handleClick(e) {
@@ -276,6 +285,9 @@
                     logic: 'Logic: Toggle inputs to make output match target'
                 };
                 document.getElementById('controlsText').textContent = instructions[type];
+
+                // Show the Hint button only for the mode that implements hint()
+                this.updateHintButton();
             }
             
             reset() {

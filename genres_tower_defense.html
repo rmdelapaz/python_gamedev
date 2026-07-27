@@ -152,7 +152,7 @@ enemy_count = base_count + floor(wave_number / 5)
     </div>
     
     <div style="text-align: center; margin-top: 10px;">
-        <p>Build towers to defend against waves of enemies! Click to place towers, upgrade them, and use special abilities!</p>
+        <p>Build towers to defend against waves of enemies! Click to place towers and upgrade them!</p>
         
         <!-- Tower Selection -->
         <div style="margin: 10px auto; padding: 10px; background-color: rgba(0,0,0,0.5); border-radius: 5px;">
@@ -202,9 +202,6 @@ enemy_count = base_count + floor(wave_number / 5)
                 </div>
                 <div style="color: white;">
                     🏆 Score: <span id="tdScore">0</span>
-                </div>
-                <div style="color: white;">
-                    ⚡ Power: <span id="power">3</span>
                 </div>
             </div>
         </div>
@@ -281,7 +278,6 @@ enemy_count = base_count + floor(wave_number / 5)
             lives: 20,
             wave: 0,
             score: 0,
-            power: 3,
             paused: false,
             speed: 1,
             selectedTower: 'basic',
@@ -1154,7 +1150,6 @@ enemy_count = base_count + floor(wave_number / 5)
             gameState.lives = 20;
             gameState.wave = 0;
             gameState.score = 0;
-            gameState.power = 3;
             gameState.gameOver = false;
             
             updateWavePreview();
@@ -1351,8 +1346,7 @@ enemy_count = base_count + floor(wave_number / 5)
             document.getElementById('wave').textContent = gameState.wave;
             document.getElementById('enemies').textContent = enemies.filter(e => !e.isDead).length;
             document.getElementById('tdScore').textContent = gameState.score;
-            document.getElementById('power').textContent = gameState.power;
-            
+
             // Game over screen
             if (gameState.gameOver) {
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';

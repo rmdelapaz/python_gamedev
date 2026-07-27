@@ -663,6 +663,7 @@
                 this.visionRange = 100;
                 this.visionAngle = Math.PI / 3;
                 this.reactionTime = 500;
+                this._seenSince = null; // timestamp the player came into continuous view
                 this.lastKnownPlayerPos = null;
                 
                 // State machine
@@ -747,28 +748,48 @@
                 // Keep NPC in bounds
                 this.x = Math.max(20, Math.min(580, this.x));
                 this.y = Math.max(20, Math.min(380, this.y));
+
+                // Walls are solid
+                pushOutOfObstacles(this, this.size / 2, this.world.obstacles);
             }
-            
+
             canSeePlayer() {
+                // The player must be in raw view for reactionTime ms of *continuous*
+                // sight before the NPC actually reacts (that's what the slider controls).
+                const now = performance.now();
+                if (this.hasLineOfSightToPlayer()) {
+                    if (this._seenSince === null) this._seenSince = now;
+                    return (now - this._seenSince) >= this.reactionTime;
+                }
+                this._seenSince = null;
+                return false;
+            }
+
+            hasLineOfSightToPlayer() {
                 const player = this.world.player;
                 const dx = player.x - this.x;
                 const dy = player.y - this.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
-                
+
                 // Check distance
                 if (distance > this.visionRange) {
                     return false;
                 }
-                
+
                 // Check angle
                 const angleToPlayer = Math.atan2(dy, dx);
                 const angleDiff = Math.abs(this.normalizeAngle(angleToPlayer - this.facing));
-                
                 if (angleDiff > this.visionAngle / 2) {
                     return false;
                 }
-                
-                // Check line of sight (simplified - no obstacles for now)
+
+                // Walls block line of sight
+                for (const o of this.world.obstacles) {
+                    if (segmentIntersectsRect(this.x, this.y, player.x, player.y,
+                                              o.x, o.y, o.width, o.height)) {
+                        return false;
+                    }
+                }
                 return true;
             }
             
@@ -843,8 +864,64 @@
                     ctx.fillStyle = '#ff0000';
                     ctx.fillRect(this.x - barWidth/2, this.y + this.size/2 + 5, barWidth, barHeight);
                     ctx.fillStyle = '#00ff00';
-                    ctx.fillRect(this.x - barWidth/2, this.y + this.size/2 + 5, 
+                    ctx.fillRect(this.x - barWidth/2, this.y + this.size/2 + 5,
                                 barWidth * (this.health / 100), barHeight);
+                }
+
+                // Draw the path toward the last known player position (the NPC's current goal)
+                if (this.lastKnownPlayerPos && document.getElementById('showPaths').checked) {
+                    ctx.save();
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+                    ctx.setLineDash([4, 4]);
+                    ctx.beginPath();
+                    ctx.moveTo(this.x, this.y);
+                    ctx.lineTo(this.lastKnownPlayerPos.x, this.lastKnownPlayerPos.y);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
+                // Alert indicator over NPCs that have noticed the player
+                if (document.getElementById('showAlerts').checked) {
+                    const s = this.currentState.name;
+                    if (s === NPCState.ALERT || s === NPCState.CHASE ||
+                        s === NPCState.ATTACK || s === NPCState.INVESTIGATE) {
+                        ctx.fillStyle = '#ff3b30';
+                        ctx.font = 'bold 16px Arial';
+                        ctx.fillText('!', this.x - 3, this.y - 22);
+                    }
+                }
+            }
+        }
+
+        // --- Geometry helpers for walls (line-of-sight blocking + solid collision) ---
+        function segSeg(x1, y1, x2, y2, x3, y3, x4, y4) {
+            const d = (x2 - x1) * (y4 - y3) - (y2 - y1) * (x4 - x3);
+            if (d === 0) return false;
+            const t = ((x3 - x1) * (y4 - y3) - (y3 - y1) * (x4 - x3)) / d;
+            const u = ((x3 - x1) * (y2 - y1) - (y3 - y1) * (x2 - x1)) / d;
+            return t >= 0 && t <= 1 && u >= 0 && u <= 1;
+        }
+        function segmentIntersectsRect(x1, y1, x2, y2, rx, ry, rw, rh) {
+            if ((x1 >= rx && x1 <= rx + rw && y1 >= ry && y1 <= ry + rh) ||
+                (x2 >= rx && x2 <= rx + rw && y2 >= ry && y2 <= ry + rh)) return true;
+            return segSeg(x1, y1, x2, y2, rx, ry, rx + rw, ry) ||
+                   segSeg(x1, y1, x2, y2, rx + rw, ry, rx + rw, ry + rh) ||
+                   segSeg(x1, y1, x2, y2, rx + rw, ry + rh, rx, ry + rh) ||
+                   segSeg(x1, y1, x2, y2, rx, ry + rh, rx, ry);
+        }
+        // Push a point-like entity (with .x/.y) out of any solid obstacle along the shortest axis.
+        function pushOutOfObstacles(entity, half, obstacles) {
+            for (const o of obstacles) {
+                const left = o.x - half, right = o.x + o.width + half;
+                const top = o.y - half, bottom = o.y + o.height + half;
+                if (entity.x > left && entity.x < right && entity.y > top && entity.y < bottom) {
+                    const dl = entity.x - left, dr = right - entity.x;
+                    const dt = entity.y - top, db = bottom - entity.y;
+                    const m = Math.min(dl, dr, dt, db);
+                    if (m === dl) entity.x = left;
+                    else if (m === dr) entity.x = right;
+                    else if (m === dt) entity.y = top;
+                    else entity.y = bottom;
                 }
             }
         }
@@ -867,6 +944,7 @@
                 this.npcs = [];
                 this.obstacles = [];
                 this.items = [];
+                this.itemsCollected = 0;
                 this.hitEffects = [];
                 this.paused = false;
                 
@@ -929,7 +1007,21 @@
                 // Keep player in bounds
                 this.player.x = Math.max(20, Math.min(580, this.player.x));
                 this.player.y = Math.max(20, Math.min(380, this.player.y));
-                
+
+                // Walls are solid for the player too
+                pushOutOfObstacles(this.player, this.player.size / 2, this.obstacles);
+
+                // Collect items the player walks over
+                for (let i = this.items.length - 1; i >= 0; i--) {
+                    const item = this.items[i];
+                    const dx = this.player.x - item.x;
+                    const dy = this.player.y - item.y;
+                    if (Math.sqrt(dx * dx + dy * dy) < this.player.size / 2 + 8) {
+                        this.items.splice(i, 1);
+                        this.itemsCollected++;
+                    }
+                }
+
                 // Update NPCs
                 for (const npc of this.npcs) {
                     npc.update(dt);
@@ -1024,7 +1116,8 @@
             updateUI() {
                 document.getElementById('npcCount').textContent = this.npcs.length;
                 document.getElementById('playerHealth').textContent = this.player.health;
-                
+                document.getElementById('itemsCollected').textContent = this.itemsCollected;
+
                 // Count alerts
                 const alertCount = this.npcs.filter(npc => 
                     npc.currentState.name === NPCState.ALERT ||
@@ -1068,6 +1161,7 @@
             world.player.health = 100;
             world.obstacles = [];
             world.items = [];
+            world.itemsCollected = 0;
             
             // Spawn initial NPCs
             world.spawnNPC('guard', 100, 100);

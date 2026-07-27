@@ -136,8 +136,6 @@
             <button onclick="clearGrid()">Clear Grid</button>
             <button onclick="generateMaze()">Generate Maze</button>
             <button onclick="generateRandom()">Random Map</button>
-            <button onclick="stepThrough()" id="stepBtn">Step Through</button>
-            <button onclick="toggleAnimation()">Animate</button>
         </div>
         
         <!-- Algorithm Selection -->
@@ -166,14 +164,12 @@
         <div style="margin-top: 10px;">
             <label><input type="checkbox" id="diagonalMovement" checked> Allow Diagonal</label>
             <label><input type="checkbox" id="showCosts" checked> Show Costs</label>
-            <label><input type="checkbox" id="showHeuristics"> Show Heuristics</label>
             <label><input type="checkbox" id="showVisited" checked> Show Visited</label>
             <label><input type="checkbox" id="smoothPath"> Smooth Path</label>
         </div>
         
-        <!-- Speed Control -->
+        <!-- Grid Control -->
         <div style="margin-top: 10px;">
-            <label>Animation Speed: <input type="range" id="animSpeed" min="1" max="100" value="50" onchange="setAnimSpeed(this.value)"> <span id="speedDisplay">50ms</span></label>
             <label>Grid Size: <input type="range" id="gridSize" min="10" max="40" value="20" onchange="setGridSize(this.value)"> <span id="gridSizeDisplay">20x20</span></label>
         </div>
         
@@ -316,12 +312,7 @@
                 // Statistics
                 this.nodesExplored = 0;
                 this.searchTime = 0;
-                
-                // Animation
-                this.animating = false;
-                this.animationSpeed = 50;
-                this.animationStep = 0;
-                
+
                 // Settings
                 this.algorithm = 'astar';
                 this.heuristic = 'manhattan';
@@ -1087,11 +1078,6 @@
             demo.grid.heuristic = heuristic;
         };
 
-        window.setAnimSpeed = function(speed) {
-            demo.grid.animationSpeed = parseInt(speed);
-            document.getElementById('speedDisplay').textContent = speed + 'ms';
-        };
-
         window.setGridSize = function(size) {
             const newSize = parseInt(size);
             demo.gridSize = newSize;
@@ -1103,15 +1089,6 @@
             demo.grid.setCell(2, 2, CellType.START);
             demo.grid.setCell(newSize - 3, newSize - 3, CellType.GOAL);
             document.getElementById('gridSizeDisplay').textContent = size + 'x' + size;
-        };
-
-        window.stepThrough = function() {
-            // Step-through animation (simplified)
-            console.log('Step through pathfinding');
-        };
-
-        window.toggleAnimation = function() {
-            demo.grid.animating = !demo.grid.animating;
         };
 
         // Update diagonal movement setting

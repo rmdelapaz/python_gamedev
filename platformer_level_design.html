@@ -160,7 +160,6 @@
         <!-- Properties Panel -->
         <div style="margin-top: 10px;">
             <label>Grid Size: <input type="range" id="gridSize" min="10" max="50" value="20" onchange="setGridSize(this.value)"> <span id="gridSizeDisplay">20</span></label>
-            <label>Zoom: <input type="range" id="zoom" min="0.5" max="2" step="0.1" value="1" onchange="setZoom(this.value)"> <span id="zoomDisplay">1.0x</span></label>
         </div>
         
         <div id="propertiesPanel" style="margin-top: 10px; padding: 10px; background-color: rgba(0,0,0,0.5); border-radius: 5px; display: none;">
@@ -979,47 +978,77 @@
             constructor(x, y) {
                 this.x = x;
                 this.y = y;
+                this.spawnX = x;
+                this.spawnY = y;
                 this.width = 20;
                 this.height = 30;
                 this.vx = 0;
                 this.vy = 0;
                 this.grounded = false;
             }
-            
+
             update(dt, objects) {
+                const speed = 200;
+
+                // Horizontal input
+                if (testKeys['arrowleft'] || testKeys['a']) {
+                    this.vx = -speed;
+                } else if (testKeys['arrowright'] || testKeys['d']) {
+                    this.vx = speed;
+                } else {
+                    this.vx = 0;
+                }
+
+                // Jump input
+                if ((testKeys['arrowup'] || testKeys['w'] || testKeys[' ']) && this.grounded) {
+                    this.vy = -450;
+                    this.grounded = false;
+                }
+
                 // Simple physics
                 this.vy += 1000 * dt;
                 this.x += this.vx * dt;
                 this.y += this.vy * dt;
-                
+
+                // Keep within canvas horizontally
+                this.x = Math.max(0, Math.min(600 - this.width, this.x));
+
+                this.grounded = false;
+
                 // Ground collision
                 if (this.y > 370) {
                     this.y = 370;
                     this.vy = 0;
                     this.grounded = true;
                 }
-                
-                // Platform collision
+
+                // Object collision / interaction
                 for (const obj of objects) {
+                    // Simple AABB overlap
+                    const overlapping = this.x < obj.x + obj.width &&
+                        this.x + this.width > obj.x &&
+                        this.y < obj.y + obj.height &&
+                        this.y + this.height > obj.y;
+                    if (!overlapping) continue;
+
                     if (obj.properties.solid) {
-                        // Simple AABB collision
-                        if (this.x < obj.x + obj.width &&
-                            this.x + this.width > obj.x &&
-                            this.y < obj.y + obj.height &&
-                            this.y + this.height > obj.y) {
-                            
-                            // Resolve collision (simple)
-                            if (this.vy > 0) {
-                                this.y = obj.y - this.height;
-                                this.vy = 0;
-                                this.grounded = true;
-                                
-                                // Spring bounce
-                                if (obj.type === ObjectType.SPRING) {
-                                    this.vy = -obj.properties.power;
-                                }
+                        // Resolve collision (simple) - land on top
+                        if (this.vy > 0) {
+                            this.y = obj.y - this.height;
+                            this.vy = 0;
+                            this.grounded = true;
+
+                            // Spring bounce
+                            if (obj.type === ObjectType.SPRING) {
+                                this.vy = -obj.properties.power;
                             }
                         }
+                    } else if (obj.type === ObjectType.SPIKE) {
+                        // Hit a spike - respawn at start
+                        this.x = this.spawnX;
+                        this.y = this.spawnY;
+                        this.vx = 0;
+                        this.vy = 0;
                     }
                 }
             }
@@ -1034,6 +1063,19 @@
         const editorCanvas = document.getElementById('editorCanvas');
         const ctx = editorCanvas.getContext('2d');
         const editor = new LevelEditor(editorCanvas, ctx);
+
+        // Test-mode player input (arrow keys / WASD, space or up to jump)
+        const testKeys = {};
+        document.addEventListener('keydown', (e) => {
+            testKeys[e.key.toLowerCase()] = true;
+            if (editor.testMode &&
+                ['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' '].includes(e.key.toLowerCase())) {
+                e.preventDefault();
+            }
+        });
+        document.addEventListener('keyup', (e) => {
+            testKeys[e.key.toLowerCase()] = false;
+        });
 
         // Control functions
         window.selectTool = function(tool) {
@@ -1105,11 +1147,6 @@
         window.setGridSize = function(size) {
             editor.gridSize = parseInt(size);
             document.getElementById('gridSizeDisplay').textContent = size;
-        };
-
-        window.setZoom = function(zoom) {
-            editor.zoom = parseFloat(zoom);
-            document.getElementById('zoomDisplay').textContent = zoom + 'x';
         };
 
         window.toggleTestMode = function() {

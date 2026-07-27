@@ -491,7 +491,28 @@
                 if (this.visualOptions.showGraph) {
                     this.drawEasingGraph();
                 }
-                
+
+                // Draw trajectory (start -> end path of each active tween)
+                if (this.visualOptions.showTrajectory) {
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([4, 4]);
+                    for (const tween of this.tweens) {
+                        const sx = tween.startValues.x;
+                        const sy = tween.startValues.y;
+                        const ex = tween.endValues.x;
+                        const ey = tween.endValues.y;
+                        if (sx !== undefined && sy !== undefined &&
+                            ex !== undefined && ey !== undefined) {
+                            ctx.beginPath();
+                            ctx.moveTo(sx, sy);
+                            ctx.lineTo(ex, ey);
+                            ctx.stroke();
+                        }
+                    }
+                    ctx.setLineDash([]);
+                }
+
                 // Draw trails
                 for (const trail of this.trails) {
                     ctx.globalAlpha = trail.alpha;

@@ -176,7 +176,6 @@
             <label><input type="checkbox" id="aimAssist" onchange="toggleAssist('aimAssist')"> Aim Assist</label>
             <label><input type="checkbox" id="invulnerability" onchange="toggleAssist('invulnerability')"> Brief Invulnerability</label>
             <label><input type="checkbox" id="slowMotion" onchange="toggleAssist('slowMotion')"> Slow Motion</label>
-            <label><input type="checkbox" id="extraLives" onchange="toggleAssist('extraLives')"> Extra Lives</label>
             <label><input type="checkbox" id="enemyOutlines" onchange="toggleAssist('enemyOutlines')"> Enemy Outlines</label>
             <label><input type="checkbox" id="autoFire" onchange="toggleAssist('autoFire')"> Auto Fire</label>
         </div>
@@ -196,7 +195,6 @@
             <label><input type="checkbox" id="showMetrics" checked> Show Metrics</label>
             <label><input type="checkbox" id="showGraph" checked> Difficulty Graph</label>
             <label><input type="checkbox" id="showFlow" checked> Flow Indicator</label>
-            <label><input type="checkbox" id="showAdaptation"> Adaptation Log</label>
         </div>
         
         <!-- Player Stats -->
@@ -295,7 +293,6 @@
                     aimAssist: false,
                     invulnerability: false,
                     slowMotion: false,
-                    extraLives: false,
                     enemyOutlines: false,
                     autoFire: false
                 };
@@ -1027,8 +1024,8 @@
 
         window.setPreset = function(preset) {
             const presets = {
-                tourist: { difficulty: 1, assists: ['aimAssist', 'invulnerability', 'extraLives', 'enemyOutlines'] },
-                easy: { difficulty: 3, assists: ['aimAssist', 'extraLives'] },
+                tourist: { difficulty: 1, assists: ['aimAssist', 'invulnerability', 'enemyOutlines'] },
+                easy: { difficulty: 3, assists: ['aimAssist'] },
                 normal: { difficulty: 5, assists: [] },
                 hard: { difficulty: 7, assists: [] },
                 nightmare: { difficulty: 9, assists: [] },

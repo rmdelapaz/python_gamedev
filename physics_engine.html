@@ -340,6 +340,73 @@
             }
         }
         
+        // --- Separating Axis Theorem (SAT) helpers for box/polygon collision ---
+        // Perpendicular unit normals of each edge of a convex polygon.
+        function shapeAxes(verts) {
+            const axes = [];
+            for (let i = 0; i < verts.length; i++) {
+                const p1 = verts[i];
+                const p2 = verts[(i + 1) % verts.length];
+                const edge = p2.subtract(p1);
+                axes.push(new Vec2(-edge.y, edge.x).normalize());
+            }
+            return axes;
+        }
+        // Project a set of vertices onto an axis, returning the [min, max] span.
+        function projectVerts(verts, axis) {
+            let min = verts[0].dot(axis);
+            let max = min;
+            for (let i = 1; i < verts.length; i++) {
+                const p = verts[i].dot(axis);
+                if (p < min) min = p;
+                if (p > max) max = p;
+            }
+            return { min, max };
+        }
+        // SAT for two convex polygons. Returns {normal (A->B), overlap} or null.
+        function satPolyPoly(bodyA, bodyB) {
+            const va = bodyA.getWorldVertices();
+            const vb = bodyB.getWorldVertices();
+            const axes = shapeAxes(va).concat(shapeAxes(vb));
+            let minOverlap = Infinity;
+            let smallest = null;
+            for (const axis of axes) {
+                const pa = projectVerts(va, axis);
+                const pb = projectVerts(vb, axis);
+                const overlap = Math.min(pa.max, pb.max) - Math.max(pa.min, pb.min);
+                if (overlap <= 0) return null; // a separating axis => no collision
+                if (overlap < minOverlap) { minOverlap = overlap; smallest = axis; }
+            }
+            let normal = smallest;
+            if (bodyB.position.subtract(bodyA.position).dot(normal) < 0) normal = normal.multiply(-1);
+            return { normal, overlap: minOverlap };
+        }
+        // SAT for a circle vs a convex polygon. Returns {normal (circle->poly), overlap} or null.
+        function satCirclePoly(circle, poly) {
+            const verts = poly.getWorldVertices();
+            const axes = shapeAxes(verts);
+            // plus the axis from the circle centre to the nearest vertex
+            let closest = verts[0];
+            let minD = Infinity;
+            for (const v of verts) {
+                const d = v.subtract(circle.position).length();
+                if (d < minD) { minD = d; closest = v; }
+            }
+            axes.push(closest.subtract(circle.position).normalize());
+            let minOverlap = Infinity;
+            let smallest = null;
+            for (const axis of axes) {
+                const pp = projectVerts(verts, axis);
+                const c = circle.position.dot(axis);
+                const overlap = Math.min(pp.max, c + circle.radius) - Math.max(pp.min, c - circle.radius);
+                if (overlap <= 0) return null;
+                if (overlap < minOverlap) { minOverlap = overlap; smallest = axis; }
+            }
+            let normal = smallest;
+            if (poly.position.subtract(circle.position).dot(normal) < 0) normal = normal.multiply(-1);
+            return { normal, overlap: minOverlap };
+        }
+
         class Constraint {
             constructor(bodyA, bodyB, restLength) {
                 this.bodyA = bodyA;
@@ -471,74 +538,108 @@
             }
             
             checkCollision(bodyA, bodyB) {
-                // Circle-circle collision
-                if (bodyA.shape === 'circle' && bodyB.shape === 'circle') {
+                if (bodyA.static && bodyB.static) return;
+
+                // Build a contact manifold {normal (points A->B), overlap} for any
+                // shape pair, then resolve it with the shared impulse solver below.
+                const aCircle = bodyA.shape === 'circle';
+                const bCircle = bodyB.shape === 'circle';
+                let manifold = null;
+
+                if (aCircle && bCircle) {
                     const delta = bodyB.position.subtract(bodyA.position);
                     const distance = delta.length();
                     const minDistance = bodyA.radius + bodyB.radius;
-                    
-                    if (distance < minDistance) {
-                        // Collision detected
-                        const normal = delta.normalize();
-                        const overlap = minDistance - distance;
-                        
-                        // Separate bodies
-                        const totalMass = bodyA.mass + bodyB.mass;
-                        if (!bodyA.static) {
-                            bodyA.position = bodyA.position.subtract(
-                                normal.multiply(overlap * bodyB.mass / totalMass)
-                            );
-                        }
-                        if (!bodyB.static) {
-                            bodyB.position = bodyB.position.add(
-                                normal.multiply(overlap * bodyA.mass / totalMass)
-                            );
-                        }
-                        
-                        // Calculate relative velocity
-                        const relativeVelocity = bodyB.velocity.subtract(bodyA.velocity);
-                        const velocityAlongNormal = relativeVelocity.dot(normal);
-                        
-                        // Don't resolve if velocities are separating
-                        if (velocityAlongNormal > 0) return;
-                        
-                        // Calculate restitution
-                        const e = Math.min(bodyA.restitution, bodyB.restitution);
-                        
-                        // Calculate impulse scalar
-                        let j = -(1 + e) * velocityAlongNormal;
-                        j /= bodyA.inverseMass + bodyB.inverseMass;
-                        
-                        // Apply impulse
-                        const impulse = normal.multiply(j);
-                        bodyA.applyImpulse(impulse.multiply(-1), null);
-                        bodyB.applyImpulse(impulse, null);
+                    if (distance < minDistance && distance > 0) {
+                        manifold = { normal: delta.normalize(), overlap: minDistance - distance };
+                    }
+                } else if (!aCircle && !bCircle) {
+                    manifold = satPolyPoly(bodyA, bodyB); // normal already A->B
+                } else {
+                    const circle = aCircle ? bodyA : bodyB;
+                    const poly = aCircle ? bodyB : bodyA;
+                    const m = satCirclePoly(circle, poly); // normal points circle->poly
+                    if (m) {
+                        // Re-orient to A->B: if A is the polygon, flip.
+                        const normal = aCircle ? m.normal : m.normal.multiply(-1);
+                        manifold = { normal, overlap: m.overlap };
                     }
                 }
-                // Box-box and other collisions would be implemented here
+
+                if (manifold) this.resolveManifold(bodyA, bodyB, manifold.normal, manifold.overlap);
+            }
+
+            // Positional correction + normal impulse for a contact whose normal
+            // points from A to B. Linear response only (bodies still spin from the
+            // wall-friction term); a small restitution threshold lets resting stacks
+            // settle instead of bouncing forever.
+            resolveManifold(bodyA, bodyB, normal, overlap) {
+                const invMassSum = bodyA.inverseMass + bodyB.inverseMass;
+                if (invMassSum === 0) return;
+
+                // Push the bodies apart along the collision normal (mass-weighted).
+                const percent = 0.8;
+                const slop = 0.5;
+                const corr = normal.multiply(Math.max(overlap - slop, 0) / invMassSum * percent);
+                bodyA.position = bodyA.position.subtract(corr.multiply(bodyA.inverseMass));
+                bodyB.position = bodyB.position.add(corr.multiply(bodyB.inverseMass));
+
+                const relativeVelocity = bodyB.velocity.subtract(bodyA.velocity);
+                const velocityAlongNormal = relativeVelocity.dot(normal);
+                if (velocityAlongNormal > 0) return; // already separating
+
+                // Treat slow contacts as resting (no bounce) so stacks don't jitter.
+                const e = Math.abs(velocityAlongNormal) < 50
+                    ? 0
+                    : Math.min(bodyA.restitution, bodyB.restitution);
+
+                const j = -(1 + e) * velocityAlongNormal / invMassSum;
+                const impulse = normal.multiply(j);
+                bodyA.applyImpulse(impulse.multiply(-1), null);
+                bodyB.applyImpulse(impulse, null);
             }
             
             constrainToScreen() {
                 for (const body of this.bodies) {
-                    // Keep bodies on screen
+                    if (body.static) continue;
+
+                    // Axis-aligned bounds of the body (circle radius, or the
+                    // extent of a box/polygon's rotated world vertices).
+                    let minX, maxX, minY, maxY;
                     if (body.shape === 'circle') {
-                        if (body.position.x - body.radius < 0) {
-                            body.position.x = body.radius;
-                            body.velocity.x *= -body.restitution;
+                        minX = body.position.x - body.radius;
+                        maxX = body.position.x + body.radius;
+                        minY = body.position.y - body.radius;
+                        maxY = body.position.y + body.radius;
+                    } else {
+                        const vs = body.getWorldVertices();
+                        minX = maxX = vs[0].x;
+                        minY = maxY = vs[0].y;
+                        for (const v of vs) {
+                            if (v.x < minX) minX = v.x;
+                            if (v.x > maxX) maxX = v.x;
+                            if (v.y < minY) minY = v.y;
+                            if (v.y > maxY) maxY = v.y;
                         }
-                        if (body.position.x + body.radius > engineCanvas.width) {
-                            body.position.x = engineCanvas.width - body.radius;
-                            body.velocity.x *= -body.restitution;
-                        }
-                        if (body.position.y - body.radius < 0) {
-                            body.position.y = body.radius;
-                            body.velocity.y *= -body.restitution;
-                        }
-                        if (body.position.y + body.radius > engineCanvas.height) {
-                            body.position.y = engineCanvas.height - body.radius;
-                            body.velocity.y *= -body.restitution;
-                            body.angularVelocity *= 0.8; // Friction
-                        }
+                    }
+
+                    if (minX < 0) {
+                        body.position.x -= minX;
+                        body.velocity.x *= -body.restitution;
+                    }
+                    if (maxX > engineCanvas.width) {
+                        body.position.x -= (maxX - engineCanvas.width);
+                        body.velocity.x *= -body.restitution;
+                    }
+                    if (minY < 0) {
+                        body.position.y -= minY;
+                        body.velocity.y *= -body.restitution;
+                    }
+                    if (maxY > engineCanvas.height) {
+                        body.position.y -= (maxY - engineCanvas.height);
+                        body.velocity.y *= -body.restitution;
+                        body.angularVelocity *= 0.8; // ground friction
+                        if (Math.abs(body.velocity.y) < 50) body.velocity.y = 0; // rest on the floor
                     }
                 }
             }
@@ -606,16 +707,22 @@
         
         function createStack() {
             world.clear();
+            const rows = 6;
             const startY = 350;
             const boxSize = 30;
-            
-            for (let row = 0; row < 6; row++) {
-                for (let col = 0; col <= row; col++) {
-                    const x = 300 + (col - row/2) * (boxSize + 2);
-                    const y = startY - row * (boxSize + 2);
+            const step = boxSize + 2;
+
+            // Upright pyramid: widest row on the bottom so it stands stably.
+            for (let row = 0; row < rows; row++) {
+                const count = rows - row;               // bottom row has the most boxes
+                for (let col = 0; col < count; col++) {
+                    const x = 300 + (col - (count - 1) / 2) * step;
+                    const y = startY - row * step;
                     const body = new Body(x, y, 'box');
                     body.width = boxSize;
                     body.height = boxSize;
+                    body.vertices = body.getBoxVertices(); // resync collision verts to the new size
+                    body.restitution = 0.2;                // low bounce so the stack settles
                     world.addBody(body);
                 }
             }
@@ -655,6 +762,7 @@
                 const body = new Body(x, y, 'box');
                 body.width = 10;
                 body.height = 60;
+                body.vertices = body.getBoxVertices(); // resync collision verts to the new size
                 world.addBody(body);
             }
             
@@ -704,14 +812,27 @@
                 e.clientY - rect.top
             );
             
-            // Find body under mouse
+            // Find body under mouse (circles by radius, boxes/polygons by bounds)
             for (const body of world.bodies) {
+                if (body.static) continue;
+                let hit = false;
                 if (body.shape === 'circle') {
-                    const dist = mousePos.subtract(body.position).length();
-                    if (dist < body.radius) {
-                        mouseBody = body;
-                        break;
+                    hit = mousePos.subtract(body.position).length() < body.radius;
+                } else {
+                    const vs = body.getWorldVertices();
+                    let minX = vs[0].x, maxX = vs[0].x, minY = vs[0].y, maxY = vs[0].y;
+                    for (const v of vs) {
+                        if (v.x < minX) minX = v.x;
+                        if (v.x > maxX) maxX = v.x;
+                        if (v.y < minY) minY = v.y;
+                        if (v.y > maxY) maxY = v.y;
                     }
+                    hit = mousePos.x >= minX && mousePos.x <= maxX &&
+                          mousePos.y >= minY && mousePos.y <= maxY;
+                }
+                if (hit) {
+                    mouseBody = body;
+                    break;
                 }
             }
         });

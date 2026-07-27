@@ -514,9 +514,9 @@
                 // Server-side validation
                 shot.serverValidated = true;
                 
-                if (!this.lagCompensationEnabled) {
-                    // No lag compensation - check current positions
-                    const hit = this.checkHit(shot.targetX, shot.targetY, performance.now());
+                if (!this.lagCompensationEnabled || !this.favorShooter) {
+                    // No lag compensation, or favor-the-target: validate against the bot's CURRENT position (no rewind)
+                    const hit = this.checkHit(shot.targetX, shot.targetY, null);
                     shot.serverResult = hit !== null;
                     if (hit) {
                         this.stats.serverHits++;

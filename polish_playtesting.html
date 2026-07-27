@@ -178,29 +178,15 @@
             <label><input type="checkbox" id="heatmap" checked onchange="toggleDataCollection('heatmap')"> Heat Maps</label>
             <label><input type="checkbox" id="pathTracking" checked onchange="toggleDataCollection('pathTracking')"> Path Tracking</label>
             <label><input type="checkbox" id="inputTracking" checked onchange="toggleDataCollection('inputTracking')"> Input Recording</label>
-            <label><input type="checkbox" id="eyeTracking" onchange="toggleDataCollection('eyeTracking')"> Eye Tracking</label>
             <label><input type="checkbox" id="emotions" checked onchange="toggleDataCollection('emotions')"> Emotion Tracking</label>
-            <label><input type="checkbox" id="thinkaloud" onchange="toggleDataCollection('thinkaloud')"> Think Aloud</label>
         </div>
-        
-        <!-- Feedback Questions -->
-        <div style="margin-top: 10px;">
-            <h4 style="color: white;">Survey Questions:</h4>
-            <button onclick="addQuestion('likert')">➕ Likert Scale</button>
-            <button onclick="addQuestion('open')">💬 Open Ended</button>
-            <button onclick="addQuestion('multiple')">☑️ Multiple Choice</button>
-            <button onclick="addQuestion('ranking')">📊 Ranking</button>
-            <button onclick="addQuestion('sus')">📋 SUS Scale</button>
-            <button onclick="addQuestion('custom')">✏️ Custom</button>
-        </div>
-        
+
         <!-- Analytics Dashboard -->
         <div style="margin-top: 10px;">
             <label><input type="checkbox" id="showHeatmap" checked> Show Heatmap</label>
             <label><input type="checkbox" id="showPaths" checked> Show Paths</label>
             <label><input type="checkbox" id="showMetrics" checked> Show Metrics</label>
             <label><input type="checkbox" id="showTimeline" checked> Show Timeline</label>
-            <label><input type="checkbox" id="showFeedback"> Show Feedback</label>
             <label><input type="checkbox" id="showInsights" checked> Show Insights</label>
         </div>
         
@@ -238,8 +224,6 @@
         <div style="margin-top: 10px;">
             <button onclick="exportData('csv')">📊 Export CSV</button>
             <button onclick="exportData('json')">📄 Export JSON</button>
-            <button onclick="generateReport()">📑 Generate Report</button>
-            <button onclick="shareResults()">🔗 Share Results</button>
         </div>
     </div>
 
@@ -1002,11 +986,6 @@
             playtestSystem.dataCollection[type] = document.getElementById(type).checked;
         };
 
-        window.addQuestion = function(type) {
-            console.log('Adding question type:', type);
-            // Would implement question builder UI
-        };
-
         window.exportData = function(format) {
             const data = {
                 session: {
@@ -1024,22 +1003,29 @@
                     clicks: t.clicks.length
                 }))
             };
-            
-            console.log(`Exporting data as ${format}:`, data);
-        };
 
-        window.generateReport = function() {
-            console.log('Generating comprehensive report...');
-            // Would generate detailed PDF report
-        };
+            let blob, filename;
+            if (format === 'csv') {
+                const rows = [['id', 'completed', 'satisfaction', 'errors', 'clicks']];
+                data.testers.forEach(t => rows.push([t.id, t.completed, t.satisfaction, t.errors, t.clicks]));
+                const csv = rows.map(r => r.join(',')).join('\n');
+                blob = new Blob([csv], { type: 'text/csv' });
+                filename = 'playtest-data.csv';
+            } else {
+                blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                filename = 'playtest-data.json';
+            }
 
-        window.shareResults = function() {
-            console.log('Sharing results...');
-            // Would create shareable link
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
         };
 
         // Visualization toggles
-        ['showHeatmap', 'showPaths', 'showMetrics', 'showTimeline', 'showFeedback', 'showInsights'].forEach(option => {
+        ['showHeatmap', 'showPaths', 'showMetrics', 'showTimeline', 'showInsights'].forEach(option => {
             document.getElementById(option).addEventListener('change', (e) => {
                 playtestSystem.visualization[option] = e.target.checked;
             });

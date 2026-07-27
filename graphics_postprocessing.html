@@ -109,12 +109,9 @@
             <p style="color: white; margin: 5px;">Toggle Effects:</p>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 5px;">
                 <button onclick="toggleEffect('bloom')" class="effect-btn active" id="bloom-btn">✨ Bloom</button>
-                <button onclick="toggleEffect('motion')" class="effect-btn" id="motion-btn">💨 Motion Blur</button>
-                <button onclick="toggleEffect('dof')" class="effect-btn" id="dof-btn">📷 Depth of Field</button>
                 <button onclick="toggleEffect('chromatic')" class="effect-btn" id="chromatic-btn">🌈 Chromatic</button>
                 <button onclick="toggleEffect('vignette')" class="effect-btn active" id="vignette-btn">🔲 Vignette</button>
                 <button onclick="toggleEffect('grain')" class="effect-btn" id="grain-btn">📺 Film Grain</button>
-                <button onclick="toggleEffect('ssao')" class="effect-btn" id="ssao-btn">🌑 SSAO</button>
                 <button onclick="toggleEffect('fxaa')" class="effect-btn active" id="fxaa-btn">📐 FXAA</button>
             </div>
         </div>
@@ -125,12 +122,6 @@
             <label>Threshold: <input type="range" id="bloomThreshold" min="0" max="1" step="0.01" value="0.7" onchange="updateParam('bloom', 'threshold', this.value)"> <span id="bloomThresholdDisplay">0.7</span></label>
             <label>Intensity: <input type="range" id="bloomIntensity" min="0" max="3" step="0.1" value="1" onchange="updateParam('bloom', 'intensity', this.value)"> <span id="bloomIntensityDisplay">1.0</span></label>
             <label>Radius: <input type="range" id="bloomRadius" min="1" max="10" step="1" value="4" onchange="updateParam('bloom', 'radius', this.value)"> <span id="bloomRadiusDisplay">4</span></label>
-        </div>
-        
-        <div style="margin-top: 10px;">
-            <h4 style="color: white;">Depth of Field:</h4>
-            <label>Focus Distance: <input type="range" id="dofFocus" min="0" max="100" step="1" value="50" onchange="updateParam('dof', 'focus', this.value)"> <span id="dofFocusDisplay">50</span></label>
-            <label>Aperture: <input type="range" id="dofAperture" min="0.1" max="5" step="0.1" value="1.4" onchange="updateParam('dof', 'aperture', this.value)"> <span id="dofApertureDisplay">1.4</span></label>
         </div>
         
         <div style="margin-top: 10px;">
@@ -206,12 +197,9 @@
                 
                 this.effects = {
                     bloom: { enabled: true, params: { threshold: 0.7, intensity: 1.0, radius: 4 } },
-                    motion: { enabled: false, params: { samples: 8, strength: 1.0 } },
-                    dof: { enabled: false, params: { focus: 50, aperture: 1.4 } },
                     chromatic: { enabled: false, params: { strength: 0.005 } },
                     vignette: { enabled: true, params: { intensity: 0.4, smoothness: 0.8 } },
                     grain: { enabled: false, params: { intensity: 0.1 } },
-                    ssao: { enabled: false, params: { radius: 4, bias: 0.025 } },
                     fxaa: { enabled: true, params: { threshold: 0.0625 } }
                 };
                 
@@ -286,18 +274,6 @@
                     this.getBloomFragment()
                 );
                 
-                // Motion blur shader
-                this.shaders.motion = this.createShader(
-                    this.getPassthroughVertex(),
-                    this.getMotionBlurFragment()
-                );
-                
-                // Depth of field shader
-                this.shaders.dof = this.createShader(
-                    this.getPassthroughVertex(),
-                    this.getDOFFragment()
-                );
-                
                 // Chromatic aberration shader
                 this.shaders.chromatic = this.createShader(
                     this.getPassthroughVertex(),
@@ -314,12 +290,6 @@
                 this.shaders.grain = this.createShader(
                     this.getPassthroughVertex(),
                     this.getGrainFragment()
-                );
-                
-                // SSAO shader
-                this.shaders.ssao = this.createShader(
-                    this.getPassthroughVertex(),
-                    this.getSSAOFragment()
                 );
                 
                 // FXAA shader
@@ -780,31 +750,19 @@
                 if (this.effects.bloom.enabled) {
                     currentTexture = this.applyBloom(currentTexture);
                 }
-                
-                if (this.effects.motion.enabled) {
-                    currentTexture = this.applyMotionBlur(currentTexture);
-                }
-                
-                if (this.effects.dof.enabled) {
-                    currentTexture = this.applyDOF(currentTexture);
-                }
-                
+
                 if (this.effects.chromatic.enabled) {
                     currentTexture = this.applyChromatic(currentTexture);
                 }
-                
+
                 if (this.effects.vignette.enabled) {
                     currentTexture = this.applyVignette(currentTexture);
                 }
-                
+
                 if (this.effects.grain.enabled) {
                     currentTexture = this.applyGrain(currentTexture);
                 }
-                
-                if (this.effects.ssao.enabled) {
-                    currentTexture = this.applySSAO(currentTexture);
-                }
-                
+
                 if (this.effects.fxaa.enabled) {
                     currentTexture = this.applyFXAA(currentTexture);
                 }
@@ -901,11 +859,28 @@
                 this.renderQuad(shader, inputTexture);
             }
             
-            // Stub implementations for other effects
-            applyMotionBlur(inputTexture) { return inputTexture; }
-            applyDOF(inputTexture) { return inputTexture; }
-            applyGrain(inputTexture) { return inputTexture; }
-            applySSAO(inputTexture) { return inputTexture; }
+            applyGrain(inputTexture) {
+                const gl = this.gl;
+                const shader = this.shaders.grain;
+                const params = this.effects.grain.params;
+
+                // Write to whichever ping/pong buffer is NOT the input so we never
+                // read from and write to the same texture in one pass.
+                const toPong = inputTexture !== this.textures.pong;
+                const framebuffer = toPong ? this.framebuffers.pong : this.framebuffers.ping;
+                const outputTexture = toPong ? this.textures.pong : this.textures.ping;
+
+                gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+                gl.useProgram(shader);
+
+                // Animate the noise so the grain shimmers rather than sitting static.
+                gl.uniform1f(gl.getUniformLocation(shader, 'u_time'), (performance.now() % 100000) / 1000);
+                gl.uniform1f(gl.getUniformLocation(shader, 'u_intensity'), params.intensity);
+
+                this.renderQuad(shader, inputTexture);
+
+                return outputTexture;
+            }
         }
 
         // Scene renderer (simplified)
@@ -989,7 +964,6 @@
             const presets = {
                 cinematic: {
                     bloom: { enabled: true, threshold: 0.7, intensity: 1.2, radius: 5 },
-                    dof: { enabled: true, focus: 50, aperture: 1.8 },
                     vignette: { enabled: true, intensity: 0.5, smoothness: 0.7 },
                     chromatic: { enabled: true, strength: 0.003 },
                     grain: { enabled: true, intensity: 0.05 },
@@ -1016,7 +990,6 @@
                 },
                 dream: {
                     bloom: { enabled: true, threshold: 0.5, intensity: 2.0, radius: 8 },
-                    dof: { enabled: true, focus: 40, aperture: 2.8 },
                     vignette: { enabled: false },
                     exposure: 0.5,
                     contrast: 0.8,
@@ -1024,7 +997,6 @@
                 },
                 action: {
                     bloom: { enabled: true, threshold: 0.8, intensity: 0.8, radius: 3 },
-                    motion: { enabled: true, samples: 8, strength: 1.5 },
                     chromatic: { enabled: true, strength: 0.002 },
                     exposure: 0.1,
                     contrast: 1.3,
@@ -1034,7 +1006,6 @@
                     bloom: { enabled: false },
                     vignette: { enabled: true, intensity: 0.9, smoothness: 0.3 },
                     grain: { enabled: true, intensity: 0.25 },
-                    ssao: { enabled: true, radius: 4, bias: 0.03 },
                     exposure: -0.8,
                     contrast: 1.5,
                     saturation: 0.3

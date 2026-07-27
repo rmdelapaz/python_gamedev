@@ -131,11 +131,7 @@
                 <button onclick="toggleLayer('music')" class="audio-btn active" id="music-btn">🎵 Music</button>
                 <button onclick="toggleLayer('sfx')" class="audio-btn active" id="sfx-btn">💥 SFX</button>
                 <button onclick="toggleLayer('ambient')" class="audio-btn active" id="ambient-btn">🌊 Ambient</button>
-                <button onclick="toggleLayer('ui')" class="audio-btn active" id="ui-btn">🔔 UI</button>
-                <button onclick="toggleLayer('voice')" class="audio-btn" id="voice-btn">🗣️ Voice</button>
-                <button onclick="toggleLayer('reverb')" class="audio-btn" id="reverb-btn">🏛️ Reverb</button>
                 <button onclick="toggleLayer('spatial')" class="audio-btn active" id="spatial-btn">🎯 Spatial</button>
-                <button onclick="toggleLayer('dynamic')" class="audio-btn active" id="dynamic-btn">🎚️ Dynamic</button>
             </div>
         </div>
         
@@ -160,8 +156,6 @@
         <!-- Audio Effects -->
         <div style="margin-top: 10px;">
             <label>Low Pass: <input type="range" id="lowPass" min="200" max="20000" value="20000" onchange="updateFilter('lowPass', this.value)"> <span id="lowPassDisplay">20000</span>Hz</label>
-            <label>Reverb: <input type="range" id="reverbAmount" min="0" max="100" value="20" onchange="updateEffect('reverb', this.value)"> <span id="reverbDisplay">20</span>%</label>
-            <label>Pitch: <input type="range" id="pitch" min="-12" max="12" value="0" onchange="updateEffect('pitch', this.value)"> <span id="pitchDisplay">0</span></label>
         </div>
         
         <!-- Sound Triggers -->
@@ -254,20 +248,21 @@
                     voice: this.ctx.createGain()
                 };
                 
-                // Connect buses to master
-                Object.values(this.buses).forEach(bus => {
-                    bus.connect(this.masterGain);
-                });
-                
                 // Effects
                 this.effects = {
                     reverb: this.createReverb(),
                     lowPass: this.ctx.createBiquadFilter(),
                     compressor: this.ctx.createDynamicsCompressor()
                 };
-                
+
                 this.effects.lowPass.type = 'lowpass';
                 this.effects.lowPass.frequency.value = 20000;
+
+                // Route all buses through the master low-pass filter into the master gain
+                Object.values(this.buses).forEach(bus => {
+                    bus.connect(this.effects.lowPass);
+                });
+                this.effects.lowPass.connect(this.masterGain);
                 
                 // Audio state
                 this.activeSounds = [];
@@ -928,11 +923,6 @@
                     soundSystem.effects.lowPass.frequency.value = value;
                 }
             }
-        };
-
-        window.updateEffect = function(effect, value) {
-            document.getElementById(effect + 'Display').textContent = value;
-            // Update effect parameters
         };
 
         window.playSound = function(type) {

@@ -112,12 +112,12 @@
         <div style="margin: 10px auto; padding: 10px; background-color: rgba(0,0,0,0.3); border-radius: 5px; max-width: 600px;">
             <p style="color: white; margin: 5px;">Spawn Swarms:</p>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 5px;">
-                <button onclick="spawnSwarm('birds')" class="swarm-btn">🐦 Birds</button>
+                <button onclick="spawnSwarm('bird')" class="swarm-btn">🐦 Birds</button>
                 <button onclick="spawnSwarm('fish')" class="swarm-btn">🐟 Fish</button>
-                <button onclick="spawnSwarm('bees')" class="swarm-btn">🐝 Bees</button>
-                <button onclick="spawnSwarm('butterflies')" class="swarm-btn">🦋 Butterflies</button>
-                <button onclick="spawnSwarm('fireflies')" class="swarm-btn">✨ Fireflies</button>
-                <button onclick="spawnSwarm('bats')" class="swarm-btn">🦇 Bats</button>
+                <button onclick="spawnSwarm('bee')" class="swarm-btn">🐝 Bees</button>
+                <button onclick="spawnSwarm('butterfly')" class="swarm-btn">🦋 Butterflies</button>
+                <button onclick="spawnSwarm('firefly')" class="swarm-btn">✨ Fireflies</button>
+                <button onclick="spawnSwarm('bat')" class="swarm-btn">🦇 Bats</button>
             </div>
         </div>
         
@@ -153,7 +153,6 @@
             <label><input type="checkbox" id="showVelocity" checked> Show Velocity</label>
             <label><input type="checkbox" id="showForces"> Show Forces</label>
             <label><input type="checkbox" id="showNeighbors"> Show Neighbors</label>
-            <label><input type="checkbox" id="debugMode"> Debug Mode</label>
         </div>
         
         <!-- Presets -->
@@ -175,8 +174,7 @@
                 Predators: <span id="predatorCount">0</span>
             </p>
             <p style="margin: 5px; color: white;">
-                FPS: <span id="fps">60</span> | 
-                Collisions Avoided: <span id="collisions">0</span> | 
+                FPS: <span id="fps">60</span> |
                 Groups Formed: <span id="groups">0</span>
             </p>
         </div>
@@ -791,7 +789,6 @@
                 this.showTrails = false;
                 
                 // Stats
-                this.collisionsAvoided = 0;
                 this.fps = 60;
                 this.frameCount = 0;
                 this.lastFpsUpdate = Date.now();
@@ -827,7 +824,7 @@
             }
             
             spawnInitialBoids() {
-                this.spawnSwarm('birds', 20);
+                this.spawnSwarm('bird', 20);
                 this.spawnSwarm('fish', 15);
             }
             
@@ -889,6 +886,24 @@
                     if (this.obstacles.length > 0) {
                         const avoidForce = boid.avoidObstacles(this.obstacles);
                         boid.acceleration = boid.acceleration.add(avoidForce);
+                    }
+
+                    // Seek nearest food (gentle attraction)
+                    if (this.food.length > 0) {
+                        let nearestFood = null;
+                        let nearestFoodDist = Infinity;
+                        for (const food of this.food) {
+                            const foodPos = new Vector2D(food.x, food.y);
+                            const dist = boid.position.distance(foodPos);
+                            if (dist < nearestFoodDist) {
+                                nearestFood = foodPos;
+                                nearestFoodDist = dist;
+                            }
+                        }
+                        if (nearestFood) {
+                            const foodForce = boid.seek(nearestFood);
+                            boid.acceleration = boid.acceleration.add(foodForce.multiply(0.5));
+                        }
                     }
                     
                     // Flee from predators
@@ -952,7 +967,6 @@
                 document.getElementById('obstacleCount').textContent = this.obstacles.length;
                 document.getElementById('predatorCount').textContent = this.predators.length;
                 document.getElementById('fps').textContent = this.fps;
-                document.getElementById('collisions').textContent = this.collisionsAvoided;
                 document.getElementById('groups').textContent = groups;
             }
             

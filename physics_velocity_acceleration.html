@@ -358,6 +358,16 @@
             objects.forEach(obj => {
                 // Apply demo-specific forces
                 switch(currentDemo) {
+                    case 'constant':
+                        // Constant velocity: no force applied
+                        break;
+
+                    case 'acceleration':
+                        // Constant acceleration: re-apply the force every frame so the object keeps
+                        // accelerating (acceleration is zeroed at the end of each update)
+                        obj.applyForce({ x: 20, y: 0 });
+                        break;
+
                     case 'deceleration':
                         // Apply friction
                         obj.applyForce({ 

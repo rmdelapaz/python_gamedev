@@ -123,9 +123,6 @@
                 <button onclick="spawnAgent('worker')" class="agent-btn">👷 Worker</button>
                 <button onclick="spawnAgent('soldier')" class="agent-btn">⚔️ Soldier</button>
                 <button onclick="spawnAgent('scout')" class="agent-btn">🔍 Scout</button>
-                <button onclick="spawnAgent('healer')" class="agent-btn">💚 Healer</button>
-                <button onclick="spawnAgent('builder')" class="agent-btn">🔨 Builder</button>
-                <button onclick="spawnAgent('harvester')" class="agent-btn">🌾 Harvester</button>
             </div>
         </div>
         
@@ -133,7 +130,6 @@
         <div style="margin-top: 10px;">
             <button onclick="addResource()">➕ Add Resource</button>
             <button onclick="addEnemy()">👹 Add Enemy</button>
-            <button onclick="addBuilding()">🏠 Add Building</button>
             <button onclick="createDanger()">⚠️ Create Danger</button>
             <button onclick="clearEnvironment()">🧹 Clear All</button>
             <button onclick="pauseSimulation()" id="pauseBtn">⏸️ Pause</button>
@@ -141,11 +137,7 @@
         
         <!-- Visualization Controls -->
         <div style="margin-top: 10px;">
-            <label><input type="checkbox" id="showTree" checked> Show Active Tree</label>
-            <label><input type="checkbox" id="showNodes" checked> Show Node States</label>
             <label><input type="checkbox" id="showDecisions" checked> Show Decisions</label>
-            <label><input type="checkbox" id="showPaths"> Show Paths</label>
-            <label><input type="checkbox" id="debugMode"> Debug Mode</label>
         </div>
         
         <!-- Selected Agent Info -->
@@ -162,9 +154,8 @@
         <div style="margin-top: 10px; background-color: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;">
             <p style="margin: 5px; color: white;">
                 Agents: <span id="agentCount">0</span> | 
-                Resources: <span id="resourceCount">0</span> | 
-                Enemies: <span id="enemyCount">0</span> | 
-                Buildings: <span id="buildingCount">0</span>
+                Resources: <span id="resourceCount">0</span> |
+                Enemies: <span id="enemyCount">0</span>
             </p>
             <div id="agentStatus" style="color: white; margin-top: 5px; font-size: 12px;"></div>
         </div>
@@ -969,7 +960,6 @@
                 this.agents = [];
                 this.resources = [];
                 this.enemies = [];
-                this.buildings = [];
                 this.score = 0;
                 this.paused = false;
                 
@@ -1019,16 +1009,6 @@
                     y: Math.random() * 350 + 25,
                     health: 50,
                     speed: 40
-                });
-            }
-            
-            addBuilding() {
-                this.buildings.push({
-                    x: Math.random() * 550 + 25,
-                    y: Math.random() * 350 + 25,
-                    type: 'base',
-                    width: 40,
-                    height: 40
                 });
             }
             
@@ -1103,17 +1083,6 @@
                     this.ctx.stroke();
                 }
                 
-                // Draw buildings
-                this.ctx.fillStyle = '#795548';
-                for (const building of this.buildings) {
-                    this.ctx.fillRect(
-                        building.x - building.width/2,
-                        building.y - building.height/2,
-                        building.width,
-                        building.height
-                    );
-                }
-                
                 // Draw resources
                 this.ctx.fillStyle = '#FFD700';
                 for (const resource of this.resources) {
@@ -1156,8 +1125,7 @@
                 document.getElementById('agentCount').textContent = this.agents.length;
                 document.getElementById('resourceCount').textContent = this.resources.length;
                 document.getElementById('enemyCount').textContent = this.enemies.length;
-                document.getElementById('buildingCount').textContent = this.buildings.length;
-                
+
                 // Agent status
                 const statusText = this.agents.map(agent => 
                     `${agent.type}: ${agent.getCurrentAction()}`
@@ -1291,10 +1259,6 @@
             world.addEnemy();
         };
 
-        window.addBuilding = function() {
-            world.addBuilding();
-        };
-
         window.createDanger = function() {
             // Add multiple enemies near agents
             for (const agent of world.agents) {
@@ -1311,7 +1275,6 @@
             world.agents = [];
             world.resources = [];
             world.enemies = [];
-            world.buildings = [];
             world.score = 0;
             selectedAgent = null;
             world.updateAgentSelector();

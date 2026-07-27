@@ -131,7 +131,7 @@
         
         <!-- Character Controls -->
         <div style="margin: 10px auto; padding: 10px; background-color: rgba(0,0,0,0.3); border-radius: 5px; max-width: 800px;">
-            <p style="color: white; margin: 5px;">Controls: Click to move, Right-click to interact, I for inventory, C for character, Q for quests</p>
+            <p style="color: white; margin: 5px;">Controls: Click to move, Right-click to attack in combat, I for inventory, K for skills, Q for quests</p>
         </div>
         
         <!-- Character Creation -->
@@ -155,9 +155,7 @@
             <button onclick="usePotion()">🧪 Use Potion (<span id="potionCount">3</span>)</button>
             <button onclick="rest()">🏕️ Rest</button>
             <button onclick="levelUp()">⬆️ Level Up</button>
-            <button onclick="openShop()">🏪 Shop</button>
             <button onclick="startCombat()">⚔️ Battle</button>
-            <button onclick="openDialogue()">💬 Talk</button>
         </div>
         
         <!-- Character Stats Display -->
@@ -863,7 +861,29 @@
                     questDiv.appendChild(questElement);
                 }
             }
-            
+
+            renderSkillTree() {
+                const treeDiv = document.getElementById('skillTree');
+                treeDiv.innerHTML = '';
+
+                const skills = this.skillTree[this.character.class];
+                if (!skills || skills.length === 0) {
+                    treeDiv.innerHTML = `<span style="color: #AAA; font-size: 12px;">No skills available for this class yet.</span>`;
+                    return;
+                }
+
+                for (const skill of skills) {
+                    const skillElement = document.createElement('div');
+                    skillElement.style.marginBottom = '8px';
+                    const lockIcon = skill.unlocked ? '' : ' 🔒';
+                    skillElement.innerHTML = `
+                        <strong>${skill.name}${lockIcon}</strong> — Lv ${skill.level}/${skill.maxLevel} (cost ${skill.cost})<br>
+                        <span style="color: #AAA; font-size: 12px;">${skill.description}</span>
+                    `;
+                    treeDiv.appendChild(skillElement);
+                }
+            }
+
             update(deltaTime) {
                 // Character movement
                 if (mouse.left) {
@@ -979,13 +999,6 @@
                     ctx.font = '10px Arial';
                     ctx.textAlign = 'center';
                     ctx.fillText(npc.name, npc.x, npc.y - 20);
-                    
-                    // Quest indicator
-                    if (npc.dialogue) {
-                        ctx.fillStyle = '#FFD700';
-                        ctx.font = '16px Arial';
-                        ctx.fillText('!', npc.x, npc.y - 30);
-                    }
                 }
                 
                 // Draw enemies
@@ -1115,18 +1128,8 @@
             rpgSystem.gainExperience(rpgSystem.character.experienceToNext);
         };
 
-        window.openShop = function() {
-            console.log('Shop opened');
-            // Would implement shop UI
-        };
-
         window.startCombat = function() {
             rpgSystem.startCombat();
-        };
-
-        window.openDialogue = function() {
-            console.log('Dialogue opened');
-            // Would implement dialogue UI
         };
 
         window.toggleInventory = function() {
@@ -1144,8 +1147,11 @@
 
         window.toggleSkills = function() {
             rpgSystem.showSkills = !rpgSystem.showSkills;
-            document.getElementById('skillPanel').style.display = 
+            document.getElementById('skillPanel').style.display =
                 rpgSystem.showSkills ? 'block' : 'none';
+            if (rpgSystem.showSkills) {
+                rpgSystem.renderSkillTree();
+            }
         };
 
         window.saveGame = function() {

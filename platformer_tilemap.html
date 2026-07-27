@@ -124,7 +124,6 @@
         <div style="margin-top: 10px;">
             <button onclick="toggleGrid()">Toggle Grid</button>
             <button onclick="toggleCollision()">Show Collision</button>
-            <button onclick="toggleAutoTile()">Auto-Tile</button>
             <button onclick="clearMap()">Clear Map</button>
             <button onclick="fillTool()">Fill Tool</button>
             <button onclick="saveMap()">Save Map</button>
@@ -200,7 +199,6 @@
                 this.brushSize = 1;
                 this.showGrid = true;
                 this.showCollision = false;
-                this.autoTile = false;
                 this.fillMode = false;
                 
                 // Statistics
@@ -247,11 +245,6 @@
                 } else if (oldTile !== TileType.EMPTY && tileType === TileType.EMPTY) {
                     this.tilesPlaced--;
                 }
-                
-                // Auto-tile if enabled
-                if (this.autoTile && props.solid) {
-                    this.updateAutoTiling(x, y);
-                }
             }
             
             setTileBrush(centerX, centerY, tileType) {
@@ -288,19 +281,6 @@
                     // Add neighbors
                     stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
                 }
-            }
-            
-            updateAutoTiling(x, y) {
-                // Simple auto-tiling based on neighbors
-                // In a real implementation, this would select appropriate tile variants
-                const neighbors = {
-                    top: this.getTile(x, y - 1),
-                    bottom: this.getTile(x, y + 1),
-                    left: this.getTile(x - 1, y),
-                    right: this.getTile(x + 1, y)
-                };
-                
-                // This would normally select corner/edge tiles based on neighbors
             }
             
             clear() {
@@ -632,10 +612,6 @@
 
         window.toggleCollision = function() {
             editor.tilemap.showCollision = !editor.tilemap.showCollision;
-        };
-
-        window.toggleAutoTile = function() {
-            editor.tilemap.autoTile = !editor.tilemap.autoTile;
         };
 
         window.clearMap = function() {

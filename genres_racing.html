@@ -176,7 +176,6 @@ grip = max_grip * sin(C * atan(B * slip_angle))
             <button onclick="resetRace()">🔄 Reset</button>
             <button onclick="toggleAI()">🤖 Toggle AI</button>
             <button onclick="changeTrack()">🛤️ Change Track</button>
-            <button onclick="toggleGhost()">👻 Ghost Car</button>
             <button onclick="toggleView()">📷 Camera View</button>
         </div>
         
@@ -246,7 +245,6 @@ grip = max_grip * sin(C * atan(B * slip_angle))
         // Game state
         let raceStarted = false;
         let aiEnabled = true;
-        let ghostEnabled = false;
         let cameraMode = 'follow'; // follow, fixed, cockpit
         let currentTrack = 0;
 
@@ -932,11 +930,6 @@ grip = max_grip * sin(C * atan(B * slip_angle))
             
             createAICars();
             raceStarted = false;
-        };
-        
-        window.toggleGhost = function() {
-            ghostEnabled = !ghostEnabled;
-            document.querySelector('button[onclick="toggleGhost()"]').classList.toggle('active', ghostEnabled);
         };
         
         window.toggleView = function() {

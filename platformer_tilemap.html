@@ -104,6 +104,14 @@
         N --> Q["Chunk Loading"]
     </div>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/tilemap-grid-to-world.svg"
+             alt="A nine-column by six-row grid of tiles with column and row indices. The bottom row is green ground, a short amber brick platform sits three rows up, and the rest is blue sky; sample cells are marked with their ID — 0 for sky, 1 for ground, 2 for brick. A dashed amber rectangle marks the camera view over the middle columns and rows, and the tiles outside it are dimmed to show they are culled and never drawn. Formulas on the right convert grid coordinates to pixels: world_x = col × TILE, world_y = row × TILE, and the inverse col = world_x ÷ TILE."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>A tilemap stores an entire level as a plain 2D array of small integers &mdash; one ID per cell &mdash; which is tiny to keep in memory and instant to look up. Two multiplications convert any grid cell to its pixel position and back, and because you only draw the tiles that overlap the camera, a 1000&times;1000 world costs the same to render as a single screen. That&rsquo;s how sprawling platformer levels stay fast on modest hardware.</figcaption>
+    </figure>
+
     <h2 id="interactive-tilemap-editor-demo">Interactive Tilemap Editor Demo</h2>
     
     <div class="canvas-wrapper" style="text-align: center;">

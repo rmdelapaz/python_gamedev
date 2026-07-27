@@ -104,6 +104,14 @@
         N --> Q["Multiple Views"]
     </div>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/camera-deadzone.svg"
+             alt="Two viewport frames of the same platformer scene side by side. In the left frame, Camera locked, the player stands inside a dashed amber rectangle called the deadzone while the world landmarks stay fixed. In the right frame, Camera scrolls, the player has walked to the deadzone's right edge, so the whole world has slid left — the tree exits off the left side, the flag re-centres, and a new rock appears on the right — while an arrow above shows the camera scrolling right."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>A camera glued straight to the player jitters on every step and makes players queasy. The <strong>deadzone</strong> is a box of slack: while the player roams inside it the camera holds perfectly still, and only when they push its edge does the view scroll to follow. You get a calm, readable frame <em>and</em> a guarantee that the player never slides off-screen &mdash; the core trick behind almost every good 2D camera.</figcaption>
+    </figure>
+
     <h2 id="interactive-camera-system-demo">Interactive Camera System Demo</h2>
     
     <div class="canvas-wrapper" style="text-align: center;">

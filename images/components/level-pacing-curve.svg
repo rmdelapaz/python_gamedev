@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 380" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="lp-title lp-desc">
+    <title id="lp-title">Level pacing as a tension-and-release curve</title>
+    <desc id="lp-desc">A line graph plots intensity, on the vertical axis, against progress through a level, on the horizontal axis. The curve starts low at a calm intro, rises to a first peak where a new mechanic is taught, dips to a breather, rises higher to a peak where the mechanic is tested, dips again, climbs to a twist that combines mechanics, dips briefly, then surges to the highest peak, the boss climax, before dropping to a calm reward and resolution at the end. Peaks are labelled teach, test, twist, and boss; the valleys between them are labelled rest and reward. A faint dashed line near the top marks the burnout zone of relentless intensity.</desc>
+
+    <style>
+        :root {
+            --axis: #64748b;
+            --curve: #3b82f6;
+            --fill: rgba(59, 130, 246, 0.15);
+            --peak: #f59e0b;
+            --rest: #10b981;
+            --boss: #ef4444;
+            --burnout: #ef4444;
+            --text: rgb(30, 41, 59);
+            --sub-text: rgb(71, 85, 105);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --axis: #94a3b8;
+                --curve: #569cd6;
+                --fill: rgba(86, 156, 214, 0.20);
+                --peak: #fbbf24;
+                --rest: #34d399;
+                --boss: #f87171;
+                --burnout: #f87171;
+                --text: #f1f5f9;
+                --sub-text: #cbd5e1;
+            }
+        }
+        .axis { stroke: var(--axis); stroke-width: 2; stroke-linecap: round; }
+        .curve { fill: none; stroke: var(--curve); stroke-width: 3.5; stroke-linejoin: round; stroke-linecap: round; }
+        .area { fill: var(--fill); }
+        .burnout { stroke: var(--burnout); stroke-width: 1.5; stroke-dasharray: 5 5; opacity: 0.7; }
+        .peak-dot { fill: var(--peak); }
+        .boss-dot { fill: var(--boss); }
+        .rest-dot { fill: var(--rest); }
+        .axis-lbl { fill: var(--sub-text); font: 600 13px ui-sans-serif, system-ui, sans-serif; }
+        .peak-lbl { fill: var(--peak); font: 700 13px ui-sans-serif, system-ui, sans-serif; }
+        .boss-lbl { fill: var(--boss); font: 800 14px ui-sans-serif, system-ui, sans-serif; }
+        .rest-lbl { fill: var(--rest); font: 700 12px ui-sans-serif, system-ui, sans-serif; }
+        .burn-lbl { fill: var(--burnout); font: 600 12px ui-sans-serif, system-ui, sans-serif; }
+        .cap { fill: var(--sub-text); font: 500 13px ui-sans-serif, system-ui, sans-serif; }
+    </style>
+
+    <!-- axes -->
+    <line class="axis" x1="70" y1="70" x2="70" y2="300"/>
+    <line class="axis" x1="70" y1="300" x2="690" y2="300"/>
+    <text class="axis-lbl" x="60" y="80" text-anchor="end" transform="rotate(-90 60 80)">intensity &#8594;</text>
+    <text class="axis-lbl" x="380" y="330" text-anchor="middle">level progress &#8594;</text>
+
+    <!-- burnout line -->
+    <line class="burnout" x1="70" y1="92" x2="690" y2="92"/>
+    <text class="burn-lbl" x="90" y="86" text-anchor="start">burnout zone &#8212; relentless pressure exhausts players</text>
+
+    <!-- filled area under curve -->
+    <path class="area" d="M70 288 L150 250 L210 175 L280 238 L350 150 L420 225 L490 120 L560 205 L625 82 L690 250 L690 300 L70 300 Z"/>
+    <!-- the pacing curve -->
+    <path class="curve" d="M70 288 L150 250 L210 175 L280 238 L350 150 L420 225 L490 120 L560 205 L625 82 L690 250"/>
+
+    <!-- peak + valley dots -->
+    <circle class="peak-dot" cx="210" cy="175" r="6"/>
+    <circle class="rest-dot" cx="280" cy="238" r="5"/>
+    <circle class="peak-dot" cx="350" cy="150" r="6"/>
+    <circle class="rest-dot" cx="420" cy="225" r="5"/>
+    <circle class="peak-dot" cx="490" cy="120" r="6"/>
+    <circle class="boss-dot" cx="625" cy="82"  r="8"/>
+
+    <!-- labels -->
+    <text class="cap"      x="70"  y="278" text-anchor="start">intro</text>
+    <text class="peak-lbl" x="210" y="165" text-anchor="middle">teach</text>
+    <text class="rest-lbl" x="280" y="258" text-anchor="middle">rest</text>
+    <text class="peak-lbl" x="350" y="140" text-anchor="middle">test</text>
+    <text class="rest-lbl" x="420" y="245" text-anchor="middle">rest</text>
+    <text class="peak-lbl" x="490" y="110" text-anchor="middle">twist</text>
+    <text class="boss-lbl" x="625" y="72"  text-anchor="middle">BOSS</text>
+    <text class="rest-lbl" x="686" y="270" text-anchor="end">reward</text>
+
+    <!-- caption -->
+    <text class="cap" x="380" y="360" text-anchor="middle">Pacing is tension and release: every spike needs a breather, or the peaks stop feeling like peaks.</text>
+</svg>

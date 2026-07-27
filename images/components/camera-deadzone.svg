@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 400" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="cam-title cam-desc">
+    <title id="cam-title">How a camera deadzone works</title>
+    <desc id="cam-desc">Two side-by-side viewport frames show the same platformer scene. In the left frame, labelled camera locked, the player character stands inside a dashed amber rectangle called the deadzone, roughly centred; a tree sits to the left and a flag to the right, both fixed. In the right frame, labelled camera scrolls, the player has walked right and now touches the deadzone's right edge; the tree has slid partly off the left side and a new rock has appeared on the right, showing the whole world has shifted left because the camera scrolled to follow. An arrow above the right frame reads camera scrolls to the right.</desc>
+
+    <style>
+        :root {
+            --frame: #3b82f6;
+            --sky: #eff6ff;
+            --ground: #10b981;
+            --ground-top: #34d399;
+            --dead: #f59e0b;
+            --player: #2563eb;
+            --player-face: #eff6ff;
+            --landmark: #64748b;
+            --flag: #ef4444;
+            --text: rgb(30, 41, 59);
+            --sub-text: rgb(71, 85, 105);
+            --scroll: #f59e0b;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --frame: #569cd6;
+                --sky: #1e293b;
+                --ground: #059669;
+                --ground-top: #34d399;
+                --dead: #fbbf24;
+                --player: #60a5fa;
+                --player-face: #0f172a;
+                --landmark: #94a3b8;
+                --flag: #f87171;
+                --text: #f1f5f9;
+                --sub-text: #cbd5e1;
+                --scroll: #fbbf24;
+            }
+        }
+        .frame { fill: var(--sky); stroke: var(--frame); stroke-width: 3; }
+        .ground { fill: var(--ground); }
+        .ground-top { fill: var(--ground-top); }
+        .dead { fill: none; stroke: var(--dead); stroke-width: 2.5; stroke-dasharray: 8 6; }
+        .trunk { fill: var(--landmark); }
+        .leaves { fill: var(--ground); }
+        .rock { fill: var(--landmark); }
+        .pole { stroke: var(--landmark); stroke-width: 3; }
+        .flag { fill: var(--flag); }
+        .body { fill: var(--player); }
+        .face { fill: var(--player-face); }
+        .scroll-arrow { stroke: var(--scroll); stroke-width: 4; fill: none; stroke-linecap: round; }
+        .scroll-head { fill: var(--scroll); }
+        .head-label { fill: var(--text); font: 700 16px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .dead-label { fill: var(--dead); font: 700 13px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .cap { fill: var(--sub-text); font: 500 13px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .cap-strong { fill: var(--text); font: 700 13px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    </style>
+
+    <defs>
+        <clipPath id="clipA"><rect x="30" y="70" width="290" height="200"/></clipPath>
+        <clipPath id="clipB"><rect x="400" y="70" width="290" height="200"/></clipPath>
+    </defs>
+
+    <!-- ============ PANEL A: camera locked ============ -->
+    <text class="head-label" x="175" y="52" text-anchor="middle">Camera locked</text>
+    <rect class="frame" x="30" y="70" width="290" height="200" rx="6"/>
+    <g clip-path="url(#clipA)">
+        <rect class="ground" x="30" y="240" width="290" height="30"/>
+        <rect class="ground-top" x="30" y="240" width="290" height="5"/>
+        <!-- tree (left, fixed) -->
+        <rect class="trunk" x="82" y="212" width="10" height="28"/>
+        <circle class="leaves" cx="87" cy="204" r="20"/>
+        <!-- flag (right, fixed) -->
+        <line class="pole" x1="285" y1="180" x2="285" y2="240"/>
+        <path class="flag" d="M285 182 L315 190 L285 198 Z"/>
+        <!-- player inside deadzone -->
+        <g>
+            <rect class="body" x="164" y="212" width="22" height="28" rx="4"/>
+            <circle class="body" cx="175" cy="202" r="11"/>
+            <circle class="face" cx="179" cy="200" r="3"/>
+        </g>
+    </g>
+    <!-- deadzone box (drawn over so dashes stay crisp) -->
+    <rect class="dead" x="120" y="96" width="110" height="150" rx="4"/>
+    <text class="dead-label" x="175" y="90" text-anchor="middle">deadzone</text>
+
+    <!-- ============ PANEL B: camera scrolls ============ -->
+    <text class="head-label" x="545" y="52" text-anchor="middle">Camera scrolls</text>
+    <rect class="frame" x="400" y="70" width="290" height="200" rx="6"/>
+    <g clip-path="url(#clipB)">
+        <rect class="ground" x="400" y="240" width="290" height="30"/>
+        <rect class="ground-top" x="400" y="240" width="290" height="5"/>
+        <!-- tree slid partly off the left edge -->
+        <rect class="trunk" x="400" y="212" width="10" height="28"/>
+        <circle class="leaves" cx="401" cy="204" r="20"/>
+        <!-- flag now nearer centre -->
+        <line class="pole" x1="520" y1="180" x2="520" y2="240"/>
+        <path class="flag" d="M520 182 L550 190 L520 198 Z"/>
+        <!-- new rock revealed on the right -->
+        <path class="rock" d="M636 240 Q650 214 668 240 Z"/>
+        <!-- player pushing the deadzone's right edge -->
+        <g>
+            <rect class="body" x="589" y="212" width="22" height="28" rx="4"/>
+            <circle class="body" cx="600" cy="202" r="11"/>
+            <circle class="face" cx="604" cy="200" r="3"/>
+        </g>
+    </g>
+    <rect class="dead" x="490" y="96" width="110" height="150" rx="4"/>
+    <text class="dead-label" x="545" y="90" text-anchor="middle">deadzone</text>
+
+    <!-- scroll arrow above panel B -->
+    <path class="scroll-arrow" d="M470 60 L618 60"/>
+    <path class="scroll-head" d="M618 52 L634 60 L618 68 Z"/>
+
+    <!-- ============ captions ============ -->
+    <text class="cap-strong" x="175" y="296" text-anchor="middle">Roam inside the box &#8594; camera holds still</text>
+    <text class="cap" x="175" y="315" text-anchor="middle">no jitter from every tiny step</text>
+    <text class="cap-strong" x="545" y="296" text-anchor="middle">Push the edge &#8594; camera follows</text>
+    <text class="cap" x="545" y="315" text-anchor="middle">world slides so the player never leaves view</text>
+
+    <text class="cap" x="360" y="352" text-anchor="middle">The deadzone is the slack that keeps the view calm while still guaranteeing the player stays on screen.</text>
+</svg>

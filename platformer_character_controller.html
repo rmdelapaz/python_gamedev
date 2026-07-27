@@ -104,6 +104,14 @@
         N --> Q["State Machine"]
     </div>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/controller-forgiveness.svg"
+             alt="Two stacked timelines. The top, Coyote time, shows a player stepping off a ledge; a short amber grace window of about 0.1 seconds follows, and a jump pressed inside it still launches while a press after it is too late and the player just falls. The bottom, Jump buffer, shows a falling player; a jump pressed in mid-air is remembered for about 0.12 seconds, so a landing within that window fires the jump the instant the player touches down."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>Human timing is imprecise by tens of milliseconds, so a controller that only jumps on the exact frame of ground contact feels broken &mdash; even when it is technically &ldquo;correct.&rdquo; <strong>Coyote time</strong> lets you still jump for a few frames after walking off a ledge; a <strong>jump buffer</strong> remembers a press made just before you land. Both are tiny forgiveness windows, and they are the difference between a platformer that feels tight and one that feels like it is fighting you.</figcaption>
+    </figure>
+
     <h2 id="interactive-character-controller-demo">Interactive Character Controller Demo</h2>
     
     <div class="canvas-wrapper" style="text-align: center;">

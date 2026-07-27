@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 380" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="tm-title tm-desc">
+    <title id="tm-title">From a tile grid of IDs to a rendered world</title>
+    <desc id="tm-desc">A nine-column by six-row grid of square tiles is drawn on the left. Column numbers zero to eight run along the top and row numbers zero to five run down the side. The tiles form a small scene: the bottom row is green ground, a short amber brick platform sits three rows up, and the rest is blue sky; sample cells are marked with their ID number, zero for sky, one for ground, two for brick. A dashed amber rectangle marks the camera view over the middle columns and rows; the tiles outside it are dimmed to show they are skipped, or culled, and never drawn. On the right, formulas convert grid coordinates to pixels: world x equals column times tile size, world y equals row times tile size, and column equals world x divided by tile size.</desc>
+
+    <style>
+        :root {
+            --sky: #dbeafe;
+            --ground: #10b981;
+            --ground-top: #34d399;
+            --brick: #f59e0b;
+            --grid: #94a3b8;
+            --camera: #f59e0b;
+            --cull: rgba(30, 41, 59, 0.55);
+            --idx: rgb(71, 85, 105);
+            --id-text: rgb(30, 41, 59);
+            --text: rgb(30, 41, 59);
+            --sub-text: rgb(71, 85, 105);
+            --formula: #2563eb;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --sky: #1e3a5f;
+                --ground: #059669;
+                --ground-top: #34d399;
+                --brick: #b45309;
+                --grid: #475569;
+                --camera: #fbbf24;
+                --cull: rgba(2, 6, 23, 0.62);
+                --idx: rgb(148, 163, 184);
+                --id-text: #f1f5f9;
+                --text: #f1f5f9;
+                --sub-text: #cbd5e1;
+                --formula: #60a5fa;
+            }
+        }
+        .sky { fill: var(--sky); }
+        .ground { fill: var(--ground); }
+        .ground-top { fill: var(--ground-top); }
+        .brick { fill: var(--brick); }
+        .grid { stroke: var(--grid); stroke-width: 1; fill: none; }
+        .cull { fill: var(--cull); }
+        .camera { fill: none; stroke: var(--camera); stroke-width: 3; stroke-dasharray: 8 5; }
+        .idx { fill: var(--idx); font: 600 12px ui-monospace, Consolas, monospace; }
+        .id { fill: var(--id-text); font: 700 14px ui-monospace, Consolas, monospace; }
+        .camlbl { fill: var(--camera); font: 700 13px ui-sans-serif, system-ui, sans-serif; }
+        .title { fill: var(--text); font: 700 14px ui-sans-serif, system-ui, sans-serif; }
+        .formula { fill: var(--formula); font: 700 15px ui-monospace, Consolas, monospace; }
+        .note { fill: var(--sub-text); font: 500 13px ui-sans-serif, system-ui, sans-serif; }
+        .legend { fill: var(--sub-text); font: 600 12px ui-sans-serif, system-ui, sans-serif; }
+    </style>
+
+    <!-- grid origin x=50 y=70, cell 40, 9 cols x 6 rows -->
+    <!-- base sky -->
+    <rect class="sky" x="50" y="70" width="360" height="240"/>
+    <!-- brick platform: row 3 (y=190), cols 2-4 (x=130..250) -->
+    <rect class="brick" x="130" y="190" width="120" height="40"/>
+    <!-- ground row 5 (y=270) -->
+    <rect class="ground" x="50" y="270" width="360" height="40"/>
+    <rect class="ground-top" x="50" y="270" width="360" height="5"/>
+
+    <!-- sample ID labels -->
+    <text class="id" x="150" y="135" text-anchor="middle">0</text>
+    <text class="id" x="190" y="215" text-anchor="middle">2</text>
+    <text class="id" x="230" y="295" text-anchor="middle">1</text>
+
+    <!-- grid lines -->
+    <g class="grid">
+        <line x1="50"  y1="70" x2="50"  y2="310"/>
+        <line x1="90"  y1="70" x2="90"  y2="310"/>
+        <line x1="130" y1="70" x2="130" y2="310"/>
+        <line x1="170" y1="70" x2="170" y2="310"/>
+        <line x1="210" y1="70" x2="210" y2="310"/>
+        <line x1="250" y1="70" x2="250" y2="310"/>
+        <line x1="290" y1="70" x2="290" y2="310"/>
+        <line x1="330" y1="70" x2="330" y2="310"/>
+        <line x1="370" y1="70" x2="370" y2="310"/>
+        <line x1="410" y1="70" x2="410" y2="310"/>
+        <line x1="50" y1="70"  x2="410" y2="70"/>
+        <line x1="50" y1="110" x2="410" y2="110"/>
+        <line x1="50" y1="150" x2="410" y2="150"/>
+        <line x1="50" y1="190" x2="410" y2="190"/>
+        <line x1="50" y1="230" x2="410" y2="230"/>
+        <line x1="50" y1="270" x2="410" y2="270"/>
+        <line x1="50" y1="310" x2="410" y2="310"/>
+    </g>
+
+    <!-- column indices -->
+    <text class="idx" x="70"  y="62" text-anchor="middle">0</text>
+    <text class="idx" x="110" y="62" text-anchor="middle">1</text>
+    <text class="idx" x="150" y="62" text-anchor="middle">2</text>
+    <text class="idx" x="190" y="62" text-anchor="middle">3</text>
+    <text class="idx" x="230" y="62" text-anchor="middle">4</text>
+    <text class="idx" x="270" y="62" text-anchor="middle">5</text>
+    <text class="idx" x="310" y="62" text-anchor="middle">6</text>
+    <text class="idx" x="350" y="62" text-anchor="middle">7</text>
+    <text class="idx" x="390" y="62" text-anchor="middle">8</text>
+    <!-- row indices -->
+    <text class="idx" x="40" y="94"  text-anchor="middle">0</text>
+    <text class="idx" x="40" y="134" text-anchor="middle">1</text>
+    <text class="idx" x="40" y="174" text-anchor="middle">2</text>
+    <text class="idx" x="40" y="214" text-anchor="middle">3</text>
+    <text class="idx" x="40" y="254" text-anchor="middle">4</text>
+    <text class="idx" x="40" y="294" text-anchor="middle">5</text>
+
+    <!-- cull overlays (everything outside camera cols 1-5 / rows 1-5) -->
+    <!-- camera = x 90..290, y 110..310 -->
+    <rect class="cull" x="50"  y="70"  width="360" height="40"/>  <!-- top row0 -->
+    <rect class="cull" x="50"  y="110" width="40"  height="200"/> <!-- left col0 -->
+    <rect class="cull" x="290" y="110" width="120" height="200"/> <!-- right cols6-8 -->
+
+    <!-- camera rect -->
+    <rect class="camera" x="90" y="110" width="200" height="200"/>
+    <text class="camlbl" x="190" y="332" text-anchor="middle">camera view &#8212; only these tiles are drawn</text>
+
+    <!-- title over grid -->
+    <text class="title" x="230" y="352" text-anchor="middle">Tile grid = a 2D array of IDs (0 sky &#183; 1 ground &#183; 2 brick)</text>
+
+    <!-- ============ right side: formulas ============ -->
+    <text class="formula" x="450" y="96">world_x = col &#215; TILE</text>
+    <text class="formula" x="450" y="126">world_y = row &#215; TILE</text>
+    <text class="formula" x="450" y="162">col = world_x &#247; TILE</text>
+    <text class="formula" x="450" y="192">row = world_y &#247; TILE</text>
+
+    <text class="note" x="450" y="238">One integer per cell is the whole map &#8212;</text>
+    <text class="note" x="450" y="258">cheap to store, instant to look up.</text>
+    <text class="note" x="450" y="292">Draw only tiles overlapping the camera,</text>
+    <text class="note" x="450" y="312">so a 1000&#215;1000 map costs the same</text>
+    <text class="note" x="450" y="332">to render as a single screen.</text>
+</svg>

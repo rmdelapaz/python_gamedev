@@ -50,6 +50,14 @@
         <p>This is the complete Python/Pygame implementation featuring multiple puzzle types: Match-3 with cascading combos, sliding tile puzzles, physics-based challenges, pattern memory games, and logic gate puzzles.</p>
     </div>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/puzzle-match3-cascade.svg"
+             alt="A five-by-five board of coloured gems with a blue swap arrow between two vertically adjacent cells that has lined up three amber gems across the middle row, ringed and labelled 'match'. On the right, a four-step loop: swap two adjacent gems; find a line of 3 or more; clear them and score; gems fall and new ones drop in, cascading into fresh matches; then the loop repeats, with chains multiplying the score."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>Before the code, hold the whole genre in one picture. A match-3 game is a tight loop: <strong>swap &rarr; detect a run of 3+ &rarr; clear &rarr; let gems fall and refill &rarr; check again</strong>. That last step is the secret sauce &mdash; clearing gems drops others into <strong>cascades</strong>, so a single clever swap can chain into a combo worth far more than the tiles you moved. The other puzzle types in this lesson (sliding tiles, logic gates) are variations on the same detect-and-resolve rhythm.</figcaption>
+    </figure>
+
     <h3 id="full-puzzle-game-code">Full Puzzle Game Code</h3>
     
     <pre class="language-python"><code>import pygame

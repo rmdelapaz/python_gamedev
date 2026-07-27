@@ -32,6 +32,14 @@
         <h1>RPG Systems Implementation (continued)</h1>
     </header>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/rpg-systems-map.svg"
+             alt="A central card labelled Character lists shared stats — HP, MP, Level, XP, Attack and Defense. Four system cards surround it, each joined to the centre by a labelled line: Combat (reads ATK/DEF), Inventory and Items (gear boosts stats), Quests and NPCs (grant XP and items), and Leveling (XP raises stats). Every system reads and writes the same character stats."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>An RPG can feel like a dozen unrelated features, but they&rsquo;re really one <strong>web of systems around a single character</strong>. Combat, inventory, quests, dialogue, and leveling all read and write the <em>same</em> stats &mdash; HP, XP, level, attack &mdash; and those shared numbers are the common language that lets them feed one another: a quest grants XP, XP raises your level, a higher level wins the next fight, the fight drops loot that boosts stats again. As you read the systems code below, notice how each one keeps circling back to the character&rsquo;s stats.</figcaption>
+    </figure>
+
     <pre class="language-python"><code>        response2.add_action('give_quest', 'main_1')
         
         self.npcs.append({

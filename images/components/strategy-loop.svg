@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 400" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="st-title st-desc">
+    <title id="st-title">Strategy games are an economic flywheel</title>
+    <desc id="st-desc">On the left, a small territory map made of square tiles. A cluster of blue tiles in the lower left is your territory, a cluster of red tiles in the upper right is the enemy, and grey neutral tiles lie between them. Two gold dots mark resource nodes. A blue unit token advances from your territory into a neutral tile, with an arrow labelled expand. On the right, a four-step loop reads: one, gather resources; two, build units and bases; three, command and fight; four, control more map; then the loop repeats, noting that more land means more income. The caption explains that strategy is a flywheel converting resources into units into territory into more resources, and whoever compounds fastest wins.</desc>
+
+    <style>
+        :root {
+            --board: #f8fafc;
+            --board-stroke: #cbd5e1;
+            --tile: #e2e8f0;
+            --tile-stroke: #cbd5e1;
+            --mine: #3b82f6;
+            --enemy: #ef4444;
+            --gold: #f59e0b;
+            --unit: #2563eb;
+            --unit-stroke: #1e40af;
+            --expand: #10b981;
+            --pill: #f8fafc;
+            --pill-stroke: #cbd5e1;
+            --num: #2563eb;
+            --arrow: #64748b;
+            --text: rgb(30, 41, 59);
+            --sub-text: rgb(71, 85, 105);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --board: #1e293b;
+                --board-stroke: #475569;
+                --tile: #334155;
+                --tile-stroke: #475569;
+                --mine: #569cd6;
+                --enemy: #f87171;
+                --gold: #fbbf24;
+                --unit: #60a5fa;
+                --unit-stroke: #93c5fd;
+                --expand: #34d399;
+                --pill: #1e293b;
+                --pill-stroke: #475569;
+                --num: #93c5fd;
+                --arrow: #94a3b8;
+                --text: #f1f5f9;
+                --sub-text: #cbd5e1;
+            }
+        }
+        .title { fill: var(--text); font: 700 16px ui-sans-serif, system-ui, sans-serif; }
+        .board { fill: var(--board); stroke: var(--board-stroke); stroke-width: 1.5; }
+        .tile { fill: var(--tile); stroke: var(--tile-stroke); stroke-width: 1.5; }
+        .mine { fill: var(--mine); stroke: var(--board); stroke-width: 1.5; }
+        .enemy { fill: var(--enemy); stroke: var(--board); stroke-width: 1.5; }
+        .gold { fill: var(--gold); }
+        .gold-ring { fill: none; stroke: var(--gold); stroke-width: 2; }
+        .unit { fill: var(--unit); stroke: var(--unit-stroke); stroke-width: 2; }
+        .expand { stroke: var(--expand); stroke-width: 3; fill: none; stroke-linecap: round; }
+        .expand-head { fill: var(--expand); }
+        .expand-lbl { fill: var(--expand); font: 800 12px ui-sans-serif, system-ui, sans-serif; }
+        .key { fill: var(--sub-text); font: 600 11px ui-sans-serif, system-ui, sans-serif; }
+        .swatch-mine { fill: var(--mine); }
+        .swatch-enemy { fill: var(--enemy); }
+        .panel-hdr { fill: var(--text); font: 700 14px ui-sans-serif, system-ui, sans-serif; }
+        .pill { fill: var(--pill); stroke: var(--pill-stroke); stroke-width: 1.5; }
+        .num { font: 800 13px ui-sans-serif, system-ui, sans-serif; fill: var(--num); }
+        .step { fill: var(--text); font: 600 13px ui-sans-serif, system-ui, sans-serif; }
+        .arrow { stroke: var(--arrow); stroke-width: 2.5; fill: none; stroke-linecap: round; }
+        .arrow-head { fill: var(--arrow); }
+        .loop-lbl { fill: var(--sub-text); font: 700 12px ui-sans-serif, system-ui, sans-serif; }
+        .cap { fill: var(--sub-text); font: 500 13px ui-sans-serif, system-ui, sans-serif; }
+    </style>
+
+    <text class="title" x="360" y="28" text-anchor="middle">Strategy &#8212; convert resources into units into territory</text>
+
+    <!-- ===== board ===== -->
+    <rect class="board" x="28" y="52" width="392" height="230" rx="10"/>
+
+    <!-- tile grid 5 cols x 4 rows, cell 46, origin 44,66 -->
+    <!-- neutral base layer -->
+    <g>
+        <rect class="tile" x="48"  y="70"  width="42" height="42" rx="5"/>
+        <rect class="tile" x="94"  y="70"  width="42" height="42" rx="5"/>
+        <rect class="enemy" x="140" y="70"  width="42" height="42" rx="5"/>
+        <rect class="enemy" x="186" y="70"  width="42" height="42" rx="5"/>
+        <rect class="enemy" x="232" y="70"  width="42" height="42" rx="5"/>
+
+        <rect class="tile" x="48"  y="116" width="42" height="42" rx="5"/>
+        <rect class="tile" x="94"  y="116" width="42" height="42" rx="5"/>
+        <rect class="tile" x="140" y="116" width="42" height="42" rx="5"/>
+        <rect class="enemy" x="186" y="116" width="42" height="42" rx="5"/>
+        <rect class="tile" x="232" y="116" width="42" height="42" rx="5"/>
+
+        <rect class="tile" x="48"  y="162" width="42" height="42" rx="5"/>
+        <rect class="tile" x="94"  y="162" width="42" height="42" rx="5"/>
+        <rect class="tile" x="140" y="162" width="42" height="42" rx="5"/>
+        <rect class="tile" x="186" y="162" width="42" height="42" rx="5"/>
+        <rect class="tile" x="232" y="162" width="42" height="42" rx="5"/>
+
+        <rect class="mine"  x="48"  y="208" width="42" height="42" rx="5"/>
+        <rect class="mine"  x="94"  y="208" width="42" height="42" rx="5"/>
+        <rect class="mine"  x="140" y="208" width="42" height="42" rx="5"/>
+        <rect class="tile"  x="186" y="208" width="42" height="42" rx="5"/>
+        <rect class="tile"  x="232" y="208" width="42" height="42" rx="5"/>
+    </g>
+
+    <!-- resource nodes (gold) -->
+    <circle class="gold" cx="115" cy="183" r="7"/><circle class="gold-ring" cx="115" cy="183" r="11"/>
+    <circle class="gold" cx="253" cy="137" r="7"/><circle class="gold-ring" cx="253" cy="137" r="11"/>
+
+    <!-- your unit advancing into neutral -->
+    <circle class="unit" cx="115" cy="229" r="12"/>
+    <path class="expand" d="M132 214 L156 190"/><path class="expand-head" d="M150 186 L164 182 L157 195 Z"/>
+    <text class="expand-lbl" x="176" y="184" text-anchor="start">expand</text>
+
+    <!-- legend -->
+    <rect class="swatch-mine"  x="300" y="72" width="14" height="14" rx="3"/><text class="key" x="320" y="84">you</text>
+    <rect class="swatch-enemy" x="300" y="94" width="14" height="14" rx="3"/><text class="key" x="320" y="106">enemy</text>
+    <circle class="gold" cx="307" cy="127" r="6"/><text class="key" x="320" y="131">resource</text>
+
+    <!-- ===== right: the loop ===== -->
+    <text class="panel-hdr" x="577" y="66" text-anchor="middle">The strategy loop</text>
+    <g>
+        <rect class="pill" x="458" y="80" width="238" height="34" rx="9"/>
+        <text class="num" x="474" y="101">1</text><text class="step" x="492" y="101">Gather resources</text>
+        <rect class="pill" x="458" y="140" width="238" height="34" rx="9"/>
+        <text class="num" x="474" y="161">2</text><text class="step" x="492" y="161">Build units &amp; bases</text>
+        <rect class="pill" x="458" y="200" width="238" height="34" rx="9"/>
+        <text class="num" x="474" y="221">3</text><text class="step" x="492" y="221">Command &amp; fight</text>
+        <rect class="pill" x="458" y="260" width="238" height="34" rx="9"/>
+        <text class="num" x="474" y="281">4</text><text class="step" x="492" y="281">Control more map</text>
+    </g>
+    <path class="arrow" d="M577 114 L577 138"/><path class="arrow-head" d="M570 138 L577 150 L584 138 Z"/>
+    <path class="arrow" d="M577 174 L577 198"/><path class="arrow-head" d="M570 198 L577 210 L584 198 Z"/>
+    <path class="arrow" d="M577 234 L577 258"/><path class="arrow-head" d="M570 258 L577 270 L584 258 Z"/>
+    <path class="arrow" d="M696 277 Q712 190 696 97"/><path class="arrow-head" d="M689 104 L697 92 L703 106 Z"/>
+    <text class="loop-lbl" x="690" y="188" text-anchor="middle" transform="rotate(90 690 188)">more land = more income</text>
+
+    <!-- caption -->
+    <text class="cap" x="360" y="360" text-anchor="middle">Strategy is a flywheel: you convert resources into units, units into territory, and territory into more resources.</text>
+    <text class="cap" x="360" y="380" text-anchor="middle">Every decision trades economy for board control &#8212; whoever compounds that advantage fastest wins.</text>
+</svg>

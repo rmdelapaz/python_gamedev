@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 400" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="pz-title pz-desc">
+    <title id="pz-title">The match-3 core loop</title>
+    <desc id="pz-desc">On the left, a five-by-five board of coloured gems. A blue two-headed swap arrow sits between two vertically adjacent cells, showing a swap that has just lined up three amber gems across the middle row; that row of three is ringed with a bright amber highlight labelled match. On the right, a four-step loop reads: one, swap two adjacent gems; two, find a line of three or more; three, clear them and score; four, gems fall and new ones drop in, which can cascade into fresh matches; then the loop repeats, with chains multiplying the score. The caption explains that cascades are where match-3 gets its depth.</desc>
+
+    <style>
+        :root {
+            --board: #f8fafc;
+            --board-stroke: #cbd5e1;
+            --gem-b: #3b82f6;
+            --gem-g: #10b981;
+            --gem-a: #f59e0b;
+            --gem-p: #8b5cf6;
+            --gem-edge: rgba(15,23,42,0.15);
+            --match: #f59e0b;
+            --swap: #2563eb;
+            --pill: #f8fafc;
+            --pill-stroke: #cbd5e1;
+            --num: #2563eb;
+            --arrow: #64748b;
+            --text: rgb(30, 41, 59);
+            --sub-text: rgb(71, 85, 105);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --board: #1e293b;
+                --board-stroke: #475569;
+                --gem-b: #569cd6;
+                --gem-g: #34d399;
+                --gem-a: #fbbf24;
+                --gem-p: #a78bfa;
+                --gem-edge: rgba(0,0,0,0.30);
+                --match: #fbbf24;
+                --swap: #60a5fa;
+                --pill: #1e293b;
+                --pill-stroke: #475569;
+                --num: #93c5fd;
+                --arrow: #94a3b8;
+                --text: #f1f5f9;
+                --sub-text: #cbd5e1;
+            }
+        }
+        .title { fill: var(--text); font: 700 16px ui-sans-serif, system-ui, sans-serif; }
+        .board { fill: var(--board); stroke: var(--board-stroke); stroke-width: 1.5; }
+        .gem { stroke: var(--gem-edge); stroke-width: 1.5; }
+        .gem-b { fill: var(--gem-b); }
+        .gem-g { fill: var(--gem-g); }
+        .gem-a { fill: var(--gem-a); }
+        .gem-p { fill: var(--gem-p); }
+        .match { fill: none; stroke: var(--match); stroke-width: 3.5; }
+        .swap { stroke: var(--swap); stroke-width: 4; fill: none; stroke-linecap: round; }
+        .swap-head { fill: var(--swap); }
+        .match-lbl { fill: var(--match); font: 800 13px ui-sans-serif, system-ui, sans-serif; }
+        .board-lbl { fill: var(--sub-text); font: 700 12px ui-sans-serif, system-ui, sans-serif; }
+        .panel-hdr { fill: var(--text); font: 700 14px ui-sans-serif, system-ui, sans-serif; }
+        .pill { fill: var(--pill); stroke: var(--pill-stroke); stroke-width: 1.5; }
+        .num { font: 800 13px ui-sans-serif, system-ui, sans-serif; fill: var(--num); }
+        .step { fill: var(--text); font: 600 13px ui-sans-serif, system-ui, sans-serif; }
+        .arrow { stroke: var(--arrow); stroke-width: 2.5; fill: none; stroke-linecap: round; }
+        .arrow-head { fill: var(--arrow); }
+        .loop-lbl { fill: var(--sub-text); font: 700 12px ui-sans-serif, system-ui, sans-serif; }
+        .cap { fill: var(--sub-text); font: 500 13px ui-sans-serif, system-ui, sans-serif; }
+    </style>
+
+    <text class="title" x="360" y="28" text-anchor="middle">Match-3 &#8212; swap, clear, fall, cascade</text>
+
+    <!-- ===== board ===== -->
+    <rect class="board" x="40" y="60" width="214" height="214" rx="10"/>
+
+    <!-- gems (cell 42, origin 40,60; cx=61+42c, cy=81+42r) -->
+    <!-- r0 -->
+    <rect class="gem gem-b" x="44"  y="64"  width="34" height="34" rx="8"/>
+    <rect class="gem gem-g" x="86"  y="64"  width="34" height="34" rx="8"/>
+    <rect class="gem gem-b" x="128" y="64"  width="34" height="34" rx="8"/>
+    <rect class="gem gem-a" x="170" y="64"  width="34" height="34" rx="8"/>
+    <rect class="gem gem-g" x="212" y="64"  width="34" height="34" rx="8"/>
+    <!-- r1 -->
+    <rect class="gem gem-a" x="44"  y="106" width="34" height="34" rx="8"/>
+    <rect class="gem gem-p" x="86"  y="106" width="34" height="34" rx="8"/>
+    <rect class="gem gem-g" x="128" y="106" width="34" height="34" rx="8"/>
+    <rect class="gem gem-b" x="170" y="106" width="34" height="34" rx="8"/>
+    <rect class="gem gem-p" x="212" y="106" width="34" height="34" rx="8"/>
+    <!-- r2 (match row: cols0-2 amber) -->
+    <rect class="gem gem-a" x="44"  y="148" width="34" height="34" rx="8"/>
+    <rect class="gem gem-a" x="86"  y="148" width="34" height="34" rx="8"/>
+    <rect class="gem gem-a" x="128" y="148" width="34" height="34" rx="8"/>
+    <rect class="gem gem-g" x="170" y="148" width="34" height="34" rx="8"/>
+    <rect class="gem gem-b" x="212" y="148" width="34" height="34" rx="8"/>
+    <!-- r3 -->
+    <rect class="gem gem-p" x="44"  y="190" width="34" height="34" rx="8"/>
+    <rect class="gem gem-b" x="86"  y="190" width="34" height="34" rx="8"/>
+    <rect class="gem gem-g" x="128" y="190" width="34" height="34" rx="8"/>
+    <rect class="gem gem-a" x="170" y="190" width="34" height="34" rx="8"/>
+    <rect class="gem gem-g" x="212" y="190" width="34" height="34" rx="8"/>
+    <!-- r4 -->
+    <rect class="gem gem-b" x="44"  y="232" width="34" height="34" rx="8"/>
+    <rect class="gem gem-g" x="86"  y="232" width="34" height="34" rx="8"/>
+    <rect class="gem gem-a" x="128" y="232" width="34" height="34" rx="8"/>
+    <rect class="gem gem-p" x="170" y="232" width="34" height="34" rx="8"/>
+    <rect class="gem gem-b" x="212" y="232" width="34" height="34" rx="8"/>
+
+    <!-- swap arrow between r1c2 and r2c2 (the move that made the match) -->
+    <line class="swap" x1="145" y1="141" x2="145" y2="147"/>
+    <path class="swap-head" d="M138 142 L145 132 L152 142 Z"/>
+    <path class="swap-head" d="M138 146 L145 156 L152 146 Z"/>
+
+    <!-- match highlight on r2 cols0-2 -->
+    <rect class="match" x="42" y="150" width="120" height="30" rx="7"/>
+    <text class="match-lbl" x="264" y="170" text-anchor="start">&#9664; match!</text>
+    <text class="board-lbl" x="147" y="292" text-anchor="middle">line up 3+ of one colour</text>
+
+    <!-- ===== right: the loop ===== -->
+    <text class="panel-hdr" x="577" y="66" text-anchor="middle">The match-3 loop</text>
+    <g>
+        <rect class="pill" x="458" y="80" width="238" height="34" rx="9"/>
+        <text class="num" x="474" y="101">1</text><text class="step" x="492" y="101">Swap two adjacent gems</text>
+        <rect class="pill" x="458" y="140" width="238" height="34" rx="9"/>
+        <text class="num" x="474" y="161">2</text><text class="step" x="492" y="161">Find a line of 3 or more</text>
+        <rect class="pill" x="458" y="200" width="238" height="34" rx="9"/>
+        <text class="num" x="474" y="221">3</text><text class="step" x="492" y="221">Clear them &#8594; score</text>
+        <rect class="pill" x="458" y="260" width="238" height="34" rx="9"/>
+        <text class="num" x="474" y="275">4</text><text class="step" x="492" y="275">Gems fall, new ones drop</text>
+        <text class="step" x="492" y="290" style="font-weight:800;fill:var(--match)">&#8594; cascade combo!</text>
+    </g>
+    <path class="arrow" d="M577 114 L577 138"/><path class="arrow-head" d="M570 138 L577 150 L584 138 Z"/>
+    <path class="arrow" d="M577 174 L577 198"/><path class="arrow-head" d="M570 198 L577 210 L584 198 Z"/>
+    <path class="arrow" d="M577 234 L577 258"/><path class="arrow-head" d="M570 258 L577 270 L584 258 Z"/>
+    <path class="arrow" d="M696 277 Q712 190 696 97"/><path class="arrow-head" d="M689 104 L697 92 L703 106 Z"/>
+    <text class="loop-lbl" x="690" y="188" text-anchor="middle" transform="rotate(90 690 188)">chains multiply the score</text>
+
+    <!-- caption -->
+    <text class="cap" x="360" y="360" text-anchor="middle">Cascades are where match-3 gets its depth: clearing gems drops others into fresh matches, so one clever swap</text>
+    <text class="cap" x="360" y="380" text-anchor="middle">can chain into a combo worth far more than the two tiles you actually moved.</text>
+</svg>

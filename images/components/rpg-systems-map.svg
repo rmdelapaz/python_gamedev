@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 400" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="rp-title rp-desc">
+    <title id="rp-title">An RPG is a web of systems around one character</title>
+    <desc id="rp-desc">A central card labelled Character sits in the middle, listing shared stats: HP, MP, Level, XP, and Attack and Defense. Four system cards surround it, each joined to the centre by a line with a small label describing what it reads or writes. Top left, Combat, reads attack and defense. Top right, Inventory and Items, where gear boosts stats. Bottom right, Quests, Dialogue and NPCs, which grant XP and items. Bottom left, Leveling and Progression, where XP raises stats. The caption explains that every system reads and writes the same character stats, and those shared numbers are the common language linking all of them.</desc>
+
+    <style>
+        :root {
+            --edge: #94a3b8;
+            --edge-lbl: rgb(71, 85, 105);
+            --center-bg: #eff6ff;
+            --center-stroke: #3b82f6;
+            --center-title: #2563eb;
+            --card-bg: #f8fafc;
+            --card-stroke: #cbd5e1;
+            --combat: #ef4444;
+            --inventory: #f59e0b;
+            --quests: #8b5cf6;
+            --leveling: #10b981;
+            --text: rgb(30, 41, 59);
+            --sub-text: rgb(71, 85, 105);
+            --stat: rgb(51, 65, 85);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --edge: #64748b;
+                --edge-lbl: #cbd5e1;
+                --center-bg: #0f213b;
+                --center-stroke: #569cd6;
+                --center-title: #93c5fd;
+                --card-bg: #1e293b;
+                --card-stroke: #475569;
+                --combat: #f87171;
+                --inventory: #fbbf24;
+                --quests: #a78bfa;
+                --leveling: #34d399;
+                --text: #f1f5f9;
+                --sub-text: #cbd5e1;
+                --stat: #cbd5e1;
+            }
+        }
+        .title { fill: var(--text); font: 700 16px ui-sans-serif, system-ui, sans-serif; }
+        .edge { stroke: var(--edge); stroke-width: 2; }
+        .edge-lbl { fill: var(--edge-lbl); font: 600 11px ui-sans-serif, system-ui, sans-serif; }
+        .center { fill: var(--center-bg); stroke: var(--center-stroke); stroke-width: 2.5; }
+        .center-title { fill: var(--center-title); font: 800 16px ui-sans-serif, system-ui, sans-serif; }
+        .stat { fill: var(--stat); font: 700 12px ui-monospace, Consolas, monospace; }
+        .card { fill: var(--card-bg); stroke: var(--card-stroke); stroke-width: 1.5; }
+        .card-title { fill: var(--text); font: 700 13px ui-sans-serif, system-ui, sans-serif; }
+        .card-sub { fill: var(--sub-text); font: 600 11px ui-sans-serif, system-ui, sans-serif; }
+        .cap { fill: var(--sub-text); font: 500 13px ui-sans-serif, system-ui, sans-serif; }
+    </style>
+
+    <text class="title" x="360" y="28" text-anchor="middle">An RPG is a web of systems around one character</text>
+
+    <!-- edges (drawn first, behind cards) -->
+    <line class="edge" x1="360" y1="205" x2="180" y2="110"/>
+    <line class="edge" x1="360" y1="205" x2="540" y2="110"/>
+    <line class="edge" x1="360" y1="205" x2="540" y2="300"/>
+    <line class="edge" x1="360" y1="205" x2="180" y2="300"/>
+
+    <!-- edge labels -->
+    <text class="edge-lbl" x="258" y="150" text-anchor="middle">reads ATK / DEF</text>
+    <text class="edge-lbl" x="462" y="150" text-anchor="middle">gear boosts stats</text>
+    <text class="edge-lbl" x="466" y="262" text-anchor="middle">grants XP &amp; items</text>
+    <text class="edge-lbl" x="254" y="262" text-anchor="middle">XP raises stats</text>
+
+    <!-- ===== corner cards ===== -->
+    <!-- Combat (TL) -->
+    <rect class="card" x="86" y="82" width="168" height="56" rx="10"/>
+    <rect x="86" y="82" width="7" height="56" rx="3" fill="var(--combat)"/>
+    <text class="card-title" x="104" y="106">Combat</text>
+    <text class="card-sub" x="104" y="124">attack, damage, defence</text>
+
+    <!-- Inventory (TR) -->
+    <rect class="card" x="466" y="82" width="168" height="56" rx="10"/>
+    <rect x="466" y="82" width="7" height="56" rx="3" fill="var(--inventory)"/>
+    <text class="card-title" x="484" y="106">Inventory &amp; Items</text>
+    <text class="card-sub" x="484" y="124">weapons, armour, potions</text>
+
+    <!-- Quests (BR) -->
+    <rect class="card" x="466" y="272" width="168" height="56" rx="10"/>
+    <rect x="466" y="272" width="7" height="56" rx="3" fill="var(--quests)"/>
+    <text class="card-title" x="484" y="296">Quests &amp; NPCs</text>
+    <text class="card-sub" x="484" y="314">dialogue, objectives</text>
+
+    <!-- Leveling (BL) -->
+    <rect class="card" x="86" y="272" width="168" height="56" rx="10"/>
+    <rect x="86" y="272" width="7" height="56" rx="3" fill="var(--leveling)"/>
+    <text class="card-title" x="104" y="296">Leveling</text>
+    <text class="card-sub" x="104" y="314">XP &#8594; level up &#8594; stronger</text>
+
+    <!-- ===== center Character card ===== -->
+    <rect class="center" x="272" y="164" width="176" height="82" rx="12"/>
+    <text class="center-title" x="360" y="192" text-anchor="middle">Character</text>
+    <text class="stat" x="360" y="214" text-anchor="middle">HP &#183; MP &#183; Lvl &#183; XP</text>
+    <text class="stat" x="360" y="232" text-anchor="middle">ATK &#183; DEF</text>
+
+    <!-- caption -->
+    <text class="cap" x="360" y="360" text-anchor="middle">Every system reads and writes the same character stats &#8212; HP, XP, level, attack. Those shared numbers are the</text>
+    <text class="cap" x="360" y="380" text-anchor="middle">common language that lets combat, loot, quests, and leveling all feed one another.</text>
+</svg>

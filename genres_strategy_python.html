@@ -50,6 +50,14 @@
         <p>This is the complete Python/Pygame implementation of a strategy game with all core mechanics including resource management, unit control, pathfinding, base building, and AI opponents.</p>
     </div>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/strategy-loop.svg"
+             alt="A small territory map of square tiles: a blue cluster (yours) in the lower left, a red cluster (enemy) in the upper right, grey neutral tiles between, and two gold resource nodes. A blue unit token advances into a neutral tile with an arrow labelled 'expand'. On the right, a four-step loop: gather resources; build units and bases; command and fight; control more map; then repeat, noting more land means more income."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>Before the code, here&rsquo;s the engine driving every strategy game: a <strong>flywheel</strong>. You spend resources to build units, use units to take territory, and territory yields <em>more</em> resources &mdash; which buys more units. Each turn is really a trade of <strong>economy for board control</strong>, and whoever compounds that advantage fastest pulls ahead. Keep this loop in mind and the resource, pathfinding, and AI code below all fall into place as pieces serving it.</figcaption>
+    </figure>
+
     <h3 id="full-strategy-game-code">Full Strategy Game Code</h3>
     
     <pre class="language-python"><code>import pygame

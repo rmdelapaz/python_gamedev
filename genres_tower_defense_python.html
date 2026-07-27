@@ -54,6 +54,14 @@
         <p>A full tower defense implementation featuring multiple tower types, enemy waves, upgrade systems, pathfinding, and special abilities.</p>
     </div>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/tower-defense-loop.svg"
+             alt="A game board with a winding path from a spawn point to a base with HP. Red enemies walk the path; two blue towers with dashed range circles fire amber shots at enemies in range. On the right, a four-step loop: a wave spawns; enemies follow the path; towers in range fire and kills pay gold; spend gold to build or upgrade towers; then repeat with a tougher wave."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>Before the code, the shape of the whole game: tower defense is a <strong>spatial money puzzle</strong>. Each wave&rsquo;s income buys the placement and upgrades that maximise damage along the enemy&rsquo;s path, and if too many enemies leak through to the base you lose HP. The loop &mdash; <strong>spawn &rarr; travel &rarr; towers fire &amp; earn &rarr; build/upgrade</strong> &mdash; repeats with ever-tougher waves, so every gold coin you spend is a bet on the next wave. The tower types, waves, and pathfinding below all serve that loop.</figcaption>
+    </figure>
+
     <h2 id="full-implementation">Full Implementation</h2>
     
     <pre><code class="language-python">"""

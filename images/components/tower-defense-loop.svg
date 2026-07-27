@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 400" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="td-title td-desc">
+    <title id="td-title">Tower defense: the wave economy loop</title>
+    <desc id="td-desc">On the left, a game board shows a winding path from a spawn point at the upper left to a base at the right. Red enemies walk along the path. Two blue towers sit beside the path, each with a dashed range circle; amber lines show them firing at enemies that have entered their range. On the right, a four-step loop reads: one, a wave spawns; two, enemies follow the path; three, towers in range fire and kills pay gold; four, spend gold to build or upgrade towers; then the loop repeats with a tougher wave. The caption explains that tower defense is a spatial money puzzle where each wave's income buys the placement that maximises damage along the path.</desc>
+
+    <style>
+        :root {
+            --board: #ecfdf5;
+            --board-stroke: #cbd5e1;
+            --path: #cbd5e1;
+            --path-edge: #94a3b8;
+            --tower: #3b82f6;
+            --tower-stroke: #2563eb;
+            --range: #3b82f6;
+            --enemy: #ef4444;
+            --enemy-stroke: #b91c1c;
+            --hp: #22c55e;
+            --fire: #f59e0b;
+            --base: #10b981;
+            --base-stroke: #047857;
+            --pill: #f8fafc;
+            --pill-stroke: #cbd5e1;
+            --num: #2563eb;
+            --arrow: #64748b;
+            --text: rgb(30, 41, 59);
+            --sub-text: rgb(71, 85, 105);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --board: #0f2a22;
+                --board-stroke: #475569;
+                --path: #475569;
+                --path-edge: #64748b;
+                --tower: #569cd6;
+                --tower-stroke: #60a5fa;
+                --range: #569cd6;
+                --enemy: #f87171;
+                --enemy-stroke: #ef4444;
+                --hp: #34d399;
+                --fire: #fbbf24;
+                --base: #34d399;
+                --base-stroke: #10b981;
+                --pill: #1e293b;
+                --pill-stroke: #475569;
+                --num: #93c5fd;
+                --arrow: #94a3b8;
+                --text: #f1f5f9;
+                --sub-text: #cbd5e1;
+            }
+        }
+        .title { fill: var(--text); font: 700 16px ui-sans-serif, system-ui, sans-serif; }
+        .board { fill: var(--board); stroke: var(--board-stroke); stroke-width: 1.5; }
+        .path { fill: none; stroke: var(--path); stroke-width: 22; stroke-linejoin: round; stroke-linecap: round; }
+        .path-edge { fill: none; stroke: var(--path-edge); stroke-width: 24; stroke-linejoin: round; stroke-linecap: round; }
+        .range { fill: none; stroke: var(--range); stroke-width: 1.5; stroke-dasharray: 5 4; opacity: 0.8; }
+        .tower { fill: var(--tower); stroke: var(--tower-stroke); stroke-width: 2; }
+        .barrel { stroke: var(--tower-stroke); stroke-width: 5; stroke-linecap: round; }
+        .enemy { fill: var(--enemy); stroke: var(--enemy-stroke); stroke-width: 1.5; }
+        .hp-track { fill: var(--path-edge); }
+        .hp { fill: var(--hp); }
+        .fire { stroke: var(--fire); stroke-width: 2.5; stroke-dasharray: 4 3; stroke-linecap: round; }
+        .fire-dot { fill: var(--fire); }
+        .base { fill: var(--base); stroke: var(--base-stroke); stroke-width: 2; }
+        .base-txt { fill: #ffffff; font: 800 11px ui-sans-serif, system-ui, sans-serif; }
+        .lbl { fill: var(--sub-text); font: 700 12px ui-sans-serif, system-ui, sans-serif; }
+        .panel-hdr { fill: var(--text); font: 700 14px ui-sans-serif, system-ui, sans-serif; }
+        .pill { fill: var(--pill); stroke: var(--pill-stroke); stroke-width: 1.5; }
+        .num { font: 800 13px ui-sans-serif, system-ui, sans-serif; fill: var(--num); }
+        .step { fill: var(--text); font: 600 13px ui-sans-serif, system-ui, sans-serif; }
+        .arrow { stroke: var(--arrow); stroke-width: 2.5; fill: none; stroke-linecap: round; }
+        .arrow-head { fill: var(--arrow); }
+        .loop-lbl { fill: var(--sub-text); font: 700 12px ui-sans-serif, system-ui, sans-serif; }
+        .cap { fill: var(--sub-text); font: 500 13px ui-sans-serif, system-ui, sans-serif; }
+    </style>
+
+    <text class="title" x="360" y="28" text-anchor="middle">Tower defense &#8212; buy placement with each wave&#8217;s income</text>
+
+    <!-- ===== board ===== -->
+    <rect class="board" x="28" y="50" width="402" height="278" rx="10"/>
+
+    <!-- path (edge under, fill over) -->
+    <polyline class="path-edge" points="28,108 150,108 150,250 320,250 320,150 412,150"/>
+    <polyline class="path" points="28,108 150,108 150,250 320,250 320,150 412,150"/>
+
+    <!-- spawn marker -->
+    <text class="lbl" x="44" y="92">spawn</text>
+    <path class="arrow-head" d="M34 100 L48 108 L34 116 Z" fill="var(--enemy)"/>
+
+    <!-- base -->
+    <rect class="base" x="398" y="136" width="28" height="28" rx="5"/>
+    <text class="base-txt" x="412" y="154" text-anchor="middle">BASE</text>
+    <text class="lbl" x="412" y="182" text-anchor="middle">HP 20</text>
+
+    <!-- tower 1 (covers middle horizontal segment) -->
+    <circle class="range" cx="235" cy="185" r="78"/>
+    <line class="barrel" x1="235" y1="185" x2="248" y2="230"/>
+    <rect class="tower" x="223" y="173" width="24" height="24" rx="5"/>
+
+    <!-- tower 2 (covers right vertical segment) -->
+    <circle class="range" cx="372" cy="210" r="76"/>
+    <line class="barrel" x1="372" y1="210" x2="332" y2="204"/>
+    <rect class="tower" x="360" y="198" width="24" height="24" rx="5"/>
+
+    <!-- enemies -->
+    <!-- E1 near spawn (out of range) -->
+    <rect class="hp-track" x="98" y="92" width="24" height="4" rx="2"/><rect class="hp" x="98" y="92" width="16" height="4" rx="2"/>
+    <circle class="enemy" cx="110" cy="108" r="9"/>
+    <!-- E2 on middle segment (T1 fires) -->
+    <rect class="hp-track" x="238" y="234" width="24" height="4" rx="2"/><rect class="hp" x="238" y="234" width="10" height="4" rx="2"/>
+    <circle class="enemy" cx="250" cy="250" r="9"/>
+    <!-- E3 on right vertical (T2 fires) -->
+    <rect class="hp-track" x="308" y="184" width="24" height="4" rx="2"/><rect class="hp" x="308" y="184" width="20" height="4" rx="2"/>
+    <circle class="enemy" cx="320" cy="200" r="9"/>
+
+    <!-- fire lines -->
+    <line class="fire" x1="247" y1="196" x2="250" y2="241"/><circle class="fire-dot" cx="250" cy="228" r="3"/>
+    <line class="fire" x1="361" y1="207" x2="329" y2="202"/><circle class="fire-dot" cx="344" cy="204" r="3"/>
+
+    <!-- ===== right: the wave loop ===== -->
+    <text class="panel-hdr" x="577" y="66" text-anchor="middle">The wave loop</text>
+
+    <g>
+        <rect class="pill" x="458" y="80" width="238" height="34" rx="9"/>
+        <text class="num" x="474" y="101">1</text><text class="step" x="492" y="101">Wave spawns</text>
+
+        <rect class="pill" x="458" y="140" width="238" height="34" rx="9"/>
+        <text class="num" x="474" y="161">2</text><text class="step" x="492" y="161">Enemies follow the path</text>
+
+        <rect class="pill" x="458" y="200" width="238" height="34" rx="9"/>
+        <text class="num" x="474" y="221">3</text><text class="step" x="492" y="221">Towers fire &#8594; earn gold</text>
+
+        <rect class="pill" x="458" y="260" width="238" height="34" rx="9"/>
+        <text class="num" x="474" y="281">4</text><text class="step" x="492" y="281">Build / upgrade towers</text>
+    </g>
+    <!-- down arrows -->
+    <path class="arrow" d="M577 114 L577 138"/><path class="arrow-head" d="M570 138 L577 150 L584 138 Z"/>
+    <path class="arrow" d="M577 174 L577 198"/><path class="arrow-head" d="M570 198 L577 210 L584 198 Z"/>
+    <path class="arrow" d="M577 234 L577 258"/><path class="arrow-head" d="M570 258 L577 270 L584 258 Z"/>
+    <!-- loop back -->
+    <path class="arrow" d="M696 277 Q712 190 696 97"/><path class="arrow-head" d="M689 104 L697 92 L703 106 Z"/>
+    <text class="loop-lbl" x="690" y="190" text-anchor="end" transform="rotate(90 690 190)">next wave is tougher</text>
+
+    <!-- caption -->
+    <text class="cap" x="360" y="360" text-anchor="middle">Tower defense is a spatial money puzzle: each wave&#8217;s income buys the placement and upgrades that</text>
+    <text class="cap" x="360" y="380" text-anchor="middle">maximise damage along the path &#8212; let enemies leak through to the base and you lose HP.</text>
+</svg>

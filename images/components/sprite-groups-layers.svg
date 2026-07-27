@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 360" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="sg-title sg-desc">
+    <title id="sg-title">Sprite groups batch work; layers set draw order</title>
+    <desc id="sg-desc">Two panels. The left panel, Sprite Group, shows a rounded container labelled Group holding four little sprite tokens; to its right three method pills — dot update, dot draw screen, and dot add slash remove — each point back into the container with an arrow, and a note reads that one call acts on every sprite at once with no loop. The right panel, Layers, shows four translucent layer cards stacked back to front and offset diagonally: layer zero Background, layer one Platforms, layer two Enemies, and layer three Player and UI, with an arrow indicating draw order from back to front and a note that a higher layer draws on top. The caption explains that a Group is a container you update, draw, add to, remove from, or collision-test as one unit, and that layered groups add a draw order so a sprite on a higher layer always renders on top.</desc>
+
+    <style>
+        :root {
+            --panel: #f8fafc;
+            --panel-stroke: #e2e8f0;
+            --container: #eff6ff;
+            --container-stroke: #3b82f6;
+            --tok-b: #3b82f6;
+            --tok-g: #10b981;
+            --tok-a: #f59e0b;
+            --tok-p: #8b5cf6;
+            --pill: #f1f5f9;
+            --pill-stroke: #cbd5e1;
+            --code: #2563eb;
+            --arrow: #64748b;
+            --lay-bg: #64748b;
+            --lay-plat: #10b981;
+            --lay-enemy: #f59e0b;
+            --lay-player: #8b5cf6;
+            --lay-text: #ffffff;
+            --text: rgb(30, 41, 59);
+            --sub-text: rgb(71, 85, 105);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --panel: #1e293b;
+                --panel-stroke: #334155;
+                --container: #0f213b;
+                --container-stroke: #569cd6;
+                --tok-b: #569cd6;
+                --tok-g: #34d399;
+                --tok-a: #fbbf24;
+                --tok-p: #a78bfa;
+                --pill: #334155;
+                --pill-stroke: #475569;
+                --code: #93c5fd;
+                --arrow: #94a3b8;
+                --lay-bg: #475569;
+                --lay-plat: #059669;
+                --lay-enemy: #b45309;
+                --lay-player: #7c3aed;
+                --lay-text: #f1f5f9;
+                --text: #f1f5f9;
+                --sub-text: #cbd5e1;
+            }
+        }
+        .title { fill: var(--text); font: 700 16px ui-sans-serif, system-ui, sans-serif; }
+        .panel { fill: var(--panel); stroke: var(--panel-stroke); stroke-width: 1.5; }
+        .ptitle { fill: var(--text); font: 800 14px ui-sans-serif, system-ui, sans-serif; }
+        .container { fill: var(--container); stroke: var(--container-stroke); stroke-width: 2; stroke-dasharray: 6 4; }
+        .container-lbl { fill: var(--container-stroke); font: 800 13px ui-monospace, Consolas, monospace; }
+        .tok-b { fill: var(--tok-b); } .tok-g { fill: var(--tok-g); } .tok-a { fill: var(--tok-a); } .tok-p { fill: var(--tok-p); }
+        .eye { fill: #ffffff; }
+        .pill { fill: var(--pill); stroke: var(--pill-stroke); stroke-width: 1.5; }
+        .code { fill: var(--code); font: 700 12px ui-monospace, Consolas, monospace; }
+        .arrow { stroke: var(--arrow); stroke-width: 2; fill: none; stroke-linecap: round; }
+        .arrow-head { fill: var(--arrow); }
+        .note { fill: var(--sub-text); font: 600 12px ui-sans-serif, system-ui, sans-serif; }
+        .layer-lbl { fill: var(--lay-text); font: 800 12px ui-sans-serif, system-ui, sans-serif; }
+        .order-lbl { fill: var(--sub-text); font: 700 11px ui-sans-serif, system-ui, sans-serif; }
+        .cap { fill: var(--sub-text); font: 500 13px ui-sans-serif, system-ui, sans-serif; }
+    </style>
+
+    <text class="title" x="360" y="28" text-anchor="middle">Groups batch the work &#8212; layers set the draw order</text>
+
+    <!-- ================= Panel A: Group ================= -->
+    <rect class="panel" x="24" y="46" width="330" height="250" rx="10"/>
+    <text class="ptitle" x="189" y="72" text-anchor="middle">Sprite Group</text>
+
+    <!-- container -->
+    <rect class="container" x="46" y="92" width="150" height="150" rx="12"/>
+    <text class="container-lbl" x="121" y="112" text-anchor="middle">Group()</text>
+    <!-- sprite tokens (with eyes) -->
+    <g><rect class="tok-b" x="66"  y="128" width="34" height="34" rx="7"/><circle class="eye" cx="76" cy="140" r="3"/><circle class="eye" cx="90" cy="140" r="3"/></g>
+    <g><rect class="tok-g" x="122" y="128" width="34" height="34" rx="7"/><circle class="eye" cx="132" cy="140" r="3"/><circle class="eye" cx="146" cy="140" r="3"/></g>
+    <g><rect class="tok-a" x="66"  y="180" width="34" height="34" rx="7"/><circle class="eye" cx="76" cy="192" r="3"/><circle class="eye" cx="90" cy="192" r="3"/></g>
+    <g><rect class="tok-p" x="122" y="180" width="34" height="34" rx="7"/><circle class="eye" cx="132" cy="192" r="3"/><circle class="eye" cx="146" cy="192" r="3"/></g>
+
+    <!-- method pills -->
+    <rect class="pill" x="220" y="104" width="120" height="26" rx="13"/><text class="code" x="232" y="121">.update()</text>
+    <rect class="pill" x="220" y="140" width="120" height="26" rx="13"/><text class="code" x="232" y="157">.draw(screen)</text>
+    <rect class="pill" x="220" y="176" width="120" height="26" rx="13"/><text class="code" x="232" y="193">.add() / .remove()</text>
+    <!-- arrows pill -> container -->
+    <path class="arrow" d="M218 117 L202 130"/><path class="arrow-head" d="M206 123 L197 133 L210 132 Z"/>
+    <path class="arrow" d="M218 153 L202 160"/><path class="arrow-head" d="M207 154 L196 162 L209 164 Z"/>
+    <path class="arrow" d="M218 189 L202 186"/><path class="arrow-head" d="M207 181 L196 187 L208 192 Z"/>
+
+    <text class="note" x="189" y="266" text-anchor="middle">one call acts on every sprite &#8212; no loop</text>
+
+    <!-- ================= Panel B: Layers ================= -->
+    <rect class="panel" x="366" y="46" width="330" height="250" rx="10"/>
+    <text class="ptitle" x="531" y="72" text-anchor="middle">Layers (draw order)</text>
+
+    <!-- layer stack, back (0) to front (3), later = on top -->
+    <g>
+        <rect x="400" y="96"  width="180" height="40" rx="8" fill="var(--lay-bg)"    opacity="0.92"/><text class="layer-lbl" x="414" y="121">0 &#183; Background</text>
+        <rect x="426" y="130" width="180" height="40" rx="8" fill="var(--lay-plat)"  opacity="0.92"/><text class="layer-lbl" x="440" y="155">1 &#183; Platforms</text>
+        <rect x="452" y="164" width="180" height="40" rx="8" fill="var(--lay-enemy)" opacity="0.92"/><text class="layer-lbl" x="466" y="189">2 &#183; Enemies</text>
+        <rect x="478" y="198" width="180" height="40" rx="8" fill="var(--lay-player)" opacity="0.94"/><text class="layer-lbl" x="492" y="223">3 &#183; Player / UI</text>
+    </g>
+    <!-- draw-order arrow -->
+    <path class="arrow" d="M388 104 L388 232"/><path class="arrow-head" d="M381 226 L388 240 L395 226 Z"/>
+    <text class="order-lbl" x="382" y="172" text-anchor="middle" transform="rotate(-90 382 172)">draw order: back &#8594; front</text>
+    <text class="note" x="531" y="266" text-anchor="middle">a higher layer draws on top</text>
+
+    <!-- ================= caption ================= -->
+    <text class="cap" x="360" y="322" text-anchor="middle">A Group is a container you update, draw, add to, remove from, or collision-test as one unit &#8212; no per-sprite loops.</text>
+    <text class="cap" x="360" y="342" text-anchor="middle">Layered groups also fix draw order &#8212; a sprite on a higher layer always renders on top of lower ones.</text>
+</svg>

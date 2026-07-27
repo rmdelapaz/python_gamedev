@@ -98,6 +98,14 @@
         E --> M["Specialized Behavior"]
     </div>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/sprite-groups-layers.svg"
+             alt="Two panels. Sprite Group: a dashed container labelled Group() holds four little sprite tokens; three method pills — .update(), .draw(screen), and .add() / .remove() — each point back into the container, with the note 'one call acts on every sprite — no loop'. Layers: four translucent cards stacked back-to-front and offset diagonally — 0 Background, 1 Platforms, 2 Enemies, 3 Player / UI — with a 'draw order: back to front' arrow and the note 'a higher layer draws on top'."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>Two ideas make big scenes manageable. A <strong>Group</strong> is a container of sprites you treat as one: <code>group.update()</code> ticks them all, <code>group.draw()</code> blits them all, and you can add, remove, or collision-test the whole set without writing a single loop. <strong>Layered</strong> groups (<code>LayeredUpdates</code>) add a second superpower &mdash; a draw order. Each sprite carries a layer number, and higher layers render on top of lower ones, so your player always draws over the background and the HUD always draws over the player.</figcaption>
+    </figure>
+
     <h2 id="interactive-groups-and-layers-demo">Interactive Groups and Layers Demo</h2>
     
     <div class="canvas-wrapper">

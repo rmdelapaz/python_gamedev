@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 420" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="plat-title plat-desc">
+    <title id="plat-title">Distribution platforms plotted by audience reach against the cut they take</title>
+    <desc id="plat-desc">A chart with a horizontal axis for the platform's revenue cut increasing to the right and a vertical axis for potential audience increasing upward. Four platforms are plotted. Web in the browser sits low-left: small cut, modest reach, but zero install friction. itch.io sits middle-left: low and often optional cut with a mid-size indie-friendly audience. Steam sits upper-right: a thirty percent cut but a very large built-in audience. Mobile app stores sit top-right: a thirty percent cut and the largest reach, but the hardest discovery.</desc>
+
+    <style>
+        :root {
+            --text: rgb(30, 41, 59);
+            --sub-text: rgb(71, 85, 105);
+            --axis: #94a3b8;
+            --grid: #e2e8f0;
+            --steam: #3b82f6;
+            --itch: #10b981;
+            --mobile: rgb(245, 158, 11);
+            --web: #8b5cf6;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --text: #f1f5f9;
+                --sub-text: #cbd5e1;
+                --axis: #64748b;
+                --grid: #334155;
+                --steam: #60a5fa;
+                --itch: #34d399;
+                --mobile: #fbbf24;
+                --web: #a78bfa;
+            }
+        }
+        .axis { stroke: var(--axis); stroke-width: 2; }
+        .grid { stroke: var(--grid); stroke-width: 1; }
+        .axis-label { fill: var(--text); font: 700 14px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .tick-label { fill: var(--sub-text); font: 500 11px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .name { font: 800 15px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .note { fill: var(--sub-text); font: 500 11px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .caption { fill: var(--sub-text); font: 500 13px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    </style>
+
+    <defs>
+        <marker id="axarrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="var(--axis)"/>
+        </marker>
+    </defs>
+
+    <!-- plot area: x 90..660 , y 60..320 -->
+    <!-- faint grid -->
+    <line class="grid" x1="90" y1="125" x2="660" y2="125"/>
+    <line class="grid" x1="90" y1="190" x2="660" y2="190"/>
+    <line class="grid" x1="90" y1="255" x2="660" y2="255"/>
+    <line class="grid" x1="280" y1="60" x2="280" y2="320"/>
+    <line class="grid" x1="470" y1="60" x2="470" y2="320"/>
+
+    <!-- axes -->
+    <line class="axis" x1="90" y1="320" x2="672" y2="320" marker-end="url(#axarrow)"/>
+    <line class="axis" x1="90" y1="320" x2="90" y2="48" marker-end="url(#axarrow)"/>
+
+    <text class="axis-label" x="380" y="360" text-anchor="middle">Platform's revenue cut &#8594;</text>
+    <text class="axis-label" transform="translate(34 190) rotate(-90)" text-anchor="middle">Potential audience &#8593;</text>
+
+    <text class="tick-label" x="150" y="338" text-anchor="middle">low (0&#8211;10%)</text>
+    <text class="tick-label" x="580" y="338" text-anchor="middle">high (~30%)</text>
+
+    <!-- Web: low cut, low-mid reach, low friction -->
+    <circle cx="150" cy="270" r="11" fill="var(--web)"/>
+    <text class="name" x="168" y="266" fill="var(--web)">Web (browser)</text>
+    <text class="note" x="168" y="283">no install &#8212; instant play, smallest reach</text>
+
+    <!-- itch.io: low/optional cut, mid reach -->
+    <circle cx="200" cy="185" r="11" fill="var(--itch)"/>
+    <text class="name" x="218" y="181" fill="var(--itch)">itch.io</text>
+    <text class="note" x="218" y="198">pay-what-you-want cut, indie-friendly</text>
+
+    <!-- Steam: 30% cut, large reach -->
+    <circle cx="560" cy="150" r="11" fill="var(--steam)"/>
+    <text class="name" x="544" y="132" text-anchor="end" fill="var(--steam)">Steam</text>
+    <text class="note" x="544" y="149" text-anchor="end">30% cut, huge built-in store traffic</text>
+
+    <!-- Mobile: 30% cut, largest reach, hard discovery -->
+    <circle cx="590" cy="90" r="11" fill="var(--mobile)"/>
+    <text class="name" x="574" y="80" text-anchor="end" fill="var(--mobile)">Mobile stores</text>
+    <text class="note" x="574" y="97" text-anchor="end">30% cut, largest reach, hardest to be found</text>
+
+    <text class="caption" x="90" y="390">No platform wins on every axis: you trade the cut they take</text>
+    <text class="caption" x="90" y="408">for the players they bring you &#8212; so most indies ship to several.</text>
+</svg>

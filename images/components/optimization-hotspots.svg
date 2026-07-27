@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 340" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="hot-title hot-desc">
+    <title id="hot-title">A profiler report showing one function dominating frame time</title>
+    <desc id="hot-desc">Six horizontal bars, one per function, sized by the milliseconds each takes per frame. The top bar, update_physics, is far longer than the rest at 13.6 milliseconds, roughly three quarters of the whole frame. The other five &#8212; check_collisions, render_sprites, update_ai, play_audio, and handle_input &#8212; are short. An amber callout points at the long bar with the note to optimise the tall bar first. A dashed line marks the 16.7 millisecond budget for 60 frames per second.</desc>
+
+    <style>
+        :root {
+            --text: rgb(30, 41, 59);
+            --sub-text: rgb(71, 85, 105);
+            --bar: #569cd6;
+            --bar-cool: #7dd3fc;
+            --hi: rgb(245, 158, 11);
+            --grid: #cbd5e1;
+            --budget: #ef4444;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --text: #f1f5f9;
+                --sub-text: #cbd5e1;
+                --bar: #3b82f6;
+                --bar-cool: #38bdf8;
+                --hi: #fbbf24;
+                --grid: #475569;
+                --budget: #f87171;
+            }
+        }
+        .title { fill: var(--text); font: 700 18px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .fn { fill: var(--text); font: 600 13px ui-monospace, "SFMono-Regular", Consolas, monospace; }
+        .ms { fill: var(--sub-text); font: 600 12px ui-monospace, "SFMono-Regular", Consolas, monospace; }
+        .bar { fill: var(--bar-cool); }
+        .bar-hi { fill: var(--hi); }
+        .callout { fill: var(--hi); font: 800 14px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .caption { fill: var(--sub-text); font: 500 13px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .budget { stroke: var(--budget); stroke-width: 2; stroke-dasharray: 5 4; }
+        .budget-label { fill: var(--budget); font: 700 11px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    </style>
+
+    <text class="title" x="30" y="34">One cProfile run, ranked by time per frame</text>
+
+    <!-- 60 FPS budget line: 16.7 ms -> x = 210 + 16.7*30 = 711 (just at edge). Scale 1ms=30px, origin x=210 -->
+    <line class="budget" x1="710" y1="52" x2="710" y2="292"/>
+    <text class="budget-label" x="706" y="308" text-anchor="end">16.7 ms budget (60 FPS)</text>
+
+    <!-- bars: origin x=210, 1ms = 30px -->
+    <!-- update_physics 13.6 ms -> 408 wide  (HOTSPOT) -->
+    <text class="fn" x="200" y="74" text-anchor="end">update_physics</text>
+    <rect class="bar-hi" x="210" y="62" width="408" height="24" rx="3"/>
+    <text class="ms" x="626" y="79">13.6 ms</text>
+
+    <!-- check_collisions 1.9 ms -> 57 -->
+    <text class="fn" x="200" y="114" text-anchor="end">check_collisions</text>
+    <rect class="bar" x="210" y="102" width="57" height="24" rx="3"/>
+    <text class="ms" x="275" y="119">1.9 ms</text>
+
+    <!-- render_sprites 1.4 ms -> 42 -->
+    <text class="fn" x="200" y="154" text-anchor="end">render_sprites</text>
+    <rect class="bar" x="210" y="142" width="42" height="24" rx="3"/>
+    <text class="ms" x="260" y="159">1.4 ms</text>
+
+    <!-- update_ai 0.8 ms -> 24 -->
+    <text class="fn" x="200" y="194" text-anchor="end">update_ai</text>
+    <rect class="bar" x="210" y="182" width="24" height="24" rx="3"/>
+    <text class="ms" x="242" y="199">0.8 ms</text>
+
+    <!-- play_audio 0.4 ms -> 12 -->
+    <text class="fn" x="200" y="234" text-anchor="end">play_audio</text>
+    <rect class="bar" x="210" y="222" width="12" height="24" rx="3"/>
+    <text class="ms" x="230" y="239">0.4 ms</text>
+
+    <!-- handle_input 0.2 ms -> 6 -->
+    <text class="fn" x="200" y="274" text-anchor="end">handle_input</text>
+    <rect class="bar" x="210" y="262" width="6" height="24" rx="3"/>
+    <text class="ms" x="224" y="279">0.2 ms</text>
+
+    <!-- callout on the hotspot -->
+    <text class="callout" x="330" y="52" text-anchor="middle">&#9650; ~75% of every frame lives here</text>
+
+    <text class="caption" x="30" y="326">Measure first: this one function is worth more than perfecting the other five combined.</text>
+</svg>

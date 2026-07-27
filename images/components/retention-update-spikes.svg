@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 380" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="ret-title ret-desc">
+    <title id="ret-title">Active players over time, with each content update re-engaging the audience</title>
+    <desc id="ret-desc">A chart of active players over the months after launch. Both lines spike at launch then fall. A dashed line shows what happens with no updates: a steady decline toward zero. A solid line shows a game that ships updates: it also falls, but at each of three marked update points the player count jumps back up, and the overall baseline stays far higher than the no-update line. Update one, two, and three are flagged along the timeline.</desc>
+
+    <style>
+        :root {
+            --text: rgb(30, 41, 59);
+            --sub-text: rgb(71, 85, 105);
+            --axis: #94a3b8;
+            --grid: #e2e8f0;
+            --updated: #10b981;
+            --updated-fill: rgba(16, 185, 129, 0.14);
+            --no-update: #ef4444;
+            --flag: rgb(245, 158, 11);
+            --flag-text: rgb(120, 53, 15);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --text: #f1f5f9;
+                --sub-text: #cbd5e1;
+                --axis: #64748b;
+                --grid: #334155;
+                --updated: #34d399;
+                --updated-fill: rgba(52, 211, 153, 0.16);
+                --no-update: #f87171;
+                --flag: #fbbf24;
+                --flag-text: rgb(30, 20, 5);
+            }
+        }
+        .axis { stroke: var(--axis); stroke-width: 2; }
+        .grid { stroke: var(--grid); stroke-width: 1; }
+        .axis-label { fill: var(--text); font: 700 13px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .tick-label { fill: var(--sub-text); font: 500 11px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .updated-line { stroke: var(--updated); stroke-width: 3; fill: none; stroke-linejoin: round; }
+        .updated-area { fill: var(--updated-fill); }
+        .no-update-line { stroke: var(--no-update); stroke-width: 2.5; fill: none; stroke-dasharray: 6 5; stroke-linejoin: round; }
+        .flag-line { stroke: var(--flag); stroke-width: 1.5; stroke-dasharray: 3 3; }
+        .flag-tag { fill: var(--flag); }
+        .flag-text { fill: var(--flag-text); font: 800 10px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .legend-text { fill: var(--text); font: 600 12px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .caption { fill: var(--sub-text); font: 500 13px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    </style>
+
+    <defs>
+        <marker id="retarrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="var(--axis)"/>
+        </marker>
+    </defs>
+
+    <!-- plot area x 70..680, y 60..290. baseline y=290 = 0 players -->
+    <line class="grid" x1="70" y1="118" x2="680" y2="118"/>
+    <line class="grid" x1="70" y1="176" x2="680" y2="176"/>
+    <line class="grid" x1="70" y1="234" x2="680" y2="234"/>
+
+    <line class="axis" x1="70" y1="290" x2="692" y2="290" marker-end="url(#retarrow)"/>
+    <line class="axis" x1="70" y1="290" x2="70" y2="48" marker-end="url(#retarrow)"/>
+    <text class="axis-label" transform="translate(30 175) rotate(-90)" text-anchor="middle">Active players &#8593;</text>
+    <text class="axis-label" x="380" y="330" text-anchor="middle">Time after launch &#8594;</text>
+    <text class="tick-label" x="96" y="306" text-anchor="middle">launch</text>
+    <text class="tick-label" x="640" y="306" text-anchor="middle">6+ months</text>
+
+    <!-- update flag verticals -->
+    <line class="flag-line" x1="250" y1="122" x2="250" y2="290"/>
+    <line class="flag-line" x1="400" y1="122" x2="400" y2="290"/>
+    <line class="flag-line" x1="550" y1="122" x2="550" y2="290"/>
+
+    <!-- WITH UPDATES: filled area (sawtooth: decay then spike at each update) -->
+    <path class="updated-area" d="M96,290 L96,72 L250,214 L250,150 L400,210 L400,146 L550,206 L550,150 L680,212 L680,290 Z"/>
+    <!-- WITH UPDATES solid line -->
+    <path class="updated-line" d="M96,72 L250,214 L250,150 L400,210 L400,146 L550,206 L550,150 L680,212"/>
+
+    <!-- NO UPDATES dashed decline -->
+    <path class="no-update-line" d="M96,72 C 180,200 300,258 420,272 C 520,282 600,286 680,288"/>
+
+    <!-- update flags -->
+    <rect class="flag-tag" x="222" y="104" width="56" height="18" rx="4"/>
+    <text class="flag-text" x="250" y="117" text-anchor="middle">Update 1</text>
+    <rect class="flag-tag" x="372" y="104" width="56" height="18" rx="4"/>
+    <text class="flag-text" x="400" y="117" text-anchor="middle">Update 2</text>
+    <rect class="flag-tag" x="522" y="104" width="56" height="18" rx="4"/>
+    <text class="flag-text" x="550" y="117" text-anchor="middle">Update 3</text>
+
+    <!-- legend -->
+    <line class="updated-line" x1="90" y1="350" x2="122" y2="350"/>
+    <text class="legend-text" x="130" y="354">ships updates</text>
+    <line class="no-update-line" x1="250" y1="350" x2="282" y2="350"/>
+    <text class="legend-text" x="290" y="354">no updates</text>
+    <text class="caption" x="380" y="354">&#8212; each update is a fresh reason to come back.</text>
+</svg>

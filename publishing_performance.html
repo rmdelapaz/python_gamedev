@@ -107,6 +107,14 @@
         E --> Q["Shader Optimization"]
     </div>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/optimization-hotspots.svg"
+             alt="A profiler report drawn as six horizontal bars, one per function, sized by milliseconds per frame. The top bar, update_physics, is far longer than the rest at 13.6 ms — roughly three quarters of the whole frame — while check_collisions, render_sprites, update_ai, play_audio, and handle_input are all short. An amber callout points at the long bar; a red dashed line marks the 16.7 ms budget for 60 FPS."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>This is why you profile <em>before</em> you optimise. Intuition tracks how <em>complicated</em> code looks, but the frame budget is spent where <code>runtime = call&nbsp;count &times; cost&nbsp;per&nbsp;call</code> is largest &mdash; here, one function eats ~75% of every frame. Speeding up the other five to zero would barely move the needle; halving the tall bar buys back real milliseconds. Measure first, then attack the tallest bar.</figcaption>
+    </figure>
+
     <h2 id="profiling-your-game">Profiling Your Game</h2>
     
     <div style="background-color: #f9f9f9; padding: 20px; border-radius: 10px; margin: 20px 0;">

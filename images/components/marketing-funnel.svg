@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 380" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="fun-title fun-desc">
+    <title id="fun-title">The marketing funnel from awareness down to advocacy</title>
+    <desc id="fun-desc">Four stacked bands narrowing toward the bottom, like a funnel. The widest top band is Awareness, driven by trailers, social posts, and press, illustrated with one hundred thousand people who see the game. Below it, Interest, where wishlists, follows, and a demo convert eight thousand. Below that, Purchase, at launch and on discount, converts one thousand two hundred buyers. The narrowest bottom band is Advocacy, where reviews and word of mouth come from two hundred fans. Each step keeps only a fraction of the one above, so a big top matters.</desc>
+
+    <style>
+        :root {
+            --text: #ffffff;
+            --side-text: rgb(30, 41, 59);
+            --side-sub: rgb(71, 85, 105);
+            --b1: #60a5fa;
+            --b2: #38bdf8;
+            --b3: #34d399;
+            --b4: #fbbf24;
+            --arrow: #94a3b8;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --side-text: #f1f5f9;
+                --side-sub: #cbd5e1;
+                --b1: #3b82f6;
+                --b2: #0ea5e9;
+                --b3: #10b981;
+                --b4: #f59e0b;
+                --arrow: #64748b;
+            }
+        }
+        .stage { fill: var(--text); font: 800 17px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .drivers { fill: var(--text); font: 500 12px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; opacity: 0.95; }
+        .count { fill: var(--side-text); font: 800 16px ui-monospace, "SFMono-Regular", Consolas, monospace; }
+        .count-sub { fill: var(--side-sub); font: 500 11px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .caption { fill: var(--side-sub); font: 500 13px ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    </style>
+
+    <!-- funnel bands, centered on x=290, narrowing. y bands of height 68, gap 6 -->
+    <!-- Awareness: x 70..510 (w440) -->
+    <polygon points="70,40 510,40 470,108 110,108" fill="var(--b1)"/>
+    <text class="stage" x="290" y="70" text-anchor="middle">AWARENESS</text>
+    <text class="drivers" x="290" y="92" text-anchor="middle">trailer &#183; social posts &#183; press coverage</text>
+
+    <!-- Interest: x 110..470 (w360) -->
+    <polygon points="112,114 468,114 428,182 152,182" fill="var(--b2)"/>
+    <text class="stage" x="290" y="144" text-anchor="middle">INTEREST</text>
+    <text class="drivers" x="290" y="166" text-anchor="middle">wishlist &#183; follow &#183; play the demo</text>
+
+    <!-- Purchase: x 152..428 (w276) -->
+    <polygon points="154,188 426,188 386,256 194,256" fill="var(--b3)"/>
+    <text class="stage" x="290" y="218" text-anchor="middle">PURCHASE</text>
+    <text class="drivers" x="290" y="240" text-anchor="middle">launch day &#183; discount &#183; bundles</text>
+
+    <!-- Advocacy: x 194..386 (w192) -->
+    <polygon points="196,262 384,262 344,330 236,330" fill="var(--b4)"/>
+    <text class="stage" x="290" y="292" text-anchor="middle">ADVOCACY</text>
+    <text class="drivers" x="290" y="314" text-anchor="middle">reviews &#183; word of mouth</text>
+
+    <!-- right-side counts with drop-off -->
+    <text class="count" x="540" y="70">100,000</text>
+    <text class="count-sub" x="540" y="86">see it</text>
+
+    <text class="count" x="540" y="144">8,000</text>
+    <text class="count-sub" x="540" y="160">wishlist (~8%)</text>
+
+    <text class="count" x="540" y="218">1,200</text>
+    <text class="count-sub" x="540" y="234">buy (~15% of those)</text>
+
+    <text class="count" x="540" y="292">200</text>
+    <text class="count-sub" x="540" y="308">tell their friends</text>
+
+    <text class="caption" x="70" y="352">Every step keeps only a slice of the one above it &#8212; so a wide</text>
+    <text class="caption" x="70" y="370">top of the funnel, not a hard sell, is what moves the final numbers.</text>
+</svg>

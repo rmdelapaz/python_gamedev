@@ -103,6 +103,14 @@
         L --> M
     </div>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/executable-packaging.svg"
+             alt="A flow diagram. On the left, four stacked inputs — your_game.py (your code), the Python interpreter, pygame plus its libraries, and an assets folder of images, sounds, and fonts. Arrows carry all four into a central amber box labelled PyInstaller / Nuitka / cx_Freeze, the bundler. A single arrow leaves it to a blue box on the right labelled game.exe, one standalone file, double-click and play."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>A bundler answers one question: how does a player with <em>no Python installed</em> run your game? It copies the interpreter and every dependency your code imports into a single distributable, so nothing needs to be set up on their machine. That is also why a &ldquo;tiny&rdquo; pygame script becomes a 30&ndash;60&nbsp;MB download &mdash; you are shipping a whole Python runtime, not just your script. The tools below (PyInstaller, cx_Freeze, Nuitka) are just different ways to do this one job.</figcaption>
+    </figure>
+
     <h2 id="pyinstaller-the-most-popular-choice">PyInstaller - The Most Popular Choice</h2>
     
     <div style="background-color: #f9f9f9; padding: 20px; border-radius: 10px; margin: 20px 0;">

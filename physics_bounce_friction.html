@@ -1244,13 +1244,13 @@ if __name__ == "__main__":
 
             <div class="card card-info">
                 <h3>🏋️‍♂️ Exercise 1: Restitution Fights Friction in 50 Lines</h3>
-                <p><strong>Objective:</strong> Build a Pygame demo that drops three balls simultaneously from the same height onto a single floor and lets you watch the lesson's two surface-physics rules play against each other in real time. Each ball has its own <strong>restitution</strong> (the bounce-response coefficient e in the lesson's <code>velocity.y *= -restitution</code> floor-collision formula) — rubber 0.8 (lots of bounces), steel 0.6 (a few), putty 0.1 (essentially dead on first contact, matching the lesson's material table). Each frame a ball is on the ground, the floor's <strong>kinetic friction</strong> decays its horizontal velocity via <code>velocity.x *= (1 - friction * dt)</code> — the lesson's surface-friction pattern. A <strong>resting threshold</strong> (<code>if abs(velocity) &lt; 5: velocity = 0</code>) is non-negotiable here: friction decay is asymptotic and would jitter forever without it (Best Practice 'Threshold Values: Stop objects when velocity is very small'). Press R to drop a fresh trio with a small horizontal nudge so the friction decay is visible too. Couples directly to chat-44 M1's <code>PhysicsObject.update()</code> shape and chat-44 M2's bounce reflection, with the new ingredient being per-material restitution and per-surface friction working together.</p>
+                <p><strong>Objective:</strong> Build a Pygame demo that drops three balls simultaneously from the same height onto a single floor and lets you watch the lesson's two surface-physics rules play against each other in real time. Each ball has its own <strong>restitution</strong> (the bounce-response coefficient e in the lesson's <code>velocity.y *= -restitution</code> floor-collision formula) — rubber 0.8 (lots of bounces), steel 0.6 (a few), putty 0.1 (essentially dead on first contact, matching the lesson's material table). Each frame a ball is on the ground, the floor's <strong>kinetic friction</strong> decays its horizontal velocity via <code>velocity.x *= (1 - friction * dt)</code> — the lesson's surface-friction pattern. A <strong>resting threshold</strong> (<code>if abs(velocity) &lt; 5: velocity = 0</code>) is non-negotiable here: friction decay is asymptotic and would jitter forever without it (Best Practice 'Threshold Values: Stop objects when velocity is very small'). Press R to drop a fresh trio with a small horizontal nudge so the friction decay is visible too.</p>
                 <h4>Instructions:</h4>
                 <ol>
                     <li>Reuse the <code>PhysicsObject</code> shape from the velocity_acceleration lesson: <code>position</code>, <code>velocity</code>, <code>acceleration</code> (all <code>Vector2</code>), <code>mass</code>; add <code>restitution</code> (float) and a <code>color</code> for visual identity.</li>
                     <li>Create three balls in a list: rubber (<code>e=0.8</code>, red), steel (<code>e=0.6</code>, gray), putty (<code>e=0.1</code>, brown) — values from the lesson's material table.</li>
                     <li>Define one floor <code>FRICTION = 1.5</code> (per-second friction coefficient — values 0.5–3 feel right for kinetic friction in pixels-per-second-squared scale).</li>
-                    <li>Each frame: apply gravity via <code>apply_force(Vector2(0, 980 * mass))</code> (chat-44 M2 pattern), integrate Euler, reset acceleration.</li>
+                    <li>Each frame: apply gravity via <code>apply_force(Vector2(0, 980 * mass))</code> (pattern), integrate Euler, reset acceleration.</li>
                     <li>On floor hit (<code>position.y &gt;= floor_y</code>): clamp <code>position.y = floor_y</code>, reflect Y velocity with energy loss as <code>velocity.y *= -restitution</code> — the lesson's core bounce formula.</li>
                     <li>If the ball is touching the floor (<code>position.y &gt;= floor_y - 1</code>), apply kinetic friction to horizontal velocity each frame: <code>velocity.x *= (1 - FRICTION * dt)</code>.</li>
                     <li>Resting threshold: <code>if abs(velocity.y) &lt; 5: velocity.y = 0</code> AND <code>if abs(velocity.x) &lt; 1: velocity.x = 0</code> — without these, the asymptotic friction decay never zeroes out and the balls jitter forever (Best Practice 'Threshold Values' verbatim).</li>
@@ -1268,7 +1268,7 @@ from pygame.math import Vector2
 pygame.init()
 W, H = 600, 400
 FLOOR_Y = H - 30
-GRAVITY = 980      # chat-44 M2 pattern: positive y because Pygame Y grows down
+GRAVITY = 980      # pattern: positive y because Pygame Y grows down
 FRICTION = 1.5     # per-second kinetic friction coefficient
 screen = pygame.display.set_mode((W, H))
 pygame.display.set_caption("Three Balls, One Floor")
@@ -1290,7 +1290,7 @@ class Ball:
         self.acceleration += force / self.mass
 
     def update(self, dt: float) -> None:
-        # Gravity each frame (chat-44 M2 pattern)
+        # Gravity each frame (pattern)
         self.apply_force(Vector2(0, GRAVITY * self.mass))
         # Euler integration
         self.velocity += self.acceleration * dt

@@ -778,7 +778,7 @@ class RealisticJump:
     <pre class="language-python"><code>import pygame
 from pygame.math import Vector2
 
-# Earth gravity 980 px/s² (chat-43 coordinates: +y is screen-down).
+# Earth gravity 980 px/s² (coordinates: +y is screen-down).
 # Moon gravity ~16.5% of Earth.
 EARTH_G: float = 980.0
 MOON_G: float = 162.0  # EARTH_G * 0.165
@@ -812,7 +812,7 @@ class JumpingCharacter:
             self.on_ground = False
 
     def update(self, dt: float, gravity: float, floor_y: int) -> None:
-        # Constant down-gravity: +y direction (chat-43 coordinates)
+        # Constant down-gravity: +y direction (coordinates)
         self.velocity.y += gravity * dt
         # Terminal velocity cap prevents tunneling through thin floors
         if self.velocity.y &gt; MAX_FALL:
@@ -918,12 +918,12 @@ if __name__ == "__main__":
 
             <div class="card card-info">
                 <h3>🏋️‍♂️ Exercise 1: Earth, Moon, and a Floor That Bounces</h3>
-                <p><strong>Objective:</strong> Build a platformer-style 'bouncy ball with tunable gravity' demo (~50 lines) that exercises three pillar gravity patterns in one program: <strong>constant down-gravity</strong> applied as a force every frame via <code>apply_force(Vector2(0, GRAVITY * mass))</code> with POSITIVE y because Pygame's screen Y grows down (the lesson's Earth-mode pattern + chat-43 coordinates Y-axis-flip rule); <strong>one-shot jump impulse</strong> via <code>velocity.y = -JUMP_SPEED</code> on SPACEBAR <code>KEYDOWN</code> ONLY when <code>on_ground</code> is True (the lesson's <code>JumpingCharacter.jump()</code> on-ground guard — without it, holding spacebar re-launches the ball every frame); and <strong>terminal velocity</strong> via <code>if velocity.y &gt; MAX_FALL_SPEED: velocity.y = MAX_FALL_SPEED</code> (Best Practice 'Terminal Velocity: Cap fall speed for better control' + Key Takeaway 'Terminal velocity prevents uncontrollable falling'). Press M to toggle between Earth gravity (980 px/s²) and Moon gravity (~162 px/s² = Earth · 0.165) per the lesson's Moon mode; the floor reflects velocity with energy loss (<code>velocity.y *= -0.6</code>) so the ball settles after a few bounces — a preview of next lesson's bounce_friction.</p>
+                <p><strong>Objective:</strong> Build a platformer-style 'bouncy ball with tunable gravity' demo (~50 lines) that exercises three pillar gravity patterns in one program: <strong>constant down-gravity</strong> applied as a force every frame via <code>apply_force(Vector2(0, GRAVITY * mass))</code> with POSITIVE y because Pygame's screen Y grows down (the lesson's Earth-mode pattern + coordinates Y-axis-flip rule); <strong>one-shot jump impulse</strong> via <code>velocity.y = -JUMP_SPEED</code> on SPACEBAR <code>KEYDOWN</code> ONLY when <code>on_ground</code> is True (the lesson's <code>JumpingCharacter.jump()</code> on-ground guard — without it, holding spacebar re-launches the ball every frame); and <strong>terminal velocity</strong> via <code>if velocity.y &gt; MAX_FALL_SPEED: velocity.y = MAX_FALL_SPEED</code> (Best Practice 'Terminal Velocity: Cap fall speed for better control' + Key Takeaway 'Terminal velocity prevents uncontrollable falling'). Press M to toggle between Earth gravity (980 px/s²) and Moon gravity (~162 px/s² = Earth · 0.165) per the lesson's Moon mode; the floor reflects velocity with energy loss (<code>velocity.y *= -0.6</code>) so the ball settles after a few bounces — a preview of next lesson's bounce_friction.</p>
                 <h4>Instructions:</h4>
                 <ol>
                     <li>Reuse the <code>PhysicsObject</code> shape from the previous lesson: <code>position</code>, <code>velocity</code>, <code>acceleration</code> (all <code>Vector2</code>), <code>mass</code>; plus an <code>on_ground</code> bool.</li>
                     <li>Define <code>EARTH_G = 980</code>, <code>MOON_G = 162</code> (Earth · 0.165 per the lesson's Moon Gravity mode), <code>JUMP_SPEED = 500</code>, <code>MAX_FALL = 800</code>; start with <code>gravity = EARTH_G</code>.</li>
-                    <li>Each frame, <code>apply_force(Vector2(0, gravity * mass))</code> — <strong>POSITIVE</strong> y, because Pygame Y grows down so 'down' is +y (chat-43 coordinates Common Problems #1).</li>
+                    <li>Each frame, <code>apply_force(Vector2(0, gravity * mass))</code> — <strong>POSITIVE</strong> y, because Pygame Y grows down so 'down' is +y (coordinates Common Problems #1).</li>
                     <li>Handle SPACE in the <code>KEYDOWN</code> event branch: <code>if on_ground: velocity.y = -JUMP_SPEED; on_ground = False</code> — negative because 'up' is −y; one-shot to avoid the rocket-launch foot-gun.</li>
                     <li>Handle M in the <code>KEYDOWN</code> branch to toggle <code>gravity</code> between EARTH_G and MOON_G — the difference is dramatic: jump arcs roughly 6× higher on Moon.</li>
                     <li>After the integrator runs (<code>velocity += accel * dt; position += velocity * dt</code>), clamp fall speed: <code>if velocity.y &gt; MAX_FALL: velocity.y = MAX_FALL</code>.</li>
@@ -1020,8 +1020,8 @@ pygame.quit()</code></pre>
                 <div class="quiz-question">
                     <p><strong>Question 1:</strong> When you apply Earth-like gravity each frame in Pygame via <code>apply_force(Vector2(0, g * mass))</code>, what's the SIGN of <code>g</code>?</p>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-correct="true" data-explanation="POSITIVE. Pygame's screen origin is top-left with Y growing DOWN (chat-43 coordinates lesson, Common Coordinate Problems #1 'Y-Axis Confusion: Screen Y goes down, math Y goes up'), so 'down' on screen is the +y direction. A gravity force vector pointing toward the bottom of the screen is therefore (0, +g), not (0, \u2212g). The lesson's Earth mode uses gravityStrength = 980 (positive) and applies it as +mass*gravity in the y component. Math-class instinct says 'down is negative,' but that's only true with math-Y-up conventions; in screen space, gravity literally adds to y.">A) Positive \u2014 because Pygame Y grows down, 'down' is +y</button>
-                        <button class="quiz-option" data-correct="false" data-hint="That's the math-class convention where Y points up so down is negative. Pygame is screen space, top-left origin, Y down \u2014 the same Y-flip you handled in the chat-43 trigonometry lesson when calling pygame.transform.rotate(-angle).">B) Negative \u2014 gravity pulls things 'down' which is mathematically \u2212y</button>
+                        <button class="quiz-option" data-correct="true" data-explanation="POSITIVE. Pygame's screen origin is top-left with Y growing DOWN (coordinates lesson, Common Coordinate Problems #1 'Y-Axis Confusion: Screen Y goes down, math Y goes up'), so 'down' on screen is the +y direction. A gravity force vector pointing toward the bottom of the screen is therefore (0, +g), not (0, \u2212g). The lesson's Earth mode uses gravityStrength = 980 (positive) and applies it as +mass*gravity in the y component. Math-class instinct says 'down is negative,' but that's only true with math-Y-up conventions; in screen space, gravity literally adds to y.">A) Positive \u2014 because Pygame Y grows down, 'down' is +y</button>
+                        <button class="quiz-option" data-correct="false" data-hint="That's the math-class convention where Y points up so down is negative. Pygame is screen space, top-left origin, Y down \u2014 the same Y-flip you handled in the trigonometry lesson when calling pygame.transform.rotate(-angle).">B) Negative \u2014 gravity pulls things 'down' which is mathematically \u2212y</button>
                         <button class="quiz-option" data-correct="false" data-hint="Sign matters. A zero force does nothing. The whole point of gravity is to add a non-zero downward acceleration each frame.">C) Zero \u2014 gravity is a constant offset, not a force</button>
                     </div>
                     <div class="quiz-feedback"></div>

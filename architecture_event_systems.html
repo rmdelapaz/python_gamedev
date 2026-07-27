@@ -236,9 +236,9 @@ class EventBus:
         # Add to queue for processing
         self.event_queue.put(event)
         
-        # Process immediately if not already processing
-        if not self.processing:
-            self.process_events()
+        # Dispatch is DEFERRED: emit() only enqueues. Call process_events()
+        # (typically once per frame, at a safe batch boundary) to drain the
+        # queue. Use emit_immediate() for synchronous, same-call dispatch.
     
     def emit_immediate(self, event: Event):
         """Emit an event immediately, bypassing the queue"""
@@ -285,9 +285,7 @@ class PriorityEventBus(EventBus):
         """Emit event with priority"""
         # Priority queue uses (priority, item) tuples
         self.event_queue.put((event.priority, event.timestamp, event))
-        
-        if not self.processing:
-            self.process_events()
+        # Deferred, like the base class: process_events() drains in priority order.
     
     def process_events(self):
         """Process events in priority order"""
@@ -637,7 +635,8 @@ class EventDrivenGame:
             ))
             self.score += 10
         elif key == pygame.K_h:
-            # Take damage; PLAYER_DEATH at priority=2 fires inline if health hits 0.
+            # Take damage; if health hits 0, PLAYER_DEATH is queued at priority=2
+            # (drained at the next frame boundary, ahead of routine events).
             self.player.take_damage(25)
 
     def run(self) -> None:
@@ -879,10 +878,10 @@ while True:
                 </div>
 
                 <div class="quiz-question">
-                    <p><strong>Question 2:</strong> The lesson distinguishes <code>EventBus.emit(event)</code> (which calls <code>self.event_queue.put(event)</code> and processes via <code>process_events()</code>) from <code>EventBus.emit_immediate(event)</code> (which calls <code>self._dispatch_event(event)</code> directly, bypassing the queue). Why does the lesson keep both methods rather than collapsing to one?</p>
+                    <p><strong>Question 2:</strong> The lesson distinguishes <code>EventBus.emit(event)</code> (which enqueues via <code>self.event_queue.put(event)</code>, to be dispatched later when <code>process_events()</code> drains the queue) from <code>EventBus.emit_immediate(event)</code> (which calls <code>self._dispatch_event(event)</code> directly, bypassing the queue). Why does the lesson keep both methods rather than collapsing to one?</p>
                     <div class="quiz-options">
                         <button class="quiz-option" data-correct='false' data-hint='Per-event cost is essentially identical between the two methods &mdash; both do the same listeners[event_type] dict lookup and the same callback iteration; the queue.put() in emit() is a few microseconds at most. The driver is timing semantics (when does the listener&apos;s reaction land relative to the publisher&apos;s next line?), not throughput.'>A) <code>emit_immediate</code> is the &apos;fast path&apos; for hot events because skipping the queue saves CPU per emit; <code>emit</code> is the slow general-purpose path.</button>
-                        <button class="quiz-option" data-correct='true' data-explanation='Queued <code>emit()</code> defers dispatch to a controlled batch boundary (the lesson&apos;s process_events() drain at the top of every frame), avoiding RE-ENTRANCE bugs where a callback emits during dispatch and the new event interleaves mid-iteration over listeners[event_type]; queued events are also batchable for replay / debugging / event-sourcing. Synchronous <code>emit_immediate()</code> is the right choice when the listener&apos;s reaction MUST land before the publisher&apos;s next line of code &mdash; e.g., DAMAGE_TAKEN updating Player.health before subsequent collision checks read it the same frame, or PLAYER_DEATH at priority=1 in EventDrivenGame that must fire before the next physics step. Two orthogonal dispatch modes for two orthogonal timing requirements &mdash; choosing the wrong one causes either re-entrance bugs (immediate emits-during-dispatch interleaving) or stale-frame bugs (queued events firing one frame after the game state they describe is already gone).'>B) Queued <code>emit()</code> defers dispatch to a controlled batch boundary (top-of-frame <code>process_events()</code> drain), avoiding re-entrance bugs where a callback emits during dispatch and the new event interleaves mid-iteration; synchronous <code>emit_immediate()</code> is correct when the listener&apos;s reaction MUST land before the publisher&apos;s next line of code.</button>
+                        <button class="quiz-option" data-correct='true' data-explanation='Queued <code>emit()</code> defers dispatch to a controlled batch boundary (the lesson&apos;s process_events() drain at the top of every frame), avoiding RE-ENTRANCE bugs where a callback emits during dispatch and the new event interleaves mid-iteration over listeners[event_type]; queued events are also batchable for replay / debugging / event-sourcing. Synchronous <code>emit_immediate()</code> is the right choice when the listener&apos;s reaction MUST land before the publisher&apos;s next line of code &mdash; e.g., DAMAGE_TAKEN updating Player.health before subsequent collision checks read it the same frame. Priority is a separate axis from immediacy: EventDrivenGame emits PLAYER_DEATH through the QUEUED path at priority=2 (below the default 5), so it drains ahead of routine events at the next batch boundary &mdash; priority orders the queue, it does not make dispatch synchronous. Two orthogonal dispatch modes for two orthogonal timing requirements &mdash; choosing the wrong one causes either re-entrance bugs (immediate emits-during-dispatch interleaving) or stale-frame bugs (queued events firing one frame after the game state they describe is already gone).'>B) Queued <code>emit()</code> defers dispatch to a controlled batch boundary (top-of-frame <code>process_events()</code> drain), avoiding re-entrance bugs where a callback emits during dispatch and the new event interleaves mid-iteration; synchronous <code>emit_immediate()</code> is correct when the listener&apos;s reaction MUST land before the publisher&apos;s next line of code.</button>
                         <button class="quiz-option" data-correct='false' data-hint='The two methods produce different behavior in any scenario where (a) a callback emits another event during dispatch, or (b) the publisher&apos;s next line depends on the listener having already run. They are NOT interchangeable; the lesson keeps both precisely because they encode different timing semantics. Picking the wrong one causes either re-entrance bugs (immediate emits-during-dispatch interleaving) or stale-frame bugs (queued events firing one frame after their context).'>C) <code>emit_immediate</code> is just an alias for <code>emit</code>; they produce identical behavior and the duplication is purely API ergonomics.</button>
                     </div>
                     <div class="quiz-feedback"></div>

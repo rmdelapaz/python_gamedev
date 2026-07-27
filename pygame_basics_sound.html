@@ -110,17 +110,19 @@
     
     <pre class="language-python"><code>import pygame
 
-# Initialize Pygame and the mixer
-pygame.init()
-pygame.mixer.init()
-
-# Optional: Configure mixer for better performance
-pygame.mixer.init(
+# Configure the mixer BEFORE pygame.init().
+# pygame.init() auto-initializes the mixer with default settings. If you call
+# pygame.mixer.init(frequency=..., buffer=...) AFTER that, the mixer is already
+# running, so the call is a no-op and your arguments are silently ignored.
+# pre_init() just records the settings you want; pygame.init() then starts the
+# mixer with them.
+pygame.mixer.pre_init(
     frequency=22050,     # Sample rate (22050, 44100, 48000)
-    size=-16,           # 16-bit signed samples
-    channels=2,         # Stereo
-    buffer=512          # Smaller = less latency, more CPU
+    size=-16,            # 16-bit signed samples
+    channels=2,          # Stereo
+    buffer=512           # Smaller = less latency, more CPU
 )
+pygame.init()            # Starts everything, including the mixer with the settings above
 
 # Set number of channels for sound effects
 pygame.mixer.set_num_channels(8)  # 8 simultaneous sounds</code></pre>
@@ -643,9 +645,9 @@ import random
 
 class AudioGame:
     def __init__(self):
-        pygame.init()
-        pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=512)
-        
+        pygame.mixer.pre_init(frequency=22050, size=-16, channels=2, buffer=512)
+        pygame.init()  # pre_init above ensures these mixer settings actually take effect
+
         self.screen = pygame.display.set_mode((800, 600))
         pygame.display.set_caption("Audio Adventure")
         self.clock = pygame.time.Clock()

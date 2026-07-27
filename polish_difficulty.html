@@ -434,16 +434,16 @@
                 if (Math.abs(difference) > 10) {
                     const adjustment = difference * this.dda.adjustmentRate * 0.01;
                     this.currentDifficulty = Math.max(1, Math.min(10, 
-                        this.currentDifficulty - adjustment));
+                        this.currentDifficulty + adjustment));
                     
                     this.dda.adjustmentCount++;
                     this.dda.lastAdjustment = Date.now();
                     
                     // Update trend
                     if (adjustment > 0) {
-                        this.dda.trend = 'Easier';
-                    } else if (adjustment < 0) {
                         this.dda.trend = 'Harder';
+                    } else if (adjustment < 0) {
+                        this.dda.trend = 'Easier';
                     } else {
                         this.dda.trend = 'Stable';
                     }
@@ -1211,8 +1211,8 @@ class DifficultyManager:
         target_performance = self.target_success_rate * 100
         error = performance - target_performance
         
-        # Adjust difficulty
-        adjustment = -error * self.dda_rate * 0.01
+        # Adjust difficulty: raise it when the player is above target, lower it when below
+        adjustment = error * self.dda_rate * 0.01
         self.current_difficulty += adjustment
         
         # Clamp difficulty
@@ -1425,7 +1425,7 @@ class DifficultyPresets:
                 <ol>
                     <li>Create a <code>Difficulty</code> class with a scalar <code>value</code> in <code>[1, 10]</code>, a <code>mode</code> (<code>'static'</code> / <code>'dda'</code> / <code>'flow'</code>), rolling 10-second windows of <code>recent_kills</code> and <code>recent_deaths</code>, and lifetime <code>shots</code> / <code>hits</code> counters.</li>
                     <li>Compute a <code>performance</code> scalar in <code>[0, 100]</code> as a weighted blend: start at <code>50</code>, add <code>(accuracy - 50) * 0.3</code>, add <code>recent_kills * 4</code>, subtract <code>recent_deaths * 6</code>, clamp to <code>[0, 100]</code>. <strong>This is the vectors anchor &mdash; performance is a scalar magnitude derived from multiple weighted components, exactly the way speed is the magnitude of a velocity vector.</strong></li>
-                    <li>In <code>'dda'</code> mode, run the canonical control loop every frame: <code>error = performance - 65.0</code> (target 65% performance), then <code>value -= error * 0.01 * dt</code>, then clamp <code>value</code> to <code>[1, 10]</code>. The clamp is non-negotiable &mdash; without it, runaway adjustment pushes <code>value</code> off the scale.</li>
+                    <li>In <code>'dda'</code> mode, run the canonical control loop every frame: <code>error = performance - 65.0</code> (target 65% performance), then <code>value += error * 0.01 * dt</code>, then clamp <code>value</code> to <code>[1, 10]</code>. The clamp is non-negotiable &mdash; without it, runaway adjustment pushes <code>value</code> off the scale.</li>
                     <li>In <code>'flow'</code> mode, compute <code>ratio = skill / max(1, challenge)</code> where <code>skill = performance</code> and <code>challenge = value * 10</code>. Classify: <code>ratio &lt; 0.5</code> &rarr; <code>FRUSTRATION</code>, <code>ratio &gt; 2.0</code> &rarr; <code>BOREDOM</code>, <code>0.7 &lt;= ratio &lt;= 1.3</code> &rarr; <code>FLOW</code>, otherwise <code>ANXIETY</code>. The <strong>ratio</strong> is what drives the state, not the absolute difficulty.</li>
                     <li>Wire <strong>one difficulty scalar to N gameplay axes via per-axis exponents</strong>: <code>mult = value / 5.0</code>, then <code>enemy_speed = 80 * mult ** 0.8</code> (sublinear &mdash; responsive), <code>enemy_hp = round(2 * mult ** 1.2)</code> (superlinear &mdash; spongy at high difficulty), <code>spawn_int = 1.5 / mult ** 0.7</code> (faster spawns at high mult), <code>player_dmg = (2 - mult) ** 0.5</code> (INVERSE &mdash; high difficulty reduces player damage).</li>
                     <li>Build the gameplay loop: 800&times;480 window, player rect (24&times;24, WASD/arrows at 280 px/s, <code>clamp_ip</code> to screen), enemies spawn from the top with hp from <code>diff.enemy_hp()</code> and chase the player at <code>diff.enemy_speed()</code>; <kbd>Space</kbd> fires a yellow projectile upward; projectile-vs-enemy collision deals <code>diff.player_dmg()</code>; enemy-vs-player collision counts as a death.</li>
@@ -1469,7 +1469,7 @@ class Difficulty:
         self.challenge = self.value * 10
         if self.mode == 'dda':
             error = self.performance - 65.0    # error * rate * clamp
-            self.value = max(1.0, min(10.0, self.value - error * 0.01 * dt))
+            self.value = max(1.0, min(10.0, self.value + error * 0.01 * dt))
         ratio = self.skill / max(1.0, self.challenge)   # ratio drives flow, not absolute level
         if ratio &lt; 0.5: self.flow_state = 'frustration'
         elif ratio &gt; 2.0: self.flow_state = 'boredom'
@@ -1559,7 +1559,7 @@ pygame.quit()</code></pre>
                 <h3>🎯 Quick Quiz</h3>
 
                 <div class="quiz-question">
-                    <p><strong>Question 1:</strong> Dynamic Difficulty Adjustment in the lesson&rsquo;s <code>update_dynamic_difficulty</code> runs every frame as <code>error = performance - target</code>, then <code>current_difficulty -= error * dda_rate * 0.01</code>, then <code>clamp(1, 10)</code>. Why is this continuous, clamped, error-driven shape preferred over &ldquo;lower difficulty when the player dies, raise it when they get a kill streak&rdquo;?</p>
+                    <p><strong>Question 1:</strong> Dynamic Difficulty Adjustment in the lesson&rsquo;s <code>update_dynamic_difficulty</code> runs every frame as <code>error = performance - target</code>, then <code>current_difficulty += error * dda_rate * 0.01</code>, then <code>clamp(1, 10)</code>. Why is this continuous, clamped, error-driven shape preferred over &ldquo;lower difficulty when the player dies, raise it when they get a kill streak&rdquo;?</p>
                     <div class="quiz-options">
                         <button class="quiz-option" data-correct="false" data-hint="Discrete event triggers under-react and over-react: a single death after a long winning streak shouldn't reset the system, but a binary 'lower on death' rule does exactly that. The continuous form averages noise out across frames; the event-driven form is dominated by the most recent event.">A) Event-driven adjustments are equivalent in effect; the lesson uses a continuous loop only because death and kill events are inconvenient to detect from inside the difficulty manager.</button>
                         <button class="quiz-option" data-correct="true" data-explanation="The error * rate * clamp shape is the canonical proportional control loop applied to game balance. (a) 'error' is the gap between observed performance and a target (65% in the lesson) -- a single scalar that compresses many noisy signals (accuracy, kill rate, death rate) into one number, exactly the way speed is the scalar magnitude of a velocity vector (vectors anchor: performance is a magnitude derived from weighted components). (b) 'rate' (0.1 * 0.01 = 0.001 per frame) makes adjustment slow enough to be invisible to the player, drifting over seconds rather than jumping per-event -- the same per-frame integration shape used in physics for impulse-driven simulation response. (c) 'clamp' to [1, 10] prevents runaway: without it, a frustrated player who dies repeatedly would push current_difficulty below 1 (negative enemy speed) or a winning streak would push it above 10. Event-driven 'lower on death' rules are dominated by the most recent event and feel jerky; the continuous form is statistically stable.">B) The continuous form treats performance as a SCALAR signal that compresses noisy multi-source data (accuracy, kill rate, death rate) into one number, then drifts difficulty slowly via the small rate constant so adjustment is invisible per-frame; the clamp prevents runaway off the [1, 10] scale. Event-driven binary triggers are dominated by the most recent event, which feels jerky and over-reacts to noise.</button>

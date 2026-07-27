@@ -659,7 +659,7 @@ class CollisionSystem:
             return
         
         # Calculate impulse magnitude
-        impulse = 2 * dvn / (1/obj1.mass + 1/obj2.mass)
+        impulse = dvn / (1/obj1.mass + 1/obj2.mass)
         impulse *= (1 + restitution)
         
         # Apply impulse to velocities
@@ -1090,7 +1090,7 @@ class CollisionResponseDemo:
                 return
             
             # Apply impulse
-            impulse = 2 * velocity_along_normal / (1/c1.mass + 1/c2.mass)
+            impulse = velocity_along_normal / (1/c1.mass + 1/c2.mass)
             impulse_vector = normal * impulse * (1 + self.restitution)
             
             c1.velocity += impulse_vector / c1.mass

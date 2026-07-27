@@ -397,7 +397,7 @@ class FadingSprite:
 
 # Scaling
 scaled_image = pygame.transform.scale(original_image, (new_width, new_height))
-scaled2x = pygame.transform.scale2x(original_image)  # Double size with smoothing
+scaled2x = pygame.transform.scale2x(original_image)  # Double size with the AdvMAME2x pixel-art algorithm (no smoothing/interpolation)
 
 # Smooth scaling (better quality, slower)
 smooth_scaled = pygame.transform.smoothscale(original_image, (new_width, new_height))

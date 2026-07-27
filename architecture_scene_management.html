@@ -852,9 +852,10 @@ class Scene:
             self.loaded = True
     
     def on_exit(self) -> None:
-        """Called when leaving the scene"""
-        pass
-    
+        """Called when leaving the scene; unload resources to free memory"""
+        self.unload_resources()
+        self.loaded = False
+
     def on_pause(self) -> None:
         """Called when scene is paused"""
         pass
@@ -1375,7 +1376,7 @@ sys.exit()</code></pre>
                     <p><strong>Question 3:</strong> The lesson&rsquo;s <code>Scene.on_enter()</code> begins with <code>if not self.loaded: self.load_resources(); self.loaded = True</code>.</p>
                     <div class='quiz-options'>
                         <button class='quiz-option' data-correct='false' data-hint='The cost is not function-call overhead &mdash; it is real texture/sound/GPU buffer allocation at megabyte scale. The guard is correctness, not microbenchmark optimization; skipping the guard would not just slow things down, it would actively leak memory.'>A) The guard is a Python optimization to skip redundant function calls on subsequent enter calls; without it, performance degrades over many scene swaps but no correctness issue exists.</button>
-                        <button class='quiz-option' data-correct='true' data-explanation='At scene-lifecycle scope on_enter()&rsquo;s work is significant &mdash; multi-megabyte texture loads, GPU buffer allocation, music decoder setup, asset streaming pipelines. Calling it twice without an intervening on_exit (e.g., pause overlay popped returning to the same underlying scene; rapid change_scene(&apos;A&apos;) &rarr; change_scene(&apos;A&apos;) in test or save-load code paths; race conditions in async loaders) would double-allocate, leaking the original allocation; the guard prevents that. architecture_scene_management is the production-scale instantiation where the costs are no longer milliseconds of state-machine hooks but megabytes of asset-pipeline operations.'>B) The guard prevents DOUBLE-ALLOCATION when a scene is re-entered through stack pop without intervening on_exit, or through rapid change_scene cycles in test/save-load code paths; at scene-lifecycle scope on_enter()&rsquo;s allocations are megabyte-scale (textures, GPU buffers, music decoders), so double-allocation is a real production memory leak.</button>
+                        <button class='quiz-option' data-correct='true' data-explanation='At scene-lifecycle scope on_enter()&rsquo;s work is significant &mdash; multi-megabyte texture loads, GPU buffer allocation, music decoder setup, asset streaming pipelines. Calling it twice on a scene whose loaded flag is still True (e.g., a save/load restore path that re-enters the current scene, or an async loader firing on_enter twice before the first load completes) would double-allocate, leaking the original allocation; the guard prevents that. Note the stack path is deliberately safe without relying on the guard: pop_scene() calls on_resume(), not on_enter(), so the underlying scene is never reloaded. architecture_scene_management is the production-scale instantiation where the costs are no longer milliseconds of state-machine hooks but megabytes of asset-pipeline operations.'>B) The guard prevents DOUBLE-ALLOCATION when on_enter() runs again on an already-loaded scene &mdash; e.g. a save/load restore path, or an async loader firing on_enter twice before the first load finishes (stack pop does NOT hit this: pop_scene calls on_resume(), not on_enter()); at scene-lifecycle scope on_enter()&rsquo;s allocations are megabyte-scale (textures, GPU buffers, music decoders), so double-allocation is a real production memory leak.</button>
                         <button class='quiz-option' data-correct='false' data-hint='The lesson&rsquo;s scene management is single-threaded; the loaded boolean works within a sequential call chain, not against concurrent access. Production thread-safe loading would need a lock or atomic compare-and-swap, not just a plain boolean flag.'>C) The guard is for thread safety &mdash; multiple loading threads could call on_enter simultaneously and the loaded flag prevents race conditions during async resource loading.</button>
                     </div>
                     <div class='quiz-feedback'></div>

@@ -98,6 +98,14 @@
         E --> M["Water Physics"]
     </div>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/gravity-integration.svg"
+             alt="A ball launched from the lower left follows a parabolic arc to the lower right and lands on a ground line. Eight dots mark its position at equal time steps: they are spaced equally left-to-right but their vertical gaps shrink toward the peak and grow on the way down. A constant-length amber arrow labelled g points straight down from every dot. Blue velocity arrows at launch, peak, and descent are steep, then flat, then steep again. A box shows the per-frame update: vy += g·dt, then y += vy·dt."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>The key idea: gravity isn&rsquo;t a <em>fall speed</em>, it&rsquo;s a constant downward <strong>acceleration</strong>. Every frame it adds the same small amount to the ball&rsquo;s vertical velocity, and that velocity then moves its position. Because the nudge is constant but velocity keeps growing, equal time steps cover unequal distances &mdash; the ball slows going up, hangs at the peak, and rushes down. That single mechanism is why jumps trace an arc and why falls start slow and get fast.</figcaption>
+    </figure>
+
     <h2 id="interactive-gravity-simulator">Interactive Gravity Simulator</h2>
     
     <div class="canvas-wrapper">

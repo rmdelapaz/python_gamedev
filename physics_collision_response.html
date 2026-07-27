@@ -97,6 +97,14 @@
         D --> L["Sound"]
     </div>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/collision-impulse.svg"
+             alt="On the left, two circular bodies A and B touch; A carries a blue velocity arrow pointing toward B. A dashed line through both centres is the contact normal n. At the contact point, two amber arrows point in opposite directions along the normal — pushing A back and B forward — labelled 'equal and opposite impulse j'. On the right, a bar runs from restitution e = 0 (stick) through e = 0.5 (half back) to e = 1 (full bounce), with the relation 'j ∝ (1 + e) × closing speed along n'."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>Detecting a collision is only half the job &mdash; you then have to <em>respond</em>. The fix is an <strong>impulse</strong>: an instantaneous change in velocity applied along the <strong>contact normal</strong>, equal and opposite on the two bodies (Newton&rsquo;s third law). How bouncy the hit feels is set by one number, the <strong>restitution e</strong>: at 0 the bodies stick and all the energy is lost, at 1 they rebound with no loss. Tune e per material and the same code gives you both a bouncing ball and a sack of flour.</figcaption>
+    </figure>
+
     <h2 id="interactive-collision-response-simulator">Interactive Collision Response Simulator</h2>
     
     <div class="canvas-wrapper">

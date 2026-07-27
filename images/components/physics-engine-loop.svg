@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 400" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="pe-title pe-desc">
+    <title id="pe-title">The physics engine step loop at a fixed time-step</title>
+    <desc id="pe-desc">Four labelled boxes are arranged in a ring with clockwise arrows connecting them, forming a repeating loop. Starting at the top: box one, apply forces such as gravity and input; box two on the right, integrate, updating velocity by acceleration times dt and position by velocity times dt; box three at the bottom, detect collisions; box four on the left, resolve, pushing bodies apart and applying impulses. In the centre sits a clock badge reading fixed dt, one physics step. The caption explains that the whole engine is this loop repeated at a fixed time-step so the simulation stays stable and reproducible regardless of frame rate.</desc>
+
+    <style>
+        :root {
+            --box1: #3b82f6;
+            --box2: #10b981;
+            --box3: #f59e0b;
+            --box4: #8b5cf6;
+            --box-bg: #f8fafc;
+            --box-stroke: #cbd5e1;
+            --arrow: #64748b;
+            --badge-bg: #eff6ff;
+            --badge-stroke: #3b82f6;
+            --badge-text: #2563eb;
+            --text: rgb(30, 41, 59);
+            --sub-text: rgb(71, 85, 105);
+            --mono: rgb(71, 85, 105);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --box1: #569cd6;
+                --box2: #34d399;
+                --box3: #fbbf24;
+                --box4: #a78bfa;
+                --box-bg: #1e293b;
+                --box-stroke: #475569;
+                --arrow: #94a3b8;
+                --badge-bg: #0f213b;
+                --badge-stroke: #569cd6;
+                --badge-text: #93c5fd;
+                --text: #f1f5f9;
+                --sub-text: #cbd5e1;
+                --mono: #cbd5e1;
+            }
+        }
+        .title { fill: var(--text); font: 700 16px ui-sans-serif, system-ui, sans-serif; }
+        .box { fill: var(--box-bg); stroke: var(--box-stroke); stroke-width: 1.5; }
+        .num { font: 800 15px ui-sans-serif, system-ui, sans-serif; }
+        .box-title { fill: var(--text); font: 700 14px ui-sans-serif, system-ui, sans-serif; }
+        .box-sub { fill: var(--sub-text); font: 600 12px ui-sans-serif, system-ui, sans-serif; }
+        .box-mono { fill: var(--mono); font: 700 12px ui-monospace, Consolas, monospace; }
+        .arrow { stroke: var(--arrow); stroke-width: 3; fill: none; stroke-linecap: round; }
+        .arrow-head { fill: var(--arrow); }
+        .badge { fill: var(--badge-bg); stroke: var(--badge-stroke); stroke-width: 2; }
+        .badge-clock { stroke: var(--badge-text); stroke-width: 2.5; fill: none; stroke-linecap: round; }
+        .badge-text { fill: var(--badge-text); font: 800 13px ui-sans-serif, system-ui, sans-serif; }
+        .badge-sub { fill: var(--sub-text); font: 600 11px ui-sans-serif, system-ui, sans-serif; }
+        .cap { fill: var(--sub-text); font: 500 13px ui-sans-serif, system-ui, sans-serif; }
+    </style>
+
+    <text class="title" x="360" y="28" text-anchor="middle">A physics engine is one step, looped at a fixed &#916;t</text>
+
+    <!-- ===== boxes ===== -->
+    <!-- 1 TOP: apply forces -->
+    <rect class="box" x="238" y="48" width="244" height="52" rx="10"/>
+    <rect x="238" y="48" width="7" height="52" rx="3" fill="var(--box1)"/>
+    <text class="num" x="258" y="70" fill="var(--box1)">1</text>
+    <text class="box-title" x="274" y="70">Apply forces</text>
+    <text class="box-sub" x="274" y="88">gravity, player input</text>
+
+    <!-- 2 RIGHT: integrate -->
+    <rect class="box" x="470" y="168" width="228" height="64" rx="10"/>
+    <rect x="470" y="168" width="7" height="64" rx="3" fill="var(--box2)"/>
+    <text class="num" x="490" y="190" fill="var(--box2)">2</text>
+    <text class="box-title" x="506" y="190">Integrate</text>
+    <text class="box-mono" x="490" y="210">v += a&#183;dt</text>
+    <text class="box-mono" x="490" y="226">x += v&#183;dt</text>
+
+    <!-- 3 BOTTOM: detect collisions -->
+    <rect class="box" x="238" y="300" width="244" height="52" rx="10"/>
+    <rect x="238" y="300" width="7" height="52" rx="3" fill="var(--box3)"/>
+    <text class="num" x="258" y="322" fill="var(--box3)">3</text>
+    <text class="box-title" x="274" y="322">Detect collisions</text>
+    <text class="box-sub" x="274" y="340">who overlaps whom?</text>
+
+    <!-- 4 LEFT: resolve -->
+    <rect class="box" x="22" y="168" width="228" height="64" rx="10"/>
+    <rect x="22" y="168" width="7" height="64" rx="3" fill="var(--box4)"/>
+    <text class="num" x="42" y="190" fill="var(--box4)">4</text>
+    <text class="box-title" x="58" y="190">Resolve</text>
+    <text class="box-sub" x="42" y="210">push apart +</text>
+    <text class="box-sub" x="42" y="226">apply impulses</text>
+
+    <!-- ===== clockwise arrows ===== -->
+    <!-- 1 -> 2 (top-right) -->
+    <path class="arrow" d="M488 82 Q560 96 574 162"/><path class="arrow-head" d="M567 160 L576 172 L582 158 Z"/>
+    <!-- 2 -> 3 (bottom-right) -->
+    <path class="arrow" d="M574 238 Q560 300 488 316"/><path class="arrow-head" d="M494 322 L480 318 L490 308 Z"/>
+    <!-- 3 -> 4 (bottom-left) -->
+    <path class="arrow" d="M232 316 Q160 300 146 238"/><path class="arrow-head" d="M153 240 L144 228 L138 242 Z"/>
+    <!-- 4 -> 1 (top-left) -->
+    <path class="arrow" d="M146 162 Q160 96 232 82"/><path class="arrow-head" d="M226 76 L240 80 L230 90 Z"/>
+
+    <!-- ===== centre badge ===== -->
+    <circle class="badge" cx="360" cy="200" r="52"/>
+    <circle class="badge-clock" cx="360" cy="184" r="15"/>
+    <path class="badge-clock" d="M360 176 L360 184 L367 189"/>
+    <text class="badge-text" x="360" y="212" text-anchor="middle">fixed &#916;t</text>
+    <text class="badge-sub" x="360" y="228" text-anchor="middle">one step</text>
+
+    <!-- caption -->
+    <text class="cap" x="360" y="372" text-anchor="middle">The whole engine is just this loop, repeated at a fixed time-step.</text>
+    <text class="cap" x="360" y="391" text-anchor="middle">Decoupling &#916;t from frame rate keeps the simulation stable and reproducible.</text>
+</svg>

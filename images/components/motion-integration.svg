@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 330" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="mi-title mi-desc">
+    <title id="mi-title">Acceleration integrates to velocity integrates to position</title>
+    <desc id="mi-desc">Three small graphs sit in a row, each plotting a quantity against time. The first, acceleration, is a flat horizontal amber line at a constant value. An arrow labelled v plus equals a times dt leads to the second graph, velocity, which is a straight blue line ramping upward from zero. A second arrow labelled x plus equals v times dt leads to the third graph, position, which is a green curve that starts flat and grows ever steeper. Each graph is the running total of the one before it.</desc>
+
+    <style>
+        :root {
+            --axis: #64748b;
+            --accel: #f59e0b;
+            --vel: #3b82f6;
+            --vel-fill: rgba(59,130,246,0.14);
+            --pos: #10b981;
+            --pos-fill: rgba(16,185,129,0.14);
+            --arrow: #64748b;
+            --code: rgb(30, 41, 59);
+            --text: rgb(30, 41, 59);
+            --sub-text: rgb(71, 85, 105);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --axis: #94a3b8;
+                --accel: #fbbf24;
+                --vel: #569cd6;
+                --vel-fill: rgba(86,156,214,0.18);
+                --pos: #34d399;
+                --pos-fill: rgba(52,211,153,0.18);
+                --arrow: #94a3b8;
+                --code: #e2e8f0;
+                --text: #f1f5f9;
+                --sub-text: #cbd5e1;
+            }
+        }
+        .title { fill: var(--text); font: 700 16px ui-sans-serif, system-ui, sans-serif; }
+        .g-title { fill: var(--text); font: 700 13px ui-sans-serif, system-ui, sans-serif; }
+        .axis { stroke: var(--axis); stroke-width: 2; stroke-linecap: round; }
+        .axis-lbl { fill: var(--sub-text); font: 600 11px ui-sans-serif, system-ui, sans-serif; }
+        .accel { stroke: var(--accel); stroke-width: 3.5; fill: none; stroke-linecap: round; }
+        .accel-dot { fill: var(--accel); }
+        .vel { stroke: var(--vel); stroke-width: 3.5; fill: none; stroke-linecap: round; }
+        .vel-fill { fill: var(--vel-fill); }
+        .pos { stroke: var(--pos); stroke-width: 3.5; fill: none; stroke-linecap: round; }
+        .pos-fill { fill: var(--pos-fill); }
+        .q-lbl { font: 800 15px ui-sans-serif, system-ui, sans-serif; }
+        .arrow { stroke: var(--arrow); stroke-width: 3; fill: none; stroke-linecap: round; }
+        .arrow-head { fill: var(--arrow); }
+        .code { fill: var(--code); font: 700 13px ui-monospace, Consolas, monospace; }
+        .cap { fill: var(--sub-text); font: 500 13px ui-sans-serif, system-ui, sans-serif; }
+    </style>
+
+    <text class="title" x="360" y="30" text-anchor="middle">From a push to motion &#8212; integrate twice</text>
+
+    <!-- ===== G1 acceleration ===== -->
+    <text class="g-title" x="132" y="58" text-anchor="middle">acceleration</text>
+    <line class="axis" x1="60" y1="66" x2="60" y2="200"/>
+    <line class="axis" x1="60" y1="200" x2="205" y2="200"/>
+    <text class="axis-lbl" x="205" y="216" text-anchor="middle">t</text>
+    <line class="accel" x1="66" y1="112" x2="200" y2="112"/>
+    <circle class="accel-dot" cx="66" cy="112" r="4"/>
+    <text class="q-lbl" x="188" y="104" fill="var(--accel)">a</text>
+
+    <!-- arrow 1 -->
+    <text class="code" x="240" y="118" text-anchor="middle">v += a&#183;dt</text>
+    <path class="arrow" d="M214 134 L262 134"/><path class="arrow-head" d="M262 127 L276 134 L262 141 Z"/>
+
+    <!-- ===== G2 velocity ===== -->
+    <text class="g-title" x="347" y="58" text-anchor="middle">velocity</text>
+    <polygon class="vel-fill" points="275,200 414,100 414,200"/>
+    <line class="axis" x1="275" y1="66" x2="275" y2="200"/>
+    <line class="axis" x1="275" y1="200" x2="420" y2="200"/>
+    <text class="axis-lbl" x="420" y="216" text-anchor="middle">t</text>
+    <line class="vel" x1="275" y1="200" x2="414" y2="100"/>
+    <text class="q-lbl" x="400" y="92" fill="var(--vel)">v</text>
+
+    <!-- arrow 2 -->
+    <text class="code" x="455" y="118" text-anchor="middle">x += v&#183;dt</text>
+    <path class="arrow" d="M429 134 L477 134"/><path class="arrow-head" d="M477 127 L491 134 L477 141 Z"/>
+
+    <!-- ===== G3 position ===== -->
+    <text class="g-title" x="562" y="58" text-anchor="middle">position</text>
+    <path class="pos-fill" d="M490 200 Q580 200 630 86 L630 200 Z"/>
+    <line class="axis" x1="490" y1="66" x2="490" y2="200"/>
+    <line class="axis" x1="490" y1="200" x2="635" y2="200"/>
+    <text class="axis-lbl" x="635" y="216" text-anchor="middle">t</text>
+    <path class="pos" d="M490 200 Q580 200 630 86"/>
+    <text class="q-lbl" x="616" y="82" fill="var(--pos)">x</text>
+
+    <!-- caption -->
+    <text class="cap" x="360" y="258" text-anchor="middle">Acceleration changes velocity; velocity changes position &#8212; add each into the next, every frame (Euler integration).</text>
+    <text class="cap" x="360" y="280" text-anchor="middle">A flat push builds a rising speed, which builds an ever-steeper move. That two-step add is all of game motion.</text>
+</svg>

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 380" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="gr-title gr-desc">
+    <title id="gr-title">Gravity as constant acceleration along a projectile arc</title>
+    <desc id="gr-desc">A ball is launched from the lower left and follows a parabolic arc to the lower right, landing on a ground line. Eight dots mark its position at equal time steps. The dots are spaced equally left to right but their vertical gaps shrink toward the peak and grow again on the way down, showing the ball slows going up and speeds up coming down. A small constant-length amber arrow labelled g points straight down from every dot, representing the unchanging pull of gravity. Blue velocity arrows at launch, at the peak, and while descending start long and steep, shrink to horizontal at the top, then lengthen again as the ball falls. A box shows the per-frame update: vy plus equals g times dt, then y plus equals vy times dt.</desc>
+
+    <style>
+        :root {
+            --ground: #64748b;
+            --path: #94a3b8;
+            --dot: #3b82f6;
+            --grav: #f59e0b;
+            --vel: #2563eb;
+            --card: #f8fafc;
+            --card-stroke: #cbd5e1;
+            --code: rgb(30, 41, 59);
+            --code-key: #2563eb;
+            --text: rgb(30, 41, 59);
+            --sub-text: rgb(71, 85, 105);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --ground: #94a3b8;
+                --path: #64748b;
+                --dot: #569cd6;
+                --grav: #fbbf24;
+                --vel: #60a5fa;
+                --card: #1e293b;
+                --card-stroke: #475569;
+                --code: #e2e8f0;
+                --code-key: #60a5fa;
+                --text: #f1f5f9;
+                --sub-text: #cbd5e1;
+            }
+        }
+        .title { fill: var(--text); font: 700 16px ui-sans-serif, system-ui, sans-serif; }
+        .ground { stroke: var(--ground); stroke-width: 3; stroke-linecap: round; }
+        .path { fill: none; stroke: var(--path); stroke-width: 2; stroke-dasharray: 3 5; }
+        .dot { fill: var(--dot); }
+        .grav { stroke: var(--grav); stroke-width: 3; stroke-linecap: round; }
+        .grav-head { fill: var(--grav); }
+        .grav-lbl { fill: var(--grav); font: 800 13px ui-sans-serif, system-ui, sans-serif; }
+        .vel { stroke: var(--vel); stroke-width: 3.5; stroke-linecap: round; }
+        .vel-head { fill: var(--vel); }
+        .vel-lbl { fill: var(--vel); font: 800 13px ui-sans-serif, system-ui, sans-serif; }
+        .card { fill: var(--card); stroke: var(--card-stroke); stroke-width: 1.5; }
+        .code { fill: var(--code); font: 700 15px ui-monospace, Consolas, monospace; }
+        .key { fill: var(--code-key); }
+        .card-hdr { fill: var(--sub-text); font: 700 12px ui-sans-serif, system-ui, sans-serif; }
+        .cap { fill: var(--sub-text); font: 500 13px ui-sans-serif, system-ui, sans-serif; }
+    </style>
+
+    <text class="title" x="360" y="30" text-anchor="middle">Gravity is a constant downward acceleration</text>
+
+    <!-- update box (upper-left, above the launch) -->
+    <rect class="card" x="46" y="46" width="238" height="74" rx="8"/>
+    <text class="card-hdr" x="62" y="66">every frame:</text>
+    <text class="code" x="62" y="90"><tspan class="key">vy</tspan> += g &#183; dt</text>
+    <text class="code" x="62" y="112"><tspan class="key">y</tspan>  += vy &#183; dt</text>
+
+    <!-- ground -->
+    <line class="ground" x1="40" y1="300" x2="680" y2="300"/>
+
+    <!-- arc path -->
+    <path class="path" d="M80 300 Q360 -120 640 300"/>
+
+    <!-- gravity arrows (constant length) at each equal-dt dot -->
+    <g>
+        <line class="grav" x1="80"  y1="300" x2="80"  y2="316"/><path class="grav-head" d="M74 314 L80 326 L86 314 Z"/>
+        <line class="grav" x1="160" y1="197" x2="160" y2="213"/><path class="grav-head" d="M154 211 L160 223 L166 211 Z"/>
+        <line class="grav" x1="240" y1="129" x2="240" y2="145"/><path class="grav-head" d="M234 143 L240 155 L246 143 Z"/>
+        <line class="grav" x1="320" y1="94"  x2="320" y2="110"/><path class="grav-head" d="M314 108 L320 120 L326 108 Z"/>
+        <line class="grav" x1="400" y1="94"  x2="400" y2="110"/><path class="grav-head" d="M394 108 L400 120 L406 108 Z"/>
+        <line class="grav" x1="480" y1="129" x2="480" y2="145"/><path class="grav-head" d="M474 143 L480 155 L486 143 Z"/>
+        <line class="grav" x1="560" y1="197" x2="560" y2="213"/><path class="grav-head" d="M554 211 L560 223 L566 211 Z"/>
+    </g>
+    <text class="grav-lbl" x="336" y="104" text-anchor="start">g (same every frame)</text>
+
+    <!-- equal-time position dots -->
+    <circle class="dot" cx="80"  cy="300" r="6"/>
+    <circle class="dot" cx="160" cy="197" r="6"/>
+    <circle class="dot" cx="240" cy="129" r="6"/>
+    <circle class="dot" cx="320" cy="94"  r="6"/>
+    <circle class="dot" cx="400" cy="94"  r="6"/>
+    <circle class="dot" cx="480" cy="129" r="6"/>
+    <circle class="dot" cx="560" cy="197" r="6"/>
+    <circle class="dot" cx="640" cy="300" r="6"/>
+
+    <!-- velocity vectors: launch (long, up-right), apex (short, flat), descending (long, down-right) -->
+    <line class="vel" x1="80"  y1="300" x2="120" y2="240"/><path class="vel-head" d="M112 233 L127 230 L121 244 Z"/>
+    <text class="vel-lbl" x="126" y="232">v</text>
+    <line class="vel" x1="360" y1="90"  x2="410" y2="90"/><path class="vel-head" d="M406 83 L422 90 L406 97 Z"/>
+    <text class="vel-lbl" x="380" y="80" text-anchor="middle">v (only sideways)</text>
+    <line class="vel" x1="560" y1="197" x2="600" y2="257"/><path class="vel-head" d="M600 250 L607 264 L592 261 Z"/>
+    <text class="vel-lbl" x="606" y="258">v</text>
+
+    <!-- caption -->
+    <text class="cap" x="360" y="344" text-anchor="middle">Equal time steps, unequal spacing: gravity adds the same nudge to velocity every frame, so the ball slows on the way up,</text>
+    <text class="cap" x="360" y="364" text-anchor="middle">pauses at the peak, then rushes down &#8212; which is exactly why jumps arc and falls start slow and get fast.</text>
+</svg>

@@ -103,6 +103,14 @@
         F --> P["Resolution"]
     </div>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/physics-engine-loop.svg"
+             alt="Four labelled boxes arranged in a ring with clockwise arrows form a repeating loop. Top: apply forces (gravity, input). Right: integrate, updating v += a·dt and x += v·dt. Bottom: detect collisions. Left: resolve, pushing bodies apart and applying impulses. In the centre a clock badge reads 'fixed Δt, one step'."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>A physics engine looks intimidating, but its heart is one small loop run over and over: <strong>apply forces &rarr; integrate &rarr; detect collisions &rarr; resolve</strong>. The crucial detail is the <strong>fixed time-step</strong>: the loop advances by a constant &Delta;t rather than by however long the last frame took. Fixing &Delta;t decouples the simulation from frame rate, so it stays stable and gives the same result on a slow laptop and a fast desktop &mdash; essential for anything that must be fair or reproducible.</figcaption>
+    </figure>
+
     <h2 id="interactive-physics-engine-playground">Interactive Physics Engine Playground</h2>
     
     <div class="canvas-wrapper">

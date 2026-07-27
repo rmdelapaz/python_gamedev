@@ -99,6 +99,14 @@
         E --> N["Friction"]
     </div>
 
+    <figure class="svg-wrapper">
+        <img src="/images/components/motion-integration.svg"
+             alt="Three small graphs in a row, each plotting a quantity against time. The first, acceleration, is a flat horizontal amber line. An arrow labelled 'v += a·dt' leads to the second, velocity, a straight blue line ramping up from zero. A second arrow labelled 'x += v·dt' leads to the third, position, a green curve that starts flat and grows ever steeper. Each graph is the running total of the one before it."
+             class="responsive-svg"
+             loading="lazy">
+        <figcaption>All game movement is two additions repeated every frame: <strong>acceleration changes velocity, and velocity changes position</strong>. Hold acceleration steady and velocity ramps up in a straight line; feed that velocity into position and it curves away faster and faster. This is <em>Euler integration</em> &mdash; the reason a constant thrust makes a ship pull away, and the same two lines of code drive gravity, jumping, and every other kind of motion.</figcaption>
+    </figure>
+
     <h2 id="interactive-physics-playground">Interactive Physics Playground</h2>
     
     <div class="canvas-wrapper">

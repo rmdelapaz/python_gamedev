@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 340" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="ci-title ci-desc">
+    <title id="ci-title">Collision response as an impulse along the contact normal</title>
+    <desc id="ci-desc">On the left, two circular bodies touch. The left body, A, has a blue velocity arrow pointing right toward the other. A dashed line through both centres marks the contact normal, n. At the contact point, two amber arrows point in opposite directions along the normal — one pushing A back to the left, one pushing B forward to the right — labelled equal and opposite impulse j. On the right, a bar runs from restitution e equals 0 to e equals 1, marked stick with no bounce at zero, half the speed returns at one half, and perfect bounce at one. Below it a relation reads impulse is proportional to one plus e times the closing speed along n.</desc>
+
+    <style>
+        :root {
+            --ballA: #3b82f6;
+            --ballA-stroke: #2563eb;
+            --ballB: #94a3b8;
+            --ballB-stroke: #64748b;
+            --vel: #2563eb;
+            --normal: #64748b;
+            --impulse: #f59e0b;
+            --bar0: #94a3b8;
+            --bar1: #f59e0b;
+            --text: rgb(30, 41, 59);
+            --sub-text: rgb(71, 85, 105);
+            --card-stroke: #cbd5e1;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --ballA: #569cd6;
+                --ballA-stroke: #60a5fa;
+                --ballB: #64748b;
+                --ballB-stroke: #94a3b8;
+                --vel: #60a5fa;
+                --normal: #94a3b8;
+                --impulse: #fbbf24;
+                --bar0: #64748b;
+                --bar1: #fbbf24;
+                --text: #f1f5f9;
+                --sub-text: #cbd5e1;
+                --card-stroke: #475569;
+            }
+        }
+        .title { fill: var(--text); font: 700 16px ui-sans-serif, system-ui, sans-serif; }
+        .panel-lbl { fill: var(--text); font: 700 13px ui-sans-serif, system-ui, sans-serif; }
+        .ballA { fill: var(--ballA); stroke: var(--ballA-stroke); stroke-width: 2; }
+        .ballB { fill: var(--ballB); stroke: var(--ballB-stroke); stroke-width: 2; }
+        .ball-txt { fill: #ffffff; font: 800 18px ui-sans-serif, system-ui, sans-serif; }
+        .vel { stroke: var(--vel); stroke-width: 4; fill: none; stroke-linecap: round; }
+        .vel-head { fill: var(--vel); }
+        .vel-lbl { fill: var(--vel); font: 800 14px ui-sans-serif, system-ui, sans-serif; }
+        .normal { stroke: var(--normal); stroke-width: 2; stroke-dasharray: 7 5; }
+        .normal-lbl { fill: var(--normal); font: 700 13px ui-sans-serif, system-ui, sans-serif; }
+        .impulse { stroke: var(--impulse); stroke-width: 4; fill: none; stroke-linecap: round; }
+        .impulse-head { fill: var(--impulse); }
+        .impulse-lbl { fill: var(--impulse); font: 800 13px ui-sans-serif, system-ui, sans-serif; }
+        .bar0 { fill: var(--bar0); }
+        .bar1 { fill: var(--bar1); }
+        .tick { fill: var(--text); font: 700 12px ui-monospace, Consolas, monospace; }
+        .tick-sub { fill: var(--sub-text); font: 500 11px ui-sans-serif, system-ui, sans-serif; }
+        .formula { fill: var(--text); font: 700 14px ui-monospace, Consolas, monospace; }
+        .cap { fill: var(--sub-text); font: 500 13px ui-sans-serif, system-ui, sans-serif; }
+    </style>
+
+    <defs>
+        <linearGradient id="eBar" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#94a3b8"/>
+            <stop offset="1" stop-color="#f59e0b"/>
+        </linearGradient>
+    </defs>
+
+    <text class="title" x="360" y="30" text-anchor="middle">Collision response: an impulse along the contact normal</text>
+
+    <!-- ================= LEFT: geometry ================= -->
+    <text class="panel-lbl" x="205" y="66" text-anchor="middle">Resolve along the normal</text>
+
+    <!-- incoming velocity on A -->
+    <line class="vel" x1="70" y1="120" x2="132" y2="120"/><path class="vel-head" d="M128 112 L146 120 L128 128 Z"/>
+    <text class="vel-lbl" x="92" y="108">v</text>
+
+    <!-- normal line through centres -->
+    <line class="normal" x1="96" y1="168" x2="322" y2="168"/>
+    <text class="normal-lbl" x="330" y="172" text-anchor="start">n</text>
+
+    <!-- bodies -->
+    <circle class="ballA" cx="164" cy="168" r="46"/>
+    <text class="ball-txt" x="164" y="175" text-anchor="middle">A</text>
+    <circle class="ballB" cx="256" cy="168" r="46"/>
+    <text class="ball-txt" x="256" y="175" text-anchor="middle">B</text>
+
+    <!-- equal & opposite impulse at contact (offset below balls) -->
+    <line class="impulse" x1="210" y1="250" x2="150" y2="250"/><path class="impulse-head" d="M154 242 L136 250 L154 258 Z"/>
+    <line class="impulse" x1="210" y1="250" x2="270" y2="250"/><path class="impulse-head" d="M266 242 L284 250 L266 258 Z"/>
+    <circle class="impulse-head" cx="210" cy="250" r="3"/>
+    <text class="impulse-lbl" x="210" y="278" text-anchor="middle">equal &amp; opposite impulse j</text>
+
+    <!-- ================= RIGHT: restitution ================= -->
+    <text class="panel-lbl" x="540" y="66" text-anchor="middle">Restitution e sets the bounce</text>
+
+    <rect x="430" y="92" width="220" height="18" rx="9" fill="url(#eBar)"/>
+    <!-- ticks -->
+    <line class="normal" x1="430" y1="86" x2="430" y2="116" stroke-dasharray="0"/>
+    <line class="normal" x1="540" y1="86" x2="540" y2="116" stroke-dasharray="0"/>
+    <line class="normal" x1="650" y1="86" x2="650" y2="116" stroke-dasharray="0"/>
+    <text class="tick" x="430" y="134" text-anchor="middle">e = 0</text>
+    <text class="tick-sub" x="430" y="150" text-anchor="middle">stick</text>
+    <text class="tick" x="540" y="134" text-anchor="middle">e = 0.5</text>
+    <text class="tick-sub" x="540" y="150" text-anchor="middle">half back</text>
+    <text class="tick" x="650" y="134" text-anchor="middle">e = 1</text>
+    <text class="tick-sub" x="650" y="150" text-anchor="middle">full bounce</text>
+
+    <!-- relation -->
+    <text class="formula" x="540" y="196" text-anchor="middle">j &#8733; (1 + e) &#215; closing speed along n</text>
+
+    <!-- ================= caption ================= -->
+    <text class="cap" x="360" y="308" text-anchor="middle">Resolving a hit fires an equal-and-opposite impulse along the contact normal.</text>
+    <text class="cap" x="360" y="328" text-anchor="middle">Restitution e decides how much speed returns &#8212; 0 sticks (energy lost), 1 bounces perfectly; real games sit in between.</text>
+</svg>

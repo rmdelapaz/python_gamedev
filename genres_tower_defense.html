@@ -135,7 +135,7 @@ time_to_impact = distance / projectile_speed
 future_x = enemy.x + enemy.vx * time_to_impact
 future_y = enemy.y + enemy.vy * time_to_impact
 
-# Wave difficulty scaling
+# Wave difficulty scaling (linear: +10% health per wave - what this lesson's demo uses)
 enemy_health = base_health * (1 + wave_number * 0.1)
 enemy_count = base_count + floor(wave_number / 5)
         </code></pre>
@@ -1419,7 +1419,8 @@ const wave = {
     difficulty_multiplier: 1.1
 };
 
-// Enemy health scaling
+// Enemy health scaling (exponential x1.1 per wave - an ALTERNATIVE design that ramps
+// up faster than the linear formula shown earlier; pick one scheme, not both)
 enemy.health = base_health * Math.pow(1.1, wave_number);
 
 // Wave reward calculation

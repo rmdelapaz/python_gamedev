@@ -187,6 +187,7 @@
                 Closed List: <span id="closedListSize">0</span> | 
                 Efficiency: <span id="efficiency">-</span>
             </p>
+            <p style="margin: 5px; color: #cbd5e1; font-size: 0.8em;">Open List = frontier nodes discovered but not yet expanded; Closed List = nodes already expanded.</p>
         </div>
     </div>
 
@@ -1333,7 +1334,7 @@ class AStar:
     <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; margin: 20px 0;">
         <h3 id="pathfinding-tips">⚡ Pathfinding Tips</h3>
         <ul>
-            <li><strong>Heuristic Choice:</strong> Manhattan for grids, Euclidean for open spaces</li>
+            <li><strong>Heuristic Choice:</strong> Manhattan for 4-way grids; Octile or Euclidean when diagonal moves are allowed (Manhattan overestimates on 8-way grids and can break A*'s optimality)</li>
             <li><strong>Optimization:</strong> Use hierarchical pathfinding for large maps</li>
             <li><strong>Caching:</strong> Store frequently used paths</li>
             <li><strong>Dynamic Updates:</strong> Recompute only affected portions</li>

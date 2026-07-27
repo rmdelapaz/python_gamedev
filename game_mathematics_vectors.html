@@ -656,10 +656,14 @@ def slide_along_wall(velocity: "Vector2", wall_normal: "Vector2") -> "Vector2":
         # max-range launch instead of crashing.
         angle = 0.5 * math.asin(min(1.0, (gravity * distance) / (speed * speed)))
         
-        # Set velocity components
+        # Set velocity components. Screen Y points DOWN, so negate the vertical
+        # component to launch UPWARD into an arc. This uses the flat-ground range
+        # equation (assumes the target is at the same height), so only the
+        # horizontal direction (direction.x) steers the shot - direction.y is
+        # intentionally not used here.
         self.velocity = Vector2(
             speed * math.cos(angle) * (direction.x / distance),
-            speed * math.sin(angle)
+            -speed * math.sin(angle)
         )
         
         self.gravity = Vector2(0, gravity)

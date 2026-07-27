@@ -229,6 +229,10 @@ class SaveManager:
         except (OSError, json.JSONDecodeError, TypeError) as e:
             print(f"Load failed: {e}")
             return None
+        # NOTE: validate_save() below rejects any version != "1.0.0". A robust loader
+        # should first run SaveMigration.migrate(...) to bring older (but upgradable)
+        # saves up to the current version BEFORE this gate - otherwise migratable saves
+        # are wrongly blocked here.
         if not self.validate_save(save_data):
             return None
         print(f"Game loaded from slot {slot}")
@@ -274,6 +278,7 @@ if __name__ == "__main__":
     <h2 id="advanced-save-features">Advanced Save Features</h2>
     
     <pre class="language-python"><code># Binary save system with compression
+import pickle
 import zlib
 import struct
 

@@ -131,8 +131,8 @@ drag_force = 0.5 * drag_coefficient * velocity²
 turn_radius = wheelbase / tan(steering_angle)
 angular_velocity = velocity / turn_radius
 
-# Weight transfer during acceleration
-weight_rear = static_weight + (acceleration * cg_height / wheelbase)
+# Weight transfer during acceleration (delta load = mass * accel * cg_height / wheelbase)
+weight_rear = static_weight + (mass * acceleration * cg_height / wheelbase)
 weight_front = total_weight - weight_rear
 
 # Tire grip (simplified Pacejka formula)

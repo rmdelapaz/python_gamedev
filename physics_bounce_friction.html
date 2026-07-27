@@ -554,14 +554,16 @@ class BouncingObject:
         # Calculate impulse
         impulse = -(1 + effective_restitution) * velocity_along_normal
         
+        # Measure kinetic energy BEFORE applying the impulse
+        energy_before = self.velocity.length_squared()
+
         # Apply impulse to velocity
         self.velocity += impulse * surface_normal
-        
-        # Energy loss visualization
-        energy_before = self.velocity.length_squared()
+
+        # Energy lost to the bounce (restitution < 1 removes energy)
         energy_after = self.velocity.length_squared()
         energy_lost = energy_before - energy_after
-        
+
         return energy_lost
 
 # Different material bounces

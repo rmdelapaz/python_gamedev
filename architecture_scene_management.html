@@ -1127,7 +1127,9 @@ class ResourceManager:
 
 # Async scene loading
 class AsyncSceneLoader:
-    """Handles asynchronous scene loading"""
+    """Cooperative-async scene loader. The awaits yield control between resources,
+    but each individual load below is still synchronous - true background loading
+    without frame hitches needs threads (see the note in load_texture_async)."""
     def __init__(self, resource_manager: ResourceManager) -> None:
         self.resource_manager: ResourceManager = resource_manager
         self.loading_progress: float = 0.0
@@ -1194,7 +1196,6 @@ class AsyncSceneLoader:
             <li>📦 Resource management prevents memory issues</li>
             <li>🔄 Smooth transitions hide loading times</li>
             <li>📚 Scene stacks enable complex navigation</li>
-            <li>🎯 Cameras provide viewport into large worlds</li>
             <li>⚡ Async loading keeps games responsive</li>
             <li>🔧 Proper architecture makes games scalable</li>
         </ul>

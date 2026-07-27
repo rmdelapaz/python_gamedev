@@ -351,7 +351,10 @@ pygame.draw.circle(screen, (255, 0, 0), center, 50)</code></pre>
         self.screen_height = screen_height
         self.center_x = screen_width // 2
         self.center_y = screen_height // 2
-    
+        # Note: this converter centers the Cartesian origin in the window.
+        # The earlier figure used a bottom-left origin (screen_y = height - y);
+        # both are valid conventions - just pick one and stay consistent.
+
     def screen_to_cartesian(self, x, y):
         """Convert screen coordinates to mathematical Cartesian"""
         cart_x = x - self.center_x

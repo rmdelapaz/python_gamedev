@@ -131,6 +131,8 @@ img_folder = os.path.join(game_folder, 'images')
 player_img = load_image(os.path.join(img_folder, 'player.png'))
 
 # Convert for performance (IMPORTANT!)
+# NOTE: convert()/convert_alpha() need an active display surface —
+# call pygame.display.set_mode(...) BEFORE converting, or these raise an error.
 player_img = player_img.convert()  # For images without transparency
 enemy_img = enemy_img.convert_alpha()  # For images with transparency</code></pre>
 

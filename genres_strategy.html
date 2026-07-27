@@ -509,7 +509,7 @@
                     if (dist <= this.range) {
                         // Attack
                         this.target.hp -= Math.max(1, this.attack - this.target.defense);
-                        this.attackCooldown = 60; // 1 second at 60 FPS
+                        this.attackCooldown = 60; // ~60 ms (counts down by deltaTime, measured in ms)
                         
                         if (this.target.hp <= 0) {
                             this.target = null;

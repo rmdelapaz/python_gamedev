@@ -221,6 +221,9 @@ class GameServer:
         while self.running:
             try:
                 # Receive data (max 4096 bytes)
+                # NOTE: recv() does NOT preserve message boundaries - one recv() may
+                # return a partial message OR several joined together. A real server
+                # needs the length-prefix framing shown in "Message Framing" below.
                 data = client_socket.recv(4096).decode('utf-8')
                 
                 if not data:
@@ -357,6 +360,8 @@ class GameClient:
         """Continuously receive messages from server"""
         while self.connected:
             try:
+                # Same caveat as the server: recv() is not message-framed - see
+                # "Message Framing" below for the length-prefix fix.
                 data = self.socket.recv(4096).decode('utf-8')
                 if not data:
                     break

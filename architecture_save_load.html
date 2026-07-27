@@ -107,7 +107,7 @@
 
     <figure class="svg-wrapper">
         <img class="responsive-svg" src="/images/components/save-tree.svg" alt="JSON tree of a save file showing top-level metadata (version, timestamp, play_time) and three nested sections — player (name, level, health, position, inventory), progress (current_level, completed, score, achievements), and world (world_seed, enemies, items). A dashed callout highlights how Python tuples become JSON arrays during asdict() serialization." loading="lazy">
-        <figcaption>Inside one save slot: top-level metadata wraps three logical sections — player, progress, and world. Python types like tuples flatten to JSON primitives on save and rehydrate back to Python objects on load.</figcaption>
+        <figcaption>Inside one save slot: top-level metadata wraps three logical sections — player, progress, and world. Python types like tuples flatten to JSON arrays on save; note JSON has no tuple type, so on load they come back as lists, not tuples (convert explicitly if you need a tuple).</figcaption>
     </figure>
 
     <h2 id="interactive-save-load-system-demo">Interactive Save/Load System Demo</h2>
@@ -187,7 +187,7 @@ class SaveData:
     player_name: str = "Player"
     player_level: int = 1
     player_health: int = 100
-    player_position: tuple = (0, 0)
+    player_position: tuple = (0, 0)  # NOTE: JSON has no tuple type, so this returns as a list (not a tuple) after load
     score: int = 0
     current_level: int = 1
     inventory: list = field(default_factory=list)

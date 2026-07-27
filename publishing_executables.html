@@ -147,8 +147,6 @@ pyinstaller --onefile --add-data "assets:assets" your_game.py
 # game.spec - PyInstaller specification file
 # -*- mode: python ; coding: utf-8 -*-
 
-block_cipher = None
-
 # Analysis phase
 a = Analysis(
     ['main.py'],
@@ -175,14 +173,13 @@ a = Analysis(
     ],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
-    cipher=block_cipher,
     noarchive=False,
 )
 
 # Remove unnecessary modules
 a.binaries = [x for x in a.binaries if not x[0].startswith('api-ms-win')]
 
-pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+pyz = PYZ(a.pure, a.zipped_data)
 
 exe = EXE(
     pyz,

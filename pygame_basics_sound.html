@@ -133,7 +133,7 @@ pygame.mixer.set_num_channels(8)  # 8 simultaneous sounds</code></pre>
     <pre class="language-python"><code># Load a sound effect
 jump_sound = pygame.mixer.Sound("jump.wav")
 coin_sound = pygame.mixer.Sound("coin.ogg")
-explosion_sound = pygame.mixer.Sound("explosion.mp3")
+explosion_sound = pygame.mixer.Sound("explosion.ogg")  # Sound wants WAV/OGG; play MP3 via pygame.mixer.music instead
 
 # Play a sound
 jump_sound.play()

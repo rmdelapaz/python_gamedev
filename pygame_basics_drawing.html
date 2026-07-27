@@ -252,6 +252,7 @@ pygame.draw.polygon(screen, PURPLE, points)
     
     <pre class="language-python"><code>import pygame
 import sys
+import math
 
 # Initialize Pygame
 pygame.init()
@@ -308,8 +309,8 @@ while running:
     points = []
     for i in range(6):
         angle = i * 60 * 3.14159 / 180
-        x = 600 + 50 * pygame.math.cos(angle)
-        y = 400 + 50 * pygame.math.sin(angle)
+        x = 600 + 50 * math.cos(angle)
+        y = 400 + 50 * math.sin(angle)
         points.append((x, y))
     pygame.draw.polygon(screen, WHITE, points, 2)
     

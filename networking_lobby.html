@@ -340,6 +340,8 @@ class LobbyServer:
         """Handle individual client messages"""
         while self.running:
             try:
+                # NOTE: naive single-recv (assumes one whole message per call). Fine for this
+                # lobby demo, but production TCP needs length-prefix framing -- see networking_sockets.
                 data = player.socket.recv(4096).decode('utf-8')
                 if not data:
                     break
@@ -831,6 +833,8 @@ class LobbyClient:
         """Receive messages from server"""
         while self.connected:
             try:
+                # NOTE: naive single-recv (assumes one whole message per call). Fine for this
+                # lobby demo, but production TCP needs length-prefix framing -- see networking_sockets.
                 data = self.socket.recv(4096).decode('utf-8')
                 if not data:
                     break

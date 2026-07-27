@@ -1698,7 +1698,7 @@ class NPC:
             <h2 id="practice-exercise-build-ai-state-machines">🏋️‍♂️ Practice Exercise</h2>
 
             <div class="card card-info">
-                <h3>🏋️‍♂️ Exercise 1: Four-State NPC FSM + Personality-Driven Transition + State History Log</h3>
+                <h3>🏋️‍♂️ Exercise 1: Five-State NPC FSM + Personality-Driven Transition + State History Log</h3>
                 <p><strong>Objective:</strong> Build a runnable pygame window in roughly 85 lines that shows a five-state NPC finite state machine (IDLE &harr; PATROL &harr; ALERT &rarr; CHASE/FLEE &rarr; IDLE) driving a green NPC against a player-controlled blue rect, with personality-driven branching at the ALERT outgoing transition (aggressive routes to CHASE, coward routes to FLEE), strict on_exit &rarr; reassign &rarr; on_enter ordering in <code>StateMachine.change_state</code> enforced at every transition, and per-state perception checks owning their own outgoing-edge logic so adding a new state is one new class plus one <code>add_state</code> call rather than an edit to a centralized dispatcher &mdash; three orthogonal architectural disciplines visible per frame in the HUD: current state name color-coded by state, active personality, transition count, and a rolling 8-line state-history log showing every from&rarr;to&rarr;time row.</p>
                 <h4>Instructions:</h4>
                 <ol>

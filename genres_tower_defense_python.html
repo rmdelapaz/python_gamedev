@@ -1297,7 +1297,7 @@ class Enemy:
     def __init__(self, et):
         self.stats = ENEMY_STATS[et]; self.path_idx = 0
         self.x, self.y = float(PATH[0][0]), float(PATH[0][1])
-        self.health = self.stats.health
+        self.health = self.stats.health  # NOTE: this compact demo has no wave system, so health is NOT wave-scaled (the full implementation above uses stats.health * (1 + wave_number * 0.1))
     def update(self, dt):
         if self.path_idx &gt;= len(PATH) - 1 or self.health &lt;= 0: return
         tx, ty = PATH[self.path_idx + 1]

@@ -650,8 +650,11 @@ def slide_along_wall(velocity: "Vector2", wall_normal: "Vector2") -> "Vector2":
         distance = direction.magnitude()
         gravity = 9.8
         
-        # Physics formula for projectile angle
-        angle = 0.5 * math.asin((gravity * distance) / (speed * speed))
+        # Physics formula for projectile angle (flat-ground range equation).
+        # Clamp to 1.0: if the target is out of range, asin's argument would
+        # exceed 1 and raise ValueError, so we fall back to the 45 degree
+        # max-range launch instead of crashing.
+        angle = 0.5 * math.asin(min(1.0, (gravity * distance) / (speed * speed)))
         
         # Set velocity components
         self.velocity = Vector2(

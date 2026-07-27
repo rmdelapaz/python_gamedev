@@ -1178,8 +1178,8 @@ class RigidBody:
         body_b.apply_impulse(impulse, contact.point)
         
         # Position correction (to prevent sinking)
-        const percent = 0.2  # Penetration percentage to correct
-        const slop = 0.01  # Penetration allowance
+        percent = 0.2  # Penetration percentage to correct
+        slop = 0.01  # Penetration allowance
         correction = max(contact.penetration - slop, 0) / (body_a.inv_mass + body_b.inv_mass) * percent * contact.normal
         
         if body_a.body_type == BodyType.DYNAMIC:

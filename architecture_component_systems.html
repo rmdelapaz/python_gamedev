@@ -353,7 +353,7 @@ class EntityFactory:
             <li><strong>Cache Component Queries:</strong> Store frequently used entity queries</li>
             <li><strong>Object Pooling:</strong> Reuse components and entities for performance</li>
             <li><strong>Event Systems:</strong> Use events for system communication</li>
-            <li><strong>Data-Oriented Design:</strong> Group similar components for cache efficiency</li>
+            <li><strong>Data-Oriented Design:</strong> Group similar components together for clarity &mdash; but note true CPU-cache locality needs contiguous storage (e.g. a NumPy structure-of-arrays), which the Python dict-of-objects store shown here does not provide</li>
         </ul>
     </div>
 
@@ -365,7 +365,7 @@ class EntityFactory:
             <li>📦 Entities are just IDs with component collections</li>
             <li>🔄 Systems process entities with specific components</li>
             <li>🎯 Composition creates flexible game objects</li>
-            <li>⚡ Performance benefits from data-oriented design</li>
+            <li>⚡ Data-oriented design aids organization &mdash; real cache-locality speedups need contiguous storage (NumPy/C), not a Python dict of objects</li>
             <li>🔧 Easy to add new features without changing existing code</li>
             <li>🐛 Debugging is easier with isolated systems</li>
         </ul>

@@ -288,6 +288,37 @@
                     this.position.y = this.radius;
                     this.velocity.y *= -this.material.restitution;
                 }
+
+                // Angled ramp collisions
+                walls.forEach(wall => {
+                    const cp = closestPointOnSegment(this.position, wall.start, wall.end);
+                    const dx = this.position.x - cp.x;
+                    const dy = this.position.y - cp.y;
+                    const dist = Math.hypot(dx, dy);
+                    if (dist < this.radius && dist > 0.0001) {
+                        // Outward normal: from the surface toward the ball
+                        const nx = dx / dist;
+                        const ny = dy / dist;
+
+                        // Push the ball out so it rests on the ramp instead of sinking in
+                        const overlap = this.radius - dist;
+                        this.position.x += nx * overlap;
+                        this.position.y += ny * overlap;
+
+                        // Split velocity into normal + tangential parts
+                        const vn = this.velocity.x * nx + this.velocity.y * ny;
+                        if (vn < 0) {  // only bounce when moving into the surface
+                            const e = this.material.restitution;
+                            const f = this.material.friction;
+                            const vnx = vn * nx, vny = vn * ny;   // component driving into the surface
+                            const vtx = this.velocity.x - vnx;    // component sliding along the surface
+                            const vty = this.velocity.y - vny;
+                            // Reflect the normal part (restitution), damp the tangential part (friction)
+                            this.velocity.x = vtx * (1 - f * 0.1) - vnx * e;
+                            this.velocity.y = vty * (1 - f * 0.1) - vny * e;
+                        }
+                    }
+                });
             }
             
             draw(ctx) {
@@ -399,6 +430,17 @@
             }
         }
         
+        // Closest point on a line segment to a point (JS twin of the lesson's
+        // get_closest_point_on_line) — used for ball-vs-ramp collision.
+        function closestPointOnSegment(p, a, b) {
+            const abx = b.x - a.x, aby = b.y - a.y;
+            const apx = p.x - a.x, apy = p.y - a.y;
+            const abLen2 = abx * abx + aby * aby;
+            let t = abLen2 === 0 ? 0 : (apx * abx + apy * aby) / abLen2;
+            t = Math.max(0, Math.min(1, t));  // clamp to the segment ends
+            return { x: a.x + abx * t, y: a.y + aby * t };
+        }
+
         // Add some angled surfaces
         walls.push(new AngledSurface(100, 150, 250, 200));
         walls.push(new AngledSurface(350, 200, 500, 150));
